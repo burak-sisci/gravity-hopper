@@ -7,8 +7,8 @@
 
   "current": {
     "milestone": "M0",
-    "task": "M0-05",
-    "task_title": "Git deposu + GitHub'da özel depo, ilk commit ve push",
+    "task": "M0-06",
+    "task_title": "Autoload iskeletleri (Events, GameManager, SaveManager, Progression, Settings, AudioManager)",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05"],
 
   "blockers": [],
 
@@ -90,7 +90,7 @@
       "editor_settings": "%APPDATA%/Godot/editor_settings-4.7.tres (ilk headless içe aktarmada oluştu; 'keystores' klasörü de var → S-04 için M0-08'de bakılacak)"
     },
     "git": { "version": "2.55.0", "identity_set": true },
-    "github_cli": { "version": "2.101.0", "authenticated": true, "account": "burak-sisci", "repo_url": null },
+    "github_cli": { "version": "2.101.0", "authenticated": true, "account": "burak-sisci", "repo_url": "https://github.com/burak-sisci/gravity-hopper", "visibility": "private", "default_branch": "main" },
     "jdk17": { "installed": true, "version": "17.0.20.1", "path": "C:/Program Files/Microsoft/jdk-17.0.20.101-hotspot", "java_home_set": true },
     "android_sdk": {
       "path": "C:/Users/burak/AppData/Local/Android/Sdk",
@@ -127,9 +127,8 @@
 
   "last_session": {
     "date": "2026-10-01",
-    "summary": "M0-02 kapandı: telefon adb ile doğrulandı (Redmi Note 12 4G, Android 15, Adreno 610, 1080x2400, 120 Hz), KURULUM.md kullanıcı onayıyla silindi. M0-04 tamamlandı: project.godot (ayarlar betikle doğrulandı), icon.svg, .gitignore, .gitattributes, .editorconfig, docs/.gdignore; headless içe aktarma hatasız ve uyarısız. M0-05 sürüyor.",
+    "summary": "M0-02 kapandı: telefon adb ile doğrulandı (Redmi Note 12 4G, Android 15, Adreno 610, 1080x2400, 120 Hz), KURULUM.md kullanıcı onayıyla silindi. M0-04 tamamlandı: project.godot (ayarlar betikle doğrulandı), icon.svg, .gitignore, .gitattributes, .editorconfig, docs/.gdignore; headless içe aktarma hatasız ve uyarısız. M0-05 tamamlandı: git deposu (main), GitHub'da özel depo burak-sisci/gravity-hopper, ilk commit gönderildi.",
     "next_steps": [
-      "M0-05: git deposu, ilk commit, GitHub'da özel depo ve push.",
       "Kullanıcı projeyi Godot editöründe ilk kez açar ve 'Auto Reload Scripts on External Change' ayarını açar.",
       "Sıradaki görev M0-06 (autoload iskeletleri).",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."

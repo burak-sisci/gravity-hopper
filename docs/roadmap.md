@@ -49,7 +49,7 @@
   *Kabul:* Claude Code yeni klasörde açılıyor, belgeler yerinde.
 - [x] **M0-04** 🤖 Godot projesini oluştur: `project.godot` ayarları (`architecture.md` §2), `.gitignore`, `.gitattributes`, geçici ikon.
   *Kabul:* Proje editörde uyarısız açılıyor.
-- [ ] **M0-05** 🤖 Git deposu + GitHub'da özel depo, ilk commit ve push.
+- [x] **M0-05** 🤖 Git deposu + GitHub'da özel depo, ilk commit ve push.
   *Kabul:* Depo GitHub'da görünüyor.
 - [ ] **M0-06** 🤖 Autoload iskeletleri: `Events` (sinyal kataloğu), `GameManager`, `SaveManager`, `Progression`, `Settings`, `AudioManager`, hepsi minimal.
   *Kabul:* Headless kontrol sıfır hata ve sıfır uyarı verir.
