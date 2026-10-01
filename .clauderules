@@ -1,0 +1,85 @@
+# GRAVITY HOPPER — Katı Kurallar
+
+> Bu kurallar pazarlık konusu değildir. Bir kuralın çiğnenmesi gerekiyorsa önce kullanıcıya sor, onay alırsan gerekçeyi `docs/architecture.md` karar kaydına (ADR) yaz.
+> Bu dosya `CLAUDE.md` içinden içe aktarılır; Claude Code onu her oturumda otomatik yükler.
+
+## 1. Motor ve dil
+
+- **Godot 4.7.x (standard) ve GDScript kullan.** C#, GDExtension ya da yeni eklenti (addon) kullanıcı onayı olmadan eklenmez.
+- Renderer: **Compatibility**. Değiştirilmez.
+- Tanımlayıcılar (sınıf, fonksiyon, değişken, sinyal, dosya adı) **İngilizce**. Kod yorumları **Türkçe** ve kısa.
+- `@export` değişkenlerinin `##` açıklamaları Türkçe yazılır (Inspector'da ipucu olarak görünür).
+
+## 2. Statik tipleme (zorunlu)
+
+- **Sınıfları ve tüm kodu statik tiple yaz.** Her değişken, parametre ve dönüş tipi belirtilir:
+
+  ```gdscript
+  var climb_speed: float = 600.0
+  var hazards: Array[Hazard] = []
+  func flip(to_right: bool) -> void:
+  ```
+
+- `:=` yalnızca tip sağ taraftan açıkça belliyse kullanılır (`var timer := Timer.new()`).
+- Diziler `Array[T]`, sözlükler `Dictionary[K, V]` ile tiplenir.
+- Sinyaller tipli parametrelerle tanımlanır: `signal player_died(cause: DeathCause)`.
+- Proje ayarında `debug/gdscript/warnings/untyped_declaration` = **Error**. Uyarı veren kod teslim edilmez.
+- Yeniden kullanılan her betik `class_name` alır.
+
+## 3. Sahne ayrımı ve sinyaller
+
+- **Arayüzü (UI) ve oyun mantığını birbirinden ayrı sahnelerde tut. Haberleşmek için Sinyalleri kullan.**
+- UI sahneleri oyun dünyasındaki düğümlere asla doğrudan erişmez (ne okur ne yazar). Yalnızca `Events` sinyallerini dinler ve niyet sinyalleri yayar (`retry_requested` gibi).
+- Oyun dünyası UI'yi tanımaz.
+- **"Aşağı çağır, yukarı sinyal ver":** Ebeveyn çocuğunun metodunu çağırabilir. Çocuk ebeveynini asla çağırmaz (`get_parent()` ile iş yaptırmak yasak); yukarıya sinyalle haber verir.
+- Farklı sahne ağaçları arasında iletişim yalnızca `Events` autoload'u üzerinden olur. Aynı sahnenin içinde çocukların sinyallerini ebeveyn bağlar; her şeyi `Events`'e yığma.
+- **Karakter bir engele çarptığında engelin kodunu çağırmaz. Kalkanı varsa kalkanı tüketir, yoksa yalnızca `player_died` sinyali yayar. UI ve GameManager bu sinyali dinleyip kendi işlerini yapar.**
+- Engeller pasiftir: oyuncuyu tanımaz, ona referans tutmaz.
+- Uzun düğüm yolları yasaktır (`get_node("../../X")`). Sahne içinde `%UniqueName`, dışarıdan gerekiyorsa `@export` referansı kullanılır.
+- Sinyal adları geçmiş zaman kipinde olur: `player_died`, `glimmer_collected`, `sector_entered`.
+- Autoload'lar servis gibi doğrudan çağrılabilir (`SaveManager.save_game()`), ama autoload'lar sahne düğümlerine doğrudan erişmez; sinyal yayar.
+
+## 4. Veri, ayar ve metin
+
+- Sihirli sayı yoktur. Oynanış değerleri `TuningConfig` kaynağında (`data/tuning/`), içerik (sektör, yükseltme, iz) `data/` altındaki Resource dosyalarında durur.
+- Oyuncunun gördüğü her metin `tr("ANAHTAR")` ile gösterilir; kodda sabit metin olmaz. Her anahtarın **TR ve EN** karşılığı aynı anda eklenir.
+- Kodda `to_upper()` / `to_lower()` ile metin dönüştürülmez (Türkçe i/İ sorunu). Büyük harf gerekiyorsa metin çeviri dosyasına büyük harfle yazılır.
+
+## 5. Zaman, cihaz ve rastgelelik
+
+- Oynanış mantığı yalnızca `_physics_process` içinde çalışır (60 Hz sabit adım). `_process` sadece görsel içindir.
+- Kare hızına bağlı kod yoktur; her hareket `delta` ile hesaplanır.
+- Ekran boyutu varsayılmaz: dünya birimi kullanılır, UI anchor ve güvenli alanla yerleşir.
+- Oynanışı etkileyen rastgelelik yalnızca turun tohumlu RNG'sinden (`RunRng`) gelir. Global `randi()` / `randf()` oynanışta yasaktır (yalnızca kozmetik efektlerde serbest).
+- `Engine.time_scale` değişirse müziğin `pitch_scale` değeri de aynı orana çekilir (ritim senkronu bozulmasın).
+
+## 6. Performans
+
+- Tur sırasında `instantiate()` / `queue_free()` yapılmaz. Engeller, toplanabilirler, parçacıklar ve desen parçaları havuzdan (`ObjectPool`) gelir.
+- Parçacıklar için `CPUParticles2D` kullanılır. Yeni bir shader ya da efekt, Redmi Note 12'de denenmeden "bitti" sayılmaz.
+- Debug özellikleri `OS.is_debug_build()` kontrolünün arkasında durur; yayın sürümüne girmez.
+
+## 7. Varlıklar, eklentiler ve lisans
+
+- İzinli: görsel/ses **CC0, CC-BY** · kod/eklenti **MIT, BSD, Apache-2.0, zlib** · font **SIL OFL 1.1**. Hepsi atıfla.
+- **Yasak: CC-BY-NC, CC-BY-SA, GPL/LGPL/AGPL ve lisansı belirsiz her şey.**
+- Eklenen her dış varlık ve eklenti aynı commit içinde `CREDITS.md`'ye (sürümüyle) yazılır.
+- Eklentiler `addons/` altına **sürümü sabitlenerek** konur ve depoya commit edilir. Test ve editör eklentileri yayın dışa aktarımına girmez.
+- Dış repolar proje klasörüne klonlanmaz (Godot klasördeki her dosyayı içe aktarır). İnceleme proje dışında yapılır; yalnızca gereken dosyalar alınır, fazlası alınmaz.
+
+## 8. Adlandırma ve yerleşim
+
+- Dosyalar `snake_case` (`player.gd`, `player.tscn`); sınıflar `PascalCase`; fonksiyon, değişken ve sinyaller `snake_case`; sabitler `UPPER_SNAKE_CASE`; özel üyeler `_` önekli.
+- Sahne `scenes/<kategori>/`, betiği `scripts/<kategori>/` altında aynı adla durur.
+- Resmi GDScript stil rehberindeki sıra izlenir: signals → enums → constants → @export → public vars → private vars → @onready → built-in callbacks → public methods → private methods.
+
+## 9. Süreç
+
+- Aynı anda tek bir roadmap görevi üzerinde çalışılır. Görev kimliği (`M1-03`) her commit mesajının başında yer alır.
+- **Kilometre taşı kapısı:** Kullanıcı oynayıp onaylamadan bir sonraki aşamaya geçilmez.
+- **"Bitti" için kanıt şarttır, iddia yetmez:** proje hatasız ve uyarısız açılır; sahne aracı (`check`) ve `gdlint` temiz geçer (araçlar kurulduktan sonra); oynanış ya da görsel değişiklikte ekran görüntüsü / kare dizisi ve varsa test sonucu sunulur.
+- Kullanıcı editörde bir sahneyi açık tutuyorsa, o `.tscn` dışarıdan değiştirilmeden önce kaydedip kapatması istenir; değişiklikten sonra editörde yeniden yüklemesi söylenir.
+- Proje asla bozuk halde bırakılmaz; her görev bir commit ile kapanır.
+- Yeni autoload, yeni klasör ya da mimari değişiklik öncesinde `docs/architecture.md` güncellenir.
+- `CLAUDE.md`'deki planlama rutini atlanmaz.
+- **Bağlam ekonomisi:** Her oturumda yüklenen talimatlar (`CLAUDE.md` + bu dosya) toplam ~200 satırı geçmez. Nadiren gereken ayrıntı ilgili belgeye konur ve gerektiğinde oradan okunur.

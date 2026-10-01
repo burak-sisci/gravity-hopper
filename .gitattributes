@@ -1,0 +1,2 @@
+# Metin dosyalarında satır sonlarını LF'ye normalleştir
+* text=auto eol=lf

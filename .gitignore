@@ -1,0 +1,14 @@
+# Godot 4
+.godot/
+/android/
+
+# Dışa aktarma çıktıları
+/builds/
+
+# İşletim sistemi
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Python önbelleği (araçlar)
+__pycache__/
