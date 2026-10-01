@@ -16,6 +16,15 @@ config/version="0.0.1"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Events="*res://scripts/autoloads/events.gd"
+Settings="*res://scripts/autoloads/settings.gd"
+SaveManager="*res://scripts/autoloads/save_manager.gd"
+Progression="*res://scripts/autoloads/progression.gd"
+AudioManager="*res://scripts/autoloads/audio_manager.gd"
+GameManager="*res://scripts/autoloads/game_manager.gd"
+
 [debug]
 
 gdscript/warnings/untyped_declaration=2
@@ -32,7 +41,6 @@ window/handheld/orientation=1
 
 [physics]
 
-common/physics_ticks_per_second=60
 common/physics_interpolation=true
 
 [rendering]

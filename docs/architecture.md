@@ -105,7 +105,7 @@ gravity-hopper/
 │   ├── ui/                   # UI betikleri
 │   └── debug/                # Debug araçları
 │
-├── tools/                    # Geliştirici araçları: scene_tool.gd (M0-11)
+├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), scene_tool.gd (M0-11)
 ├── tests/                    # (M2) Otomatik testler (gdUnit4)
 └── addons/                   # Sürümü sabit eklentiler: godot-debug-menu (M0), gdUnit4 (M2), Play Games ve AdMob (M7)
 ```
@@ -182,10 +182,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Sinyal | Parametreler | Yayan | Dinleyen |
 | --- | --- | --- | --- |
-| `run_started` | `seed: int, start_sector: int` | GameManager | HUD, AudioManager |
+| `run_started` | `run_seed: int, start_sector: int` | GameManager | HUD, AudioManager |
 | `run_ended` | `result: RunResult` | GameManager | Sonuç ekranı |
 | `pause_changed` | `paused: bool` | GameManager | HUD, AudioManager |
-| `player_died` | `cause: DeathCause` (HAZARD, FELL, WALL) | Player, PressureSystem | GameManager, HUD, AudioManager |
+| `player_died` | `cause: GameTypes.DeathCause` (HAZARD, FELL, WALL) | Player, PressureSystem | GameManager, HUD, AudioManager |
 | `player_revived` | — | GameManager | HUD, AudioManager |
 | `player_flipped` | — | Player | AudioManager (ses, titreşim) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
@@ -300,6 +300,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
 | `RunResult` | (kod, `RefCounted`) | Yükseklik, Glimmer, kıl payı sayısı, ölüm nedeni, ulaşılan sektör, tohum |
+| `GameTypes` | (kod, `RefCounted`) | Paylaşılan enum'lar: `DeathCause`, `Quality`. Autoload'ların iç enum'ları tip olarak kullanılamadığı için ortak türler burada durur |
 
 ## 11. Kayıt sistemi
 
@@ -377,7 +378,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Sahne aracı** `tools/scene_tool.gd` (M0-11), `--headless --script` ile çalışır:
   - `tree <sahne>`: düğüm ağacı (ad, tür, `%` benzersiz ad, betik, gruplar, sinyal bağlantıları). Sahne çalıştırılmadan `SceneState` ile okunur.
   - `check`: Betiklerdeki `$Yol`, `%Ad`, `get_node("...")` başvurularını ve sahnelerdeki sinyal bağlantılarının hedef metotlarını sahnelere karşı denetler. Hata varsa sıfır olmayan çıkış kodu döner.
-  - S-08: Autoload'lara başvuran betikler bu modda yüklenemezse yedek plan, `.tscn` metnini okuyan bir Python betiğidir.
+  - S-08 çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor; araç GDScript ile yazılır.
 - **Kod denetimi** (M0-12): `gdlint` (gdtoolkit, MIT) + kökteki `gdlintrc`. Bir Claude Code kancası (hook), düzenlenen her `.gd` dosyasını otomatik denetler; yalnızca hata olduğunda çıktı verir (bağlam yükü yok).
 
 ## 14. Android ve dağıtım
@@ -398,13 +399,15 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Katman | Nasıl | Ne zaman |
 | --- | --- | --- |
-| Açılış kontrolü | `--headless --import`: sıfır hata, sıfır uyarı | Her görevde |
+| **Tam kontrol** | `tools/check.ps1`: içe aktarma + tüm betikler, "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir. `TEMİZ` = sıfır hata, sıfır uyarı | Her görevde |
 | Sahne denetimi | `tools/scene_tool.gd check` | Her görevde (M0-11'den sonra) |
 | Kod denetimi | `gdlint` (kanca ile otomatik) | Her `.gd` düzenlemesinde (M0-12'den sonra) |
 | Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi | Görsel değişikliklerde |
 | Otomatik test | **gdUnit4** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi; sahne koşucusuyla dokunuş taklidi yapan oynanış testleri | M2'den itibaren |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
 | Oyun testi | Kullanıcı: PC → Redmi → web linki | Her kilometre taşında |
+
+> **Ders (M0-06):** Godot'nun ekransız modu (`--import`, `--script`, `--check-only`) GDScript **uyarılarını yazdırmaz**, yalnızca hataları yazdırır. `--check-only` ayrıca autoload adlarını tanımaz. Bu yüzden "uyarısız" iddiası yalnızca `tools/check.ps1` ile doğrulanır.
 
 ## 16. Performans bütçesi
 
@@ -447,7 +450,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
 | S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi | M1 |
-| S-08 | Sahne aracı `--headless --script` modunda autoload'lara başvuran betikleri yükleyebiliyor mu? (Olmazsa `.tscn` metnini okuyan Python betiği) | Sahne aracı görevi |
+| S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)
 

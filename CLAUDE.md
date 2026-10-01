@@ -60,11 +60,11 @@ Her kilometre taşının sonunda ve kullanıcı "planlama gözden geçir" dediğ
 
 ## Ortam ve komutlar
 
-> Yollar 2026-10-01'de doğrulandı (M0-02); içe aktarma komutu M0-04'te doğrulandı. Çalıştırma ve kare yakalama ⚠️ ana sahne olunca (M0-10) doğrulanacak. Ayrıntılı ortam bilgisi: `state.json` → `environment`.
+> Yollar 2026-10-01'de doğrulandı (M0-02); tam kontrol aracı M0-06'da doğrulandı. Çalıştırma ve kare yakalama ⚠️ ana sahne olunca (M0-10) doğrulanacak. Ayrıntılı ortam bilgisi: `state.json` → `environment`.
 
 - İşletim sistemi: Windows 11. Proje yolu: `C:\Users\burak\Desktop\gravity-hopper` (boşluksuz; bkz. ADR-012)
 - `<godot>` (Claude'un kullandığı konsol sürümü): `C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe` — kullanıcının editörü aynı klasörde
-- İçe aktarma ve hata kontrolü: `<godot> --headless --path . --import`
+- **Tam kontrol (her görevde):** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1` → `TEMİZ` / `SORUN VAR` (içe aktarma + uyarılar hata sayılarak tüm betikler)
 - Oyunu çalıştırma: `<godot> --path .`
 - Kare yakalama (Movie Maker): `<godot> --path . --write-movie <scratchpad>/frame.png --fixed-fps 60 --quit-after 120`
 - JDK 17: `C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot` · Android SDK: `%LOCALAPPDATA%\Android\Sdk`

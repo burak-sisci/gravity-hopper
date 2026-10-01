@@ -22,7 +22,7 @@
 
 - `:=` yalnızca tip sağ taraftan açıkça belliyse kullanılır (`var timer := Timer.new()`).
 - Diziler `Array[T]`, sözlükler `Dictionary[K, V]` ile tiplenir.
-- Sinyaller tipli parametrelerle tanımlanır: `signal player_died(cause: DeathCause)`.
+- Sinyaller tipli parametrelerle tanımlanır: `signal player_died(cause: GameTypes.DeathCause)`. Paylaşılan enum'lar `GameTypes`'ta durur.
 - Proje ayarında `debug/gdscript/warnings/untyped_declaration` = **Error**. Uyarı veren kod teslim edilmez.
 - Yeniden kullanılan her betik `class_name` alır.
 
@@ -77,7 +77,7 @@
 
 - Aynı anda tek bir roadmap görevi üzerinde çalışılır. Görev kimliği (`M1-03`) her commit mesajının başında yer alır.
 - **Kilometre taşı kapısı:** Kullanıcı oynayıp onaylamadan bir sonraki aşamaya geçilmez.
-- **"Bitti" için kanıt şarttır, iddia yetmez:** proje hatasız ve uyarısız açılır; sahne aracı (`check`) ve `gdlint` temiz geçer (araçlar kurulduktan sonra); oynanış ya da görsel değişiklikte ekran görüntüsü / kare dizisi ve varsa test sonucu sunulur.
+- **"Bitti" için kanıt şarttır, iddia yetmez:** `tools/check.ps1` `TEMİZ` döner (ekransız mod uyarıları göstermez; başka yolla "uyarısız" denmez); sahne aracı (`check`) ve `gdlint` temiz geçer (araçlar kurulduktan sonra); oynanış ya da görsel değişiklikte ekran görüntüsü / kare dizisi ve varsa test sonucu sunulur.
 - Kullanıcı editörde bir sahneyi açık tutuyorsa, o `.tscn` dışarıdan değiştirilmeden önce kaydedip kapatması istenir; değişiklikten sonra editörde yeniden yüklemesi söylenir.
 - Proje asla bozuk halde bırakılmaz; her görev bir commit ile kapanır.
 - Yeni autoload, yeni klasör ya da mimari değişiklik öncesinde `docs/architecture.md` güncellenir.

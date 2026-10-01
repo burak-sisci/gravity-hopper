@@ -51,7 +51,7 @@
   *Kabul:* Proje editörde uyarısız açılıyor.
 - [x] **M0-05** 🤖 Git deposu + GitHub'da özel depo, ilk commit ve push.
   *Kabul:* Depo GitHub'da görünüyor.
-- [ ] **M0-06** 🤖 Autoload iskeletleri: `Events` (sinyal kataloğu), `GameManager`, `SaveManager`, `Progression`, `Settings`, `AudioManager`, hepsi minimal.
+- [x] **M0-06** 🤖 Autoload iskeletleri: `Events` (sinyal kataloğu), `GameManager`, `SaveManager`, `Progression`, `Settings`, `AudioManager`, hepsi minimal. *(Ek: `GameTypes`, `RunResult`, tam kontrol aracı `tools/check.ps1`.)*
   *Kabul:* Headless kontrol sıfır hata ve sıfır uyarı verir.
 - [ ] **M0-07** 🤖 Yerelleştirme altyapısı: `translations.csv` (TR/EN), cihaz diline göre varsayılan.
   *Kabul:* Test metni cihaz diline göre değişiyor.
@@ -61,7 +61,7 @@
   *Kabul:* İki yöntemin Redmi'deki görüntüsü ve kare süresi ölçüldü; karar ADR olarak yazıldı.
 - [ ] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil ve "Dokun / Tap" yazısı.
   *Kabul:* PC'de ve Redmi'de dokunma algılanıyor, yazı iki dilde doğru.
-- [ ] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (S-08; `architecture.md` §13.1).
+- [ ] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (`architecture.md` §13.1); `check`, `tools/check.ps1`'e bağlanır.
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.
 - [ ] **M0-12** 🤖 Kod denetimi: gdtoolkit kurulumu (sürümü sabit), kurallarımıza göre `gdlintrc`, düzenlenen `.gd` dosyalarını otomatik denetleyen Claude Code kancası.
   *Kabul:* Kural dışı bir adı `gdlint` yakalıyor; mevcut tüm kod temiz geçiyor.

@@ -2,6 +2,9 @@
 .godot/
 /android/
 
+# Denetim sırasında geçici oluşturulan ayar dosyası (tools/check.ps1)
+override.cfg
+
 # Dışa aktarma çıktıları
 /builds/
 
