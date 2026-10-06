@@ -2,13 +2,13 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-10-01",
+  "updated": "2026-10-06",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M0",
-    "task": "M0-07",
-    "task_title": "Yerelleştirme altyapısı: translations.csv (TR/EN), cihaz diline göre varsayılan",
+    "task": "M0-08",
+    "task_title": "Android dışa aktarma + tek tıkla (kablolu ve kablosuz) yükleme",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07"],
 
   "blockers": [],
 
@@ -108,7 +108,9 @@
       "ram_gb": 8,
       "screen": "1080x2400 (20:9), 440 dpi, 60/90/120 Hz",
       "abi": "arm64-v8a",
-      "install_via_usb_verified": false
+      "install_via_usb_verified": false,
+      "wireless_paired": false,
+      "wireless_notes": "Okul ağında (sdu.edu.tr) telefon ve PC farklı alt ağlarda, TCP erişimi yok → kablosuz eşleştirme başarısız (2026-10-06). Eşleştirme evde ya da PC Mobil etkin noktası üzerinden yapılacak. Telefon hotspot açınca kablosuz hata ayıklama çalışmaz (Android kısıtı)."
     }
   },
 
@@ -126,10 +128,11 @@
   },
 
   "last_session": {
-    "date": "2026-10-01",
-    "summary": "M0-06 tamamlandı: 6 autoload (Events sinyal kataloğu, GameManager durum makinesi, SaveManager/Settings/AudioManager iskeletleri, Progression Glimmer cüzdanı) + GameTypes (DeathCause, Quality) + RunResult. Doğrulama: autoload'ların yüklendiği ve player_died → GameManager RESULTS, add_glimmers → glimmers_changed akışlarının çalıştığı denendi. Bulgu: ekransız mod GDScript uyarılarını yazdırmıyor ve --check-only autoload adlarını tanımıyor → tools/check.ps1 yazıldı (uyarılar geçici override.cfg ile hataya çekilir); bilerek konan uyarıyla sınandı, gerçek kontrol TEMİZ. S-08 çözüldü. Kullanıcı editörde Auto Reload ayarını doğruladı; editör project.godot'dan varsayılan physics_ticks_per_second satırını sildi (davranış aynı).",
+    "date": "2026-10-06",
+    "summary": "M0-07 tamamlandı: localization/translations.csv (keys,en,tr; APP_TITLE, UI_TAP), project.godot çeviri kaydı, Settings ayarları user://settings.cfg'ye yazıp okuyor; dil önceliği seçilen → cihaz → İngilizce (ADR-018). Doğrulama: 12 denemenin hepsi geçti (tr/en geçişi, resolve_language durumları, set_language → settings_changed, kaydet/oku); check.ps1 TEMİZ. Üretilen .translation dosyaları depoya konuyor. Kullanıcı B planını (sağlık kontrolü + oturum kancası) iptal etti. Kablosuz eşleştirme okul ağında başarısız; bulgular architecture.md §14'te.",
     "next_steps": [
-      "M0-07: yerelleştirme altyapısı (translations.csv TR/EN, Settings'e dil okuma/yazma, cihaz diline göre varsayılan).",
+      "M0-08: Android dışa aktarma (editör Java/SDK yolları, Runnable ön ayar, debug anahtarı S-04, dışlama filtreleri) ve Redmi'ye kablolu tek tık yükleme; kablosuz eşleştirme uygun bir ağda (ev ya da PC Mobil etkin noktası).",
+      "M0-08 kullanıcının editörü açmasını ve telefonu bağlamasını gerektiriyor.",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }

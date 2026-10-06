@@ -39,6 +39,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.tr.translation")
+
 [physics]
 
 common/physics_interpolation=true

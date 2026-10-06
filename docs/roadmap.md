@@ -53,10 +53,10 @@
   *Kabul:* Depo GitHub'da görünüyor.
 - [x] **M0-06** 🤖 Autoload iskeletleri: `Events` (sinyal kataloğu), `GameManager`, `SaveManager`, `Progression`, `Settings`, `AudioManager`, hepsi minimal. *(Ek: `GameTypes`, `RunResult`, tam kontrol aracı `tools/check.ps1`.)*
   *Kabul:* Headless kontrol sıfır hata ve sıfır uyarı verir.
-- [ ] **M0-07** 🤖 Yerelleştirme altyapısı: `translations.csv` (TR/EN), cihaz diline göre varsayılan.
+- [x] **M0-07** 🤖 Yerelleştirme altyapısı: `translations.csv` (TR/EN), cihaz diline göre varsayılan.
   *Kabul:* Test metni cihaz diline göre değişiyor.
-- [ ] **M0-08** 🤝 Android dışa aktarma: editörde Java ve SDK yolları, "Runnable" ön ayar, debug anahtarı (S-04), dışlama filtreleri (`tools/`, `tests/`), Redmi'ye tek tıkla yükleme.
-  *Kabul:* Oyun Redmi'de açılıyor.
+- [ ] **M0-08** 🤝 Android dışa aktarma: editörde Java ve SDK yolları, "Runnable" ön ayar, debug anahtarı (S-04), dışlama filtreleri (`tools/`, `tests/`), Redmi'ye tek tıkla yükleme; kablosuz yükleme (eşleştirme + `tools/phone.ps1`, `architecture.md` §14).
+  *Kabul:* Oyun Redmi'de açılıyor; Wi-Fi üzerinden tek tıkla yükleme çalışıyor, kablo yedek yol olarak kalıyor.
 - [ ] **M0-09** 🤖 Parlama teknik denemesi (S-01, S-02): `godot-debug-menu` eklentisi (sürümü sabit), Compatibility'de `WorldEnvironment` glow + `Polygon2D`, HUD katmanı ayrımı, yedek plan olarak sahte parlama.
   *Kabul:* İki yöntemin Redmi'deki görüntüsü ve kare süresi ölçüldü; karar ADR olarak yazıldı.
 - [ ] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil ve "Dokun / Tap" yazısı.

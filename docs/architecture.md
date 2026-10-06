@@ -350,6 +350,9 @@ Run (Node2D)                          scenes/levels/run.tscn
 - Varsayılan dil: cihaz dili Türkçe ise TR, değilse EN. Ayarlardan değiştirilebilir.
 - Fontlar Türkçe karakterleri (ş ğ ı İ ö ü ç) içermek zorundadır (S-06, M3).
 - Büyük harf metinler çeviri dosyasına büyük harfle yazılır; kodda dönüştürülmez (`i` → `İ` sorunu).
+- **Anahtar adları** `BÜYÜK_YILAN` biçiminde ve alan önekli: `UI_`, `HUD_`, `SECTOR_`, `UPGRADE_`, `TRAIL_`, `SETTINGS_` (ör. `UI_TAP`, `SECTOR_1_NAME`).
+- **Dil seçimi** (`Settings.resolve_language`): oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce. Seçim `user://settings.cfg`'de saklanır; boş değer "cihaz dili" demektir.
+- Üretilen `translations.*.translation` dosyaları **depoya konur** (ADR-018). Konmazsa, depoyu yeni kopyalayan herkes ilk içe aktarmada "dosya bulunamadı" hatası görür: Godot çevirileri, dosyalar üretilmeden önce yüklemeye çalışır.
 
 ## 13. Debug araçları (yalnızca debug build)
 
@@ -385,6 +388,12 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 - Dışa aktarma ön ayarı "Android", **Runnable** olarak işaretlenir. Redmi'ye tek tıkla yükleme bununla yapılır.
 - **Xiaomi / HyperOS notu:** Geliştirici seçeneklerinde hem "USB hata ayıklama" hem "USB üzerinden yükle" açık olmalı. İkincisi Xiaomi hesabı gerektirir; açılmıyorsa Wi-Fi kapatılıp mobil veriyle denenir. Her yüklemede telefonda birkaç saniyelik bir onay ekranı çıkabilir.
+- **Kablosuz yükleme (Android 11+ kablosuz hata ayıklama)** — 2026-10-06 bulguları:
+  - Eşleştirme (`adb pair`) bir kez yapılır ve ağdan bağımsızdır. Her yeni Wi-Fi ağında telefonda düğme yeniden açılır; bağlantı portu her açılışta değişir.
+  - Telefon yalnızca Wi-Fi **istemcisi** iken çalışır; telefon paylaşım (hotspot) açtığında devre dışıdır.
+  - Okul ağı (`sdu.edu.tr`): telefon ve bilgisayar farklı alt ağlarda, TCP erişimi yok → kablosuz çalışmaz.
+  - Seçenekler: ev Wi-Fi'ı (önerilen) · bilgisayarın "Mobil etkin nokta"sı açılıp telefon ona bağlanır · kablo (her ağda yedek) · yalnızca mobil veri varsa telefon paylaşımı + eski yöntem (`adb tcpip 5555`, telefon her yeniden başladığında bir kez kablo gerekir).
+  - Godot hata ayıklama bağlantısı için önce Remote Host = localhost (adb tüneli) denenecek; çalışırsa ağ değişince Godot ayarı gerekmez (M0-08).
 - Debug anahtarı ⚠️ (S-04: Godot 4.7'de otomatik mi oluşuyor, M0-08'de doğrulanacak).
 - **Yayın anahtarı** (upload keystore) M8'de oluşturulur:
   - **Depoya konmaz.**
@@ -438,6 +447,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | ADR-015 | 2026-10-01 | Kod denetimi `gdlint` (gdtoolkit) + kanca ile otomatik denetim; kendi sahne aracımız `tools/scene_tool.gd` (`tree`, `check`) M0'da yazılır (D-08, D-09) | Kural ihlalleri ve yanlış düğüm adları oyun çalıştırılmadan yakalanır |
 | ADR-016 | 2026-10-01 | `godot-debug-menu` yalnızca debug build'de (D-10) | Parlama maliyeti (M0-09) ve performans (M6) ölçümü |
 | ADR-017 | 2026-10-01 | Lisans politikası genişletildi (kod: MIT/BSD/Apache-2.0/zlib, font: OFL); eklentiler sürümü sabit ve depoda; dış repolar klonlanmaz, yalnızca gereken parça alınır; "bitti" için kanıt; açık sahne güvenliği; her oturumda yüklenen talimatlar ~200 satırı geçmez (D-11) | Kaliteli araçların çoğu MIT, fontların çoğu OFL; gereksiz bağlam ağırlığı ve Godot'nun yabancı dosyaları içe aktarması önlenir |
+| ADR-018 | 2026-10-06 | Üretilen `.translation` dosyaları depoya konur; dil önceliği: seçilen → cihaz → İngilizce | Yeni kopyada ilk içe aktarma hatasız olsun; Türkçe olmayan cihazlarda İngilizce |
 
 ## 18. Açık teknik sorular
 
