@@ -74,7 +74,7 @@
 
 - [x] **M1-01** 🤖 `TuningConfig` kaynağı (`scripts/data/tuning_config.gd`) ve `data/tuning/default_tuning.tres`. Hareket, kamera ve adalet değerleri `@export_group`'larla gruplanır, her alanın Türkçe `##` açıklaması olur. Başlangıç değerleri GDD ve `architecture.md`'den gelir (M1'de geçici `climb_speed` = 12 m/sn). *(Değerler GDD birimlerinde: m, m/sn, sn; ADR-024.)*
   *Kabul:* Tüm hareket ve kamera değerleri tek `.tres` dosyasında; editörde Inspector'da açıklamalarıyla görünüyor.
-- [ ] **M1-02** 🤖 Debug katmanı: `scenes/debug/debug_layer.tscn`, `Main/Debug`'a yalnızca debug build'de yüklenir. `godot-debug-menu` buraya taşınır (`7` tuşu ile aç/kapa). Telefonda küçük debug düğmesi FPS'yi açıp kapatır. Tuş altyapısı burada kurulur; diğer tuşlar sonraki görevlerde dolar.
+- [x] **M1-02** 🤖 Debug katmanı: `scenes/debug/debug_layer.tscn`, `Main/Debug`'a yalnızca debug build'de yüklenir. `godot-debug-menu` buraya taşınır (`7` tuşu ile aç/kapa). Telefonda küçük debug düğmesi FPS'yi açıp kapatır. Tuş altyapısı burada kurulur; diğer tuşlar sonraki görevlerde dolar.
   *Kabul:* PC'de `7`, telefonda düğme FPS'yi açıp kapatıyor; düğmeye dokunmak oyunda dokunuş sayılmıyor (girdi denemesi).
 - [ ] **M1-03** 🤖 `run.tscn` iskeleti: düz koridor duvarları (sabit sayıda parça, aşağıda kalan parça yukarı taşınır), `GameCamera` ile sabit ileri görüş kuralı (`architecture.md` §3). `main.tscn`'de `TapTest` ve `TapHint` yerine `World/Run` gelir.
   *Kabul:* Kamera sabit hızla yukarı kayıyor, duvarlar kesintisiz; PC ve Redmi ekran görüntüsü.
@@ -216,7 +216,7 @@
 **Hedef:** Play Store'da.
 
 - [ ] **M8-01** 🤝 Paket adının kesinleşmesi (D-06) + yayın anahtarı + yedekleme + Play App Signing
-- [ ] **M8-02** 🤖 AAB derlemesi, hedef API şartının kontrolü, yayın ön ayarında debug eklentilerinin dışlanması (`addons/debug_menu/*`)
+- [ ] **M8-02** 🤖 AAB derlemesi, hedef API şartının kontrolü, yayın ön ayarında debug dosyalarının dışlanması (`addons/debug_menu/*`, `scenes/debug/*`, `scripts/debug/*`)
 - [ ] **M8-03** 🤝 Mağaza sayfası: ikon, ekran görüntüleri, dikey tanıtım videosu, TR/EN açıklamalar
 - [ ] **M8-04** 🤝 İsim ve marka son kontrolü
 - [ ] **M8-05** 👤 Dahili test

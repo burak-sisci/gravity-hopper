@@ -1,9 +1,11 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/main.gd" id="0_main"]
 [ext_resource type="PackedScene" path="res://scenes/debug/tap_test.tscn" id="1_tap"]
 [ext_resource type="PackedScene" path="res://scenes/ui/tap_hint.tscn" id="2_hint"]
 
 [node name="Main" type="Node"]
+script = ExtResource("0_main")
 
 [node name="World" type="Node2D" parent="."]
 unique_name_in_owner = true

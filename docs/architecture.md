@@ -98,9 +98,10 @@ gravity-hopper/
 │   │   └── chunks/           # Elle tasarlanmış desen parçaları
 │   ├── entities/             # Player, Hazard türleri, Glimmer, CollapseWall
 │   ├── ui/                   # Ana menü, HUD, sonuç, mağaza, ayarlar
-│   └── debug/                # Ayar paneli, debug katmanı, glow_bench.tscn (M0-09 parlama ölçümü) — yalnızca debug
+│   └── debug/                # debug_layer.tscn (M1-02), glow_bench.tscn (M0-09 parlama ölçümü) — yalnızca debug
 │
 ├── scripts/                  # GDScript dosyaları (.gd)
+│   ├── main.gd               # Kök sahne betiği: debug build'de debug katmanını yükler
 │   ├── autoloads/            # Global servisler (bkz. §6)
 │   ├── components/           # Bağımsız parçalar: Hurtbox, GrazeDetector, Magnet…
 │   ├── entities/             # Varlık betikleri (sahnelerle aynı ad)
@@ -393,8 +394,13 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ## 13. Debug araçları (yalnızca debug build)
 
-- **Debug katmanı** (`scenes/debug/debug_layer.tscn`, M1-02): Tüm debug araçları bu sahnede toplanır. `Main`, sahneyi `Debug` (`CanvasLayer` 100) altına yalnızca `OS.is_debug_build()` iken `load()` ile yükler; yayın sürümünde hiç yüklenmez.
+- **Debug katmanı** (`scenes/debug/debug_layer.tscn` + `scripts/debug/debug_layer.gd`, M1-02): Tüm debug araçları bu sahnede toplanır. `Main` (`scripts/main.gd`), sahneyi `Debug` (`CanvasLayer` 100) altına yalnızca `OS.is_debug_build()` iken `load()` ile yükler; yayın sürümünde hiç yüklenmez.
   - Oyun dünyasını tanımaz. İsteklerini `Events` sinyalleriyle iletir; bunlar M1'de eklenir ve kataloğa yazılır.
+  - Kök `Control` tam ekrandır ama `mouse_filter = IGNORE` taşır, yani dokunuşları yutmaz. `process_mode = ALWAYS` olduğu için oyun duraklatılınca da çalışır.
+  - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
+  - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Şimdilik FPS görünümünü değiştirir; M1-11'de debug panelini açar.
+  - M1-02'de sınandı: ekransız denemede `7` tuşu üç görünümü sırayla değiştirdi, düğmeye dokunuş çevirme sayılmadı, ekranın ortasına dokunuş ve boşluk sayıldı. Redmi'de de düğme FPS'yi açtı ve günlükte çevirme kaydı çıkmadı.
+  - Ders: `Viewport.push_input()` ile dokunuş taklit edilirken koordinat viewport biriminde verilecekse ikinci parametre `true` olmalı. Aksi hâlde pencere ölçeği (PC'de 450/1080) uygulanır ve nokta hedefini ıskalar.
 - **Canlı ayar paneli:** `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar (yeni bir ayar eklendiğinde panele kendiliğinden gelir).
   - "Kaydet" düğmesi değerleri `user://tuning_override.tres`'e yazar.
   - PC'de Claude bu dosyayı doğrudan okuyup onaylanan değerleri kalıcı hale getirebilir.
@@ -418,7 +424,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Performans katmanı:** `godot-debug-menu` eklentisi (MIT): FPS, kare süresi grafikleri, CPU süresi. GPU süresi Android'de (GLES) ölçülemiyor (`-1`); onun yerine §16'daki GPU doluluk sayacı kullanılır.
   - Eklentinin yalnızca çalışma zamanı parçası alındı; editör eklentisi (`plugin.gd`) alınmadı, çünkü kendini autoload olarak ekliyor ve yayın sürümüne de girerdi.
   - Yükleme: Debug katmanı onu `load("res://addons/debug_menu/debug_menu.tscn")` ile örnekler (M1-02). Telefonda okunabilsin diye `CanvasLayer` 2× büyütülüp sola kaydırılır (örnek: `glow_bench.gd` → `_add_debug_menu`). Görünüm `style` özelliğiyle seçilir: 0 gizli, 1 kısa, 2 ayrıntılı.
-  - `7` tuşu ve telefondaki debug paneli bunu açıp kapatır (M1). Eklentinin kendi kısayolu F3'tür.
+  - `7` tuşu ve telefondaki debug düğmesi görünümü gizli → kısa → ayrıntılı sırasıyla değiştirir (M1-02). Eklentinin kendi kısayolu F3'tür.
+  - Bilinen kusur: Ayrıntılı görünümdeki uzun sürücü bilgisi satırı 2× büyütmede ekranın soluna taşar. Yalnızca debug ekranını etkiler.
 
 ### 13.1 Geliştirici araçları (oyunun dışında)
 
@@ -469,7 +476,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Depoya konmaz.**
   - İki ayrı yerde yedeklenir.
   - **Play App Signing** kullanılır.
-- **Yayın ön ayarı** (M8-02): dışlama filtresine `addons/debug_menu/*` da eklenir (debug araçları yayına girmez, §13).
+- **Yayın ön ayarı** (M8-02): dışlama filtresine `addons/debug_menu/*`, `scenes/debug/*` ve `scripts/debug/*` da eklenir. Debug araçları yayın sürümünde zaten yüklenmez; dışlama, pakete hiç girmemelerini sağlar (§13). `main.gd` debug katmanını `ResourceLoader.exists()` ile denetlediği için dosyaların olmaması sorun çıkarmaz.
 - **Gradle derlemesi** eklentiler için M7'de açılır: Play Games Services, AdMob (S-05: sürüm uyumluluğu).
 - **Min / hedef SDK:** Godot 4.7 varsayılanları kullanılır. Play'in güncel hedef API şartı M8'de kontrol edilecek.
 - **Paket adı** (`com.<yayıncı>.gravityhopper`) Play'e ilk yüklemeden sonra değiştirilemez. Karar D-06'da.
