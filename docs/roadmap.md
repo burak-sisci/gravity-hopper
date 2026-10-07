@@ -72,7 +72,7 @@
 **Hedef:** Görsel süs yok, sadece his. *"30 saniyede eğlenceli mi?"*
 *(M0 gözden geçirmesinde atomik hale getirildi, 2026-10-07; ADR-023. Şekiller düz renkli gri kutular; neon görünüm M3'te.)*
 
-- [ ] **M1-01** 🤖 `TuningConfig` kaynağı (`scripts/data/tuning_config.gd`) ve `data/tuning/default_tuning.tres`. Hareket, kamera ve adalet değerleri `@export_group`'larla gruplanır, her alanın Türkçe `##` açıklaması olur. Başlangıç değerleri GDD ve `architecture.md`'den gelir (M1'de geçici `climb_speed` = 600 px/sn).
+- [x] **M1-01** 🤖 `TuningConfig` kaynağı (`scripts/data/tuning_config.gd`) ve `data/tuning/default_tuning.tres`. Hareket, kamera ve adalet değerleri `@export_group`'larla gruplanır, her alanın Türkçe `##` açıklaması olur. Başlangıç değerleri GDD ve `architecture.md`'den gelir (M1'de geçici `climb_speed` = 12 m/sn). *(Değerler GDD birimlerinde: m, m/sn, sn; ADR-024.)*
   *Kabul:* Tüm hareket ve kamera değerleri tek `.tres` dosyasında; editörde Inspector'da açıklamalarıyla görünüyor.
 - [ ] **M1-02** 🤖 Debug katmanı: `scenes/debug/debug_layer.tscn`, `Main/Debug`'a yalnızca debug build'de yüklenir. `godot-debug-menu` buraya taşınır (`7` tuşu ile aç/kapa). Telefonda küçük debug düğmesi FPS'yi açıp kapatır. Tuş altyapısı burada kurulur; diğer tuşlar sonraki görevlerde dolar.
   *Kabul:* PC'de `7`, telefonda düğme FPS'yi açıp kapatıyor; düğmeye dokunmak oyunda dokunuş sayılmıyor (girdi denemesi).

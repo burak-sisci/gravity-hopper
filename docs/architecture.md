@@ -57,7 +57,7 @@ rendering/textures/vram_compression/import_etc2_astc=true          ; Android dı
 - **Sabit ileri görüş kuralı:** Kamera, oyuncunun **üstünde** her cihazda aynı mesafeyi gösterir (`LOOKAHEAD`, başlangıç 1400 px). Fazla dikey alan oyuncunun **altına**, çöküş duvarı tarafına gider. Fazla yatay alan arka plan olarak kullanılır.
 - Kamera ofseti pencere boyutu değiştiğinde yeniden hesaplanır (`get_viewport().size_changed`).
 - **UI:** Control düğümleri anchor ile yerleşir. Güvenli alan (çentik, yuvarlak köşe) `DisplayServer.get_display_safe_area()` ile hesaplanıp kök UI'ye kenar boşluğu olarak uygulanır.
-- **Birim:** 1 m = 50 px. GDD'deki tüm metre değerleri bu ölçeğe göredir.
+- **Birim:** 1 m = 50 px (`TuningConfig.PX_PER_M`). GDD'deki tüm metre değerleri bu ölçeğe göredir.
 
 ## 4. Klasör yapısı
 
@@ -228,7 +228,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 ### 8.1 Hareket (Player)
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
-- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-06'da `SectorDef`'e taşınır.
+- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-06'da `SectorDef`'e taşınır. Bütün hareket değerleri `TuningConfig`'te metre birimindedir (§10).
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
   - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-08'de gelir.
@@ -316,7 +316,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | Hareket, kamera, adalet süreleri, basınç, kıl payı parametreleri |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … | İsim anahtarı, palet, BPM, tırmanış hızı, uzunluk, izinli tehlikeler, zorluk aralığı, müzik |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
@@ -324,6 +324,14 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
 | `RunResult` | (kod, `RefCounted`) | Yükseklik, Glimmer, kıl payı sayısı, ölüm nedeni, ulaşılan sektör, tohum |
 | `GameTypes` | (kod, `RefCounted`) | Paylaşılan enum'lar: `DeathCause`, `Quality`. Autoload'ların iç enum'ları tip olarak kullanılamadığı için ortak türler burada durur |
+
+**`TuningConfig` kuralları (M1-01, ADR-024):**
+
+- **Birimler GDD ile aynıdır:** mesafe m, hız m/sn, ivme m/sn², süre sn. Kod piksele `TuningConfig.to_px()` ile çevirir (`PX_PER_M = 50`, §3).
+- **Aralık ve birim:** Her alan `@export_range(en az, en çok, adım, "suffix:birim")` taşır. Canlı ayar paneli (M1-11) kaydırıcıları bu bilgiden kendiliğinden kurar. Yeni alan eklemek için tek satır yeterlidir.
+- **Değerin kaynağı:** Geçerli değerler `.tres`'tedir. Betikteki varsayılanlar yalnızca yeni bir alanın başlangıç değeridir (M1-01'de dosyanın betiği geçersiz kıldığı sınandı). Onaylanan değerler M1-15'te `.tres`'e ve GDD'ye yazılır.
+- **Erişim:** Kullanan sahne kaynağı `@export var tuning: TuningConfig` ile alır. Debug build'de `user://tuning_override.tres` varsa o kullanılır (M1-11).
+- Başlangıç değerleriyle duvardan duvara geçiş ≈ 0,37 sn.
 
 ## 11. Kayıt sistemi
 
@@ -537,6 +545,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-021 | 2026-10-07 | Sahne aracı başvuruları sahneyi ağaca eklemeden örnekleyip Godot'nun kendi çözümlemesiyle dener. `get_parent()` ve `..` yollarını da hata sayar. `tools/check.ps1`'in 3. adımıdır ve `tools/fixtures/` düzeneğiyle kendini sınar | Metin ayrıştırarak `%Ad` sahipliğini taklit etmek hataya açık; gerçek çözümleme çalışma anıyla birebir aynı. §3'teki kurallar oyun çalıştırılmadan zorlanır |
 | ADR-022 | 2026-10-07 | gdtoolkit 4.5.0, proje dışındaki bir sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`). Varsayılan kurallar + satır ≤ 100 karakter. Kanca exec biçiminde (`python` + `tools/lint_hook.py`, yalnızca standart kütüphane). `check.ps1`'in 4. adımı tüm projeyi denetler | Sanal ortam sistem Python'una karışmaz ve tek klasörle silinir. Exec biçimi Git Bash / PowerShell tırnak farklarından etkilenmez, ayar dosyasında kullanıcıya özel yol gerekmez. Varsayılan kurallar zaten stil rehberimizle aynı |
 | ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
+| ADR-024 | 2026-10-07 | `TuningConfig` değerleri GDD birimlerinde (m, m/sn, sn) tutulur; kod `to_px()` ile çevirir. Her alan `@export_range` ile aralık ve birim taşır; geçerli değerler `.tres`'tedir | Kaydırıcılar tasarım belgesiyle aynı dili konuşur (ör. 12 m/sn = S1). Ayar paneli alanları elle tanımlamadan kurar |
 
 ## 18. Açık teknik sorular
 
