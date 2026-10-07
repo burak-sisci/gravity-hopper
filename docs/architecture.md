@@ -56,6 +56,11 @@ rendering/textures/vram_compression/import_etc2_astc=true          ; Android dı
 - **Koridor genişliği sabittir** (dünya biriminde, başlangıç 900 px). Taban genişlik 1080 olduğundan her cihaza sığar.
 - **Sabit ileri görüş kuralı:** Kamera, oyuncunun **üstünde** her cihazda aynı mesafeyi gösterir (`LOOKAHEAD`, başlangıç 1400 px). Fazla dikey alan oyuncunun **altına**, çöküş duvarı tarafına gider. Fazla yatay alan arka plan olarak kullanılır.
 - Kamera ofseti pencere boyutu değiştiğinde yeniden hesaplanır (`get_viewport().size_changed`).
+- **Uygulama (M1-03):**
+  - `GameCamera.follow(hedef_y, lookahead_px)` kamerayı her fizik adımında konumlar; görünür alanın üst kenarı = hedef − ileri görüş. Koridorun ortası dünyada x = 0'dır, kamera yatayda hep onu ortalar.
+  - Değerler her adımda `TuningConfig`'ten okunur.
+  - Redmi'de 60 Hz fizik + 120 Hz ekranda kamera her karede tam 5 px ilerledi; fizik ara değerlemesi Camera2D ile çalışıyor, titreme yok.
+- **Dünyada `Control` kullanılmaz.** `ColorRect` ya da `Label` gibi arayüz düğümleri dokunuşları yutar; o noktadaki dokunuş çevirme sayılmaz. Dünya görselleri `Polygon2D` / `Line2D` / `Sprite2D`'dir.
 - **UI:** Control düğümleri anchor ile yerleşir. Güvenli alan (çentik, yuvarlak köşe) `DisplayServer.get_display_safe_area()` ile hesaplanıp kök UI'ye kenar boşluğu olarak uygulanır.
 - **Birim:** 1 m = 50 px (`TuningConfig.PX_PER_M`). GDD'deki tüm metre değerleri bu ölçeğe göredir.
 
@@ -138,7 +143,11 @@ Main (Node)                           scenes/main.tscn
 
 `WorldEnvironment` yoktur: parlama nesne başına sahte parlamayla yapılır (§9, ADR-020).
 
-> **Şu anki içerik (M0-10, geçici):** `World/TapTest` (`scenes/debug/tap_test.tscn`, dokununca renk değiştiren neon elmas) ve `UI/TapHint` (`scenes/ui/tap_hint.tscn`, "DOKUN / TAP" ipucu). İkisi de M1-03'te kaldırılır ve `World`'e `run.tscn` gelir. FTUE metinsizdir (GDD §18): orada yazı değil "dokun" eli ikonu kullanılır. `TapHint`'in nabız davranışı o ikona taşınabilir.
+> **Şu anki içerik (M1-03):** `World/Run` (`scenes/levels/run.tscn`). M0-10'un `TapTest` ve `TapHint` sahneleri ana sahneden çıkarıldı ama dosyaları duruyor:
+> - `scenes/debug/tap_test.tscn`: girdi kurallarının başvuru örneği.
+> - `scenes/ui/tap_hint.tscn`: FTUE'deki "dokun" eli ikonunun nabız davranışı için. FTUE metinsizdir (GDD §18).
+>
+> Şimdilik `UI` boş; HUD M1-10'da gelir.
 
 Sahne geçişlerini `GameManager` yönetir: `World` ve `UI` kaplarının içeriğini değiştirir. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
 
@@ -162,6 +171,14 @@ Run (Node2D)                          scenes/levels/run.tscn
 ```
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
+
+**Şu anki hâli (M1-03):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+
+- **Corridor:**
+  - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
+  - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
+  - Görünür alanın altında kalan parça bir halka boyu yukarı taşınır ve `reset_physics_interpolation()` çağrılır.
+- **M1-03'te tırmanış noktası:** `Run`'daki bir y değeridir; sabit hızla yükselir. M1-04'te yerini oyuncu alır.
 
 ### 5.3 UI sahneleri (`scenes/ui/`)
 

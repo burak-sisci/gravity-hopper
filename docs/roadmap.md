@@ -76,7 +76,7 @@
   *Kabul:* Tüm hareket ve kamera değerleri tek `.tres` dosyasında; editörde Inspector'da açıklamalarıyla görünüyor.
 - [x] **M1-02** 🤖 Debug katmanı: `scenes/debug/debug_layer.tscn`, `Main/Debug`'a yalnızca debug build'de yüklenir. `godot-debug-menu` buraya taşınır (`7` tuşu ile aç/kapa). Telefonda küçük debug düğmesi FPS'yi açıp kapatır. Tuş altyapısı burada kurulur; diğer tuşlar sonraki görevlerde dolar.
   *Kabul:* PC'de `7`, telefonda düğme FPS'yi açıp kapatıyor; düğmeye dokunmak oyunda dokunuş sayılmıyor (girdi denemesi).
-- [ ] **M1-03** 🤖 `run.tscn` iskeleti: düz koridor duvarları (sabit sayıda parça, aşağıda kalan parça yukarı taşınır), `GameCamera` ile sabit ileri görüş kuralı (`architecture.md` §3). `main.tscn`'de `TapTest` ve `TapHint` yerine `World/Run` gelir.
+- [x] **M1-03** 🤖 `run.tscn` iskeleti: düz koridor duvarları (sabit sayıda parça, aşağıda kalan parça yukarı taşınır), `GameCamera` ile sabit ileri görüş kuralı (`architecture.md` §3). `main.tscn`'de `TapTest` ve `TapHint` yerine `World/Run` gelir.
   *Kabul:* Kamera sabit hızla yukarı kayıyor, duvarlar kesintisiz; PC ve Redmi ekran görüntüsü.
 - [ ] **M1-04** 🤖 Player hareketi: sabit tırmanış, aktif duvara yerçekimi, yalnızca duvara tutunurken çevirme, girdi kuralları (her parmak, sahte fare yok sayılır; S-07), `Events.player_flipped`. Kamera artık oyuncuyu izler.
   *Kabul:* Çevirme PC'de ve Redmi'de güvenilir (ekransız deneme + adb dokunuşları). Gerçek iki başparmak denemesi adb ile taklit edilemediği için M1-14'te sen yaparsın (S-07 orada kapanır).

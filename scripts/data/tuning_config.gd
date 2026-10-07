@@ -27,7 +27,8 @@ const PX_PER_M: float = 50.0
 
 @export_group("Kamera ve dünya")
 ## Kameranın oyuncunun üstünde gösterdiği mesafe; her cihazda aynıdır (sabit ileri görüş kuralı).
-@export_range(10.0, 40.0, 0.5, "suffix:m") var lookahead: float = 28.0
+## Üst sınır, en kısa ekranda (16:9, 38,4 m) oyuncunun altında pay kalacak şekilde seçildi.
+@export_range(10.0, 34.0, 0.5, "suffix:m") var lookahead: float = 28.0
 ## İki duvar arasındaki mesafe. Taban genişliğe (1080 px = 21,6 m) sığmalıdır.
 @export_range(12.0, 21.6, 0.2, "suffix:m") var corridor_width: float = 18.0
 
