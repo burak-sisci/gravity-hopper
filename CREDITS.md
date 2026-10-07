@@ -33,5 +33,5 @@
 | Araç | Sürüm | Lisans | Kullanım | Durum |
 | --- | --- | --- | --- | --- |
 | gdtoolkit (`gdlint`) | 4.x (kurulumda sabitlenecek) | MIT | Kod denetimi (Python paketi, proje dışında) | M0-12'de kurulacak |
-| godot-debug-menu | (kurulumda sabitlenecek) | MIT | FPS ve kare süresi ölçümü, yalnızca debug build | M0-09'da eklenecek |
+| godot-debug-menu ([godot-extended-libraries/godot-debug-menu](https://github.com/godot-extended-libraries/godot-debug-menu)), © 2023-present Hugo Locurcio and contributors | commit `ff12461` (2025-11-19; v1.2.0 + 7 düzeltme) | MIT (`addons/debug_menu/LICENSE.md`) | FPS ve kare süresi ölçümü, yalnızca debug build. Yalnızca `debug_menu.gd`, `.tscn`, `.uid` ve lisans alındı; editör eklentisi alınmadı | ✅ M0-09'da eklendi |
 | gdUnit4 | (kurulumda sabitlenecek) | MIT | Otomatik testler, sahne koşucusu | M2-01'de eklenecek |

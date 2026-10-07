@@ -44,7 +44,7 @@ rendering/renderer/rendering_method.mobile="gl_compatibility"
 physics/common/physics_ticks_per_second=60
 physics/common/physics_interpolation=true
 debug/gdscript/warnings/untyped_declaration=2    ; Error
-application/run/main_scene="res://scenes/main.tscn"                 ; M0-08
+application/run/main_scene="res://scenes/main.tscn"                 ; M0-08 (M0-09 ile M0-10 arasında geçici olarak glow_bench.tscn)
 rendering/environment/defaults/default_clear_color=Color(0.039, 0.055, 0.122, 1)  ; koyu lacivert
 rendering/textures/vram_compression/import_etc2_astc=true          ; Android dışa aktarma için zorunlu
 ```
@@ -81,7 +81,7 @@ gravity-hopper/
 │   │   ├── sfx/              # Efektler (çevirme, toplama, ölüm, kıl payı)
 │   │   └── music/            # Sektör müzikleri (BPM'i belli döngüler)
 │   ├── fonts/                # Türkçe karakter destekli fontlar
-│   └── shaders/              # Arka plan ağı, glitch, sahte parlama
+│   └── shaders/              # Arka plan ağı, glitch (sahte parlama shader'sız: §9)
 │
 ├── data/                     # İçerik ve ayar kaynakları (.tres)
 │   ├── tuning/               # TuningConfig (hareket, kamera, adalet, basınç)
@@ -96,7 +96,7 @@ gravity-hopper/
 │   │   └── chunks/           # Elle tasarlanmış desen parçaları
 │   ├── entities/             # Player, Hazard türleri, Glimmer, CollapseWall
 │   ├── ui/                   # Ana menü, HUD, sonuç, mağaza, ayarlar
-│   └── debug/                # Ayar paneli, debug katmanı (yalnızca debug)
+│   └── debug/                # Ayar paneli, debug katmanı, glow_bench.tscn (M0-09 parlama ölçümü) — yalnızca debug
 │
 ├── scripts/                  # GDScript dosyaları (.gd)
 │   ├── autoloads/            # Global servisler (bkz. §6)
@@ -110,7 +110,9 @@ gravity-hopper/
 │
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), scene_tool.gd (M0-11)
 ├── tests/                    # (M2) Otomatik testler (gdUnit4)
-└── addons/                   # Sürümü sabit eklentiler: godot-debug-menu (M0), gdUnit4 (M2), Play Games ve AdMob (M7)
+└── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
+    ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
+    └── …                     # gdUnit4 (M2), Play Games ve AdMob (M7)
 ```
 
 Kurallar:
@@ -125,11 +127,12 @@ Kurallar:
 
 ```
 Main (Node)                           scenes/main.tscn
-├── WorldEnvironment                  # parlama ayarları (bkz. §9)
 ├── World (Node2D)                    # aktif oyun dünyası buraya yüklenir (run.tscn)
 ├── UI (CanvasLayer, layer 10)        # aktif ekran: menü / HUD / sonuç / mağaza
 └── Debug (CanvasLayer, layer 100)    # yalnızca debug build: ayar paneli, FPS
 ```
+
+`WorldEnvironment` yoktur: parlama nesne başına sahte parlamayla yapılır (§9, ADR-020).
 
 Sahne geçişlerini `GameManager` yönetir: `World` ve `UI` kaplarının içeriğini değiştirir. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
 
@@ -282,15 +285,21 @@ Run (Node2D)                          scenes/levels/run.tscn
 ## 9. Görsel mimari
 
 - **Şekiller:** Tüm oyun şekilleri beyaz `Polygon2D` / `Line2D` olarak çizilir. Renkler koddan, aktif sektörün `SectorPalette` kaynağından atanır. Sektör geçişinde palet yumuşak bir geçişle (tween) değişir.
-- **Parlama (glow):** `Main` içindeki `WorldEnvironment`, arka plan modu `Canvas`, glow açık, düşük `hdr_threshold`. Koyu arka plan parlamaz; parlak neon renkler parlar.
-  - ⚠️ **S-01:** Godot 4.7'de Compatibility renderer glow'u **sınırlı** destekliyor (düşük seviyeli cihazlar için optimize, bazı ayarlar yok). **HDR 2D ise bu renderer'da yok.** M0-09'da Redmi Note 12'de görüntü ve maliyet test edilecek.
-  - **Yedek plan:** Nesne başına sahte parlama. Bulanık bir kopya ya da shader, toplamsal karışımla (`CanvasItemMaterial.blend_mode = ADD`) çizilir. Her cihazda çalışır ve ucuzdur.
-  - ⚠️ **S-02:** HUD'un parlamadan etkilenmemesi için HUD katmanı `background_canvas_max_layer` üstünde tutulacak; M0-09'da doğrulanacak.
+- **Parlama (glow): nesne başına sahte parlama (ADR-020).** Her neon nesne kendi parlamasını taşır. Parlama toplamsal karışımla (`CanvasItemMaterial.blend_mode = ADD`) çizilir ve yalnızca nesnenin çevresini boyar. Tam ekran efekt yoktur.
+  - **Çizgiler** (duvar, iz) ve geniş açılı şekiller (blok): çizginin geniş kopyaları, enine yumuşak sönen bir dokuyla çizilir. İki katman var: 64 px / %35 ve 26 px / %70.
+  - **Küçük, sivri köşeli şekiller** (diken, Glimmer, oyuncu): arkalarında dairesel bir ışık lekesi durur (`Sprite2D` + radyal `GradientTexture2D`). Çizgi kopyası bu şekillerde sivri köşelerde ve kapanma noktasında yay izi bırakıyor.
+  - Teknik ve başlangıç değerleri `scripts/debug/glow_bench.gd` içinde. M3-01'de yeniden kullanılabilir bileşenlere dönüşür.
+  - **Ölçüm** (M0-09, Redmi, 1080×2400, 120 Hz): parlama yok 8,4 ms · sahte parlama 8,4 ms (≈ +0,9 ms GPU) · WorldEnvironment glow 17,5 ms (57 FPS). Ayrıntı §16.1'de.
+- **WorldEnvironment glow kullanılmıyor (S-01 ✅).** Compatibility'de çalışıyor: Canvas arka plan modu yeterli, 3B kamera gerekmiyor, görüntüsü güzel. Ama Redmi'de kare süresini iki katına çıkarıyor. İleride güçlü cihazlar için denenirse şu bulgular geçerli:
+  - Compatibility, parlama seviyelerini, gücü ve karışım modunu yok sayar.
+  - Eşik rengin parlaklığına bakar; bu yüzden kırmızı geç parlar.
+  - `glow_hdr_scale` varsayılanı (2.0) 2B'de parlamayı neredeyse görünmez yapar. Eşik 0.3, ölçek 0.2, yoğunluk 2.0 ile çalıştı.
+- **HUD ayrımı (S-02 ✅):** `background_canvas_max_layer` (0) üstündeki `CanvasLayer`'lar ortam efektlerinden etkilenmiyor. Bu, telefonda doğrulandı. Sahte parlamada bu sorun hiç yok, çünkü parlama yalnızca dünya nesnelerine eklenir.
 - **İz:** Oyuncunun geçmiş konumlarından beslenen bir `Line2D` (genişlik eğrisi + renk geçişi). Kozmetik izler `TrailDef` ile tanımlanır.
 - **Parçacıklar:** `CPUParticles2D`, düşük adetli.
 - **Ekran sarsıntısı:** `Camera2D` ofseti, "travma" modeliyle (travma² × gürültü).
 - **Shader'lar:** Arka plan veri ağı (vuruşta nabız), çöküş duvarı glitch'i, S5 için renk kayması. Hepsi kalite ayarına bağlıdır.
-- **Efekt kalitesi:** Yüksek / Orta / Düşük. Düşük modda parlama kapanır ya da sahte parlamaya düşer, parçacıklar azalır.
+- **Efekt kalitesi:** Yüksek / Orta / Düşük. Düşük modda sahte parlama tek katmana iner ya da kapanır, parçacıklar azalır.
 
 ## 10. Veri modeli (Resource sınıfları)
 
@@ -377,7 +386,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 
   F5–F8 kullanılmaz; Godot editör kısayollarıyla karışır.
 - **Telefonda:** Sol üst köşeye üç kez dokununca debug paneli açılır.
-- **Performans katmanı:** `godot-debug-menu` eklentisi (MIT): FPS, kare süresi grafikleri, CPU/GPU süresi. Yalnızca debug build'de yüklenir; `7` tuşu ve telefondaki debug paneli bunu açıp kapatır.
+- **Performans katmanı:** `godot-debug-menu` eklentisi (MIT): FPS, kare süresi grafikleri, CPU süresi. GPU süresi Android'de (GLES) ölçülemiyor (`-1`); onun yerine §16'daki GPU doluluk sayacı kullanılır.
+  - Eklentinin yalnızca çalışma zamanı parçası alındı; editör eklentisi (`plugin.gd`) alınmadı, çünkü kendini autoload olarak ekliyor ve yayın sürümüne de girerdi.
+  - Yükleme: `OS.is_debug_build()` ise `load("res://addons/debug_menu/debug_menu.tscn")` ile örneklenir. Telefonda okunabilsin diye `CanvasLayer` 2× büyütülüp sola kaydırılır (örnek: `glow_bench.gd` → `_add_debug_menu`). Görünüm `style` özelliğiyle seçilir: 0 gizli, 1 kısa, 2 ayrıntılı.
+  - `7` tuşu ve telefondaki debug paneli bunu açıp kapatır (M1). Eklentinin kendi kısayolu F3'tür.
 
 ### 13.1 Geliştirici araçları (oyunun dışında)
 
@@ -406,6 +418,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Depoya konmaz.**
   - İki ayrı yerde yedeklenir.
   - **Play App Signing** kullanılır.
+- **Yayın ön ayarı** (M8-02): dışlama filtresine `addons/debug_menu/*` da eklenir (debug araçları yayına girmez, §13).
 - **Gradle derlemesi** eklentiler için M7'de açılır: Play Games Services, AdMob (S-05: sürüm uyumluluğu).
 - **Min / hedef SDK:** Godot 4.7 varsayılanları kullanılır. Play'in güncel hedef API şartı M8'de kontrol edilecek.
 - **Paket adı** (`com.<yayıncı>.gravityhopper`) Play'e ilk yüklemeden sonra değiştirilemez. Karar D-06'da.
@@ -427,11 +440,30 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ## 16. Performans bütçesi
 
-- **Referans cihaz:** Redmi Note 12 4G: Snapdragon 685 / **Adreno 610** (orta-alt segment GPU), 8 GB RAM, 1080×2400, 60/90/120 Hz, Android 15. GPU zayıf ve ekran yüksek çözünürlüklü olduğu için tam ekran efektler (parlama) burada en çok zorlanır; M0-09 ölçümü bu yüzden kritik.
+- **Referans cihaz:** Redmi Note 12 4G: Snapdragon 685 / **Adreno 610** (orta-alt segment GPU), 8 GB RAM, 1080×2400, 60/90/120 Hz, Android 15. GPU zayıf ve ekran yüksek çözünürlüklü olduğu için tam ekran efektler burada en çok zorlanıyor. M0-09 ölçümü bunu doğruladı (§16.1).
 - Redmi Note 12'de 60 FPS'te **kare süresi ≤ 10 ms** (bütçenin yaklaşık %60'ı). Kalan pay daha zayıf cihazlar içindir.
 - Tur sırasında bellek ayırma yok (havuzlama).
 - İndirme boyutu hedefi < 40 MB (M6'da ölçülecek).
 - Ayarlarda **60 FPS sınırı** seçeneği (pil için). Varsayılan: ekranın yenileme hızı.
+
+### 16.1 Ölçüm (M0-09, Redmi Note 12)
+
+Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez.
+
+| Mod | Ort. kare süresi | p95 | FPS | GPU doluluğu |
+| --- | --- | --- | --- | --- |
+| Parlama yok | 8,4 ms | 9,3–10,6 ms | 119 | %77 |
+| Sahte parlama | 8,4 ms | 9,3–9,4 ms | 119 | %88 |
+| WorldEnvironment glow | 17,4–17,7 ms | 18,5–19,9 ms | 57 | %99,9 (tıkanmış) |
+
+- Uygulama 120 Hz'de çalışıyor. Bu durumda bütçe 8,3 ms ve **en büyük yük GPU'da**: basit sahne bile 120 Hz'de GPU'nun %77'sini kullanıyor (≈ 6,4 ms).
+  - M3-12 ve M6-03'te asıl ölçüt 60 FPS'te ≤ 10 ms'dir.
+  - 120 Hz bir ek hedeftir; tutmazsa kalite seviyesi ya da 60 FPS sınırı devreye girer.
+- **Ölçüm yöntemi:**
+  - Android'de dikey eşitleme kapatılamıyor; FPS yenileme hızında takılı kalıyor.
+  - Godot'nun GPU zamanlayıcısı GLES'te çalışmıyor (`-1`).
+  - Bu yüzden GPU yükü, Qualcomm sayacıyla adb kabuğundan okunur: `adb shell cat /sys/class/kgsl/kgsl-3d0/gpubusy`. Çıktıdaki "meşgul toplam" çiftleri toplanıp oranlanır. Uygulama bu dosyayı okuyamıyor (SELinux), yalnızca kabuk okuyabiliyor.
+  - GPU frekansı okunamadığı için doluluk karşılaştırması yaklaşıktır.
 
 ## 17. Karar kaydı (ADR)
 
@@ -440,7 +472,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | ADR-001 | 2026-09-28 | Godot 4.7 + GDScript, zorunlu statik tip | Ücretsiz, hafif, metin tabanlı; statik tip hataları erken yakalar |
 | ADR-002 | 2026-09-28 | Compatibility renderer | En geniş Android desteği ve web çıktısı |
 | ADR-003 | 2026-09-28 | Dikey 1080×1920, `canvas_items` + `expand`, sabit ileri görüş kuralı | Tek elle oynanış, dikey video; farklı ekranlarda adalet |
-| ADR-004 | 2026-09-28 | `Polygon2D` / `Line2D` + koddan renk + WorldEnvironment glow (yedek: sahte parlama) | Sıfır varlık bütçesi, tutarlı neon stil |
+| ADR-004 | 2026-09-28 | `Polygon2D` / `Line2D` + koddan renk + WorldEnvironment glow (yedek: sahte parlama). *Parlama kısmı ADR-020 ile değişti.* | Sıfır varlık bütçesi, tutarlı neon stil |
 | ADR-005 | 2026-09-28 | Sinyal tabanlı iletişim: `Events` veri yolu, "aşağı çağır, yukarı sinyal", `player_died` kuralı | Gevşek bağlılık, ajan hatalarının azalması |
 | ADR-006 | 2026-09-28 | 60 Hz sabit fizik + interpolasyon; oynanış yalnızca `_physics_process`'te | Her ekran yenileme hızında aynı oyun |
 | ADR-007 | 2026-09-28 | Tohumlu RNG; harita yalnızca tohuma bağlı | Günlük meydan okuma, adalet, hata yeniden üretimi |
@@ -456,13 +488,14 @@ Run (Node2D)                          scenes/levels/run.tscn
 | ADR-017 | 2026-10-01 | Lisans politikası genişletildi (kod: MIT/BSD/Apache-2.0/zlib, font: OFL); eklentiler sürümü sabit ve depoda; dış repolar klonlanmaz, yalnızca gereken parça alınır; "bitti" için kanıt; açık sahne güvenliği; her oturumda yüklenen talimatlar ~200 satırı geçmez (D-11) | Kaliteli araçların çoğu MIT, fontların çoğu OFL; gereksiz bağlam ağırlığı ve Godot'nun yabancı dosyaları içe aktarması önlenir |
 | ADR-018 | 2026-10-06 | Üretilen `.translation` dosyaları depoya konur; dil önceliği: seçilen → cihaz → İngilizce | Yeni kopyada ilk içe aktarma hatasız olsun; Türkçe olmayan cihazlarda İngilizce |
 | ADR-019 | 2026-10-07 | Telefona yükleme kabloyla; kablosuz yükleme ertelendi (kullanıcı kararı) | Okul ağı cihazlar arası erişimi engelliyor; kablo her ağda çalışıyor. Gerekirse §14'teki bulgulardan devam edilir |
+| ADR-020 | 2026-10-07 | Neon parlama **nesne başına sahte parlama** ile yapılır (toplamsal çizgi kopyaları + ışık lekeleri); `WorldEnvironment` glow kullanılmaz. `godot-debug-menu` commit `ff12461`'e sabitlendi; autoload değil, debug build'de koddan yüklenir | Redmi'de glow kare süresini 8,4 → 17,5 ms'ye çıkarıp 120 FPS'yi 57'ye düşürüyor; sahte parlama ölçülebilir kare kaybı yaratmıyor (≈ +0,9 ms GPU), her cihazda aynı görünüyor ve HUD'u etkilemiyor (§9, §16.1) |
 
 ## 18. Açık teknik sorular
 
 | # | Soru | Nerede çözülecek |
 | --- | --- | --- |
-| S-01 | Compatibility renderer'da 2D glow Redmi'de nasıl görünüyor, maliyeti ne? | M0-09 |
-| S-02 | HUD'u parlamanın dışında tutmak `background_canvas_max_layer` ile mümkün mü? | M0-09 |
+| S-01 | ✅ Çözüldü (M0-09): Glow çalışıyor ve güzel ama Redmi'de kare süresi 8,4 → 17,5 ms (57 FPS). Sahte parlama seçildi (ADR-020) | — |
+| S-02 | ✅ Çözüldü (M0-09): Evet. `background_canvas_max_layer` = 0 iken katman 10'daki HUD parlamıyor (telefonda doğrulandı) | — |
 | S-03 | Android'de müzik kayma eşiği ve gecikme telafisi | M2-05 / M3 |
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
@@ -481,7 +514,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | GUT (bitwes) | Birim testleri, komut satırı | MIT | ✅ `godot_4_7` dalı (9.7.1) | ❌ ADR-014 (gdUnit4 seçildi) |
 | **gdtoolkit** (Scony) | `gdlint` (adlandırma ve stil denetimi), `gdformat` | MIT | Son sürüm 4.5.0 (Eki 2025); 4.6–4.7 sözdizimi doğrulanmadı | ✅ ADR-015 (M0-12) |
 | GDScript-formatter (GDQuest) | Rust ile hızlı biçimlendirici + linter, kod sıralaması | MIT | Belirtilmemiş | 📖 gdtoolkit takılırsa yedek |
-| **godot-debug-menu** (godot-extended-libraries) | FPS, kare süresi grafikleri, CPU/GPU süresi; Compatibility ve Android'de çalışıyor | MIT | 4.x | ✅ ADR-016 (M0-09) |
+| **godot-debug-menu** (godot-extended-libraries) | FPS, kare süresi grafikleri, CPU süresi (GPU süresi GLES'te yok); Compatibility ve Android'de çalışıyor | MIT | ✅ 4.7.2'de denendi | ✅ ADR-016, ADR-020 (commit `ff12461`, M0-09) |
 | gdfxr (timothyqiu) | Godot editöründe sfxr: ses efekti üretme, `.sfxr` içe aktarma | MIT | Son commit Ağu 2024; 4.7'de denenmeli | 🟡 D-05 kapsamında (M3) |
 | GodotPrompter (jame581) | Claude Code için 56 Godot becerisi (mobil, test, event bus…) | MIT | 4.3+ (4.5–4.7 notlarıyla) | 📖 Kurulmuyor; ilgili beceriler gerektiğinde okunur |
 | godogen (htdt) | Otonom Godot oyun üretimi | MIT | — | 📖 Ders: "iddia değil kanıt", oyunu çalıştırarak doğrula |

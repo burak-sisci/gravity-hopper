@@ -57,9 +57,9 @@
   *Kabul:* Test metni cihaz diline göre değişiyor.
 - [x] **M0-08** 🤝 Android dışa aktarma: editörde Java ve SDK yolları, "Runnable" ön ayar, debug anahtarı (S-04), dışlama filtreleri (`tools/`, `tests/`), dışa aktarma şablonları, boş ana sahne iskeleti, Redmi'ye kabloyla tek tıkla yükleme. *(Kablosuz yükleme ertelendi, ADR-019.)*
   *Kabul:* Oyun Redmi'de açılıyor (telefonun ekran görüntüsüyle kanıtlı).
-- [ ] **M0-09** 🤖 Parlama teknik denemesi (S-01, S-02): `godot-debug-menu` eklentisi (sürümü sabit), Compatibility'de `WorldEnvironment` glow + `Polygon2D`, HUD katmanı ayrımı, yedek plan olarak sahte parlama.
+- [x] **M0-09** 🤖 Parlama teknik denemesi (S-01, S-02): `godot-debug-menu` eklentisi (sürümü sabit), Compatibility'de `WorldEnvironment` glow + `Polygon2D`, HUD katmanı ayrımı, yedek plan olarak sahte parlama. *(Sonuç: sahte parlama, ADR-020. Ölçüm sahnesi `scenes/debug/glow_bench.tscn`.)*
   *Kabul:* İki yöntemin Redmi'deki görüntüsü ve kare süresi ölçüldü; karar ADR olarak yazıldı.
-- [ ] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil ve "Dokun / Tap" yazısı.
+- [ ] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil (sahte parlamalı) ve "Dokun / Tap" yazısı. Ana sahne `glow_bench.tscn`'den yeniden `main.tscn`'e döner.
   *Kabul:* PC'de ve Redmi'de dokunma algılanıyor, yazı iki dilde doğru.
 - [ ] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (`architecture.md` §13.1); `check`, `tools/check.ps1`'e bağlanır.
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.
@@ -134,7 +134,7 @@
 
 **Hedef:** Oyunun profesyonel göründüğü ve duyulduğu an. *(Gözden geçirmede atomik hale getirilecek.)*
 
-- [ ] **M3-01** 🤖 Parlama kararına göre neon altyapısı: `SectorPalette`, şekil yardımcıları
+- [ ] **M3-01** 🤖 Neon altyapısı (sahte parlama, ADR-020): `SectorPalette`, yeniden kullanılabilir neon çizgi/şekil bileşenleri (`glow_bench.gd` tekniğinden), kalite seviyesine göre parlama katmanı sayısı
 - [ ] **M3-02** 🤖 Çekirdek görseli + iz (`Line2D`)
 - [ ] **M3-03** 🤖 Tehlike görselleri (şekil dili: sivri = tehlike)
 - [ ] **M3-04** 🤖 Arka plan veri ağı shader'ı, vuruşta nabız
@@ -211,7 +211,7 @@
 **Hedef:** Play Store'da.
 
 - [ ] **M8-01** 🤝 Paket adının kesinleşmesi (D-06) + yayın anahtarı + yedekleme + Play App Signing
-- [ ] **M8-02** 🤖 AAB derlemesi, hedef API şartının kontrolü
+- [ ] **M8-02** 🤖 AAB derlemesi, hedef API şartının kontrolü, yayın ön ayarında debug eklentilerinin dışlanması (`addons/debug_menu/*`)
 - [ ] **M8-03** 🤝 Mağaza sayfası: ikon, ekran görüntüleri, dikey tanıtım videosu, TR/EN açıklamalar
 - [ ] **M8-04** 🤝 İsim ve marka son kontrolü
 - [ ] **M8-05** 👤 Dahili test

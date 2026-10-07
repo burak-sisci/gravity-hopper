@@ -13,7 +13,7 @@ config_version=5
 config/name="Gravity Hopper"
 config/description="Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli sonsuz tırmanış oyunu."
 config/version="0.0.1"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/debug/glow_bench.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 

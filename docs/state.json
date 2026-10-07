@@ -7,8 +7,8 @@
 
   "current": {
     "milestone": "M0",
-    "task": "M0-09",
-    "task_title": "Parlama teknik denemesi (S-01, S-02): godot-debug-menu, WorldEnvironment glow vs sahte parlama, Redmi ölçümü",
+    "task": "M0-10",
+    "task_title": "Test sahnesi: dokununca renk değiştiren neon şekil (sahte parlamalı) + \"Dokun / Tap\" yazısı; ana sahne yeniden main.tscn",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09"],
 
   "blockers": [],
 
@@ -68,8 +68,8 @@
   ],
 
   "open_technical_questions": [
-    { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "open", "fallback": "Shader/toplamsal karışımla sahte parlama" },
-    { "id": "S-02", "question": "HUD'u parlamadan background_canvas_max_layer ile ayırmak", "resolve_in": "M0-09", "status": "open" },
+    { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "resolved", "answer": "Glow çalışıyor (Canvas arka plan, 3B kamera gerekmez; hdr_scale 0.2, eşik 0.3, yoğunluk 2.0) ama Redmi'de kare süresi 8,4 → 17,5 ms, 120 → 57 FPS. Sahte parlama 8,4 ms (≈ +0,9 ms GPU) → ADR-020: sahte parlama." },
+    { "id": "S-02", "question": "HUD'u parlamadan background_canvas_max_layer ile ayırmak", "resolve_in": "M0-09", "status": "resolved", "answer": "Evet: max_layer 0 iken katman 10'daki HUD parlamıyor (telefonda doğrulandı). Sahte parlamada sorun zaten yok." },
     { "id": "S-03", "question": "Android'de müzik kayma eşiği ve gecikme telafisi", "resolve_in": "M2-05", "status": "open" },
     { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "resolved", "answer": "Evet: %APPDATA%/Godot/keystores/debug.keystore otomatik oluştu; Java ve SDK yolları da editör ayarlarına kendiliğinden yazıldı." },
     { "id": "S-05", "question": "Play Games ve AdMob eklentilerinin 4.7 uyumlu sürümleri", "resolve_in": "M7", "status": "open" },
@@ -88,7 +88,7 @@
       "editor_path": "C:/Users/burak/Godot/Godot_v4.7.2-stable_win64.exe",
       "verified": true,
       "editor_launched_once": true,
-      "editor_settings": "%APPDATA%/Godot/editor_settings-4.7.tres (ilk headless içe aktarmada oluştu; 'keystores' klasörü de var → S-04 için M0-08'de bakılacak)"
+      "editor_settings": "%APPDATA%/Godot/editor_settings-4.7.tres (Java/SDK yolları ve debug anahtarı Godot tarafından yazıldı, S-04)"
     },
     "git": { "version": "2.55.0", "identity_set": true },
     "github_cli": { "version": "2.101.0", "authenticated": true, "account": "burak-sisci", "repo_url": "https://github.com/burak-sisci/gravity-hopper", "visibility": "private", "default_branch": "main" },
@@ -113,13 +113,16 @@
       "install_via_usb_verified": true,
       "wireless_paired": false,
       "wireless_status": "deferred (ADR-019, kullanıcı kararı 2026-10-07)",
-      "wireless_notes": "Okul ağında (sdu.edu.tr) telefon ve PC farklı alt ağlarda, TCP erişimi yok → kablosuz eşleştirme başarısız (2026-10-06). Eşleştirme evde ya da PC Mobil etkin noktası üzerinden yapılacak. Telefon hotspot açınca kablosuz hata ayıklama çalışmaz (Android kısıtı)."
+      "wireless_notes": "Okul ağında (sdu.edu.tr) telefon ve PC farklı alt ağlarda, TCP erişimi yok → kablosuz eşleştirme başarısız (2026-10-06). Eşleştirme evde ya da PC Mobil etkin noktası üzerinden yapılacak. Telefon hotspot açınca kablosuz hata ayıklama çalışmaz (Android kısıtı).",
+      "perf_notes": "Uygulama 120 Hz'de çalışıyor. Android'de vsync kapatılamıyor; Godot GPU zamanlayıcısı GLES'te -1. GPU yükü: adb shell cat /sys/class/kgsl/kgsl-3d0/gpubusy (uygulama okuyamıyor, kabuk okuyor). Ayrıntı architecture.md §16.1."
     }
   },
 
   "approved_tuning": {},
 
-  "temp_files": [],
+  "temp_files": [
+    { "what": "project.godot run/main_scene = res://scenes/debug/glow_bench.tscn (kullanıcı parlamayı telefonda görebilsin diye)", "revert_in": "M0-10", "revert_to": "res://scenes/main.tscn" }
+  ],
 
   "docs_reviewed": {
     "CLAUDE.md": "2026-10-01",
@@ -132,9 +135,10 @@
 
   "last_session": {
     "date": "2026-10-07",
-    "summary": "Kullanıcı kablosuz yüklemeyi erteledi, kabloyla devam (ADR-019). M0-08 tamamlandı: dışa aktarma şablonları 4.7.2 indirildi (1,2 GB, SHA512 doğrulandı) ve kuruldu; Godot Java/SDK yollarını ve debug anahtarını kendisi oluşturmuştu (S-04 çözüldü); export_presets.cfg (Android, runnable, arm64+armv7, immersive, tools/tests dışlanır, geçici paket com.gravityhopper.dev); Android için import_etc2_astc açıldı; scenes/main.tscn iskeleti (World, UI, Debug) ana sahne, varsayılan arka plan koyu lacivert. Debug APK 55 MB; Redmi'ye kabloyla yüklendi, açıldı, ekran görüntüsü tam ekran lacivert; Godot günlüğü temiz (Compatibility, Adreno 610). tools/deploy.ps1 yazıldı ve uçtan uca sınandı.",
+    "summary": "M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
     "next_steps": [
-      "M0-09: godot-debug-menu eklentisi (sürümü sabit), WorldEnvironment glow ile sahte parlama karşılaştırması, Redmi'de kare süresi ölçümü, ADR.",
+      "Kullanıcı telefonda Gravity Hopper'ı açıp üç modu görsel olarak karşılaştırır; itirazı varsa ADR-020 yeniden ele alınır.",
+      "M0-10: test sahnesi (sahte parlamalı neon şekil + Dokun/Tap yazısı), ana sahne yeniden main.tscn.",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }

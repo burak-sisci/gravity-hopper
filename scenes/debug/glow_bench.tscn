@@ -1,0 +1,116 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/glow_bench.gd" id="1_bench"]
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_levels/1 = 1.0
+glow_levels/2 = 0.8
+glow_levels/3 = 0.6
+glow_levels/4 = 0.3
+glow_intensity = 2.0
+glow_blend_mode = 0
+glow_hdr_threshold = 0.3
+glow_hdr_scale = 0.2
+
+[node name="GlowBench" type="Node2D"]
+script = ExtResource("1_bench")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+unique_name_in_owner = true
+environment = SubResource("Environment_glow")
+
+[node name="Grid" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Shapes" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="WorldText" type="Label" parent="."]
+offset_left = 300.0
+offset_top = 560.0
+offset_right = 780.0
+offset_bottom = 660.0
+theme_override_font_sizes/font_size = 72
+text = "DÜNYA"
+horizontal_alignment = 1
+
+[node name="WorldNote" type="Label" parent="."]
+offset_left = 240.0
+offset_top = 660.0
+offset_right = 840.0
+offset_bottom = 710.0
+theme_override_font_sizes/font_size = 30
+text = "dünya katmanı: parlamalı"
+horizontal_alignment = 1
+
+[node name="Hud" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Score" type="Label" parent="Hud"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 150.0
+offset_right = 300.0
+offset_bottom = 270.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 96
+text = "1234 m"
+horizontal_alignment = 1
+
+[node name="Bar" type="ColorRect" parent="Hud"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 280.0
+offset_right = 300.0
+offset_bottom = 296.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0, 0.9, 1, 1)
+
+[node name="HudNote" type="Label" parent="Hud"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 300.0
+offset_right = 300.0
+offset_bottom = 350.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 30
+text = "HUD katmanı: parlamamalı"
+horizontal_alignment = 1
+
+[node name="ResultsLabel" type="Label" parent="Hud"]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = -760.0
+offset_right = -40.0
+offset_bottom = -300.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 32
+vertical_alignment = 2
+
+[node name="ModeLabel" type="Label" parent="Hud"]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = -280.0
+offset_right = -40.0
+offset_bottom = -140.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 44
+horizontal_alignment = 1
