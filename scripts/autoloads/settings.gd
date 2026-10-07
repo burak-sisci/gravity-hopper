@@ -45,7 +45,8 @@ func load_settings() -> void:
 	sfx_volume = clampf(float(cfg.get_value("audio", "sfx_volume", sfx_volume)), 0.0, 1.0)
 	vibration = bool(cfg.get_value("feedback", "vibration", vibration))
 	language = str(cfg.get_value("general", "language", language))
-	var quality: int = clampi(int(cfg.get_value("video", "effect_quality", effect_quality)), 0, GameTypes.Quality.size() - 1)
+	var stored_quality: int = int(cfg.get_value("video", "effect_quality", effect_quality))
+	var quality: int = clampi(stored_quality, 0, GameTypes.Quality.size() - 1)
 	effect_quality = quality as GameTypes.Quality
 	limit_fps_60 = bool(cfg.get_value("video", "limit_fps_60", limit_fps_60))
 

@@ -68,6 +68,7 @@ gravity-hopper/
 ├── CREDITS.md                # Dış varlıklar ve lisanslar
 ├── project.godot             # (M0-04'te oluşur)
 ├── gdlintrc                  # gdlint kuralları (M0-12)
+├── .claude/                  # Claude Code proje ayarı: settings.json (gdlint kancası), .gdignore
 │
 ├── docs/                     # Planlama belgeleri
 │   ├── architecture.md
@@ -109,7 +110,7 @@ gravity-hopper/
 │   └── debug/                # Debug araçları
 │
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), deploy.ps1 (M0-08),
-│                             #   scene_tool.gd + fixtures/ (M0-11)
+│                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12)
 ├── tests/                    # (M2) Otomatik testler (gdUnit4)
 └── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
     ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
@@ -420,7 +421,19 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Hiçbir sahneye bağlı olmayan betiklerdeki yollar denetlenemez, `NOT` satırıyla sayılır; kural ihlalleri yine hatadır.
   - **Aracın kendi sınaması:** `tools/fixtures/scene_tool_broken.tscn` bilerek 7 hata ve birkaç tuzak içerir. `-- check --dir res://tools/fixtures` tam 7 hata ve çıkış kodu 1 vermelidir; araç değiştirildiğinde bununla sınanır.
   - S-08 çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor; araç GDScript ile yazılır.
-- **Kod denetimi** (M0-12): `gdlint` (gdtoolkit, MIT) + kökteki `gdlintrc`. Bir Claude Code kancası (hook), düzenlenen her `.gd` dosyasını otomatik denetler; yalnızca hata olduğunda çıktı verir (bağlam yükü yok).
+- **Kod denetimi** (M0-12, ADR-022): `gdlint` (gdtoolkit 4.5.0, MIT) + kökteki `gdlintrc`.
+  - **Kurulum** proje dışında, ayrı bir Python sanal ortamında: `%LOCALAPPDATA%\gravity-hopper\venv`. Yeniden kurmak için:
+    - `python -m venv %LOCALAPPDATA%\gravity-hopper\venv`
+    - `...\venv\Scripts\python.exe -m pip install gdtoolkit==4.5.0`
+    - Kaldırmak için klasörü silmek yeterli.
+  - **Kurallar:** gdtoolkit varsayılanları kullanılıyor; `.clauderules` §2 ve §8 ile örtüşüyorlar (adlandırma, sınıf içi sıra, sekme girinti, satır ≤ 100 karakter). Tek fark: `addons/` ve `.godot/` denetlenmez. gdtoolkit 4.5, Godot 4.7 sözdizimimizi sorunsuz okuyor (tipli sözlük, tipli döngü değişkeni, `@warning_ignore_start`).
+  - **Claude Code kancası** (`.claude/settings.json`, depoda):
+    - Tetiklenme: `PostToolUse` · `Edit|Write`.
+    - Çalıştırma: exec biçimi (kabuksuz), `python ${CLAUDE_PROJECT_DIR}/tools/lint_hook.py`.
+    - Betik, düzenlenen dosya `.gd` ise `gdlint` çalıştırır. Hata varsa çıktıyı Claude'a gösterir (çıkış 2); temizse ya da dosya `.gd` değilse sessiz kalır, yani bağlam yükü yok.
+    - Süre: dosya başına yaklaşık 0,35 sn.
+    - `.claude/.gdignore`, klasörün Godot'ya ve dışa aktarmaya girmesini engeller.
+  - `tools/check.ps1`'in 4. adımı tüm projeyi `gdlint .` ile denetler. `gdlint` kurulu değilse kontrol başarısız olur.
 
 ## 14. Android ve dağıtım
 
@@ -451,8 +464,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Katman | Nasıl | Ne zaman |
 | --- | --- | --- |
-| **Tam kontrol** | `tools/check.ps1`, üç adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir, (3) sahne denetimi (`scene_tool.gd check`, §13.1). `TEMİZ` = sıfır hata, sıfır uyarı | Her görevde |
-| Kod denetimi | `gdlint` (kanca ile otomatik) | Her `.gd` düzenlemesinde (M0-12'den sonra) |
+| **Tam kontrol** | `tools/check.ps1`, dört adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir, (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1). `TEMİZ` = sıfır hata, sıfır uyarı | Her görevde |
+| Kod denetimi (anlık) | Claude Code kancası: düzenlenen `.gd` dosyasında `gdlint` | Her `.gd` düzenlemesinde, otomatik |
 | Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi | Görsel değişikliklerde |
 | Otomatik test | **gdUnit4** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi; sahne koşucusuyla dokunuş taklidi yapan oynanış testleri | M2'den itibaren |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
@@ -512,6 +525,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-019 | 2026-10-07 | Telefona yükleme kabloyla; kablosuz yükleme ertelendi (kullanıcı kararı) | Okul ağı cihazlar arası erişimi engelliyor; kablo her ağda çalışıyor. Gerekirse §14'teki bulgulardan devam edilir |
 | ADR-020 | 2026-10-07 | Neon parlama **nesne başına sahte parlama** ile yapılır (toplamsal çizgi kopyaları + ışık lekeleri); `WorldEnvironment` glow kullanılmaz. `godot-debug-menu` commit `ff12461`'e sabitlendi; autoload değil, debug build'de koddan yüklenir | Redmi'de glow kare süresini 8,4 → 17,5 ms'ye çıkarıp 120 FPS'yi 57'ye düşürüyor; sahte parlama ölçülebilir kare kaybı yaratmıyor (≈ +0,9 ms GPU), her cihazda aynı görünüyor ve HUD'u etkilemiyor (§9, §16.1) |
 | ADR-021 | 2026-10-07 | Sahne aracı başvuruları sahneyi ağaca eklemeden örnekleyip Godot'nun kendi çözümlemesiyle dener. `get_parent()` ve `..` yollarını da hata sayar. `tools/check.ps1`'in 3. adımıdır ve `tools/fixtures/` düzeneğiyle kendini sınar | Metin ayrıştırarak `%Ad` sahipliğini taklit etmek hataya açık; gerçek çözümleme çalışma anıyla birebir aynı. §3'teki kurallar oyun çalıştırılmadan zorlanır |
+| ADR-022 | 2026-10-07 | gdtoolkit 4.5.0, proje dışındaki bir sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`). Varsayılan kurallar + satır ≤ 100 karakter. Kanca exec biçiminde (`python` + `tools/lint_hook.py`, yalnızca standart kütüphane). `check.ps1`'in 4. adımı tüm projeyi denetler | Sanal ortam sistem Python'una karışmaz ve tek klasörle silinir. Exec biçimi Git Bash / PowerShell tırnak farklarından etkilenmez, ayar dosyasında kullanıcıya özel yol gerekmez. Varsayılan kurallar zaten stil rehberimizle aynı |
 
 ## 18. Açık teknik sorular
 
@@ -535,7 +549,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | --- | --- | --- | --- | --- |
 | **gdUnit4** (godot-gdunit-labs) | Birim testleri + sahne koşucusu: dokunma simülasyonu, kare ilerletme, sinyal bekleme; komut satırı, HTML/JUnit rapor | MIT | ✅ 4.7 ve 4.7.1 listelenmiş | ✅ ADR-014 (M2-01) |
 | GUT (bitwes) | Birim testleri, komut satırı | MIT | ✅ `godot_4_7` dalı (9.7.1) | ❌ ADR-014 (gdUnit4 seçildi) |
-| **gdtoolkit** (Scony) | `gdlint` (adlandırma ve stil denetimi), `gdformat` | MIT | Son sürüm 4.5.0 (Eki 2025); 4.6–4.7 sözdizimi doğrulanmadı | ✅ ADR-015 (M0-12) |
+| **gdtoolkit** (Scony) | `gdlint` (adlandırma ve stil denetimi), `gdformat` | MIT | 4.5.0; projemizin 4.7 sözdizimini okuyor (M0-12) | ✅ ADR-015, ADR-022 (4.5.0, M0-12) |
 | GDScript-formatter (GDQuest) | Rust ile hızlı biçimlendirici + linter, kod sıralaması | MIT | Belirtilmemiş | 📖 gdtoolkit takılırsa yedek |
 | **godot-debug-menu** (godot-extended-libraries) | FPS, kare süresi grafikleri, CPU süresi (GPU süresi GLES'te yok); Compatibility ve Android'de çalışıyor | MIT | ✅ 4.7.2'de denendi | ✅ ADR-016, ADR-020 (commit `ff12461`, M0-09) |
 | gdfxr (timothyqiu) | Godot editöründe sfxr: ses efekti üretme, `.sfxr` içe aktarma | MIT | Son commit Ağu 2024; 4.7'de denenmeli | 🟡 D-05 kapsamında (M3) |

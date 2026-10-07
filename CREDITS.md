@@ -32,6 +32,6 @@
 
 | Araç | Sürüm | Lisans | Kullanım | Durum |
 | --- | --- | --- | --- | --- |
-| gdtoolkit (`gdlint`) | 4.x (kurulumda sabitlenecek) | MIT | Kod denetimi (Python paketi, proje dışında) | M0-12'de kurulacak |
+| gdtoolkit (`gdlint`) ([Scony/godot-gdscript-toolkit](https://github.com/Scony/godot-gdscript-toolkit)) | 4.5.0 (bağımlılıklar: lark 1.2.2, docopt-ng 0.9.0, radon 6.0.1, PyYAML 6.0.3) | MIT | Kod denetimi. Python paketi; proje dışındaki sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`), depoda değil | ✅ M0-12'de kuruldu |
 | godot-debug-menu ([godot-extended-libraries/godot-debug-menu](https://github.com/godot-extended-libraries/godot-debug-menu)), © 2023-present Hugo Locurcio and contributors | commit `ff12461` (2025-11-19; v1.2.0 + 7 düzeltme) | MIT (`addons/debug_menu/LICENSE.md`) | FPS ve kare süresi ölçümü, yalnızca debug build. Yalnızca `debug_menu.gd`, `.tscn`, `.uid` ve lisans alındı; editör eklentisi alınmadı | ✅ M0-09'da eklendi |
 | gdUnit4 | (kurulumda sabitlenecek) | MIT | Otomatik testler, sahne koşucusu | M2-01'de eklenecek |

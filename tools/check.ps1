@@ -1,10 +1,12 @@
 ﻿# Projenin tam kontrolü: içe aktarma + tüm GDScript dosyalarının uyarılar hataya çekilerek derlenmesi
-# + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd).
+# + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd)
+# + kod denetimi (gdlint, kurallar kökteki gdlintrc'de).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
 # Çıkış kodu 0 = temiz. Godot'nun ekransız modu uyarıları yazdırmadığı için geçici bir
 # override.cfg ile "Warn" seviyesindeki kurallar "Error" yapılır; dosya her durumda silinir.
 param(
-	[string]$Godot = "C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe"
+	[string]$Godot = "C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe",
+	[string]$GdLint = (Join-Path $env:LOCALAPPDATA "gravity-hopper\venv\Scripts\gdlint.exe")
 )
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -42,6 +44,18 @@ $scene = & $Godot --headless --path $root --script "res://tools/scene_tool.gd" -
 $sceneCode = $LASTEXITCODE
 $scene | Where-Object { $_ -match "^(HATA|KURAL|NOT|SAHNE)|SCRIPT ERROR|ERROR:" }
 if ($sceneCode -ne 0) { $code = 1 }
+
+# 4) Kod denetimi: adlandırma, sıralama, satır uzunluğu (gdlint; addons/ ve .godot/ hariç)
+if (-not (Test-Path -LiteralPath $GdLint)) {
+	Write-Output "GDLINT YOK: $GdLint (kurulum: docs/architecture.md §13.1)"; $code = 1
+} else {
+	Push-Location $root
+	try {
+		$lint = & $GdLint . 2>&1 | ForEach-Object { "$_" }
+		if ($LASTEXITCODE -ne 0) { Write-Output "GDLINT SORUNLU:"; $lint; $code = 1 }
+		else { Write-Output "OK   gdlint" }
+	} finally { Pop-Location }
+}
 
 if ($code -eq 0) { Write-Output "SONUÇ: TEMİZ" } else { Write-Output "SONUÇ: SORUN VAR" }
 exit $code

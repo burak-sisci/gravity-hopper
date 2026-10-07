@@ -12,7 +12,8 @@ extends SceneTree
 ## Godot'nun kendi get_node_or_null() çözümlemesiyle denenir; %Ad sahiplik kuralı aynen geçerlidir.
 
 const DEFAULT_DIR: String = "res://"
-## Varsayılan taramada atlanır: motor önbelleği, dış eklentiler, araçlar (ve deneme düzenekleri), testler.
+## Varsayılan taramada atlanır: motor önbelleği, dış eklentiler, araçlar (deneme düzenekleri
+## dahil) ve testler.
 const SKIP_DIRS: Array[String] = ["res://.godot", "res://addons", "res://tools", "res://tests"]
 const NODE_PATH_FUNCS: Array[String] = ["get_node", "get_node_or_null"]
 ## Bu sözcüklerden sonra gelen % işareti mod işlemi değil, benzersiz ad başlangıcıdır.
@@ -66,7 +67,8 @@ func _tree(scene_path: String) -> int:
 	return 0
 
 
-func _print_node(node: Node, scene_root: Node, prefix: String, is_last: bool, is_root: bool) -> void:
+func _print_node(node: Node, scene_root: Node, prefix: String,
+		is_last: bool, is_root: bool) -> void:
 	if is_root:
 		print(_describe(node, scene_root))
 	else:
@@ -109,7 +111,9 @@ func _connection_lines(node: Node, scene_root: Node) -> PackedStringArray:
 			var callable: Callable = connection["callable"]
 			var target: Node = callable.get_object() as Node
 			var target_name: String = String(scene_root.get_path_to(target)) if target != null else "?"
-			lines.append("%s.%s → %s.%s()" % [scene_root.get_path_to(node), signal_name, target_name, callable.get_method()])
+			lines.append("%s.%s → %s.%s()" % [
+				scene_root.get_path_to(node), signal_name, target_name, callable.get_method(),
+			])
 	for child: Node in node.get_children():
 		lines.append_array(_connection_lines(child, scene_root))
 	return lines
@@ -133,7 +137,9 @@ func _check(dir: String) -> int:
 			if not _is_rule_violation(script_path, ref):
 				unchecked += 1
 
-	print("SAHNE: %d sahne, %d başvuru, %d bağlantı, %d hata" % [scenes.size(), _ref_count, _connection_count, _errors])
+	print("SAHNE: %d sahne, %d başvuru, %d bağlantı, %d hata" % [
+		scenes.size(), _ref_count, _connection_count, _errors,
+	])
 	if unchecked > 0:
 		print("NOT  %d düğüm başvurusu hiçbir sahneye bağlı olmayan betiklerde; denetlenmedi" % unchecked)
 	return 1 if _errors > 0 else 0
@@ -174,7 +180,8 @@ func _check_scene(scene_path: String) -> void:
 ## Bu sahne dosyasına ait düğümlerin betiklerini denetler. Örneklenen alt sahnelerin
 ## düğümleri, o alt sahne dosyası denetlenirken ele alınır (aynı hata iki kez yazılmasın).
 func _check_scripts_in(scene_path: String, node: Node, scene_root: Node) -> void:
-	var own: bool = node == scene_root or (node.owner == scene_root and node.scene_file_path.is_empty())
+	var own: bool = node == scene_root \
+			or (node.owner == scene_root and node.scene_file_path.is_empty())
 	if own:
 		var script: Script = node.get_script() as Script
 		while script != null and script.resource_path.begins_with("res://") \
@@ -187,7 +194,8 @@ func _check_scripts_in(scene_path: String, node: Node, scene_root: Node) -> void
 		_check_scripts_in(scene_path, child, scene_root)
 
 
-func _check_ref(scene_path: String, node: Node, scene_root: Node, script_path: String, ref: Dictionary) -> void:
+func _check_ref(scene_path: String, node: Node, scene_root: Node,
+		script_path: String, ref: Dictionary) -> void:
 	if _is_rule_violation(script_path, ref):
 		return
 	var where: String = _node_label(node, scene_root)
@@ -198,7 +206,9 @@ func _check_ref(scene_path: String, node: Node, scene_root: Node, script_path: S
 	if node.get_node_or_null(NodePath(path)) != null:
 		return
 	var line: int = ref["line"]
-	_report(scene_path, "%s: %s:%d \"%s\" bulunamadı%s" % [where, script_path, line, path, _suggest_node(node, path)])
+	_report(scene_path, "%s: %s:%d \"%s\" bulunamadı%s" % [
+		where, script_path, line, path, _suggest_node(node, path),
+	])
 
 
 ## get_parent() çağrısı ya da ".." içeren yol kural ihlalidir. Betik birden çok sahnede
@@ -277,7 +287,9 @@ func _refs_of(script_path: String) -> Array:
 
 
 func _node_label(node: Node, scene_root: Node) -> String:
-	return String(scene_root.name) if node == scene_root else String(scene_root.name) + "/" + String(scene_root.get_path_to(node))
+	if node == scene_root:
+		return String(scene_root.name)
+	return String(scene_root.name) + "/" + String(scene_root.get_path_to(node))
 
 
 ## SceneState yolunu okunur hale getirir: "." → kök düğümün adı.
@@ -394,7 +406,9 @@ static func find_node_refs(source: String) -> Array[Dictionary]:
 			prev_kind = "ident"
 			prev_text = ident
 		elif c >= "0" and c <= "9":
-			while i < n and (_is_ident_char(source[i]) or (source[i] == "." and i + 1 < n and source[i + 1] >= "0" and source[i + 1] <= "9")):
+			# Ondalık nokta yalnızca ardından rakam geliyorsa sayıya dahildir (1.5 ama x[0].y değil).
+			while i < n and (_is_ident_char(source[i])
+					or (source[i] == "." and i + 1 < n and _is_digit(source[i + 1]))):
 				i += 1
 			pending = ""
 			prev_kind = "operand"
@@ -472,4 +486,8 @@ static func _is_ident_start(c: String) -> bool:
 
 
 static func _is_ident_char(c: String) -> bool:
-	return _is_ident_start(c) or (c >= "0" and c <= "9")
+	return _is_ident_start(c) or _is_digit(c)
+
+
+static func _is_digit(c: String) -> bool:
+	return c >= "0" and c <= "9"

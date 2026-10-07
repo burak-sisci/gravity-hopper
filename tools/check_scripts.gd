@@ -39,7 +39,8 @@ func _check(path: String) -> void:
 	_checked += 1
 	# CACHE_MODE_IGNORE betiği önbellekten almadan yeniden derler. reload() kullanılmaz:
 	# çalışan autoload'lar için reddedilir.
-	var script: GDScript = ResourceLoader.load(path, "GDScript", ResourceLoader.CACHE_MODE_IGNORE) as GDScript
+	var script: GDScript = ResourceLoader.load(
+			path, "GDScript", ResourceLoader.CACHE_MODE_IGNORE) as GDScript
 	if script == null or not script.can_instantiate():
 		_failures += 1
 		print("HATA %s" % path)

@@ -7,9 +7,9 @@
 
   "current": {
     "milestone": "M0",
-    "task": "M0-12",
-    "task_title": "Kod denetimi: gdtoolkit (sürümü sabit), kurallarımıza göre gdlintrc, düzenlenen .gd dosyalarını denetleyen Claude Code kancası",
-    "owner": "claude",
+    "task": "M0-13",
+    "task_title": "Planlama Gözden Geçirmesi + kilometre taşı kapısı: kullanıcı oyunu PC'de ve telefonda açar, M0'ı onaylar; M1 görevleri atomik hale getirilir",
+    "owner": "user+claude",
     "status": "in_progress",
     "parallel": [
       { "task": "P-04", "title": "Planlama belgelerini oku; itiraz ve düzeltmelerini ilet", "owner": "user", "status": "in_progress" }
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12"],
 
   "blockers": [],
 
@@ -99,6 +99,7 @@
       "components": ["platform-tools (adb 1.0.41)", "build-tools 35.0.1", "platforms android-35", "ndk 28.1.13356709", "cmake 3.10.2.4988404", "cmdline-tools latest"]
     },
     "python": { "version": "3.12.10" },
+    "gdtoolkit": { "version": "4.5.0", "venv": "%LOCALAPPDATA%/gravity-hopper/venv", "gdlint": "%LOCALAPPDATA%/gravity-hopper/venv/Scripts/gdlint.exe", "verified": true },
     "export_templates": { "version": "4.7.2.stable", "path": "%APPDATA%/Godot/export_templates/4.7.2.stable", "sha512_verified": true },
     "test_device": {
       "model": "Redmi Note 12 (4G, 23021RAAEG, tapas)",
@@ -134,10 +135,10 @@
 
   "last_session": {
     "date": "2026-10-07",
-    "summary": "M0-11 tamamlandı: tools/scene_tool.gd (tree, check). check sahneleri ağaca eklemeden örnekleyip $Yol/%Ad/get_node başvurularını Godot'nun kendi çözümlemesiyle dener; sinyal bağlantıları, @export yolları, get_parent()/'..' kural ihlalleri, benzer ad önerisi. tools/check.ps1'in 3. adımı oldu (TEMİZ: 4 sahne, 6 başvuru, 0 hata). tools/fixtures/scene_tool_broken.tscn: 7 bilerek hata + tuzaklar → tam 7 hata, çıkış 1. Kabul: tap_hint.gd'de %Label → %Labl geçici bozulunca check.ps1 SORUN VAR + öneri verdi, geri alındı. ADR-021. Önceki: M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
+    "summary": "M0-12 tamamlandı: gdtoolkit 4.5.0 proje dışındaki sanal ortama kuruldu (4.7 sözdizimini okuyor); gdlintrc = varsayılanlar (stil rehberimizle aynı) + addons/.godot hariç; mevcut 20 uzun satır (>100) bölündü, davranış değişmedi (girdi denemesi + glow_bench karesi aynı). .claude/settings.json: PostToolUse Edit|Write kancası, exec biçimi python tools/lint_hook.py (yalnızca hata olunca konuşur, ~0,35 sn). Canlı sınandı: BadName/BadVar yazınca kanca iki hatayı bildirdi, düzeltince sessiz kaldı. check.ps1 4. adım: gdlint. ADR-022. Önceki: M0-11 tamamlandı: tools/scene_tool.gd (tree, check). check sahneleri ağaca eklemeden örnekleyip $Yol/%Ad/get_node başvurularını Godot'nun kendi çözümlemesiyle dener; sinyal bağlantıları, @export yolları, get_parent()/'..' kural ihlalleri, benzer ad önerisi. tools/check.ps1'in 3. adımı oldu (TEMİZ: 4 sahne, 6 başvuru, 0 hata). tools/fixtures/scene_tool_broken.tscn: 7 bilerek hata + tuzaklar → tam 7 hata, çıkış 1. Kabul: tap_hint.gd'de %Label → %Labl geçici bozulunca check.ps1 SORUN VAR + öneri verdi, geri alındı. ADR-021. Önceki: M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
     "next_steps": [
       "Kullanıcı test sahnesini PC'de (editörde F5) ve telefonda dener; sahte parlamanın görünümüne itirazı varsa ADR-020 yeniden ele alınır.",
-      "M0-12: gdtoolkit kurulumu (sürümü sabit, proje dışında Python paketi), gdlintrc, Claude Code kancası (yalnızca hata olunca çıktı).",
+      "M0-13: Planlama Gözden Geçirmesi (tüm belgeler birlikte okunur, çelişkiler düzeltilir, M1 atomik görevlere bölünür, docs_reviewed güncellenir) → kullanıcı oyunu PC'de ve telefonda açıp M0'ı onaylar (kapı).",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }

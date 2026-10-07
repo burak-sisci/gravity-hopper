@@ -5,7 +5,11 @@ extends Node2D
 
 ## Sektör çevre renkleri taslağı (S1 camgöbeği → S5 beyaz); kesin tonlar M3'te seçilecek.
 const COLORS: Array[Color] = [
-	Color(0.0, 0.9, 1.0), Color(0.62, 0.35, 1.0), Color(1.0, 0.72, 0.1), Color(1.0, 0.3, 0.85), Color(1.0, 1.0, 1.0),
+	Color(0.0, 0.9, 1.0),
+	Color(0.62, 0.35, 1.0),
+	Color(1.0, 0.72, 0.1),
+	Color(1.0, 0.3, 0.85),
+	Color(1.0, 1.0, 1.0),
 ]
 ## Elmasın ekrandaki yeri: yatayda orta, dikeyde bu oranda.
 const HEIGHT_RATIO: float = 0.45

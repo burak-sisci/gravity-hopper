@@ -167,7 +167,9 @@ func _apply_mode(mode: Mode) -> void:
 	_world_environment.environment = _glow_environment if mode == Mode.ENV_GLOW else null
 	for halo: CanvasItem in _halos:
 		halo.visible = mode == Mode.FAKE_GLOW
-	var prefix: String = "Ölçülüyor %d/%d" % [_bench_index + 1, BENCH_ORDER.size()] if not _bench_done else "Dokun: sonraki mod"
+	var prefix: String = "Dokun: sonraki mod"
+	if not _bench_done:
+		prefix = "Ölçülüyor %d/%d" % [_bench_index + 1, BENCH_ORDER.size()]
 	_mode_label.text = "%s\n%s" % [MODE_NAMES[mode], prefix]
 
 
@@ -186,7 +188,8 @@ func _update_bench(frame_ms: float) -> void:
 	if _phase_elapsed < WARMUP_SEC:
 		return
 	_frame_times.append(frame_ms)
-	var gpu_ms: float = RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid())
+	var viewport_rid: RID = get_viewport().get_viewport_rid()
+	var gpu_ms: float = RenderingServer.viewport_get_measured_render_time_gpu(viewport_rid)
 	if gpu_ms > 0.0:
 		_gpu_times.append(gpu_ms)
 	_gpubusy_elapsed += frame_ms / 1000.0
@@ -207,9 +210,10 @@ func _finish_phase() -> void:
 	var gpu_ms: float = _sum(_gpu_times) / _gpu_times.size() if not _gpu_times.is_empty() else -1.0
 	var busy_pct: float = 100.0 * _gpubusy_busy / _gpubusy_total if _gpubusy_total > 0 else -1.0
 	var mode: Mode = BENCH_ORDER[_bench_index]
-	print("BENCH mode=%s run=%d frames=%d avg_ms=%.2f p95_ms=%.2f max_ms=%.2f fps=%.1f gpu_ms=%.2f gpu_busy=%.1f" % [
-		MODE_ARGS[mode], _bench_index + 1, count, avg_ms, p95_ms, max_ms, 1000.0 / avg_ms, gpu_ms, busy_pct,
-	])
+	var line: String = "BENCH mode=%s run=%d frames=%d avg_ms=%.2f p95_ms=%.2f max_ms=%.2f" % [
+		MODE_ARGS[mode], _bench_index + 1, count, avg_ms, p95_ms, max_ms,
+	]
+	print(line + " fps=%.1f gpu_ms=%.2f gpu_busy=%.1f" % [1000.0 / avg_ms, gpu_ms, busy_pct])
 	var gpu_text: String = " · GPU %%%.0f" % busy_pct if busy_pct >= 0.0 else ""
 	_results.append("%d %s: %.2f ms (p95 %.2f) · %.0f FPS%s" % [
 		_bench_index + 1, MODE_NAMES[mode], avg_ms, p95_ms, 1000.0 / avg_ms, gpu_text,
@@ -268,8 +272,11 @@ func _build_world() -> void:
 	var right_x: float = view.x - WALL_INSET
 
 	# Duvarlar
-	_add_neon(_shapes, PackedVector2Array([Vector2(left_x, -BAND_MARGIN), Vector2(left_x, view.y + BAND_MARGIN)]), COLOR_WALL, false, FILL_ALPHA)
-	_add_neon(_shapes, PackedVector2Array([Vector2(right_x, -BAND_MARGIN), Vector2(right_x, view.y + BAND_MARGIN)]), COLOR_WALL, false, FILL_ALPHA)
+	var top: float = -BAND_MARGIN
+	var bottom: float = view.y + BAND_MARGIN
+	for wall_x: float in [left_x, right_x]:
+		var wall: PackedVector2Array = PackedVector2Array([Vector2(wall_x, top), Vector2(wall_x, bottom)])
+		_add_neon(_shapes, wall, COLOR_WALL, false, FILL_ALPHA)
 
 	# Duvar dikenleri (kırmızı)
 	for i: int in SPIKE_COUNT:
@@ -321,7 +328,8 @@ func _add_scroller() -> Node2D:
 ## Çizgilerde ve geniş açılı şekillerde (blok) parlama, çizginin enine yumuşak bir kopyasıdır.
 ## Küçük, sivri köşeli şekillerde ise arkadaki bir ışık lekesidir; çizgi kopyası sivri
 ## köşelerde ve kapanma noktasında yay izi bırakıyor.
-func _add_neon(parent: Node2D, points: PackedVector2Array, color: Color, closed: bool, fill_alpha: float, line_halo: bool = false) -> void:
+func _add_neon(parent: Node2D, points: PackedVector2Array, color: Color, closed: bool,
+		fill_alpha: float, line_halo: bool = false) -> void:
 	if closed and not line_halo:
 		var bounds: Rect2 = Rect2(points[0], Vector2.ZERO)
 		for point: Vector2 in points:
@@ -381,7 +389,8 @@ func _add_trail(player_pos: Vector2, from_x: float) -> void:
 	_shapes.add_child(trail)
 
 
-func _make_line(points: PackedVector2Array, color: Color, line_width: float, closed: bool) -> Line2D:
+func _make_line(points: PackedVector2Array, color: Color, line_width: float,
+		closed: bool) -> Line2D:
 	var line: Line2D = Line2D.new()
 	line.points = points
 	line.closed = closed
