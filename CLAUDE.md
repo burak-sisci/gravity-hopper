@@ -21,6 +21,7 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 - Kullanıcıyla **Türkçe** konuş. Kullanıcı ilk kez mobil oyun yapıyor; teknik terimleri kısaca açıkla.
 - Rol dağılımı: Claude geliştirir. Kullanıcı her aşamayı oyuncu gözüyle test eder ve kararları verir.
 - Her görev **oynanabilir** bir sonuçla biter. Teslim ederken kullanıcıya neyi, nasıl test edeceğini 2–4 maddeyle söyle.
+- **🤖 görevler arasında onay beklenmez** (kullanıcı kararı, ADR-025): her 🤖 görev bitince kısa bir not bırakılır ve sıradaki 🤖 göreve geçilir. Şu durumlarda durulur ve kullanıcı beklenir: 🤝 ya da 👤 görev, bekleyen bir kullanıcı kararı, kilometre taşı kapısı, beklenmedik bir tasarım sorusu.
 - Beklenen geri bildirim kalıbı: "Ne yaptım → ne oldu → ne bekliyordum".
 - Kullanıcıya ait bir karar varsa (`state.json` → `pending_user_decisions`) varsayım yapma, sor.
 

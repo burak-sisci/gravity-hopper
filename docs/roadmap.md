@@ -7,7 +7,7 @@
 
 - **Görev kimliği:** `M1-03` = 1. kilometre taşının 3. görevi. Commit mesajları bu kimlikle başlar.
 - **Atomik görev** = tek oturumda biten, tek commit'lik, test edilebilir iş.
-- **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte
+- **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte. 🤖 görevler arasında senin onayın beklenmez; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler (ADR-025).
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
 - **Kademeli planlama:** M0–M2 ayrıntılı, M3–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
@@ -79,7 +79,7 @@
 - [ ] **M1-03** 🤖 `run.tscn` iskeleti: düz koridor duvarları (sabit sayıda parça, aşağıda kalan parça yukarı taşınır), `GameCamera` ile sabit ileri görüş kuralı (`architecture.md` §3). `main.tscn`'de `TapTest` ve `TapHint` yerine `World/Run` gelir.
   *Kabul:* Kamera sabit hızla yukarı kayıyor, duvarlar kesintisiz; PC ve Redmi ekran görüntüsü.
 - [ ] **M1-04** 🤖 Player hareketi: sabit tırmanış, aktif duvara yerçekimi, yalnızca duvara tutunurken çevirme, girdi kuralları (her parmak, sahte fare yok sayılır; S-07), `Events.player_flipped`. Kamera artık oyuncuyu izler.
-  *Kabul:* Çevirme PC'de ve Redmi'de güvenilir; hızlı çift başparmak dokunuşu kaybolmuyor (sen denersin, S-07 kapanır).
+  *Kabul:* Çevirme PC'de ve Redmi'de güvenilir (ekransız deneme + adb dokunuşları). Gerçek iki başparmak denemesi adb ile taklit edilemediği için M1-14'te sen yaparsın (S-07 orada kapanır).
 - [ ] **M1-05** 🤖 Dokunma tamponu (havadayken yapılan dokunuş duvara değince uygulanır) + çevirme hissi parametreleri (`gravity_accel`, `max_side_speed`).
   *Kabul:* Duvara varmadan hemen önce yapılan dokunuş kaybolmuyor; süre `TuningConfig`'ten değişiyor.
 - [ ] **M1-06** 🤖 Ekran oranı testi: PC'de `6` tuşu pencereyi 16:9 → 20:9 → 4:3 arasında döndürür.
@@ -98,8 +98,8 @@
   *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.
 - [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma yeri D-12'ye bağlı.
   *Kabul:* Tarayıcıda oynanabilir bir link var.
-- [ ] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul.
-  *Kabul:* Beğendiğin değerler kaydedildi.
+- [ ] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
+  *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti.
 - [ ] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD).
 - [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.**
 

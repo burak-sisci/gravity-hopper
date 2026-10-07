@@ -243,7 +243,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - M0-10'da doğrulandı:
     - Ekransız denemede 8 durumun hepsi beklendiği gibi: tık, bırakma, sahte fare, iki parmak, parmak kaldırma, boşluk, tuş tekrarı.
     - Redmi'de adb ile 3 dokunuş = 3 sayım.
-    - Gerçek iki başparmak denemesi M1-04'te yapılacak. Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
+    - Gerçek iki başparmak denemesi M1-14'te kullanıcı yapacak (adb ile taklit edilemiyor). Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
 
 ### 8.2 Bölüm üretimi (desen parçaları)
 
@@ -553,6 +553,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-022 | 2026-10-07 | gdtoolkit 4.5.0, proje dışındaki bir sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`). Varsayılan kurallar + satır ≤ 100 karakter. Kanca exec biçiminde (`python` + `tools/lint_hook.py`, yalnızca standart kütüphane). `check.ps1`'in 4. adımı tüm projeyi denetler | Sanal ortam sistem Python'una karışmaz ve tek klasörle silinir. Exec biçimi Git Bash / PowerShell tırnak farklarından etkilenmez, ayar dosyasında kullanıcıya özel yol gerekmez. Varsayılan kurallar zaten stil rehberimizle aynı |
 | ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
 | ADR-024 | 2026-10-07 | `TuningConfig` değerleri GDD birimlerinde (m, m/sn, sn) tutulur; kod `to_px()` ile çevirir. Her alan `@export_range` ile aralık ve birim taşır; geçerli değerler `.tres`'tedir | Kaydırıcılar tasarım belgesiyle aynı dili konuşur (ör. 12 m/sn = S1). Ayar paneli alanları elle tanımlamadan kurar |
+| ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 
 ## 18. Açık teknik sorular
 
@@ -564,7 +565,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
-| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-04 |
+| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-14 |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)
