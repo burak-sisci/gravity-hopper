@@ -65,7 +65,7 @@
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.
 - [x] **M0-12** 🤖 Kod denetimi: gdtoolkit kurulumu (sürümü sabit), kurallarımıza göre `gdlintrc`, düzenlenen `.gd` dosyalarını otomatik denetleyen Claude Code kancası. *(gdtoolkit 4.5.0 sanal ortamda; `check.ps1` 4. adım; ADR-022.)*
   *Kabul:* Kural dışı bir adı `gdlint` yakalıyor; mevcut tüm kod temiz geçiyor.
-- [ ] **M0-13** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen test edersin:** oyun PC'de ve telefonda açılıyor. *(Gözden geçirme yapıldı, 2026-10-07; ADR-023. Kapı senin onayını bekliyor.)*
+- [x] **M0-13** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen test edersin:** oyun PC'de ve telefonda açılıyor. *(Gözden geçirme 2026-10-07, ADR-023. ✅ M0 senin tarafından onaylandı, 2026-10-07.)*
 
 ## M1 — Çekirdek his (gri kutular)
 

@@ -6,12 +6,11 @@
   "phase": "pre-production",
 
   "current": {
-    "milestone": "M0",
-    "task": "M0-13",
-    "task_title": "Planlama Gözden Geçirmesi + kilometre taşı kapısı: kullanıcı oyunu PC'de ve telefonda açar, M0'ı onaylar; M1 görevleri atomik hale getirilir",
-    "owner": "user",
-    "status": "awaiting_user",
-    "note": "Planlama Gözden Geçirmesi yapıldı (ADR-023, M1 atomik). Kapı: kullanıcı oyunu PC'de ve telefonda açıp M0'ı onaylar.",
+    "milestone": "M1",
+    "task": "M1-01",
+    "task_title": "TuningConfig kaynağı (scripts/data/tuning_config.gd) ve data/tuning/default_tuning.tres",
+    "owner": "claude",
+    "status": "in_progress",
     "parallel": [
       { "task": "P-04", "title": "Planlama belgelerini oku; itiraz ve düzeltmelerini ilet", "owner": "user", "status": "in_progress" }
     ]
@@ -19,8 +18,8 @@
 
   "milestones": [
     { "id": "P",  "title": "Ön planlama",                  "status": "review",      "user_approved": false },
-    { "id": "M0", "title": "Temel ve kurulum",             "status": "review",      "user_approved": false },
-    { "id": "M1", "title": "Çekirdek his (gri kutular)",   "status": "not_started", "user_approved": false },
+    { "id": "M0", "title": "Temel ve kurulum",             "status": "done",        "user_approved": true, "approved_on": "2026-10-07" },
+    { "id": "M1", "title": "Çekirdek his (gri kutular)",   "status": "in_progress", "user_approved": false },
     { "id": "M2", "title": "Sonsuz ve adil",               "status": "not_started", "user_approved": false },
     { "id": "M3", "title": "Görsel ve işitsel kimlik",     "status": "not_started", "user_approved": false },
     { "id": "M4", "title": "Meta döngü",                   "status": "not_started", "user_approved": false },
@@ -30,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12", "M0-13"],
 
   "blockers": [],
 
@@ -145,9 +144,9 @@
     "date": "2026-10-07",
     "summary": "Bu oturumda M0-09…M0-12 bitti ve M0-13 gözden geçirmesi yapıldı. M0-09: sahte parlama seçildi (ADR-020; glow Redmi'de 17,5 ms / 57 FPS, sahte 8,4 ms). M0-10: main.tscn'de dokunma testi (TapTest + TapHint); girdi kuralları sınandı, telefonun sistem dili en-US. M0-11: tools/scene_tool.gd tree/check, check.ps1 3. adım (ADR-021). M0-12: gdtoolkit 4.5.0 sanal ortamda, gdlintrc, .claude/settings.json düzenleme kancası, check.ps1 4. adım (ADR-022). M0-13 gözden geçirmesi (ADR-023): debug araçları autoload değil, debug_layer.tscn; telefonda panel debug düğmesiyle (üçlü dokunuş çevirme yapardı); RunRng M1-08'e, coyote M2-08'e; M1 16 atomik göreve bölündü; web barındırma için D-12 eklendi (özel depo + ücretsiz GitHub Pages olmuyor); APP_ anahtar öneki; belgelerin eskimiş notları düzeltildi.",
     "next_steps": [
-      "Kapı (M0-13): kullanıcı oyunu PC'de (editörde F5) ve telefonda açar; onaylarsa M0 user_approved = true, M0-13 [x], current = M1-01.",
-      "Kullanıcı planlama belgelerini okuma işini (P-04) bitirip itirazlarını iletir ya da kapatır.",
-      "M1-01: TuningConfig kaynağı ve default_tuning.tres."
+      "M0 kullanıcı tarafından onaylandı (2026-10-07, \"M0 onay\").",
+      "M1-01: TuningConfig kaynağı ve default_tuning.tres.",
+      "Kullanıcı planlama belgelerini okuma işini (P-04) bitirip itirazlarını iletir ya da kapatır."
     ]
   }
 }
