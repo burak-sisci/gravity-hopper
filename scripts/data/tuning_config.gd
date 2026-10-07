@@ -32,6 +32,12 @@ const PX_PER_M: float = 50.0
 ## İki duvar arasındaki mesafe. Taban genişliğe (1080 px = 21,6 m) sığmalıdır.
 @export_range(12.0, 21.6, 0.2, "suffix:m") var corridor_width: float = 18.0
 
+@export_group("Geçici engeller (M1)")
+## İki diken arasındaki dikey mesafe. M2'de desen parçaları (chunk) bunun yerini alır.
+@export_range(4.0, 30.0, 0.5, "suffix:m") var spike_spacing: float = 10.0
+## Tur başında ilk dikene kadar olan boş mesafe.
+@export_range(5.0, 60.0, 1.0, "suffix:m") var spike_start_gap: float = 25.0
+
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.
 static func to_px(meters: float) -> float:

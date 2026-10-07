@@ -176,7 +176,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M1-07):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M1-08):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%SpikeSpawner` (`scripts/levels/spike_spawner.gd`, geçici) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
@@ -316,7 +316,14 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Sektör geçişlerine "nefes alma" parçası koyar.
 - **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. M2'de parçaları sektör hızlarında denetleyen bir doğrulama betiği yazılacak.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine bağlı değildir.
-- **`RunRng`** (`scripts/systems/run_rng.gd`): tur tohumuyla kurulan `RandomNumberGenerator` sarmalayıcısı; oynanıştaki tek rastgelelik kaynağı (.clauderules §5). M1-08'de geçici engel yerleştirici için yazılır, M2-01'de gdUnit4 testleriyle sabitlenir.
+- **`RunRng`** (`scripts/systems/run_rng.gd`): tur tohumuyla kurulan `RandomNumberGenerator` sarmalayıcısı; oynanıştaki tek rastgelelik kaynağı (.clauderules §5). M1-08'de yazıldı, M2-01'de gdUnit4 testleriyle sabitlenir.
+  - Metotlar `next_float()`, `range_int()`, `range_float()`, `chance()`, `make_seed()`. `randf` ya da `seed` gibi adlar genel fonksiyonları gölgeler ve katı kontrolde hata verir.
+  - `Run.rng`'nin sahibi `Run`'dır. `Run.run_seed` 0 ise `RunRng.make_seed()` kullanılır; M1-09'dan sonra tohumu `GameManager` verir.
+- **Geçici engel yerleştirici** (`SpikeSpawner`, M1-08; M2'de `ChunkSpawner` yerini alır):
+  - 20 diken tur başında oluşturulur. İlk diken `spike_start_gap` (25 m) ileride, aralık `spike_spacing` (10 m); ikisi de `TuningConfig` → "Geçici engeller (M1)" grubunda.
+  - Görünür alanın 100 px altına inen diken en öndekinin bir aralık ilerisine taşınır; tarafını `RunRng.chance(0.5)` seçer.
+  - Taşıma hep aynı sırayla yapıldığı için k'nci dikenin tarafı k'nci çekilişten gelir. Ekran boyu ve kare zamanlaması diziyi değiştirmez.
+  - Ekransız deneme: aynı tohumla kurulan iki tur aynı taraf dizisini verdi, farklı tohum farklı diziyi; havuz 20'de sabit kaldı. Redmi'de dikenler göründü ve dokunulmayınca oyuncu ilk sol dikende öldü.
 
 ### 8.3 Ritim (Conductor)
 
@@ -375,7 +382,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`), Geçici engeller (M1) (`spike_spacing`, `spike_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … | İsim anahtarı, palet, BPM, tırmanış hızı, uzunluk, izinli tehlikeler, zorluk aralığı, müzik |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
