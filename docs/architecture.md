@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-09-28 · Durum: **Taslak.** ⚠️ işaretli maddeler M0'da doğrulanacak.
+> Son güncelleme: 2026-10-07 (M0 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -27,7 +27,7 @@
 | Esneme | `canvas_items` + `expand` | Siyah şerit yok; fazla alanın kullanımı §3'teki kurala göre |
 | Fizik | 60 tick/sn + **physics interpolation** | 60/90/120/144 Hz ekranlarda aynı oyun, akıcı görüntü |
 | Girdi | Tek eylem: çevirme (dokunma / fare sol tık / Space) | Tek dokunuş oyunu |
-| Görsel | `Polygon2D` / `Line2D` + koddan renk + parlama | Harici görsele bağımlılık yok (bkz. §9) |
+| Görsel | `Polygon2D` / `Line2D` + koddan renk + nesne başına sahte parlama | Harici görsele bağımlılık yok (bkz. §9, ADR-020) |
 
 **project.godot ayarları** (M0-04'te uygulandı; Godot 4.7.2'de tanındıkları ve değerleri betikle doğrulandı. `orientation=1` = Portrait, `untyped_declaration=2` = Error):
 
@@ -41,7 +41,7 @@ display/window/stretch/aspect="expand"
 display/window/handheld/orientation=1            ; portrait
 rendering/renderer/rendering_method="gl_compatibility"
 rendering/renderer/rendering_method.mobile="gl_compatibility"
-physics/common/physics_ticks_per_second=60
+physics/common/physics_ticks_per_second=60      ; varsayılan değer, bu yüzden project.godot'a yazılmaz
 physics/common/physics_interpolation=true
 debug/gdscript/warnings/untyped_declaration=2    ; Error
 application/run/main_scene="res://scenes/main.tscn"                 ; M0-08
@@ -66,7 +66,8 @@ gravity-hopper/
 ├── CLAUDE.md                 # Claude proje rehberi (planlama rutini)
 ├── .clauderules              # Katı kurallar (CLAUDE.md içinden yüklenir)
 ├── CREDITS.md                # Dış varlıklar ve lisanslar
-├── project.godot             # (M0-04'te oluşur)
+├── project.godot             # Proje ayarları (§2)
+├── export_presets.cfg        # Android dışa aktarma ön ayarı (§14); sır içermez
 ├── gdlintrc                  # gdlint kuralları (M0-12)
 ├── .claude/                  # Claude Code proje ayarı: settings.json (gdlint kancası), .gdignore
 │
@@ -131,12 +132,12 @@ Kurallar:
 Main (Node)                           scenes/main.tscn
 ├── World (Node2D)                    # aktif oyun dünyası buraya yüklenir (run.tscn)
 ├── UI (CanvasLayer, layer 10)        # aktif ekran: menü / HUD / sonuç / mağaza
-└── Debug (CanvasLayer, layer 100)    # yalnızca debug build: ayar paneli, FPS
+└── Debug (CanvasLayer, layer 100)    # içeriği yalnızca debug build'de yüklenir: debug katmanı (§13)
 ```
 
 `WorldEnvironment` yoktur: parlama nesne başına sahte parlamayla yapılır (§9, ADR-020).
 
-> **Şu anki içerik (M0-10, geçici):** `World/TapTest` (`scenes/debug/tap_test.tscn`, dokununca renk değiştiren neon elmas) ve `UI/TapHint` (`scenes/ui/tap_hint.tscn`, "DOKUN / TAP" ipucu). M1-02'de `World`'e `run.tscn` gelir. `TapHint` ilk açılış rehberinde (FTUE) yeniden kullanılabilir.
+> **Şu anki içerik (M0-10, geçici):** `World/TapTest` (`scenes/debug/tap_test.tscn`, dokununca renk değiştiren neon elmas) ve `UI/TapHint` (`scenes/ui/tap_hint.tscn`, "DOKUN / TAP" ipucu). İkisi de M1-03'te kaldırılır ve `World`'e `run.tscn` gelir. FTUE metinsizdir (GDD §18): orada yazı değil "dokun" eli ikonu kullanılır. `TapHint`'in nabız davranışı o ikona taşınabilir.
 
 Sahne geçişlerini `GameManager` yönetir: `World` ve `UI` kaplarının içeriğini değiştirir. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
 
@@ -176,7 +177,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `Settings` | Ses, müzik, titreşim, dil, efekt kalitesi | `user://settings.cfg` |
 | `AudioManager` | Efekt havuzu, müzik çalma ve geçişleri, `pitch_scale` senkronu | Olayları `Events`'ten dinler |
 
-İleride: `Ads`, `PlayGames` (M7) ve yalnızca debug build'de yüklenen `DebugTools`. **Yeni autoload eklemeden önce bu tablo güncellenir.**
+İleride: `Ads`, `PlayGames` (M7). **Debug araçları autoload değildir:** Autoload'lar her derlemede yüklenir. Bu yüzden debug araçları `Main/Debug` katmanına yalnızca `OS.is_debug_build()` iken yüklenir (§13, ADR-020). **Yeni autoload eklemeden önce bu tablo güncellenir.**
 
 ## 7. İletişim: Sinyaller
 
@@ -227,10 +228,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 ### 8.1 Hareket (Player)
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
-- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir.
+- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-06'da `SectorDef`'e taşınır.
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
-  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir.
+  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-08'de gelir.
   - **Dokunma tamponu:** Havadayken yapılan dokunuş kısa bir süre (başlangıç 0,12 sn) saklanır ve duvara değince uygulanır.
 - **Koridordan çıkış** (duvar boşluğundan düşme): `player_died(FELL)`.
 - **Hurtbox** görselden küçüktür (başlangıç %70).
@@ -241,7 +242,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - M0-10'da doğrulandı:
     - Ekransız denemede 8 durumun hepsi beklendiği gibi: tık, bırakma, sahte fare, iki parmak, parmak kaldırma, boşluk, tuş tekrarı.
     - Redmi'de adb ile 3 dokunuş = 3 sayım.
-    - Gerçek iki başparmak denemesi M1-03'te yapılacak. Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
+    - Gerçek iki başparmak denemesi M1-04'te yapılacak. Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
 
 ### 8.2 Bölüm üretimi (desen parçaları)
 
@@ -256,6 +257,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Sektör geçişlerine "nefes alma" parçası koyar.
 - **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. M2'de parçaları sektör hızlarında denetleyen bir doğrulama betiği yazılacak.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine bağlı değildir.
+- **`RunRng`** (`scripts/systems/run_rng.gd`): tur tohumuyla kurulan `RandomNumberGenerator` sarmalayıcısı; oynanıştaki tek rastgelelik kaynağı (.clauderules §5). M1-08'de geçici engel yerleştirici için yazılır, M2-01'de gdUnit4 testleriyle sabitlenir.
 
 ### 8.3 Ritim (Conductor)
 
@@ -287,7 +289,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ### 8.7 Nesne havuzu
 
-- `ObjectPool`: sahne başına önceden oluşturulmuş örnekler; `acquire()` / `release()`.
+- `ObjectPool`: sahne başına önceden oluşturulmuş örnekler; `acquire()` / `release()` (M2-03).
+- M1'deki geçici engel yerleştirici de bu kurala uyar. Tur başında sabit sayıda diken oluşturulur; ekranın altından çıkan diken yeniden yukarı taşınır.
 - Ekran altından çıkan desen parçaları havuza döner ve sıfırlanır: hareketli engeller baştan başlar, Glimmer'lar yeniden etkinleşir.
 
 ## 9. Görsel mimari
@@ -372,7 +375,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 - Varsayılan dil: cihaz dili Türkçe ise TR, değilse EN. Ayarlardan değiştirilebilir.
 - Fontlar Türkçe karakterleri (ş ğ ı İ ö ü ç) içermek zorundadır (S-06, M3).
 - Büyük harf metinler çeviri dosyasına büyük harfle yazılır; kodda dönüştürülmez (`i` → `İ` sorunu).
-- **Anahtar adları** `BÜYÜK_YILAN` biçiminde ve alan önekli: `UI_`, `HUD_`, `SECTOR_`, `UPGRADE_`, `TRAIL_`, `SETTINGS_` (ör. `UI_TAP`, `SECTOR_1_NAME`).
+- **Anahtar adları** `BÜYÜK_YILAN` biçiminde ve alan önekli: `APP_` (uygulama adı ve mağaza metinleri), `UI_`, `HUD_`, `SECTOR_`, `UPGRADE_`, `TRAIL_`, `SETTINGS_` (ör. `APP_TITLE`, `UI_TAP`, `SECTOR_1_NAME`).
 - **Dil seçimi** (`Settings.resolve_language`): oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce. Seçim `user://settings.cfg`'de saklanır; boş değer "cihaz dili" demektir.
   - Godot, Android 13+'ın **uygulamaya özel dil** ayarını cihaz dili olarak görüyor (M0-10, Redmi).
   - Telefonun genel dilini değiştirmeden Türkçe denemek için: `adb shell cmd locale set-app-locales com.gravityhopper.dev --locales tr-TR`. Geri almak için `--locales '""'`.
@@ -382,27 +385,31 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ## 13. Debug araçları (yalnızca debug build)
 
+- **Debug katmanı** (`scenes/debug/debug_layer.tscn`, M1-02): Tüm debug araçları bu sahnede toplanır. `Main`, sahneyi `Debug` (`CanvasLayer` 100) altına yalnızca `OS.is_debug_build()` iken `load()` ile yükler; yayın sürümünde hiç yüklenmez.
+  - Oyun dünyasını tanımaz. İsteklerini `Events` sinyalleriyle iletir; bunlar M1'de eklenir ve kataloğa yazılır.
 - **Canlı ayar paneli:** `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar (yeni bir ayar eklendiğinde panele kendiliğinden gelir).
   - "Kaydet" düğmesi değerleri `user://tuning_override.tres`'e yazar.
   - PC'de Claude bu dosyayı doğrudan okuyup onaylanan değerleri kalıcı hale getirebilir.
 - **PC tuşları** (M1'de kesinleşecek):
 
-  | Tuş | İşlev |
-  | --- | --- |
-  | `1` | Ayar paneli |
-  | `2` | Ölümsüzlük |
-  | `3` | Çarpışma kutularını göster |
-  | `4` | Yavaş çekim |
-  | `5` | Sonraki sektöre atla |
-  | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) |
-  | `7` | FPS / kare süresi |
-  | `R` | Anında yeniden başla |
+  | Tuş | İşlev | Görev |
+  | --- | --- | --- |
+  | `1` | Ayar paneli | M1-11 |
+  | `2` | Ölümsüzlük | M1-12 |
+  | `3` | Çarpışma kutularını göster | M1-12 |
+  | `4` | Yavaş çekim | M1-12 |
+  | `5` | Sonraki sektöre atla | M2-06 |
+  | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
+  | `7` | FPS / kare süresi | M1-02 |
+  | `R` | Anında yeniden başla | M1-12 |
 
   F5–F8 kullanılmaz; Godot editör kısayollarıyla karışır.
-- **Telefonda:** Sol üst köşeye üç kez dokununca debug paneli açılır.
+- **Telefonda:** Küçük, yarı saydam bir debug düğmesi paneli açar. Düğme yalnızca debug build'de görünür; yeri, HUD ile çakışmayacak şekilde M1-02'de seçilir.
+  - Düğme bir `Control` olduğu için dokunuş arayüzde kalır ve çevirme yapmaz (§8.1, `_unhandled_input`).
+  - Eski plandaki "köşeye üçlü dokunuş" bırakıldı: o dokunuşların her biri aynı zamanda yerçekimini çevirirdi.
 - **Performans katmanı:** `godot-debug-menu` eklentisi (MIT): FPS, kare süresi grafikleri, CPU süresi. GPU süresi Android'de (GLES) ölçülemiyor (`-1`); onun yerine §16'daki GPU doluluk sayacı kullanılır.
   - Eklentinin yalnızca çalışma zamanı parçası alındı; editör eklentisi (`plugin.gd`) alınmadı, çünkü kendini autoload olarak ekliyor ve yayın sürümüne de girerdi.
-  - Yükleme: `OS.is_debug_build()` ise `load("res://addons/debug_menu/debug_menu.tscn")` ile örneklenir. Telefonda okunabilsin diye `CanvasLayer` 2× büyütülüp sola kaydırılır (örnek: `glow_bench.gd` → `_add_debug_menu`). Görünüm `style` özelliğiyle seçilir: 0 gizli, 1 kısa, 2 ayrıntılı.
+  - Yükleme: Debug katmanı onu `load("res://addons/debug_menu/debug_menu.tscn")` ile örnekler (M1-02). Telefonda okunabilsin diye `CanvasLayer` 2× büyütülüp sola kaydırılır (örnek: `glow_bench.gd` → `_add_debug_menu`). Görünüm `style` özelliğiyle seçilir: 0 gizli, 1 kısa, 2 ayrıntılı.
   - `7` tuşu ve telefondaki debug paneli bunu açıp kapatır (M1). Eklentinin kendi kısayolu F3'tür.
 
 ### 13.1 Geliştirici araçları (oyunun dışında)
@@ -448,7 +455,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Telefon yalnızca Wi-Fi **istemcisi** iken çalışır; telefon paylaşım (hotspot) açtığında devre dışıdır.
   - Okul ağı (`sdu.edu.tr`): telefon ve bilgisayar farklı alt ağlarda, TCP erişimi yok → kablosuz çalışmaz.
   - Seçenekler: ev Wi-Fi'ı (önerilen) · bilgisayarın "Mobil etkin nokta"sı açılıp telefon ona bağlanır · kablo (her ağda yedek) · yalnızca mobil veri varsa telefon paylaşımı + eski yöntem (`adb tcpip 5555`, telefon her yeniden başladığında bir kez kablo gerekir).
-  - Godot hata ayıklama bağlantısı için önce Remote Host = localhost (adb tüneli) denenecek; çalışırsa ağ değişince Godot ayarı gerekmez (M0-08).
+  - Godot hata ayıklama bağlantısı için önce Remote Host = localhost (adb tüneli) denenecek; çalışırsa ağ değişince Godot ayarı gerekmez (kablosuza dönülürse).
 - Debug anahtarı: Godot 4.7 kendisi oluşturur (`%APPDATA%\Godot\keystores\debug.keystore`). Java ve Android SDK yollarını da editör ayarlarına kendisi yazdı (S-04).
 - **Yayın anahtarı** (upload keystore) M8'de oluşturulur:
   - **Depoya konmaz.**
@@ -458,7 +465,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Gradle derlemesi** eklentiler için M7'de açılır: Play Games Services, AdMob (S-05: sürüm uyumluluğu).
 - **Min / hedef SDK:** Godot 4.7 varsayılanları kullanılır. Play'in güncel hedef API şartı M8'de kontrol edilecek.
 - **Paket adı** (`com.<yayıncı>.gravityhopper`) Play'e ilk yüklemeden sonra değiştirilemez. Karar D-06'da.
-- **Web çıktısı** (arkadaşlara link için): tek iş parçacıklı (single-threaded) dışa aktarma, GitHub Pages ya da itch.io'da ücretsiz barındırma.
+- **Web çıktısı** (arkadaşlara link için): tek iş parçacıklı (single-threaded, `web_nothreads_*` şablonları kurulu) dışa aktarma.
+  - Barındırma kullanıcı kararıdır (D-12, M1-13).
+  - Depo **özel** olduğu için GitHub Pages ücretsiz planda kullanılamaz; Pages ücretsiz planda yalnızca açık depolarda çalışır.
+  - Seçenekler: itch.io (ücretsiz, gizli bağlantılı taslak sayfa) ya da yalnızca web çıktısını içeren ayrı bir açık depo.
 
 ## 15. Test ve doğrulama
 
@@ -483,7 +493,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ### 16.1 Ölçüm (M0-09, Redmi Note 12)
 
-Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez. Başka bir cihazda yeniden ölçmek için sahne geçici olarak ana sahne yapılıp yüklenir (M1-10'da debug paneline bağlanabilir); PC'de `<godot> --path . res://scenes/debug/glow_bench.tscn`.
+Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez. Başka bir cihazda yeniden ölçmek için sahne geçici olarak ana sahne yapılıp yüklenir (M1-12'de debug paneline bir düğme olarak bağlanabilir); PC'de `<godot> --path . res://scenes/debug/glow_bench.tscn`.
 
 | Mod | Ort. kare süresi | p95 | FPS | GPU doluluğu |
 | --- | --- | --- | --- | --- |
@@ -526,6 +536,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-020 | 2026-10-07 | Neon parlama **nesne başına sahte parlama** ile yapılır (toplamsal çizgi kopyaları + ışık lekeleri); `WorldEnvironment` glow kullanılmaz. `godot-debug-menu` commit `ff12461`'e sabitlendi; autoload değil, debug build'de koddan yüklenir | Redmi'de glow kare süresini 8,4 → 17,5 ms'ye çıkarıp 120 FPS'yi 57'ye düşürüyor; sahte parlama ölçülebilir kare kaybı yaratmıyor (≈ +0,9 ms GPU), her cihazda aynı görünüyor ve HUD'u etkilemiyor (§9, §16.1) |
 | ADR-021 | 2026-10-07 | Sahne aracı başvuruları sahneyi ağaca eklemeden örnekleyip Godot'nun kendi çözümlemesiyle dener. `get_parent()` ve `..` yollarını da hata sayar. `tools/check.ps1`'in 3. adımıdır ve `tools/fixtures/` düzeneğiyle kendini sınar | Metin ayrıştırarak `%Ad` sahipliğini taklit etmek hataya açık; gerçek çözümleme çalışma anıyla birebir aynı. §3'teki kurallar oyun çalıştırılmadan zorlanır |
 | ADR-022 | 2026-10-07 | gdtoolkit 4.5.0, proje dışındaki bir sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`). Varsayılan kurallar + satır ≤ 100 karakter. Kanca exec biçiminde (`python` + `tools/lint_hook.py`, yalnızca standart kütüphane). `check.ps1`'in 4. adımı tüm projeyi denetler | Sanal ortam sistem Python'una karışmaz ve tek klasörle silinir. Exec biçimi Git Bash / PowerShell tırnak farklarından etkilenmez, ayar dosyasında kullanıcıya özel yol gerekmez. Varsayılan kurallar zaten stil rehberimizle aynı |
+| ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
 
 ## 18. Açık teknik sorular
 
@@ -537,7 +548,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
-| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-03 |
+| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-04 |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)

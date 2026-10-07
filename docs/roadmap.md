@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-09-28
+> Son güncelleme: 2026-10-07 (M0 Planlama Gözden Geçirmesi: M1 atomik hale getirildi)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -65,44 +65,49 @@
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.
 - [x] **M0-12** 🤖 Kod denetimi: gdtoolkit kurulumu (sürümü sabit), kurallarımıza göre `gdlintrc`, düzenlenen `.gd` dosyalarını otomatik denetleyen Claude Code kancası. *(gdtoolkit 4.5.0 sanal ortamda; `check.ps1` 4. adım; ADR-022.)*
   *Kabul:* Kural dışı bir adı `gdlint` yakalıyor; mevcut tüm kod temiz geçiyor.
-- [ ] **M0-13** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen test edersin:** oyun PC'de ve telefonda açılıyor.
+- [ ] **M0-13** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen test edersin:** oyun PC'de ve telefonda açılıyor. *(Gözden geçirme yapıldı, 2026-10-07; ADR-023. Kapı senin onayını bekliyor.)*
 
 ## M1 — Çekirdek his (gri kutular)
 
 **Hedef:** Görsel süs yok, sadece his. *"30 saniyede eğlenceli mi?"*
+*(M0 gözden geçirmesinde atomik hale getirildi, 2026-10-07; ADR-023. Şekiller düz renkli gri kutular; neon görünüm M3'te.)*
 
-- [ ] **M1-01** 🤖 `TuningConfig` kaynağı ve başlangıç değerleri.
-  *Kabul:* Tüm hareket ve kamera değerleri tek bir `.tres` dosyasında.
-- [ ] **M1-02** 🤖 `run.tscn` iskeleti: sonsuz tekrar eden düz koridor duvarları, `GameCamera` ile sabit ileri görüş kuralı.
-  *Kabul:* Kamera yukarı kayıyor, duvarlar kesintisiz.
-- [ ] **M1-03** 🤖 Player hareketi: sabit tırmanış, sol/sağ yerçekimi, tutunurken çevirme, dokunma tamponu, coyote süresi, çoklu dokunma girdisi (S-07).
-  *Kabul:* Çevirme PC'de ve Redmi'de güvenilir; hızlı çift başparmak dokunuşu kaybolmuyor.
-- [ ] **M1-04** 🤖 Ekran oranı testi: debug tuşuyla 16:9 / 20:9 / 4:3 pencere.
-  *Kabul:* Her oranda oyuncunun üstündeki görüş mesafesi aynı.
-- [ ] **M1-05** 🤖 Diken tehlikesi (pasif `Area2D`) + `Hurtbox` bileşeni → `Events.player_died`.
-  *Kabul:* Diken oyuncuyu tanımıyor; ölüm yalnızca sinyalle işleniyor.
-- [ ] **M1-06** 🤖 Geçici engel yerleştirici (düz aralıklı, rastgele taraf; M2'de desen sistemiyle değişecek).
-  *Kabul:* Sonsuz ama basit bir engel akışı.
-- [ ] **M1-07** 🤖 `GameManager` tur döngüsü: başla → öl → anında yeniden başla.
-  *Kabul:* Ölümden yeni tura < 0,5 sn.
-- [ ] **M1-08** 🤖 Minimal HUD (ayrı sahne, yalnızca sinyal dinler): yükseklik ve oturum rekoru.
-  *Kabul:* HUD dünyadaki hiçbir düğüme erişmiyor.
-- [ ] **M1-09** 🤖 Canlı ayar paneli: `TuningConfig`'ten otomatik kaydırıcılar, "Kaydet" → `tuning_override.tres`.
-  *Kabul:* Oynarken değer değişiyor, kaydedilen dosyayı Claude okuyabiliyor.
-- [ ] **M1-10** 🤖 Debug tuşları: ölümsüzlük, çarpışma kutuları, yavaş çekim, FPS, hızlı yeniden başlama; telefonda üçlü dokunuşla panel.
-  *Kabul:* Tuşlar `architecture.md` §13 ile uyumlu.
-- [ ] **M1-11** 🤖 Web dışa aktarma denemesi (arkadaşlara link).
+- [ ] **M1-01** 🤖 `TuningConfig` kaynağı (`scripts/data/tuning_config.gd`) ve `data/tuning/default_tuning.tres`. Hareket, kamera ve adalet değerleri `@export_group`'larla gruplanır, her alanın Türkçe `##` açıklaması olur. Başlangıç değerleri GDD ve `architecture.md`'den gelir (M1'de geçici `climb_speed` = 600 px/sn).
+  *Kabul:* Tüm hareket ve kamera değerleri tek `.tres` dosyasında; editörde Inspector'da açıklamalarıyla görünüyor.
+- [ ] **M1-02** 🤖 Debug katmanı: `scenes/debug/debug_layer.tscn`, `Main/Debug`'a yalnızca debug build'de yüklenir. `godot-debug-menu` buraya taşınır (`7` tuşu ile aç/kapa). Telefonda küçük debug düğmesi FPS'yi açıp kapatır. Tuş altyapısı burada kurulur; diğer tuşlar sonraki görevlerde dolar.
+  *Kabul:* PC'de `7`, telefonda düğme FPS'yi açıp kapatıyor; düğmeye dokunmak oyunda dokunuş sayılmıyor (girdi denemesi).
+- [ ] **M1-03** 🤖 `run.tscn` iskeleti: düz koridor duvarları (sabit sayıda parça, aşağıda kalan parça yukarı taşınır), `GameCamera` ile sabit ileri görüş kuralı (`architecture.md` §3). `main.tscn`'de `TapTest` ve `TapHint` yerine `World/Run` gelir.
+  *Kabul:* Kamera sabit hızla yukarı kayıyor, duvarlar kesintisiz; PC ve Redmi ekran görüntüsü.
+- [ ] **M1-04** 🤖 Player hareketi: sabit tırmanış, aktif duvara yerçekimi, yalnızca duvara tutunurken çevirme, girdi kuralları (her parmak, sahte fare yok sayılır; S-07), `Events.player_flipped`. Kamera artık oyuncuyu izler.
+  *Kabul:* Çevirme PC'de ve Redmi'de güvenilir; hızlı çift başparmak dokunuşu kaybolmuyor (sen denersin, S-07 kapanır).
+- [ ] **M1-05** 🤖 Dokunma tamponu (havadayken yapılan dokunuş duvara değince uygulanır) + çevirme hissi parametreleri (`gravity_accel`, `max_side_speed`).
+  *Kabul:* Duvara varmadan hemen önce yapılan dokunuş kaybolmuyor; süre `TuningConfig`'ten değişiyor.
+- [ ] **M1-06** 🤖 Ekran oranı testi: PC'de `6` tuşu pencereyi 16:9 → 20:9 → 4:3 arasında döndürür.
+  *Kabul:* Her oranda oyuncunun üstündeki görüş mesafesi aynı (üç ekran görüntüsüyle ölçülü).
+- [ ] **M1-07** 🤖 Diken tehlikesi (pasif `Area2D`) + `Hurtbox` bileşeni → `Events.player_died(HAZARD)`.
+  *Kabul:* Diken oyuncuyu tanımıyor; ölüm yalnızca sinyalle işleniyor; sahne denetimi temiz.
+- [ ] **M1-08** 🤖 `RunRng` (tohumlu RNG, `architecture.md` §8.2) + geçici engel yerleştirici: düz aralıklı dikenler, taraf `RunRng` ile seçilir. Dikenler tur başında oluşturulur ve geri dönüştürülür (tur sırasında `instantiate` yok). M2'de desen sistemiyle değişir.
+  *Kabul:* Sonsuz ama basit bir engel akışı; aynı tohum aynı diziyi veriyor (günlükle).
+- [ ] **M1-09** 🤖 `GameManager` tur döngüsü: başla → öl → anında yeniden başla (`run_started`, `player_died`, `run_ended`).
+  *Kabul:* Ölümden yeni tura < 0,5 sn (günlük zamanlarıyla ölçülü).
+- [ ] **M1-10** 🤖 Minimal HUD (`scenes/ui/hud.tscn`, ayrı sahne, yalnızca sinyal dinler): yükseklik ve oturum rekoru; metinler TR/EN anahtarlarla.
+  *Kabul:* HUD dünyadaki hiçbir düğüme erişmiyor; sahne denetimi temiz.
+- [ ] **M1-11** 🤖 Canlı ayar paneli: `TuningConfig`'in `@export` alanlarından otomatik kaydırıcılar, "Kaydet" → `user://tuning_override.tres`. PC'de `1`, telefonda debug düğmesiyle açılır.
+  *Kabul:* Oynarken değer değişiyor; kaydedilen dosyayı Claude okuyabiliyor.
+- [ ] **M1-12** 🤖 Debug tuşları: ölümsüzlük (`2`), çarpışma kutuları (`3`), yavaş çekim (`4`), anında yeniden başlama (`R`); telefonda debug panelinde aynı düğmeler.
+  *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.
+- [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma yeri D-12'ye bağlı.
   *Kabul:* Tarayıcıda oynanabilir bir link var.
-- [ ] **M1-12** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul.
+- [ ] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul.
   *Kabul:* Beğendiğin değerler kaydedildi.
-- [ ] **M1-13** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD).
-- [ ] **M1-14** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.**
+- [ ] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD).
+- [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.**
 
 ## M2 — Sonsuz ve adil
 
 **Hedef:** Bitmeyen, adil ve giderek zorlaşan bir tırmanış.
 
-- [ ] **M2-01** 🤖 gdUnit4 test altyapısı (sürümü sabit) + `RunRng` (tohumlu RNG).
+- [ ] **M2-01** 🤖 gdUnit4 test altyapısı (sürümü sabit) + `RunRng` testleri (`RunRng` M1-08'de yazıldı).
   *Kabul:* Aynı tohum aynı sayı dizisini veriyor (test).
 - [ ] **M2-02** 🤖 Desen parçası biçimi: `ChunkInfo`, vuruş birimli ızgara, parça tasarım kuralları (belgeye).
   *Kabul:* Örnek bir parça editörde ızgaraya oturuyor.
@@ -112,12 +117,12 @@
   *Kabul:* Her parça doğrulama betiğinden geçiyor.
 - [ ] **M2-05** 🤖 `Conductor`: BPM, vuruş sinyali, metronom sesi, dünya-vuruş hizası (S-03 ilk ölçüm).
   *Kabul:* Engeller metronomla aynı anda geliyor.
-- [ ] **M2-06** 🤖 `SectorDef` kaynakları + sektör ilerleyişi: hız basamağı, geçici palet, "nefes alma" geçişi.
+- [ ] **M2-06** 🤖 `SectorDef` kaynakları + sektör ilerleyişi: hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır), geçici palet, "nefes alma" geçişi, debug `5` tuşu (sonraki sektör).
   *Kabul:* S1→S2→S3 geçişleri çalışıyor.
 - [ ] **M2-07** 🤖 Zorluk eğrisi: sektör içi hedef zorluk, parça ağırlıkları, hız tavanı.
   *Kabul:* Sektör sonu başından belirgin şekilde zor.
-- [ ] **M2-08** 🤖 Yeni tehlikeler: duvar boşluğu (düşme), veri bloğu, lazer kapısı (vuruşa bağlı).
-  *Kabul:* Her biri en az 3 parçada kullanılıyor.
+- [ ] **M2-08** 🤖 Yeni tehlikeler: duvar boşluğu (düşme) + coyote süresi, veri bloğu, lazer kapısı (vuruşa bağlı).
+  *Kabul:* Her biri en az 3 parçada kullanılıyor; boşluğa girdikten hemen sonraki çevirme kaybolmuyor.
 - [ ] **M2-09** 🤖 Glimmer (havuzlu) ve riskli yol yerleşimi; sayaç HUD'da.
   *Kabul:* Toplama sinyalle HUD'a yansıyor.
 - [ ] **M2-10** 🤖 `GrazeDetector` + kombo sayacı.

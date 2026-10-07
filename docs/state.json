@@ -9,8 +9,9 @@
     "milestone": "M0",
     "task": "M0-13",
     "task_title": "Planlama Gözden Geçirmesi + kilometre taşı kapısı: kullanıcı oyunu PC'de ve telefonda açar, M0'ı onaylar; M1 görevleri atomik hale getirilir",
-    "owner": "user+claude",
-    "status": "in_progress",
+    "owner": "user",
+    "status": "awaiting_user",
+    "note": "Planlama Gözden Geçirmesi yapıldı (ADR-023, M1 atomik). Kapı: kullanıcı oyunu PC'de ve telefonda açıp M0'ı onaylar.",
     "parallel": [
       { "task": "P-04", "title": "Planlama belgelerini oku; itiraz ve düzeltmelerini ilet", "owner": "user", "status": "in_progress" }
     ]
@@ -18,7 +19,7 @@
 
   "milestones": [
     { "id": "P",  "title": "Ön planlama",                  "status": "review",      "user_approved": false },
-    { "id": "M0", "title": "Temel ve kurulum",             "status": "in_progress", "user_approved": false },
+    { "id": "M0", "title": "Temel ve kurulum",             "status": "review",      "user_approved": false },
     { "id": "M1", "title": "Çekirdek his (gri kutular)",   "status": "not_started", "user_approved": false },
     { "id": "M2", "title": "Sonsuz ve adil",               "status": "not_started", "user_approved": false },
     { "id": "M3", "title": "Görsel ve işitsel kimlik",     "status": "not_started", "user_approved": false },
@@ -64,6 +65,12 @@
       "needed_by": "M8-01 (erken karar verilirse iyi olur)",
       "recommendation": "Kısa, kalıcı bir stüdyo adı seç.",
       "note": "Şimdilik geçici paket adı com.gravityhopper.dev kullanılıyor (export_presets.cfg)."
+    },
+    {
+      "id": "D-12",
+      "question": "Web sürümü (arkadaşlara link) nerede barındırılsın? Depo özel olduğu için GitHub Pages ücretsiz planda kullanılamıyor.",
+      "needed_by": "M1-13",
+      "recommendation": "itch.io: ücretsiz, HTML5 oyunları destekliyor, sayfa taslak/gizli bağlantıyla yalnızca linki olanlara açılabiliyor. Alternatif: yalnızca web çıktısını içeren ayrı bir açık GitHub deposu."
     }
   ],
 
@@ -74,7 +81,7 @@
     { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "resolved", "answer": "Evet: %APPDATA%/Godot/keystores/debug.keystore otomatik oluştu; Java ve SDK yolları da editör ayarlarına kendiliğinden yazıldı." },
     { "id": "S-05", "question": "Play Games ve AdMob eklentilerinin 4.7 uyumlu sürümleri", "resolve_in": "M7", "status": "open" },
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-11", "status": "open" },
-    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-03", "status": "open", "note": "M0-10: headless 8 durum geçti; Redmi'de adb ile 3 dokunuş = 3 sayım. Kalan: gerçek iki başparmak denemesi (M1-03)." },
+    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-04", "status": "open", "note": "M0-10: headless 8 durum geçti; Redmi'de adb ile 3 dokunuş = 3 sayım. Kalan: gerçek iki başparmak denemesi (M1-04)." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." }
   ],
 
@@ -125,21 +132,22 @@
   "temp_files": [],
 
   "docs_reviewed": {
-    "CLAUDE.md": "2026-10-01",
-    ".clauderules": "2026-10-01",
-    "docs/architecture.md": "2026-10-01",
-    "docs/GDD.md": "2026-09-28",
-    "docs/roadmap.md": "2026-10-01",
-    "CREDITS.md": "2026-10-01"
+    "CLAUDE.md": "2026-10-07",
+    ".clauderules": "2026-10-07",
+    "docs/architecture.md": "2026-10-07",
+    "docs/GDD.md": "2026-10-07",
+    "docs/roadmap.md": "2026-10-07",
+    "docs/state.json": "2026-10-07",
+    "CREDITS.md": "2026-10-07"
   },
 
   "last_session": {
     "date": "2026-10-07",
-    "summary": "M0-12 tamamlandı: gdtoolkit 4.5.0 proje dışındaki sanal ortama kuruldu (4.7 sözdizimini okuyor); gdlintrc = varsayılanlar (stil rehberimizle aynı) + addons/.godot hariç; mevcut 20 uzun satır (>100) bölündü, davranış değişmedi (girdi denemesi + glow_bench karesi aynı). .claude/settings.json: PostToolUse Edit|Write kancası, exec biçimi python tools/lint_hook.py (yalnızca hata olunca konuşur, ~0,35 sn). Canlı sınandı: BadName/BadVar yazınca kanca iki hatayı bildirdi, düzeltince sessiz kaldı. check.ps1 4. adım: gdlint. ADR-022. Önceki: M0-11 tamamlandı: tools/scene_tool.gd (tree, check). check sahneleri ağaca eklemeden örnekleyip $Yol/%Ad/get_node başvurularını Godot'nun kendi çözümlemesiyle dener; sinyal bağlantıları, @export yolları, get_parent()/'..' kural ihlalleri, benzer ad önerisi. tools/check.ps1'in 3. adımı oldu (TEMİZ: 4 sahne, 6 başvuru, 0 hata). tools/fixtures/scene_tool_broken.tscn: 7 bilerek hata + tuzaklar → tam 7 hata, çıkış 1. Kabul: tap_hint.gd'de %Label → %Labl geçici bozulunca check.ps1 SORUN VAR + öneri verdi, geri alındı. ADR-021. Önceki: M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
+    "summary": "Bu oturumda M0-09…M0-12 bitti ve M0-13 gözden geçirmesi yapıldı. M0-09: sahte parlama seçildi (ADR-020; glow Redmi'de 17,5 ms / 57 FPS, sahte 8,4 ms). M0-10: main.tscn'de dokunma testi (TapTest + TapHint); girdi kuralları sınandı, telefonun sistem dili en-US. M0-11: tools/scene_tool.gd tree/check, check.ps1 3. adım (ADR-021). M0-12: gdtoolkit 4.5.0 sanal ortamda, gdlintrc, .claude/settings.json düzenleme kancası, check.ps1 4. adım (ADR-022). M0-13 gözden geçirmesi (ADR-023): debug araçları autoload değil, debug_layer.tscn; telefonda panel debug düğmesiyle (üçlü dokunuş çevirme yapardı); RunRng M1-08'e, coyote M2-08'e; M1 16 atomik göreve bölündü; web barındırma için D-12 eklendi (özel depo + ücretsiz GitHub Pages olmuyor); APP_ anahtar öneki; belgelerin eskimiş notları düzeltildi.",
     "next_steps": [
-      "Kullanıcı test sahnesini PC'de (editörde F5) ve telefonda dener; sahte parlamanın görünümüne itirazı varsa ADR-020 yeniden ele alınır.",
-      "M0-13: Planlama Gözden Geçirmesi (tüm belgeler birlikte okunur, çelişkiler düzeltilir, M1 atomik görevlere bölünür, docs_reviewed güncellenir) → kullanıcı oyunu PC'de ve telefonda açıp M0'ı onaylar (kapı).",
-      "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
+      "Kapı (M0-13): kullanıcı oyunu PC'de (editörde F5) ve telefonda açar; onaylarsa M0 user_approved = true, M0-13 [x], current = M1-01.",
+      "Kullanıcı planlama belgelerini okuma işini (P-04) bitirip itirazlarını iletir ya da kapatır.",
+      "M1-01: TuningConfig kaynağı ve default_tuning.tres."
     ]
   }
 }

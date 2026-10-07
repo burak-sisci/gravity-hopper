@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-09-28 · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-07 (M0 gözden geçirmesi, tasarım değişmedi) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -202,7 +202,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 ## 14. Çöküş duvarı (baskı)
 
-- Aşağıdan gelen, glitch'li bir veri yok oluşu. Oyuncunun altında sabit hızdan biraz daha hızlı yaklaşır.
+- Aşağıdan gelen, glitch'li bir veri yok oluşu. Oyuncunun tırmanış hızından biraz daha hızlı ilerler; aradaki fark aşağıdaki tablodaki "sürünme" hızıdır.
 
 | Olay | Etki (başlangıç) |
 | --- | --- |
