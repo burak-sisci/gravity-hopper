@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="0_main"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="1_hud"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
@@ -11,6 +12,8 @@ unique_name_in_owner = true
 [node name="UI" type="CanvasLayer" parent="."]
 unique_name_in_owner = true
 layer = 10
+
+[node name="Hud" parent="UI" instance=ExtResource("1_hud")]
 
 [node name="Debug" type="CanvasLayer" parent="."]
 unique_name_in_owner = true

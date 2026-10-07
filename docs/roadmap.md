@@ -90,7 +90,7 @@
   *Kabul:* Sonsuz ama basit bir engel akışı; aynı tohum aynı diziyi veriyor (günlükle).
 - [x] **M1-09** 🤖 `GameManager` tur döngüsü: başla → öl → anında yeniden başla (`run_started`, `player_died`, `run_ended`).
   *Kabul:* Ölümden yeni tura < 0,5 sn (günlük zamanlarıyla ölçülü).
-- [ ] **M1-10** 🤖 Minimal HUD (`scenes/ui/hud.tscn`, ayrı sahne, yalnızca sinyal dinler): yükseklik ve oturum rekoru; metinler TR/EN anahtarlarla.
+- [x] **M1-10** 🤖 Minimal HUD (`scenes/ui/hud.tscn`, ayrı sahne, yalnızca sinyal dinler): yükseklik ve oturum rekoru; metinler TR/EN anahtarlarla.
   *Kabul:* HUD dünyadaki hiçbir düğüme erişmiyor; sahne denetimi temiz.
 - [ ] **M1-11** 🤖 Canlı ayar paneli: `TuningConfig`'in `@export` alanlarından otomatik kaydırıcılar, "Kaydet" → `user://tuning_override.tres`. PC'de `1`, telefonda debug düğmesiyle açılır.
   *Kabul:* Oynarken değer değişiyor; kaydedilen dosyayı Claude okuyabiliyor.

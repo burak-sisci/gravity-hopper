@@ -208,6 +208,14 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 `main_menu`, `hud`, `results`, `shop` (yükseltmeler + izler), `settings`, `pause`, `about` (lisanslar). **Hiçbiri `World`'e erişmez**: hepsi `Events`'i dinler, niyetlerini `Events` ile bildirir.
 
+- **HUD (M1-10, `scenes/ui/hud.tscn`, `main.tscn`'de `UI/Hud`):**
+  - Sol üstte anlık yükseklik (`HUD_HEIGHT` = "%d m"), altında oturum rekoru (`HUD_BEST`). Rekor satırı ilk turdan sonra görünür.
+  - Dinlediği sinyaller: `run_started`, `height_changed`, `run_ended`.
+  - Metinler kodda `tr()` ile kurulduğu için Label'larda `auto_translate_mode = DISABLED`. Dil değişince `NOTIFICATION_TRANSLATION_CHANGED` ile yeniden yazılır.
+  - Kök `Control` `mouse_filter = IGNORE`'dur; HUD'un üstüne dokunuş çevirme yapar (denendi).
+  - Üst pay sabit 110 px; güvenli alan M6-01'de gelir.
+  - Oturum rekoru bellektedir; kalıcı rekor M4'te `Progression`'a taşınır.
+
 ## 6. Autoload'lar
 
 | Autoload | Görevi | Not |
