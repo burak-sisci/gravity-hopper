@@ -65,6 +65,8 @@ func _cycle_fps() -> void:
 ## denemeler günlükten (adb logcat) doğrulanır. Yeni olaylar ilgili görevde eklenir.
 func _connect_event_log() -> void:
 	Events.player_flipped.connect(_log_event.bind("player_flipped"))
+	Events.player_died.connect(func(cause: GameTypes.DeathCause) -> void:
+		_log_event("player_died cause=%s" % GameTypes.DeathCause.keys()[cause]))
 
 
 func _log_event(event_name: String) -> void:

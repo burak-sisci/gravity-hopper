@@ -84,7 +84,7 @@
   *Kabul:* Duvara varmadan hemen önce yapılan dokunuş kaybolmuyor; süre `TuningConfig`'ten değişiyor.
 - [x] **M1-06** 🤖 Ekran oranı testi: PC'de `6` tuşu pencereyi 16:9 → 20:9 → 4:3 arasında döndürür.
   *Kabul:* Her oranda oyuncunun üstündeki görüş mesafesi aynı (üç ekran görüntüsüyle ölçülü).
-- [ ] **M1-07** 🤖 Diken tehlikesi (pasif `Area2D`) + `Hurtbox` bileşeni → `Events.player_died(HAZARD)`.
+- [x] **M1-07** 🤖 Diken tehlikesi (pasif `Area2D`) + `Hurtbox` bileşeni → `Events.player_died(HAZARD)`.
   *Kabul:* Diken oyuncuyu tanımıyor; ölüm yalnızca sinyalle işleniyor; sahne denetimi temiz.
 - [ ] **M1-08** 🤖 `RunRng` (tohumlu RNG, `architecture.md` §8.2) + geçici engel yerleştirici: düz aralıklı dikenler, taraf `RunRng` ile seçilir. Dikenler tur başında oluşturulur ve geri dönüştürülür (tur sırasında `instantiate` yok). M2'de desen sistemiyle değişir.
   *Kabul:* Sonsuz ama basit bir engel akışı; aynı tohum aynı diziyi veriyor (günlükle).

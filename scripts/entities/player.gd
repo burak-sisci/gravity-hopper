@@ -3,7 +3,8 @@ extends CharacterBody2D
 ## Oyuncu: Enerji Çekirdeği (architecture.md §8.1). Sabit hızla tırmanır, aktif duvara doğru
 ## çekilir; dokunuş yerçekimini öbür duvara çevirir. Çevirme yalnızca duvara tutunurken olur.
 ## Girdi olayları yalnızca not edilir; karar bir sonraki fizik adımında verilir (.clauderules §5).
-## Çevirince Events.player_flipped yayar; kimseyi tanımaz.
+## Çevirince Events.player_flipped yayar. Hurtbox bir tehlikeye değince yalnızca
+## Events.player_died yayar ve donar; tehlikenin koduna dokunmaz (architecture.md §7.3).
 
 ## Ayarlar Run tarafından atanır (aşağı çağrı).
 var tuning: TuningConfig
@@ -13,10 +14,15 @@ var _gravity_dir: float = -1.0
 var _flip_requested: bool = false
 ## Dokunma tamponunda kalan süre (sn). Havadaki dokunuş bu süre içinde duvara değilirse uygulanır.
 var _buffer_left: float = 0.0
+var _alive: bool = true
+
+@onready var _body: CollisionShape2D = $Body
+@onready var _hurtbox: Hurtbox = $Hurtbox
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	_hurtbox.hit.connect(_on_hurtbox_hit)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -26,6 +32,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not _alive:
+		return
+	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
+	_hurtbox.set_size((_body.shape as RectangleShape2D).size * tuning.hurtbox_scale)
 	if _flip_requested:
 		_flip_requested = false
 		if is_on_wall():
@@ -57,6 +67,20 @@ func _physics_process(delta: float) -> void:
 ## Aktif duvar sağda mı (Run ve testler için).
 func is_gravity_right() -> bool:
 	return _gravity_dir > 0.0
+
+
+func is_alive() -> bool:
+	return _alive
+
+
+## Kalkan M2-12'de gelir; o zamana kadar her darbe ölümdür.
+func _on_hurtbox_hit() -> void:
+	if not _alive:
+		return
+	_alive = false
+	_flip_requested = false
+	_buffer_left = 0.0
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 
 
 func _flip() -> void:

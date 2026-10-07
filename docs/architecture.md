@@ -176,13 +176,24 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M1-04):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%Player` (`scenes/entities/player.tscn`, `Player`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M1-07):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
   - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
   - Görünür alanın altında kalan parça bir halka boyu yukarı taşınır ve `reset_physics_interpolation()` çağrılır.
 - **Kamera** M1-04'ten beri oyuncuyu izler (M1-03'te sabit hızla yükselen bir noktayı izliyordu).
+
+**Fizik katmanları** (`project.godot` → `layer_names`, M1-07):
+
+| Katman | Değer | Kimde | Neyi algılar (mask) |
+| --- | --- | --- | --- |
+| 1 `world` | 1 | Duvar parçaları (`StaticBody2D`) | — |
+| 2 `player` | 2 | Oyuncu gövdesi (`CharacterBody2D`) | `world` |
+| 3 `hazard` | 4 | Tehlikeler (`Area2D`, `monitoring = false`, pasif) | — |
+| — | 0 | Oyuncunun `Hurtbox`'ı (`Area2D`, `monitorable = false`) | `hazard` |
+
+Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi görevlerinde alır (M2-09, M2-10).
 
 ### 5.3 UI sahneleri (`scenes/ui/`)
 
@@ -244,6 +255,16 @@ Run (Node2D)                          scenes/levels/run.tscn
 4. `GameManager` dinler: `Run.stop()` (aşağı çağrı), `RunResult` oluşturur, `Progression.add_glimmers()`, `SaveManager.save_game()`, ardından `Events.run_ended.emit(result)`.
 5. Sonuç ekranı `run_ended`'i, `AudioManager` ise `player_died`'ı dinleyerek kendi işini yapar.
 6. Oyuncu "Tekrar"a dokunur → UI `Events.retry_requested` yayar → `GameManager` yeni turu **yarım saniyenin altında** başlatır.
+
+**Uygulama (M1-07):**
+
+- Adım 1–3 hazır:
+  - `scenes/entities/spike.tscn`: betiksiz `Area2D` (yalnızca şekil + görsel), en saf pasif tehlike.
+  - `Hurtbox` (`scripts/components/hurtbox.gd`): tehlike katmanındaki bir alana girince `hit` yayar.
+  - `Player._on_hurtbox_hit()`: oyuncu donar ve tek bir `player_died(HAZARD)` yayar.
+- Çarpışma kutusu her adımda gövde × `hurtbox_scale` boyutuna ayarlanır.
+- Ekransız deneme: karşı duvardaki diken öldürmedi, kendi duvarındaki diken bir kez öldürdü, oyuncu dondu, `GameManager` `RESULTS`'a geçti.
+- Adım 4 ve 6 (tur döngüsü) M1-09'da gelir.
 
 ## 8. Oynanış sistemleri
 
@@ -437,7 +458,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
   - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Şimdilik FPS görünümünü değiştirir; M1-11'de debug panelini açar.
   - M1-02'de sınandı: ekransız denemede `7` tuşu üç görünümü sırayla değiştirdi, düğmeye dokunuş çevirme sayılmadı, ekranın ortasına dokunuş ve boşluk sayıldı. Redmi'de de düğme FPS'yi açtı ve günlükte çevirme kaydı çıkmadı.
-  - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Şimdilik `player_flipped`; yeni olaylar ilgili görevde eklenir.
+  - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Şimdilik `player_flipped` ve `player_died cause=<NEDEN>`; yeni olaylar ilgili görevde eklenir.
   - Ders: `Viewport.push_input()` ile dokunuş taklit edilirken koordinat viewport biriminde verilecekse ikinci parametre `true` olmalı. Aksi hâlde pencere ölçeği (PC'de 450/1080) uygulanır ve nokta hedefini ıskalar.
 - **Canlı ayar paneli:** `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar (yeni bir ayar eklendiğinde panele kendiliğinden gelir).
   - "Kaydet" düğmesi değerleri `user://tuning_override.tres`'e yazar.

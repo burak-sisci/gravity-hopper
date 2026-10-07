@@ -44,6 +44,12 @@ window/handheld/orientation=1
 
 locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.tr.translation")
 
+[layer_names]
+
+2d_physics/layer_1="world"
+2d_physics/layer_2="player"
+2d_physics/layer_3="hazard"
+
 [physics]
 
 common/physics_interpolation=true
