@@ -15,10 +15,14 @@ func _init(new_seed: int) -> void:
 
 
 ## Tohum belirtilmeyen turlar için yeni bir tohum üretir (oynanışın kendisi değil, tohum seçimi).
+## 0 döndürmez: Run'da 0 "tohum verilmedi" anlamına gelir.
 static func make_seed() -> int:
 	var source: RandomNumberGenerator = RandomNumberGenerator.new()
 	source.randomize()
-	return source.randi()
+	var value: int = 0
+	while value == 0:
+		value = source.randi()
+	return value
 
 
 ## [0, 1) aralığında sayı.

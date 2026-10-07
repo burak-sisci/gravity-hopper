@@ -147,13 +147,22 @@ Main (Node)                           scenes/main.tscn
 
 `WorldEnvironment` yoktur: parlama nesne başına sahte parlamayla yapılır (§9, ADR-020).
 
-> **Şu anki içerik (M1-03):** `World/Run` (`scenes/levels/run.tscn`). M0-10'un `TapTest` ve `TapHint` sahneleri ana sahneden çıkarıldı ama dosyaları duruyor:
+> **Şu anki içerik (M1-09):** `World` boş başlar; `Main` her turda `scenes/levels/run.tscn`'den bir `Run` kurar. M0-10'un `TapTest` ve `TapHint` sahneleri ana sahneden çıkarıldı ama dosyaları duruyor:
 > - `scenes/debug/tap_test.tscn`: girdi kurallarının başvuru örneği.
 > - `scenes/ui/tap_hint.tscn`: FTUE'deki "dokun" eli ikonunun nabız davranışı için. FTUE metinsizdir (GDD §18).
 >
 > Şimdilik `UI` boş; HUD M1-10'da gelir.
 
-Sahne geçişlerini `GameManager` yönetir: `World` ve `UI` kaplarının içeriğini değiştirir. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
+**Sahne geçişleri: `GameManager` karar verir, `Main` uygular (ADR-026).** Autoload'lar sahne düğümlerine erişmediği için (.clauderules §3) `World` ve `UI` kaplarının içeriğini kök sahne `Main` (`scripts/main.gd`) değiştirir. `GameManager` tohumu seçer, durumu tutar, sonucu (`RunResult`) oluşturur ve `Events` ile duyurur. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
+
+**Tur döngüsü (M1-09):**
+
+1. `Main._start_run()`: varsa eski `Run`'ı ağaçtan çıkarıp `queue_free()` eder. `GameManager.new_run_seed()` ile yeni bir `Run` kurar, `World`'e ekler ve `GameManager.begin_run(tohum, sektör)` çağırır.
+2. `begin_run` durumu `RUNNING` yapar ve `Events.run_started` yayar.
+3. `Player` ölünce `GameManager` `RunResult` oluşturur (yükseklik `Events.height_changed`'den), durumu `RESULTS` yapar ve `Events.run_ended` yayar.
+4. M1 geçici akışı: `Main`, `run_ended`'den 0,35 sn sonra yeni tur kurar. M5'te sonuç ekranı gelir; "Tekrar" düğmesi `Events.retry_requested` yayar, `Main` bunu zaten dinliyor.
+
+Ölçüm: ekransız denemede ölümden yeni tura 22 kare (0,37 sn); Redmi'de 7 turda 348–360 ms.
 
 ### 5.2 Oyun dünyası
 
@@ -204,7 +213,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | Autoload | Görevi | Not |
 | --- | --- | --- |
 | `Events` | Global sinyal veri yolu | Yalnızca sinyal tanımları, mantık yok |
-| `GameManager` | Uygulama durum makinesi, tur başlatma/bitirme, sahne geçişleri | Turu `Run`'a aşağı çağrıyla başlatır |
+| `GameManager` | Uygulama durum makinesi; tur tohumu, `run_started` / `run_ended` duyuruları, `RunResult` | Sahneye dokunmaz; sahne geçişlerini `Main` uygular (§5.1, ADR-026) |
 | `SaveManager` | Kayıt dosyalarını okuma/yazma, şifreleme, sürüm geçişi | Yalnızca kalıcılık; oyun kuralı bilmez |
 | `Progression` | Glimmer cüzdanı, yükseltme seviyeleri, izler, açılmış sektörler | Veriyi `SaveManager` ile saklar |
 | `Settings` | Ses, müzik, titreşim, dil, efekt kalitesi | `user://settings.cfg` |
@@ -226,14 +235,14 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sinyal | Parametreler | Yayan | Dinleyen |
 | --- | --- | --- | --- |
-| `run_started` | `run_seed: int, start_sector: int` | GameManager | HUD, AudioManager |
+| `run_started` | `run_seed: int, start_sector: int` | GameManager (`Main` turu kurduktan sonra `begin_run` ile) | HUD, AudioManager |
 | `run_ended` | `result: RunResult` | GameManager | Sonuç ekranı |
 | `pause_changed` | `paused: bool` | GameManager | HUD, AudioManager |
 | `player_died` | `cause: GameTypes.DeathCause` (HAZARD, FELL, WALL) | Player, PressureSystem | GameManager, HUD, AudioManager |
 | `player_revived` | — | GameManager | HUD, AudioManager |
 | `player_flipped` | — | Player | AudioManager (ses, titreşim) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
-| `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD |
+| `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
 | `sector_entered` | `index: int` | Run | HUD (afiş), AudioManager (müzik) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int` | Run | HUD, AudioManager |
@@ -264,7 +273,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - `Player._on_hurtbox_hit()`: oyuncu donar ve tek bir `player_died(HAZARD)` yayar.
 - Çarpışma kutusu her adımda gövde × `hurtbox_scale` boyutuna ayarlanır.
 - Ekransız deneme: karşı duvardaki diken öldürmedi, kendi duvarındaki diken bir kez öldürdü, oyuncu dondu, `GameManager` `RESULTS`'a geçti.
-- Adım 4 ve 6 (tur döngüsü) M1-09'da gelir.
+- Adım 4 ve 6 (tur döngüsü) M1-09'da geldi (§5.1). Adım 4'teki `Run.stop()` yerine `Main` eski turu kaldırır; kayıt (`SaveManager`) ve Glimmer M4'te eklenir.
 
 ## 8. Oynanış sistemleri
 
@@ -629,6 +638,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
 | ADR-024 | 2026-10-07 | `TuningConfig` değerleri GDD birimlerinde (m, m/sn, sn) tutulur; kod `to_px()` ile çevirir. Her alan `@export_range` ile aralık ve birim taşır; geçerli değerler `.tres`'tedir | Kaydırıcılar tasarım belgesiyle aynı dili konuşur (ör. 12 m/sn = S1). Ayar paneli alanları elle tanımlamadan kurar |
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
+| ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 
 ## 18. Açık teknik sorular
 

@@ -67,6 +67,12 @@ func _connect_event_log() -> void:
 	Events.player_flipped.connect(_log_event.bind("player_flipped"))
 	Events.player_died.connect(func(cause: GameTypes.DeathCause) -> void:
 		_log_event("player_died cause=%s" % GameTypes.DeathCause.keys()[cause]))
+	Events.run_started.connect(func(run_seed: int, start_sector: int) -> void:
+		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
+	Events.run_ended.connect(func(result: RunResult) -> void:
+		_log_event("run_ended height=%d cause=%s" % [
+			result.height_m, GameTypes.DeathCause.keys()[result.cause],
+		]))
 
 
 func _log_event(event_name: String) -> void:

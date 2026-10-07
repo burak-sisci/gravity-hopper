@@ -1,15 +1,12 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="0_main"]
-[ext_resource type="PackedScene" path="res://scenes/levels/run.tscn" id="1_run"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
 
 [node name="World" type="Node2D" parent="."]
 unique_name_in_owner = true
-
-[node name="Run" parent="World" instance=ExtResource("1_run")]
 
 [node name="UI" type="CanvasLayer" parent="."]
 unique_name_in_owner = true
