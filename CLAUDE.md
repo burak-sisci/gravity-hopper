@@ -65,6 +65,7 @@ Her kilometre taşının sonunda ve kullanıcı "planlama gözden geçir" dediğ
 - İşletim sistemi: Windows 11. Proje yolu: `C:\Users\burak\Desktop\gravity-hopper` (boşluksuz; bkz. ADR-012)
 - `<godot>` (Claude'un kullandığı konsol sürümü): `C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe` — kullanıcının editörü aynı klasörde
 - **Tam kontrol (her görevde):** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1` → `TEMİZ` / `SORUN VAR` (içe aktarma + uyarılar hata sayılarak tüm betikler)
+- **Telefona yükleme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy.ps1 -Screenshot <scratchpad>/x.png` (dışa aktar + kabloyla yükle + başlat + ekran görüntüsü + Godot günlüğü)
 - Oyunu çalıştırma: `<godot> --path .`
 - Kare yakalama (Movie Maker): `<godot> --path . --write-movie <scratchpad>/frame.png --fixed-fps 60 --quit-after 120`
 - JDK 17: `C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot` · Android SDK: `%LOCALAPPDATA%\Android\Sdk`

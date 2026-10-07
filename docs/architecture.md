@@ -44,6 +44,9 @@ rendering/renderer/rendering_method.mobile="gl_compatibility"
 physics/common/physics_ticks_per_second=60
 physics/common/physics_interpolation=true
 debug/gdscript/warnings/untyped_declaration=2    ; Error
+application/run/main_scene="res://scenes/main.tscn"                 ; M0-08
+rendering/environment/defaults/default_clear_color=Color(0.039, 0.055, 0.122, 1)  ; koyu lacivert
+rendering/textures/vram_compression/import_etc2_astc=true          ; Android dışa aktarma için zorunlu
 ```
 
 ## 3. Ekran, kamera ve görüş kuralı
@@ -386,15 +389,19 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ## 14. Android ve dağıtım
 
-- Dışa aktarma ön ayarı "Android", **Runnable** olarak işaretlenir. Redmi'ye tek tıkla yükleme bununla yapılır.
+- Dışa aktarma ön ayarı "Android" (`export_presets.cfg`, depoda), **Runnable** olarak işaretli: arm64-v8a + armeabi-v7a (eski 32-bit cihazlar için), immersive mod, dışlama filtresi `tools/*, tests/*`.
+  - **Kullanıcı:** telefon bağlıyken editörün sağ üstündeki Android simgesine tek tık.
+  - **Claude:** `tools/deploy.ps1`, yani dışa aktarma + `adb install` + başlatma + ekran görüntüsü + Godot günlüğündeki hatalar.
+- Dışa aktarma şablonları (4.7.2, SHA512 ile doğrulandı): `%APPDATA%\Godot\export_templates\4.7.2.stable\`. Godot sürümü yükseltilirse şablonlar da aynı sürüme yükseltilir.
+- Geçici paket adı `com.gravityhopper.dev`; kalıcı ad Play'e ilk yüklemeden önce D-06'da seçilir. Paket adı değişirse telefondaki eski uygulama ayrı bir uygulama olarak kalır ve elle silinir.
 - **Xiaomi / HyperOS notu:** Geliştirici seçeneklerinde hem "USB hata ayıklama" hem "USB üzerinden yükle" açık olmalı. İkincisi Xiaomi hesabı gerektirir; açılmıyorsa Wi-Fi kapatılıp mobil veriyle denenir. Her yüklemede telefonda birkaç saniyelik bir onay ekranı çıkabilir.
-- **Kablosuz yükleme (Android 11+ kablosuz hata ayıklama)** — 2026-10-06 bulguları:
+- **Kablosuz yükleme — ERTELENDİ (ADR-019, 2026-10-07).** Kablolu yükleme kullanılıyor; çok gerekirse aşağıdaki bulgulardan devam edilir. 2026-10-06 bulguları:
   - Eşleştirme (`adb pair`) bir kez yapılır ve ağdan bağımsızdır. Her yeni Wi-Fi ağında telefonda düğme yeniden açılır; bağlantı portu her açılışta değişir.
   - Telefon yalnızca Wi-Fi **istemcisi** iken çalışır; telefon paylaşım (hotspot) açtığında devre dışıdır.
   - Okul ağı (`sdu.edu.tr`): telefon ve bilgisayar farklı alt ağlarda, TCP erişimi yok → kablosuz çalışmaz.
   - Seçenekler: ev Wi-Fi'ı (önerilen) · bilgisayarın "Mobil etkin nokta"sı açılıp telefon ona bağlanır · kablo (her ağda yedek) · yalnızca mobil veri varsa telefon paylaşımı + eski yöntem (`adb tcpip 5555`, telefon her yeniden başladığında bir kez kablo gerekir).
   - Godot hata ayıklama bağlantısı için önce Remote Host = localhost (adb tüneli) denenecek; çalışırsa ağ değişince Godot ayarı gerekmez (M0-08).
-- Debug anahtarı ⚠️ (S-04: Godot 4.7'de otomatik mi oluşuyor, M0-08'de doğrulanacak).
+- Debug anahtarı: Godot 4.7 kendisi oluşturur (`%APPDATA%\Godot\keystores\debug.keystore`). Java ve Android SDK yollarını da editör ayarlarına kendisi yazdı (S-04).
 - **Yayın anahtarı** (upload keystore) M8'de oluşturulur:
   - **Depoya konmaz.**
   - İki ayrı yerde yedeklenir.
@@ -448,6 +455,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | ADR-016 | 2026-10-01 | `godot-debug-menu` yalnızca debug build'de (D-10) | Parlama maliyeti (M0-09) ve performans (M6) ölçümü |
 | ADR-017 | 2026-10-01 | Lisans politikası genişletildi (kod: MIT/BSD/Apache-2.0/zlib, font: OFL); eklentiler sürümü sabit ve depoda; dış repolar klonlanmaz, yalnızca gereken parça alınır; "bitti" için kanıt; açık sahne güvenliği; her oturumda yüklenen talimatlar ~200 satırı geçmez (D-11) | Kaliteli araçların çoğu MIT, fontların çoğu OFL; gereksiz bağlam ağırlığı ve Godot'nun yabancı dosyaları içe aktarması önlenir |
 | ADR-018 | 2026-10-06 | Üretilen `.translation` dosyaları depoya konur; dil önceliği: seçilen → cihaz → İngilizce | Yeni kopyada ilk içe aktarma hatasız olsun; Türkçe olmayan cihazlarda İngilizce |
+| ADR-019 | 2026-10-07 | Telefona yükleme kabloyla; kablosuz yükleme ertelendi (kullanıcı kararı) | Okul ağı cihazlar arası erişimi engelliyor; kablo her ağda çalışıyor. Gerekirse §14'teki bulgulardan devam edilir |
 
 ## 18. Açık teknik sorular
 
@@ -456,7 +464,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | S-01 | Compatibility renderer'da 2D glow Redmi'de nasıl görünüyor, maliyeti ne? | M0-09 |
 | S-02 | HUD'u parlamanın dışında tutmak `background_canvas_max_layer` ile mümkün mü? | M0-09 |
 | S-03 | Android'de müzik kayma eşiği ve gecikme telafisi | M2-05 / M3 |
-| S-04 | Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu? | M0-08 |
+| S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
 | S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi | M1 |

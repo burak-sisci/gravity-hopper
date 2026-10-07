@@ -2,13 +2,13 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-10-06",
+  "updated": "2026-10-07",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M0",
-    "task": "M0-08",
-    "task_title": "Android dışa aktarma + tek tıkla (kablolu ve kablosuz) yükleme",
+    "task": "M0-09",
+    "task_title": "Parlama teknik denemesi (S-01, S-02): godot-debug-menu, WorldEnvironment glow vs sahte parlama, Redmi ölçümü",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08"],
 
   "blockers": [],
 
@@ -62,7 +62,8 @@
       "id": "D-06",
       "question": "Paket adı ve yayıncı/stüdyo adı (ör. com.<studyo>.gravityhopper). Play'e ilk yüklemeden sonra değiştirilemez.",
       "needed_by": "M8-01 (erken karar verilirse iyi olur)",
-      "recommendation": "Kısa, kalıcı bir stüdyo adı seç."
+      "recommendation": "Kısa, kalıcı bir stüdyo adı seç.",
+      "note": "Şimdilik geçici paket adı com.gravityhopper.dev kullanılıyor (export_presets.cfg)."
     }
   ],
 
@@ -70,7 +71,7 @@
     { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "open", "fallback": "Shader/toplamsal karışımla sahte parlama" },
     { "id": "S-02", "question": "HUD'u parlamadan background_canvas_max_layer ile ayırmak", "resolve_in": "M0-09", "status": "open" },
     { "id": "S-03", "question": "Android'de müzik kayma eşiği ve gecikme telafisi", "resolve_in": "M2-05", "status": "open" },
-    { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "open" },
+    { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "resolved", "answer": "Evet: %APPDATA%/Godot/keystores/debug.keystore otomatik oluştu; Java ve SDK yolları da editör ayarlarına kendiliğinden yazıldı." },
     { "id": "S-05", "question": "Play Games ve AdMob eklentilerinin 4.7 uyumlu sürümleri", "resolve_in": "M7", "status": "open" },
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-11", "status": "open" },
     { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-03", "status": "open" },
@@ -86,7 +87,7 @@
       "console_path": "C:/Users/burak/Godot/Godot_v4.7.2-stable_win64_console.exe",
       "editor_path": "C:/Users/burak/Godot/Godot_v4.7.2-stable_win64.exe",
       "verified": true,
-      "editor_launched_once": false,
+      "editor_launched_once": true,
       "editor_settings": "%APPDATA%/Godot/editor_settings-4.7.tres (ilk headless içe aktarmada oluştu; 'keystores' klasörü de var → S-04 için M0-08'de bakılacak)"
     },
     "git": { "version": "2.55.0", "identity_set": true },
@@ -98,6 +99,7 @@
       "components": ["platform-tools (adb 1.0.41)", "build-tools 35.0.1", "platforms android-35", "ndk 28.1.13356709", "cmake 3.10.2.4988404", "cmdline-tools latest"]
     },
     "python": { "version": "3.12.10" },
+    "export_templates": { "version": "4.7.2.stable", "path": "%APPDATA%/Godot/export_templates/4.7.2.stable", "sha512_verified": true },
     "test_device": {
       "model": "Redmi Note 12 (4G, 23021RAAEG, tapas)",
       "role": "referans (hedef değil)",
@@ -108,8 +110,9 @@
       "ram_gb": 8,
       "screen": "1080x2400 (20:9), 440 dpi, 60/90/120 Hz",
       "abi": "arm64-v8a",
-      "install_via_usb_verified": false,
+      "install_via_usb_verified": true,
       "wireless_paired": false,
+      "wireless_status": "deferred (ADR-019, kullanıcı kararı 2026-10-07)",
       "wireless_notes": "Okul ağında (sdu.edu.tr) telefon ve PC farklı alt ağlarda, TCP erişimi yok → kablosuz eşleştirme başarısız (2026-10-06). Eşleştirme evde ya da PC Mobil etkin noktası üzerinden yapılacak. Telefon hotspot açınca kablosuz hata ayıklama çalışmaz (Android kısıtı)."
     }
   },
@@ -128,11 +131,10 @@
   },
 
   "last_session": {
-    "date": "2026-10-06",
-    "summary": "M0-07 tamamlandı: localization/translations.csv (keys,en,tr; APP_TITLE, UI_TAP), project.godot çeviri kaydı, Settings ayarları user://settings.cfg'ye yazıp okuyor; dil önceliği seçilen → cihaz → İngilizce (ADR-018). Doğrulama: 12 denemenin hepsi geçti (tr/en geçişi, resolve_language durumları, set_language → settings_changed, kaydet/oku); check.ps1 TEMİZ. Üretilen .translation dosyaları depoya konuyor. Kullanıcı B planını (sağlık kontrolü + oturum kancası) iptal etti. Kablosuz eşleştirme okul ağında başarısız; bulgular architecture.md §14'te.",
+    "date": "2026-10-07",
+    "summary": "Kullanıcı kablosuz yüklemeyi erteledi, kabloyla devam (ADR-019). M0-08 tamamlandı: dışa aktarma şablonları 4.7.2 indirildi (1,2 GB, SHA512 doğrulandı) ve kuruldu; Godot Java/SDK yollarını ve debug anahtarını kendisi oluşturmuştu (S-04 çözüldü); export_presets.cfg (Android, runnable, arm64+armv7, immersive, tools/tests dışlanır, geçici paket com.gravityhopper.dev); Android için import_etc2_astc açıldı; scenes/main.tscn iskeleti (World, UI, Debug) ana sahne, varsayılan arka plan koyu lacivert. Debug APK 55 MB; Redmi'ye kabloyla yüklendi, açıldı, ekran görüntüsü tam ekran lacivert; Godot günlüğü temiz (Compatibility, Adreno 610). tools/deploy.ps1 yazıldı ve uçtan uca sınandı.",
     "next_steps": [
-      "M0-08: Android dışa aktarma (editör Java/SDK yolları, Runnable ön ayar, debug anahtarı S-04, dışlama filtreleri) ve Redmi'ye kablolu tek tık yükleme; kablosuz eşleştirme uygun bir ağda (ev ya da PC Mobil etkin noktası).",
-      "M0-08 kullanıcının editörü açmasını ve telefonu bağlamasını gerektiriyor.",
+      "M0-09: godot-debug-menu eklentisi (sürümü sabit), WorldEnvironment glow ile sahte parlama karşılaştırması, Redmi'de kare süresi ölçümü, ADR.",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }
