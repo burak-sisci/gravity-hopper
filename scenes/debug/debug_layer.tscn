@@ -1,6 +1,19 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/debug/debug_layer.gd" id="1_dbg"]
+[ext_resource type="Script" path="res://scripts/debug/tuning_panel.gd" id="2_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.04, 0.06, 0.11, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.5, 0.7, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="DebugLayer" type="Control"]
 process_mode = 3
@@ -22,4 +35,107 @@ focus_mode = 0
 theme_override_font_sizes/font_size = 30
 text = "DBG"
 
+[node name="TuningPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 270.0
+offset_right = -24.0
+offset_bottom = 1240.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("2_panel")
+
+[node name="Margin" type="MarginContainer" parent="TuningPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="TuningPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="TuningPanel/Margin/VBox"]
+layout_mode = 2
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Ayar paneli"
+
+[node name="Scroll" type="ScrollContainer" parent="TuningPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="TuningPanel/Margin/VBox/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Status" type="Label" parent="TuningPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+auto_translate_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.9, 0.7, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="Buttons" type="HBoxContainer" parent="TuningPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SaveButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Kaydet"
+
+[node name="ResetButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Sıfırla"
+
+[node name="PauseButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Duraklat"
+
+[node name="FpsButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "FPS"
+
+[node name="CloseButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Kapat"
+
 [connection signal="pressed" from="DebugButton" to="." method="_on_debug_button_pressed"]
+[connection signal="fps_requested" from="TuningPanel" to="." method="_cycle_fps"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/SaveButton" to="TuningPanel" method="_on_save_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/ResetButton" to="TuningPanel" method="_on_reset_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/PauseButton" to="TuningPanel" method="_on_pause_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/FpsButton" to="TuningPanel" method="_on_fps_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/CloseButton" to="TuningPanel" method="_on_close_pressed"]

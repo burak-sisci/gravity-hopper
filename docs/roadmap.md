@@ -92,7 +92,7 @@
   *Kabul:* Ölümden yeni tura < 0,5 sn (günlük zamanlarıyla ölçülü).
 - [x] **M1-10** 🤖 Minimal HUD (`scenes/ui/hud.tscn`, ayrı sahne, yalnızca sinyal dinler): yükseklik ve oturum rekoru; metinler TR/EN anahtarlarla.
   *Kabul:* HUD dünyadaki hiçbir düğüme erişmiyor; sahne denetimi temiz.
-- [ ] **M1-11** 🤖 Canlı ayar paneli: `TuningConfig`'in `@export` alanlarından otomatik kaydırıcılar, "Kaydet" → `user://tuning_override.tres`. PC'de `1`, telefonda debug düğmesiyle açılır.
+- [x] **M1-11** 🤖 Canlı ayar paneli: `TuningConfig`'in `@export` alanlarından otomatik kaydırıcılar, "Kaydet" → `user://tuning_override.tres`. PC'de `1`, telefonda debug düğmesiyle açılır.
   *Kabul:* Oynarken değer değişiyor; kaydedilen dosyayı Claude okuyabiliyor.
 - [ ] **M1-12** 🤖 Debug tuşları: ölümsüzlük (`2`), çarpışma kutuları (`3`), yavaş çekim (`4`), anında yeniden başlama (`R`); telefonda debug panelinde aynı düğmeler.
   *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.

@@ -480,13 +480,24 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Oyun dünyasını tanımaz. İsteklerini `Events` sinyalleriyle iletir; bunlar M1'de eklenir ve kataloğa yazılır.
   - Kök `Control` tam ekrandır ama `mouse_filter = IGNORE` taşır, yani dokunuşları yutmaz. `process_mode = ALWAYS` olduğu için oyun duraklatılınca da çalışır.
   - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
-  - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Şimdilik FPS görünümünü değiştirir; M1-11'de debug panelini açar.
+  - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Ayar panelini açıp kapatır (M1-11); FPS görünümü panelin içindeki düğmede ve `7` tuşunda.
   - M1-02'de sınandı: ekransız denemede `7` tuşu üç görünümü sırayla değiştirdi, düğmeye dokunuş çevirme sayılmadı, ekranın ortasına dokunuş ve boşluk sayıldı. Redmi'de de düğme FPS'yi açtı ve günlükte çevirme kaydı çıkmadı.
   - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Şimdilik `player_flipped` ve `player_died cause=<NEDEN>`; yeni olaylar ilgili görevde eklenir.
   - Ders: `Viewport.push_input()` ile dokunuş taklit edilirken koordinat viewport biriminde verilecekse ikinci parametre `true` olmalı. Aksi hâlde pencere ölçeği (PC'de 450/1080) uygulanır ve nokta hedefini ıskalar.
-- **Canlı ayar paneli:** `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar (yeni bir ayar eklendiğinde panele kendiliğinden gelir).
-  - "Kaydet" düğmesi değerleri `user://tuning_override.tres`'e yazar.
-  - PC'de Claude bu dosyayı doğrudan okuyup onaylanan değerleri kalıcı hale getirebilir.
+- **Canlı ayar paneli** (M1-11, `scripts/debug/tuning_panel.gd`, debug katmanında `%TuningPanel`): `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar. Yeni bir ayar eklendiğinde panele kendiliğinden gelir; aralık, adım ve birim `@export_range`'den okunur.
+  - **Açma:** PC'de `1`, telefonda DBG düğmesi. Panel ekranın üstünden 270–1240 px arasındadır; oyuncu her zaman 1400 px'te olduğu için açıkken de oynanabilir.
+  - Panelin üstüne dokunuş çevirme yapmaz, altına dokunuş yapar (denendi).
+  - **Canlı etki:** Panel, `Run`'ın kullandığı `default_tuning.tres` örneğinin kendisini düzenler. Godot `res://` kaynağını bellekte tek örnek tutar; değişiklik anında etki eder, yeni turlarda da sürer ve panelin dünyaya erişmesi gerekmez.
+  - **Düğmeler:**
+    - Kaydet: `user://tuning_override.tres`'e yazar.
+    - Sıfırla: varsayılanları dosyadan yeniden yükler ve kayıt dosyasını siler.
+    - Duraklat / Devam: `get_tree().paused`; debug katmanı `ALWAYS` olduğu için çalışır.
+    - FPS ve Kapat.
+  - **Açılış:** Debug build'de kayıt dosyası varsa değerleri paylaşılan örneğe kopyalanır. Bu, ilk turdan önce olur, çünkü `Main` debug katmanını turdan önce yükler.
+  - **Claude dosyayı okur:**
+    - PC: `%APPDATA%\Godot\app_userdata\Gravity Hopper\tuning_override.tres`.
+    - Telefon: `adb shell run-as com.gravityhopper.dev cat files/tuning_override.tres` (debug paketi `run-as`'a izin veriyor; M1-11'de denendi).
+  - Ekransız deneme (13 durum): satırların kurulması, canlı etki (15 m/sn = 750 px/sn), kaydetme, yeni turda korunma, sıfırlama, açılışta kayıtlı dosyanın uygulanması. Redmi'de kaydırıcı → Kaydet → dosya okundu → Sıfırla → dosya silindi.
 - **PC tuşları** (M1'de kesinleşecek):
 
   | Tuş | İşlev | Görev |
@@ -507,7 +518,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - **Performans katmanı:** `godot-debug-menu` eklentisi (MIT): FPS, kare süresi grafikleri, CPU süresi. GPU süresi Android'de (GLES) ölçülemiyor (`-1`); onun yerine §16'daki GPU doluluk sayacı kullanılır.
   - Eklentinin yalnızca çalışma zamanı parçası alındı; editör eklentisi (`plugin.gd`) alınmadı, çünkü kendini autoload olarak ekliyor ve yayın sürümüne de girerdi.
   - Yükleme: Debug katmanı onu `load("res://addons/debug_menu/debug_menu.tscn")` ile örnekler (M1-02). Telefonda okunabilsin diye `CanvasLayer` 2× büyütülüp sola kaydırılır (örnek: `glow_bench.gd` → `_add_debug_menu`). Görünüm `style` özelliğiyle seçilir: 0 gizli, 1 kısa, 2 ayrıntılı.
-  - `7` tuşu ve telefondaki debug düğmesi görünümü gizli → kısa → ayrıntılı sırasıyla değiştirir (M1-02). Eklentinin kendi kısayolu F3'tür.
+  - `7` tuşu ve ayar panelindeki "FPS" düğmesi görünümü gizli → kısa → ayrıntılı sırasıyla değiştirir. Eklentinin kendi kısayolu F3'tür.
   - Bilinen kusur: Ayrıntılı görünümdeki uzun sürücü bilgisi satırı 2× büyütmede ekranın soluna taşar. Yalnızca debug ekranını etkiler.
 
 ### 13.1 Geliştirici araçları (oyunun dışında)

@@ -19,8 +19,12 @@ var _key_actions: Dictionary[int, Callable] = {}
 var _debug_menu: CanvasLayer
 var _aspect_index: int = 0
 
+@onready var _tuning_panel: Control = %TuningPanel
+
 
 func _ready() -> void:
+	_key_actions[KEY_1] = _toggle_tuning_panel
+	_key_actions[KEY_KP_1] = _toggle_tuning_panel
 	_key_actions[KEY_7] = _cycle_fps
 	_key_actions[KEY_KP_7] = _cycle_fps
 	_key_actions[KEY_6] = _cycle_aspect
@@ -42,9 +46,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		action.call()
 
 
-## Telefondaki debug düğmesi. Şimdilik FPS'yi değiştirir; M1-11'de debug panelini açar.
+## Telefondaki debug düğmesi ayar panelini açıp kapatır (FPS panelin içindeki düğmede).
 func _on_debug_button_pressed() -> void:
-	_cycle_fps()
+	_toggle_tuning_panel()
+
+
+func _toggle_tuning_panel() -> void:
+	_tuning_panel.visible = not _tuning_panel.visible
 
 
 ## Pencereyi sıradaki ekran oranına getirir. Telefonda pencere boyutu değişmez, tuş etkisizdir.
