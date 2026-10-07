@@ -60,6 +60,10 @@ rendering/textures/vram_compression/import_etc2_astc=true          ; Android dı
   - `GameCamera.follow(hedef_y, lookahead_px)` kamerayı her fizik adımında konumlar; görünür alanın üst kenarı = hedef − ileri görüş. Koridorun ortası dünyada x = 0'dır, kamera yatayda hep onu ortalar.
   - Değerler her adımda `TuningConfig`'ten okunur.
   - Redmi'de 60 Hz fizik + 120 Hz ekranda kamera her karede tam 5 px ilerledi; fizik ara değerlemesi Camera2D ile çalışıyor, titreme yok.
+- **Ekran oranı denemesi (M1-06):** PC'de `6` tuşu (debug katmanı) pencereyi 450×800 (16:9) → 450×1000 (20:9) → 600×800 (4:3) arasında döndürür; telefonda etkisizdir.
+  - Ekranlı denemede üç oranda da oyuncunun üstü tam 1400 px (28 m) çıktı.
+  - Ekran görüntülerinde elmas üçünde de y = 567–598 aralığındaydı.
+  - 20:9'da fazla dikey alan (+200 px) oyuncunun altına, 4:3'te fazla yatay alan (görünür alan 1440 px) yanlara gitti.
 - **Dünyada `Control` kullanılmaz.** `ColorRect` ya da `Label` gibi arayüz düğümleri dokunuşları yutar; o noktadaki dokunuş çevirme sayılmaz. Dünya görselleri `Polygon2D` / `Line2D` / `Sprite2D`'dir.
 - **UI:** Control düğümleri anchor ile yerleşir. Güvenli alan (çentik, yuvarlak köşe) `DisplayServer.get_display_safe_area()` ile hesaplanıp kök UI'ye kenar boşluğu olarak uygulanır.
 - **Birim:** 1 m = 50 px (`TuningConfig.PX_PER_M`). GDD'deki tüm metre değerleri bu ölçeğe göredir.
