@@ -258,7 +258,15 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Dokunuş `_unhandled_input`'ta yalnızca not edilir; çevirme kararı sonraki `_physics_process`'te verilir.
   - Başlangıç x = 0'dır; karakter sol duvara düşer. Gövde 60×80 px dikdörtgendir (1,2 × 1,6 m), görseli beyaz elmas.
   - `Run`, `process_physics_priority = 1` ile oyuncudan sonra çalışır; böylece kamera o adımın konumunu izler.
-  - Ekransız denemede 9 durum geçti; Redmi'de art arda iki hızlı dokunuştan yalnızca biri çevirme yaptı (ikincisi havadaydı).
+  - Ekransız denemede 9 durum geçti; Redmi'de art arda iki hızlı dokunuştan yalnızca biri çevirme yaptı (ikincisi havadaydı, tampon öncesi).
+- **Dokunma tamponu (M1-05):**
+  - Havadaki dokunuş `_buffer_left = input_buffer_time` olarak saklanır. Her adımda yatay hareketten sonra karakter duvara değmişse çevirme hemen uygulanır; değmemişse süre azalır.
+  - Geçiş başlangıç değerleriyle 22 kare (0,37 sn) sürüyor.
+  - Ekransız deneme:
+    - İnişten 4 kare önceki dokunuş inişte uygulandı.
+    - İnişten 0,2 sn önceki dokunuş yok sayıldı.
+    - `input_buffer_time = 0` iken 4 kare önceki dokunuş da yok sayıldı; yani süre ayardan geliyor.
+  - Redmi'de havadaki ikinci dokunuş dört denemede de inişte uygulandı; iki çevirmenin arası ≈ 350 ms, yani bir geçiş süresi.
 - **Koridordan çıkış** (duvar boşluğundan düşme): `player_died(FELL)`.
 - **Hurtbox** görselden küçüktür (başlangıç %70).
 - **Girdi:** `_unhandled_input` içinde işlenir, böylece UI düğmelerine dokunmak çevirme yapmaz.
@@ -488,6 +496,9 @@ Run (Node2D)                          scenes/levels/run.tscn
 - Dışa aktarma ön ayarı "Android" (`export_presets.cfg`, depoda), **Runnable** olarak işaretli: arm64-v8a + armeabi-v7a (eski 32-bit cihazlar için), immersive mod, dışlama filtresi `tools/*, tests/*`.
   - **Kullanıcı:** telefon bağlıyken editörün sağ üstündeki Android simgesine tek tık.
   - **Claude:** `tools/deploy.ps1`, yani dışa aktarma + `adb install` + başlatma + ekran görüntüsü + Godot günlüğündeki hatalar.
+  - **adb sunucusu tuzağı (M1-05):** Sunucu kapalıyken bir adb komutu onu başlatır ve sunucu, o komutun çıktı borusunu miras alıp hiç kapatmaz. Komut PowerShell borusuna bağlıysa (`| Select-Object`) çağıran sonsuza kadar bekler.
+    - Önlem 1: `deploy.ps1` önce sunucuyu `Start-Process ... -PassThru` + `WaitForExit()` ile borudan bağımsız başlatır. `-Wait` kullanılmaz; PowerShell 5.1'de alt süreçleri de bekler.
+    - Önlem 2: `deploy.ps1`'in çıktısı boruya bağlanmaz. Sunucu dışa aktarma ya da yükleme sırasında yeniden doğarsa yalnızca boruya bağlı çağrı takılıyor; düz çağrı bitiyor (denendi).
 - Dışa aktarma şablonları (4.7.2, SHA512 ile doğrulandı): `%APPDATA%\Godot\export_templates\4.7.2.stable\`. Godot sürümü yükseltilirse şablonlar da aynı sürüme yükseltilir.
 - Geçici paket adı `com.gravityhopper.dev`; kalıcı ad Play'e ilk yüklemeden önce D-06'da seçilir. Paket adı değişirse telefondaki eski uygulama ayrı bir uygulama olarak kalır ve elle silinir.
 - **Xiaomi / HyperOS notu:** Geliştirici seçeneklerinde hem "USB hata ayıklama" hem "USB üzerinden yükle" açık olmalı. İkincisi Xiaomi hesabı gerektirir; açılmıyorsa Wi-Fi kapatılıp mobil veriyle denenir. Her yüklemede telefonda birkaç saniyelik bir onay ekranı çıkabilir.

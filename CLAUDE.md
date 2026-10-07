@@ -67,7 +67,7 @@ Her kilometre taşının sonunda ve kullanıcı "planlama gözden geçir" dediğ
 - `<godot>` (Claude'un kullandığı konsol sürümü): `C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe` — kullanıcının editörü aynı klasörde
 - **Tam kontrol (her görevde):** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1` → `TEMİZ` / `SORUN VAR` (içe aktarma + uyarılar hata sayılarak tüm betikler + sahne denetimi + gdlint). `.gd` düzenlemelerini ayrıca bir kanca anında `gdlint`'ten geçirir (`.claude/settings.json`)
 - **Sahne ağacı** (bir `.tscn`'e dokunmadan önce düğüm adlarını tahmin etme, buna bak): `<godot> --headless --path . --script res://tools/scene_tool.gd -- tree res://scenes/x.tscn`
-- **Telefona yükleme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy.ps1 -Screenshot <scratchpad>/x.png` (dışa aktar + kabloyla yükle + başlat + ekran görüntüsü + Godot günlüğü)
+- **Telefona yükleme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy.ps1 -Screenshot <scratchpad>/x.png` (dışa aktar + kabloyla yükle + başlat + ekran görüntüsü + Godot günlüğü). Çıktısı PowerShell borusuna bağlanmaz (`| Select-Object` gibi): adb sunucusu yeniden başlarsa boruyu açık tutar ve komut asılı kalır.
 - Oyunu çalıştırma: `<godot> --path .`
 - Kare yakalama (Movie Maker): `<godot> --path . [res://scenes/x.tscn] --write-movie <scratchpad>/f.png --fixed-fps 60 --quit-after 40 [-- <kullanıcı argümanları>]`. Kareler pencere boyutunda (450×800) çıkar; asıl görüntü kanıtı telefonun ekran görüntüsüdür.
 - JDK 17: `C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot` · Android SDK: `%LOCALAPPDATA%\Android\Sdk`

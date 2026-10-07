@@ -12,6 +12,14 @@ $adb = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
 $apk = Join-Path $root "builds\android\gravity-hopper-debug.apk"
 $package = "com.gravityhopper.dev"
 
+# 0) adb sunucusunu borudan bağımsız başlat. Sunucu kapalıyken ilk adb komutu onu bu betiğin
+#    çıktı borusunu miras alarak başlatır; sunucu boruyu kapatmadığı için betiği boruya bağlayan
+#    çağıran (ör. "| Select-Object") sonsuza kadar bekler (M1-05'te yaşandı).
+#    Start-Process (ShellExecute) boruyu miras vermez. -Wait kullanılmaz: PowerShell 5.1'de
+#    alt süreçleri de bekler ve sunucu hiç kapanmaz; yalnızca istemci süreci beklenir.
+$starter = Start-Process -FilePath $adb -ArgumentList "start-server" -WindowStyle Hidden -PassThru
+$starter.WaitForExit()
+
 # 1) Telefon bağlı mı?
 $devices = & $adb devices 2>$null | Select-Object -Skip 1 | Where-Object { $_ -match "\tdevice$" }
 if (-not $devices) {

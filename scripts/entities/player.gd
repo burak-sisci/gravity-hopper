@@ -11,6 +11,8 @@ var tuning: TuningConfig
 ## Aktif duvar yönü: -1 sol, +1 sağ.
 var _gravity_dir: float = -1.0
 var _flip_requested: bool = false
+## Dokunma tamponunda kalan süre (sn). Havadaki dokunuş bu süre içinde duvara değilirse uygulanır.
+var _buffer_left: float = 0.0
 
 
 func _ready() -> void:
@@ -26,10 +28,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if _flip_requested:
 		_flip_requested = false
-		# M1-04: havadaki dokunuş yok sayılır; M1-05'te dokunma tamponu saklayacak.
 		if is_on_wall():
-			_gravity_dir = -_gravity_dir
-			Events.player_flipped.emit()
+			_flip()
+		else:
+			_buffer_left = tuning.input_buffer_time
 	# Yatay: duvar teması fizikle. Yalnızca yatay hız verilir; yüzen kipteki kayma, çarpan
 	# hareketin hızını korumak için yan hareketi tırmanışa ekler (M1-04'te %8 fazla ölçüldü).
 	var max_side: float = TuningConfig.to_px(tuning.max_side_speed)
@@ -40,6 +42,13 @@ func _physics_process(delta: float) -> void:
 	# sonra önce o hızı eritmek gerekir (karakter duvardan geç ayrılırdı).
 	if is_on_wall():
 		velocity.x = 0.0
+	# Dokunma tamponu: havadayken yapılan dokunuş, duvara değilen adımda uygulanır.
+	if _buffer_left > 0.0:
+		if is_on_wall():
+			_buffer_left = 0.0
+			_flip()
+		else:
+			_buffer_left -= delta
 	# Dikey: tırmanış doğrudan konumla, tam sabit hızda. Engeller vuruş ızgarasına göre
 	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı.
 	position.y -= TuningConfig.to_px(tuning.climb_speed) * delta
@@ -48,6 +57,11 @@ func _physics_process(delta: float) -> void:
 ## Aktif duvar sağda mı (Run ve testler için).
 func is_gravity_right() -> bool:
 	return _gravity_dir > 0.0
+
+
+func _flip() -> void:
+	_gravity_dir = -_gravity_dir
+	Events.player_flipped.emit()
 
 
 ## Her parmağın basışı sayılır; dokunuştan türetilen sahte fare olayı yok sayılır, yoksa her
