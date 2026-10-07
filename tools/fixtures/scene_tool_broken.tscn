@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/fixtures/scene_tool_broken.gd" id="1_fix"]
+
+[node name="Broken" type="Node2D" node_paths=PackedStringArray("target")]
+script = ExtResource("1_fix")
+target = NodePath("Containr")
+
+[node name="Label" type="Label" parent="."]
+unique_name_in_owner = true
+
+[node name="Container" type="Node2D" parent="."]
+
+[node name="Child" type="Node2D" parent="Container"]
+
+[connection signal="visibility_changed" from="Container" to="." method="_on_container_visibility_changed"]
+[connection signal="visibility_changed" from="Container" to="." method="_on_container_visibility_changedd"]

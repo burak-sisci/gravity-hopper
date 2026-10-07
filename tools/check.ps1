@@ -1,4 +1,5 @@
-﻿# Projenin tam kontrolü: içe aktarma + tüm GDScript dosyalarının uyarılar hataya çekilerek derlenmesi.
+﻿# Projenin tam kontrolü: içe aktarma + tüm GDScript dosyalarının uyarılar hataya çekilerek derlenmesi
+# + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
 # Çıkış kodu 0 = temiz. Godot'nun ekransız modu uyarıları yazdırmadığı için geçici bir
 # override.cfg ile "Warn" seviyesindeki kurallar "Error" yapılır; dosya her durumda silinir.
@@ -35,6 +36,12 @@ try {
 } finally {
 	if (Test-Path -LiteralPath $override) { [IO.File]::Delete($override) }
 }
+
+# 3) Sahne denetimi: betiklerdeki $Yol / %Ad / get_node başvuruları, sinyal bağlantıları, @export yolları
+$scene = & $Godot --headless --path $root --script "res://tools/scene_tool.gd" -- check 2>&1 | ForEach-Object { "$_" }
+$sceneCode = $LASTEXITCODE
+$scene | Where-Object { $_ -match "^(HATA|KURAL|NOT|SAHNE)|SCRIPT ERROR|ERROR:" }
+if ($sceneCode -ne 0) { $code = 1 }
 
 if ($code -eq 0) { Write-Output "SONUÇ: TEMİZ" } else { Write-Output "SONUÇ: SORUN VAR" }
 exit $code

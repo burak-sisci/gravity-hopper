@@ -61,7 +61,7 @@
   *Kabul:* İki yöntemin Redmi'deki görüntüsü ve kare süresi ölçüldü; karar ADR olarak yazıldı.
 - [x] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil (sahte parlamalı) ve "Dokun / Tap" yazısı. Ana sahne `glow_bench.tscn`'den yeniden `main.tscn`'e döner. *(Ek: girdi kuralları erkenden sınandı, S-07 kısmen doğrulandı.)*
   *Kabul:* PC'de ve Redmi'de dokunma algılanıyor, yazı iki dilde doğru.
-- [ ] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (`architecture.md` §13.1); `check`, `tools/check.ps1`'e bağlanır.
+- [x] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (`architecture.md` §13.1); `check`, `tools/check.ps1`'e bağlanır. *(Ek: sinyal bağlantıları, `@export` yolları, `get_parent()` / `..` kural ihlalleri, ad önerisi, `tools/fixtures/` ile kendini sınama; ADR-021.)*
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.
 - [ ] **M0-12** 🤖 Kod denetimi: gdtoolkit kurulumu (sürümü sabit), kurallarımıza göre `gdlintrc`, düzenlenen `.gd` dosyalarını otomatik denetleyen Claude Code kancası.
   *Kabul:* Kural dışı bir adı `gdlint` yakalıyor; mevcut tüm kod temiz geçiyor.

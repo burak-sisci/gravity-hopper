@@ -7,8 +7,8 @@
 
   "current": {
     "milestone": "M0",
-    "task": "M0-11",
-    "task_title": "Sahne aracı tools/scene_tool.gd: tree ve check komutları; check, tools/check.ps1'e bağlanır",
+    "task": "M0-12",
+    "task_title": "Kod denetimi: gdtoolkit (sürümü sabit), kurallarımıza göre gdlintrc, düzenlenen .gd dosyalarını denetleyen Claude Code kancası",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11"],
 
   "blockers": [],
 
@@ -134,10 +134,10 @@
 
   "last_session": {
     "date": "2026-10-07",
-    "summary": "M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
+    "summary": "M0-11 tamamlandı: tools/scene_tool.gd (tree, check). check sahneleri ağaca eklemeden örnekleyip $Yol/%Ad/get_node başvurularını Godot'nun kendi çözümlemesiyle dener; sinyal bağlantıları, @export yolları, get_parent()/'..' kural ihlalleri, benzer ad önerisi. tools/check.ps1'in 3. adımı oldu (TEMİZ: 4 sahne, 6 başvuru, 0 hata). tools/fixtures/scene_tool_broken.tscn: 7 bilerek hata + tuzaklar → tam 7 hata, çıkış 1. Kabul: tap_hint.gd'de %Label → %Labl geçici bozulunca check.ps1 SORUN VAR + öneri verdi, geri alındı. ADR-021. Önceki: M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
     "next_steps": [
       "Kullanıcı test sahnesini PC'de (editörde F5) ve telefonda dener; sahte parlamanın görünümüne itirazı varsa ADR-020 yeniden ele alınır.",
-      "M0-11: sahne aracı tools/scene_tool.gd (tree, check), check.ps1'e bağlanır.",
+      "M0-12: gdtoolkit kurulumu (sürümü sabit, proje dışında Python paketi), gdlintrc, Claude Code kancası (yalnızca hata olunca çıktı).",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }
