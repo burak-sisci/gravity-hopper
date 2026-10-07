@@ -94,7 +94,7 @@
   *Kabul:* HUD dünyadaki hiçbir düğüme erişmiyor; sahne denetimi temiz.
 - [x] **M1-11** 🤖 Canlı ayar paneli: `TuningConfig`'in `@export` alanlarından otomatik kaydırıcılar, "Kaydet" → `user://tuning_override.tres`. PC'de `1`, telefonda debug düğmesiyle açılır.
   *Kabul:* Oynarken değer değişiyor; kaydedilen dosyayı Claude okuyabiliyor.
-- [ ] **M1-12** 🤖 Debug tuşları: ölümsüzlük (`2`), çarpışma kutuları (`3`), yavaş çekim (`4`), anında yeniden başlama (`R`); telefonda debug panelinde aynı düğmeler.
+- [x] **M1-12** 🤖 Debug tuşları: ölümsüzlük (`2`), çarpışma kutuları (`3`), yavaş çekim (`4`), anında yeniden başlama (`R`); telefonda debug panelinde aynı düğmeler.
   *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.
 - [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma yeri D-12'ye bağlı.
   *Kabul:* Tarayıcıda oynanabilir bir link var.

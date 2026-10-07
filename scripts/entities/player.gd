@@ -2,9 +2,13 @@ class_name Player
 extends CharacterBody2D
 ## Oyuncu: Enerji Çekirdeği (architecture.md §8.1). Sabit hızla tırmanır, aktif duvara doğru
 ## çekilir; dokunuş yerçekimini öbür duvara çevirir. Çevirme yalnızca duvara tutunurken olur.
+## Debug'da ölümsüzken (Events.debug_invincibility_changed) darbeler yok sayılır ve yarı saydamdır.
 ## Girdi olayları yalnızca not edilir; karar bir sonraki fizik adımında verilir (.clauderules §5).
 ## Çevirince Events.player_flipped yayar. Hurtbox bir tehlikeye değince yalnızca
 ## Events.player_died yayar ve donar; tehlikenin koduna dokunmaz (architecture.md §7.3).
+
+## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
+const INVINCIBLE_ALPHA: float = 0.45
 
 ## Ayarlar Run tarafından atanır (aşağı çağrı).
 var tuning: TuningConfig
@@ -15,6 +19,7 @@ var _flip_requested: bool = false
 ## Dokunma tamponunda kalan süre (sn). Havadaki dokunuş bu süre içinde duvara değilirse uygulanır.
 var _buffer_left: float = 0.0
 var _alive: bool = true
+var _invincible: bool = false
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
@@ -23,6 +28,7 @@ var _alive: bool = true
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_hurtbox.hit.connect(_on_hurtbox_hit)
+	Events.debug_invincibility_changed.connect(_on_debug_invincibility_changed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -75,12 +81,17 @@ func is_alive() -> bool:
 
 ## Kalkan M2-12'de gelir; o zamana kadar her darbe ölümdür.
 func _on_hurtbox_hit() -> void:
-	if not _alive:
+	if not _alive or _invincible:
 		return
 	_alive = false
 	_flip_requested = false
 	_buffer_left = 0.0
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+
+
+func _on_debug_invincibility_changed(enabled: bool) -> void:
+	_invincible = enabled
+	modulate.a = INVINCIBLE_ALPHA if enabled else 1.0
 
 
 func _flip() -> void:

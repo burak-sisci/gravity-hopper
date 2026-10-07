@@ -263,6 +263,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `glimmers_changed` | `total: int` | Progression | UI |
 | `upgrade_purchased` | `id: StringName, level: int` | Progression | UI, AudioManager |
 | `settings_changed` | — | Settings | AudioManager ve ilgililer |
+| `debug_invincibility_changed` | `enabled: bool` | Debug katmanı (yalnızca debug build) | Player |
 
 ### 7.3 Örnek akış: Ölüm
 
@@ -512,6 +513,14 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `R` | Anında yeniden başla | M1-12 |
 
   F5–F8 kullanılmaz; Godot editör kısayollarıyla karışır.
+- **Debug tuşlarının uygulanışı (M1-12):**
+  - Tuşlar ayar panelinin ikinci sırasındaki düğmelerin basılı durumunu değiştirir; işi düğmenin `toggled` sinyali yapar. Böylece tuş ve düğme hep aynı durumu gösterir. Telefonda bu düğmeler kullanılır.
+  - **Ölümsüzlük (`2`):** `Events.debug_invincibility_changed(enabled)` yayılır. `Player` darbeleri yok sayar ve yarı saydam olur (alfa 0,45). Yeni turdaki oyuncu bu durumu bilmediği için debug katmanı her `run_started`'da durumu yeniden duyurur.
+  - **Çarpışma kutuları (`3`):** `SceneTree.debug_collisions_hint` açılır ve ağaca `queue_redraw` yayılır; dünyaya tek tek erişilmez.
+  - **Yavaş çekim (`4`):** `Engine.time_scale = 0,3`. Müzik henüz yok; .clauderules §5 gereği müzik geldiğinde `AudioManager` `pitch_scale`'i `Engine.time_scale`'e uydurur.
+  - **`R`:** `Events.retry_requested` yayar; `Main` turu yeniden kurar.
+  - Ekransız denemede 10 durum geçti: ölümsüzken 400 karede ölüm yok, R sonrası ölümsüzlük sürüyor, kapatınca diken öldürüyor, çarpışma kutuları açılıp kapanıyor, yavaş çekimde 60 karede tam 180 px.
+  - Redmi'de ölümsüzlük düğmesiyle 8 sn'de ölümsüz 143 m tırmanıldı.
 - **Telefonda:** Küçük, yarı saydam bir debug düğmesi paneli açar. Düğme yalnızca debug build'de görünür; yeri, HUD ile çakışmayacak şekilde M1-02'de seçilir.
   - Düğme bir `Control` olduğu için dokunuş arayüzde kalır ve çevirme yapmaz (§8.1, `_unhandled_input`).
   - Eski plandaki "köşeye üçlü dokunuş" bırakıldı: o dokunuşların her biri aynı zamanda yerçekimini çevirirdi.

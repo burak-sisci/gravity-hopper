@@ -42,4 +42,7 @@ signal glimmers_changed(total: int)
 signal upgrade_purchased(id: StringName, level: int)
 signal settings_changed
 
+# --- Debug (yalnızca debug katmanı yayar; yayın sürümünde hiç yayılmaz) ---
+signal debug_invincibility_changed(enabled: bool)
+
 @warning_ignore_restore("unused_signal")

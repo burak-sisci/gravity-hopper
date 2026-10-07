@@ -1,6 +1,6 @@
 extends Control
 ## Debug katmanı (M1-02, architecture.md §13). Main bunu yalnızca debug build'de yükler.
-## Oyun dünyasını tanımaz; dünyaya ait istekler Events sinyalleriyle iletilir (M1-11, M1-12).
+## Oyun dünyasını tanımaz; dünyaya ait istekler Events sinyalleriyle iletilir.
 ## Yalnızca geliştirici görür; bu yüzden metinler tr() ile değil doğrudan yazılır.
 
 ## godot-debug-menu görünüm sayısı (eklentinin Style enum'u): gizli → kısa → ayrıntılı.
@@ -13,27 +13,41 @@ const ASPECT_WINDOWS: Array[Vector2i] = [
 	Vector2i(450, 800), Vector2i(450, 1000), Vector2i(600, 800),
 ]
 const ASPECT_NAMES: Array[String] = ["16:9", "20:9", "4:3"]
+## Yavaş çekim tuşunun zaman ölçeği. Müzik gelince AudioManager pitch_scale'i buna uydurur.
+const SLOW_MOTION_SCALE: float = 0.3
 
-## Debug tuşları: tuş kodu → işlev. Sonraki görevler buraya ekler (architecture.md §13 tablosu).
+## Debug tuşları: tuş kodu → işlev (architecture.md §13 tablosu).
 var _key_actions: Dictionary[int, Callable] = {}
 var _debug_menu: CanvasLayer
 var _aspect_index: int = 0
+var _invincible: bool = false
 
 @onready var _tuning_panel: Control = %TuningPanel
+@onready var _invincible_button: Button = %InvincibleButton
+@onready var _collisions_button: Button = %CollisionsButton
+@onready var _slow_button: Button = %SlowButton
 
 
 func _ready() -> void:
-	_key_actions[KEY_1] = _toggle_tuning_panel
-	_key_actions[KEY_KP_1] = _toggle_tuning_panel
-	_key_actions[KEY_7] = _cycle_fps
-	_key_actions[KEY_KP_7] = _cycle_fps
-	_key_actions[KEY_6] = _cycle_aspect
-	_key_actions[KEY_KP_6] = _cycle_aspect
+	_bind_key(KEY_1, KEY_KP_1, _toggle_tuning_panel)
+	# Tuşlar düğmenin basılı durumunu değiştirir; düğmenin toggled sinyali işi yapar.
+	_bind_key(KEY_2, KEY_KP_2, func() -> void: _invincible_button.button_pressed = not _invincible)
+	_bind_key(KEY_3, KEY_KP_3, func() -> void:
+		_collisions_button.button_pressed = not get_tree().debug_collisions_hint)
+	_bind_key(KEY_4, KEY_KP_4, func() -> void:
+		_slow_button.button_pressed = is_equal_approx(Engine.time_scale, 1.0))
+	_bind_key(KEY_6, KEY_KP_6, _cycle_aspect)
+	_bind_key(KEY_7, KEY_KP_7, _cycle_fps)
+	_key_actions[KEY_R] = _on_restart_pressed
 	_debug_menu = (load(DEBUG_MENU_PATH) as PackedScene).instantiate() as CanvasLayer
 	add_child(_debug_menu)
 	get_viewport().size_changed.connect(_place_debug_menu)
 	_place_debug_menu()
 	_connect_event_log()
+	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
+	Events.run_started.connect(func(_run_seed: int, _start_sector: int) -> void:
+		if _invincible:
+			Events.debug_invincibility_changed.emit(true))
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -46,9 +60,39 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		action.call()
 
 
-## Telefondaki debug düğmesi ayar panelini açıp kapatır (FPS panelin içindeki düğmede).
+## Telefondaki debug düğmesi ayar panelini açıp kapatır.
 func _on_debug_button_pressed() -> void:
 	_toggle_tuning_panel()
+
+
+## Tuşlar da düğmenin basılı durumunu değiştirir; böylece düğme ve tuş hep aynı durumu gösterir.
+func _on_invincible_toggled(enabled: bool) -> void:
+	_invincible = enabled
+	Events.debug_invincibility_changed.emit(enabled)
+	print("DEBUG ölümsüzlük %s" % ("açık" if enabled else "kapalı"))
+
+
+## Çarpışma şekillerini gösterir. Var olan şekiller yeniden çizilsin diye ağaca çizim çağrısı
+## yayılır; dünyaya tek tek erişilmez.
+func _on_collisions_toggled(enabled: bool) -> void:
+	get_tree().debug_collisions_hint = enabled
+	get_tree().root.propagate_call(&"queue_redraw")
+	print("DEBUG çarpışma kutuları %s" % ("açık" if enabled else "kapalı"))
+
+
+func _on_slow_toggled(enabled: bool) -> void:
+	Engine.time_scale = SLOW_MOTION_SCALE if enabled else 1.0
+	print("DEBUG zaman ölçeği %.2f" % Engine.time_scale)
+
+
+func _on_restart_pressed() -> void:
+	Events.retry_requested.emit()
+
+
+## Üst sıradaki rakam tuşu ve sayısal tuş takımındaki karşılığı aynı işi yapar.
+func _bind_key(key: Key, keypad_key: Key, action: Callable) -> void:
+	_key_actions[key] = action
+	_key_actions[keypad_key] = action
 
 
 func _toggle_tuning_panel() -> void:
