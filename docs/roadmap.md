@@ -59,7 +59,7 @@
   *Kabul:* Oyun Redmi'de açılıyor (telefonun ekran görüntüsüyle kanıtlı).
 - [x] **M0-09** 🤖 Parlama teknik denemesi (S-01, S-02): `godot-debug-menu` eklentisi (sürümü sabit), Compatibility'de `WorldEnvironment` glow + `Polygon2D`, HUD katmanı ayrımı, yedek plan olarak sahte parlama. *(Sonuç: sahte parlama, ADR-020. Ölçüm sahnesi `scenes/debug/glow_bench.tscn`.)*
   *Kabul:* İki yöntemin Redmi'deki görüntüsü ve kare süresi ölçüldü; karar ADR olarak yazıldı.
-- [ ] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil (sahte parlamalı) ve "Dokun / Tap" yazısı. Ana sahne `glow_bench.tscn`'den yeniden `main.tscn`'e döner.
+- [x] **M0-10** 🤖 Test sahnesi: dokununca renk değiştiren neon bir şekil (sahte parlamalı) ve "Dokun / Tap" yazısı. Ana sahne `glow_bench.tscn`'den yeniden `main.tscn`'e döner. *(Ek: girdi kuralları erkenden sınandı, S-07 kısmen doğrulandı.)*
   *Kabul:* PC'de ve Redmi'de dokunma algılanıyor, yazı iki dilde doğru.
 - [ ] **M0-11** 🤖 Sahne aracı `tools/scene_tool.gd`: `tree` ve `check` komutları (`architecture.md` §13.1); `check`, `tools/check.ps1`'e bağlanır.
   *Kabul:* `tree` test sahnesinin ağacını doğru listeliyor; bilerek yanlış yazılmış bir düğüm adını `check` yakalıyor ve hata koduyla çıkıyor.

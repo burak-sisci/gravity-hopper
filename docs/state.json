@@ -7,8 +7,8 @@
 
   "current": {
     "milestone": "M0",
-    "task": "M0-10",
-    "task_title": "Test sahnesi: dokununca renk değiştiren neon şekil (sahte parlamalı) + \"Dokun / Tap\" yazısı; ana sahne yeniden main.tscn",
+    "task": "M0-11",
+    "task_title": "Sahne aracı tools/scene_tool.gd: tree ve check komutları; check, tools/check.ps1'e bağlanır",
     "owner": "claude",
     "status": "in_progress",
     "parallel": [
@@ -29,7 +29,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10"],
 
   "blockers": [],
 
@@ -74,7 +74,7 @@
     { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "resolved", "answer": "Evet: %APPDATA%/Godot/keystores/debug.keystore otomatik oluştu; Java ve SDK yolları da editör ayarlarına kendiliğinden yazıldı." },
     { "id": "S-05", "question": "Play Games ve AdMob eklentilerinin 4.7 uyumlu sürümleri", "resolve_in": "M7", "status": "open" },
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-11", "status": "open" },
-    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-03", "status": "open" },
+    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-03", "status": "open", "note": "M0-10: headless 8 durum geçti; Redmi'de adb ile 3 dokunuş = 3 sayım. Kalan: gerçek iki başparmak denemesi (M1-03)." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." }
   ],
 
@@ -114,15 +114,14 @@
       "wireless_paired": false,
       "wireless_status": "deferred (ADR-019, kullanıcı kararı 2026-10-07)",
       "wireless_notes": "Okul ağında (sdu.edu.tr) telefon ve PC farklı alt ağlarda, TCP erişimi yok → kablosuz eşleştirme başarısız (2026-10-06). Eşleştirme evde ya da PC Mobil etkin noktası üzerinden yapılacak. Telefon hotspot açınca kablosuz hata ayıklama çalışmaz (Android kısıtı).",
+      "system_locale": "en-US (oyun cihazda İngilizce açılır). Türkçe denemek için uygulamaya özel dil: adb shell cmd locale set-app-locales com.gravityhopper.dev --locales tr-TR (geri almak: --locales '\"\"'); Godot bunu tanıyor (M0-10).",
       "perf_notes": "Uygulama 120 Hz'de çalışıyor. Android'de vsync kapatılamıyor; Godot GPU zamanlayıcısı GLES'te -1. GPU yükü: adb shell cat /sys/class/kgsl/kgsl-3d0/gpubusy (uygulama okuyamıyor, kabuk okuyor). Ayrıntı architecture.md §16.1."
     }
   },
 
   "approved_tuning": {},
 
-  "temp_files": [
-    { "what": "project.godot run/main_scene = res://scenes/debug/glow_bench.tscn (kullanıcı parlamayı telefonda görebilsin diye)", "revert_in": "M0-10", "revert_to": "res://scenes/main.tscn" }
-  ],
+  "temp_files": [],
 
   "docs_reviewed": {
     "CLAUDE.md": "2026-10-01",
@@ -135,10 +134,10 @@
 
   "last_session": {
     "date": "2026-10-07",
-    "summary": "M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
+    "summary": "M0-10 tamamlandı: ana sahne yeniden main.tscn; World/TapTest (dokununca sektör renkleri arasında geçen, sahte parlamalı neon elmas, kısa büyüme efekti) + UI/TapHint (UI_TAP anahtarlı, nabız gibi soluklaşan ipucu). Girdi kuralları (§8.1) erkenden sınandı: headless 8 durum OK; Redmi'de adb ile 3 dokunuş = 3 sayım (S-07 kısmen). Telefonun sistem dili en-US çıktı → oyun TAP gösteriyor (kural gereği doğru); uygulamaya özel dil tr-TR yapılınca DOKUN gösterdi, sonra sıfırlandı. Önceki oturumda M0-09 tamamlandı. godot-debug-menu commit ff12461'e sabitlenip yalnızca çalışma zamanı dosyalarıyla eklendi (autoload değil, debug build'de koddan yüklenir). scenes/debug/glow_bench.tscn: üç mod (yok / WorldEnvironment glow / sahte parlama) ikişer kez otomatik ölçülür, sonra dokunuşla değişir. Bulgular: Compatibility glow'u hdr_scale varsayılanıyla (2.0) görünmüyordu, 0.2'ye çekince çalıştı; 3B kamera gerekmiyor; seviye/karışım modu yok sayılıyor, eşik parlaklığa göre. Redmi: yok 8,4 ms / sahte 8,4 ms (GPU %77→%88) / glow 17,5 ms, 57 FPS (GPU %99,9). HUD katmanı parlamıyor (S-02). Karar ADR-020: sahte parlama (çizgilerde toplamsal geniş kopyalar, sivri küçük şekillerde ışık lekesi). Ana sahne geçici olarak glow_bench (M0-10'da main.tscn'e döner).",
     "next_steps": [
-      "Kullanıcı telefonda Gravity Hopper'ı açıp üç modu görsel olarak karşılaştırır; itirazı varsa ADR-020 yeniden ele alınır.",
-      "M0-10: test sahnesi (sahte parlamalı neon şekil + Dokun/Tap yazısı), ana sahne yeniden main.tscn.",
+      "Kullanıcı test sahnesini PC'de (editörde F5) ve telefonda dener; sahte parlamanın görünümüne itirazı varsa ADR-020 yeniden ele alınır.",
+      "M0-11: sahne aracı tools/scene_tool.gd (tree, check), check.ps1'e bağlanır.",
       "Kullanıcı planlama belgelerini okuyup geri bildirim verir (P-04)."
     ]
   }

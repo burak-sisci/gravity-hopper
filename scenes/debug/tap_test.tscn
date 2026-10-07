@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/debug/tap_test.gd" id="1_tap"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_add"]
+blend_mode = 1
+
+[sub_resource type="Gradient" id="Gradient_glow"]
+offsets = PackedFloat32Array(0, 0.25, 0.55, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0.45, 1, 1, 1, 0.12, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_glow"]
+gradient = SubResource("Gradient_glow")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[node name="TapTest" type="Node2D"]
+physics_interpolation_mode = 2
+script = ExtResource("1_tap")
+
+[node name="Glow" type="Sprite2D" parent="."]
+self_modulate = Color(1, 1, 1, 0.65)
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(4.375, 6)
+texture = SubResource("GradientTexture2D_glow")
+
+[node name="Fill" type="Polygon2D" parent="."]
+color = Color(1, 1, 1, 0.2)
+polygon = PackedVector2Array(0, -140, 100, 0, 0, 140, -100, 0)
+
+[node name="Outline" type="Line2D" parent="."]
+points = PackedVector2Array(0, -140, 100, 0, 0, 140, -100, 0)
+closed = true
+width = 10.0
+joint_mode = 2

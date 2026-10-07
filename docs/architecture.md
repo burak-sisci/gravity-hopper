@@ -44,7 +44,7 @@ rendering/renderer/rendering_method.mobile="gl_compatibility"
 physics/common/physics_ticks_per_second=60
 physics/common/physics_interpolation=true
 debug/gdscript/warnings/untyped_declaration=2    ; Error
-application/run/main_scene="res://scenes/main.tscn"                 ; M0-08 (M0-09 ile M0-10 arasında geçici olarak glow_bench.tscn)
+application/run/main_scene="res://scenes/main.tscn"                 ; M0-08
 rendering/environment/defaults/default_clear_color=Color(0.039, 0.055, 0.122, 1)  ; koyu lacivert
 rendering/textures/vram_compression/import_etc2_astc=true          ; Android dışa aktarma için zorunlu
 ```
@@ -133,6 +133,8 @@ Main (Node)                           scenes/main.tscn
 ```
 
 `WorldEnvironment` yoktur: parlama nesne başına sahte parlamayla yapılır (§9, ADR-020).
+
+> **Şu anki içerik (M0-10, geçici):** `World/TapTest` (`scenes/debug/tap_test.tscn`, dokununca renk değiştiren neon elmas) ve `UI/TapHint` (`scenes/ui/tap_hint.tscn`, "DOKUN / TAP" ipucu). M1-02'de `World`'e `run.tscn` gelir. `TapHint` ilk açılış rehberinde (FTUE) yeniden kullanılabilir.
 
 Sahne geçişlerini `GameManager` yönetir: `World` ve `UI` kaplarının içeriğini değiştirir. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
 
@@ -233,7 +235,11 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Girdi:** `_unhandled_input` içinde işlenir, böylece UI düğmelerine dokunmak çevirme yapmaz.
   - Mobilde her `InputEventScreenTouch` (basıldı, **her parmak**) kabul edilir. Böylece iki başparmakla hızlı dokunuşlar kaybolmaz.
   - PC'de fare sol tık ve Space kabul edilir.
-  - Dokunmadan türetilmiş (emülasyon) fare olayları yok sayılır (`device == InputEvent.DEVICE_ID_EMULATION`), yoksa tek dokunuş iki çevirme sayılır. ⚠️ M1'de doğrulanacak.
+  - Dokunmadan türetilmiş (emülasyon) fare olayları yok sayılır (`device == InputEvent.DEVICE_ID_EMULATION`), yoksa tek dokunuş iki çevirme sayılır.
+  - M0-10'da doğrulandı:
+    - Ekransız denemede 8 durumun hepsi beklendiği gibi: tık, bırakma, sahte fare, iki parmak, parmak kaldırma, boşluk, tuş tekrarı.
+    - Redmi'de adb ile 3 dokunuş = 3 sayım.
+    - Gerçek iki başparmak denemesi M1-03'te yapılacak. Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
 
 ### 8.2 Bölüm üretimi (desen parçaları)
 
@@ -358,12 +364,18 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ## 12. Yerelleştirme
 
-- `localization/translations.csv`: `keys,en,tr` sütunları. Godot bunu içe aktarıp çeviri kaynağına dönüştürür. Metinler `tr("KEY")` ile gösterilir.
+- `localization/translations.csv`: `keys,en,tr` sütunları. Godot bunu içe aktarıp çeviri kaynağına dönüştürür.
+  - Koddan atanan metinler `tr("KEY")` ile gösterilir.
+  - Sahnede `Label` ya da `Button` metnine doğrudan anahtar yazılır (`text = "UI_TAP"`). Godot bunu otomatik çevirir (`auto_translate_mode` varsayılanı) ve dil değişince kendisi günceller.
 - Varsayılan dil: cihaz dili Türkçe ise TR, değilse EN. Ayarlardan değiştirilebilir.
 - Fontlar Türkçe karakterleri (ş ğ ı İ ö ü ç) içermek zorundadır (S-06, M3).
 - Büyük harf metinler çeviri dosyasına büyük harfle yazılır; kodda dönüştürülmez (`i` → `İ` sorunu).
 - **Anahtar adları** `BÜYÜK_YILAN` biçiminde ve alan önekli: `UI_`, `HUD_`, `SECTOR_`, `UPGRADE_`, `TRAIL_`, `SETTINGS_` (ör. `UI_TAP`, `SECTOR_1_NAME`).
 - **Dil seçimi** (`Settings.resolve_language`): oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce. Seçim `user://settings.cfg`'de saklanır; boş değer "cihaz dili" demektir.
+  - Godot, Android 13+'ın **uygulamaya özel dil** ayarını cihaz dili olarak görüyor (M0-10, Redmi).
+  - Telefonun genel dilini değiştirmeden Türkçe denemek için: `adb shell cmd locale set-app-locales com.gravityhopper.dev --locales tr-TR`. Geri almak için `--locales '""'`.
+  - Android ayarlarında oyuna özel dil seçeneğinin görünmesi için uygulamanın `localeConfig` bildirmesi gerekir (M5'te değerlendirilir). Oyun içi dil seçimi M5'teki ayarlar ekranında gelir; `Settings.set_language` hazır.
+  - Test cihazının sistem dili İngilizcedir; oyun orada "cihaz dili" kuralıyla İngilizce açılır.
 - Üretilen `translations.*.translation` dosyaları **depoya konur** (ADR-018). Konmazsa, depoyu yeni kopyalayan herkes ilk içe aktarmada "dosya bulunamadı" hatası görür: Godot çevirileri, dosyalar üretilmeden önce yüklemeye çalışır.
 
 ## 13. Debug araçları (yalnızca debug build)
@@ -448,7 +460,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 ### 16.1 Ölçüm (M0-09, Redmi Note 12)
 
-Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez.
+Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez. Başka bir cihazda yeniden ölçmek için sahne geçici olarak ana sahne yapılıp yüklenir (M1-10'da debug paneline bağlanabilir); PC'de `<godot> --path . res://scenes/debug/glow_bench.tscn`.
 
 | Mod | Ort. kare süresi | p95 | FPS | GPU doluluğu |
 | --- | --- | --- | --- | --- |
@@ -500,7 +512,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
-| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi | M1 |
+| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-03 |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)
