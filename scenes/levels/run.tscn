@@ -4,14 +4,19 @@
 [ext_resource type="Resource" path="res://data/tuning/default_tuning.tres" id="2_tuning"]
 [ext_resource type="Script" path="res://scripts/levels/corridor.gd" id="3_corridor"]
 [ext_resource type="Script" path="res://scripts/components/game_camera.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://scenes/entities/player.tscn" id="5_player"]
 
 [node name="Run" type="Node2D"]
+process_physics_priority = 1
 script = ExtResource("1_run")
 tuning = ExtResource("2_tuning")
 
 [node name="Corridor" type="Node2D" parent="."]
 unique_name_in_owner = true
 script = ExtResource("3_corridor")
+
+[node name="Player" parent="." instance=ExtResource("5_player")]
+unique_name_in_owner = true
 
 [node name="GameCamera" type="Camera2D" parent="."]
 unique_name_in_owner = true

@@ -172,13 +172,13 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M1-03):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M1-04):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%Player` (`scenes/entities/player.tscn`, `Player`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
   - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
   - Görünür alanın altında kalan parça bir halka boyu yukarı taşınır ve `reset_physics_interpolation()` çağrılır.
-- **M1-03'te tırmanış noktası:** `Run`'daki bir y değeridir; sabit hızla yükselir. M1-04'te yerini oyuncu alır.
+- **Kamera** M1-04'ten beri oyuncuyu izler (M1-03'te sabit hızla yükselen bir noktayı izliyordu).
 
 ### 5.3 UI sahneleri (`scenes/ui/`)
 
@@ -251,6 +251,14 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
   - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-08'de gelir.
   - **Dokunma tamponu:** Havadayken yapılan dokunuş kısa bir süre (başlangıç 0,12 sn) saklanır ve duvara değince uygulanır.
+- **Uygulama (M1-04, `scripts/entities/player.gd`, `Player`):**
+  - **Eksenler ayrıdır.** Yatay hareket `move_and_slide()` ile yalnızca yatay hızla yapılır (duvar teması). Dikey tırmanış doğrudan konumla yapılır: `position.y -= climb × delta`.
+  - Neden: Yüzen kipte ilk kaymada çarpan hareketin hız büyüklüğü korunuyor; yan hareket tırmanışa ekleniyor (%8 fazla ölçüldü). Tırmanış vuruş ızgarası için tam sabit olmalı (§8.2).
+  - Duvara değince `velocity.x = 0`. Yoksa yan hız duvarın içine doğru birikir ve çevirmeden sonra karakter duvardan geç ayrılır.
+  - Dokunuş `_unhandled_input`'ta yalnızca not edilir; çevirme kararı sonraki `_physics_process`'te verilir.
+  - Başlangıç x = 0'dır; karakter sol duvara düşer. Gövde 60×80 px dikdörtgendir (1,2 × 1,6 m), görseli beyaz elmas.
+  - `Run`, `process_physics_priority = 1` ile oyuncudan sonra çalışır; böylece kamera o adımın konumunu izler.
+  - Ekransız denemede 9 durum geçti; Redmi'de art arda iki hızlı dokunuştan yalnızca biri çevirme yaptı (ikincisi havadaydı).
 - **Koridordan çıkış** (duvar boşluğundan düşme): `player_died(FELL)`.
 - **Hurtbox** görselden küçüktür (başlangıç %70).
 - **Girdi:** `_unhandled_input` içinde işlenir, böylece UI düğmelerine dokunmak çevirme yapmaz.
@@ -417,6 +425,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
   - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Şimdilik FPS görünümünü değiştirir; M1-11'de debug panelini açar.
   - M1-02'de sınandı: ekransız denemede `7` tuşu üç görünümü sırayla değiştirdi, düğmeye dokunuş çevirme sayılmadı, ekranın ortasına dokunuş ve boşluk sayıldı. Redmi'de de düğme FPS'yi açtı ve günlükte çevirme kaydı çıkmadı.
+  - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Şimdilik `player_flipped`; yeni olaylar ilgili görevde eklenir.
   - Ders: `Viewport.push_input()` ile dokunuş taklit edilirken koordinat viewport biriminde verilecekse ikinci parametre `true` olmalı. Aksi hâlde pencere ölçeği (PC'de 450/1080) uygulanır ve nokta hedefini ıskalar.
 - **Canlı ayar paneli:** `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar (yeni bir ayar eklendiğinde panele kendiliğinden gelir).
   - "Kaydet" düğmesi değerleri `user://tuning_override.tres`'e yazar.
@@ -512,6 +521,12 @@ Run (Node2D)                          scenes/levels/run.tscn
 | Otomatik test | **gdUnit4** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi; sahne koşucusuyla dokunuş taklidi yapan oynanış testleri | M2'den itibaren |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
 | Oyun testi | Kullanıcı: PC → Redmi → web linki | Her kilometre taşında |
+
+> **Ders (M1-04), ekransız deneme betikleri (gdUnit4 gelene kadar, M2-01):** `--script` ile verilen betik, autoload'lar kaydedilmeden derlenir.
+> - Betik, `Events` kullanan bir sınıfa (ör. `Player`) adıyla başvurursa o sınıfın derlemesi bozulur ve sahnedeki düğüm betiksiz kalır.
+> - Bu yüzden oyunun sınıflarına `call()` / `get()` ile, `Events`'e `root.get_node("Events")` ile erişilir.
+> - Her denemede kare sınırı olur ve sınır aşılınca `quit()` çağrılır; yoksa hata alan deneme sonsuza kadar asılı kalır.
+> - Kareleri sabitlemek için `--fixed-fps 60` kullanılır.
 
 > **Ders (M0-06):** Godot'nun ekransız modu (`--import`, `--script`, `--check-only`) GDScript **uyarılarını yazdırmaz**, yalnızca hataları yazdırır. `--check-only` ayrıca autoload adlarını tanımaz. Bu yüzden "uyarısız" iddiası yalnızca `tools/check.ps1` ile doğrulanır.
 

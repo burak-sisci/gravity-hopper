@@ -21,6 +21,7 @@ func _ready() -> void:
 	add_child(_debug_menu)
 	get_viewport().size_changed.connect(_place_debug_menu)
 	_place_debug_menu()
+	_connect_event_log()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -41,6 +42,16 @@ func _on_debug_button_pressed() -> void:
 func _cycle_fps() -> void:
 	var style: int = _debug_menu.get(&"style")
 	_debug_menu.set(&"style", (style + 1) % MENU_STYLE_COUNT)
+
+
+## Olay günlüğü: önemli Events sinyalleri "EVENT ..." satırı olarak yazılır. Telefondaki
+## denemeler günlükten (adb logcat) doğrulanır. Yeni olaylar ilgili görevde eklenir.
+func _connect_event_log() -> void:
+	Events.player_flipped.connect(_log_event.bind("player_flipped"))
+
+
+func _log_event(event_name: String) -> void:
+	print("EVENT %s t=%d" % [event_name, Time.get_ticks_msec()])
 
 
 ## Menü sağ üste yaslıdır; büyütülünce ekrandan taşmasın diye sola kaydırılır.
