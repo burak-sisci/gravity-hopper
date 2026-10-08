@@ -121,7 +121,7 @@ gravity-hopper/
 │   └── debug/                # Debug araçları
 │
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), deploy.ps1 (M0-08),
-│                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12)
+│                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12), web_build.ps1 (M1-13)
 ├── tests/                    # (M2) Otomatik testler (gdUnit4)
 └── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
     ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
@@ -586,10 +586,18 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - **Gradle derlemesi** eklentiler için M7'de açılır: Play Games Services, AdMob (S-05: sürüm uyumluluğu).
 - **Min / hedef SDK:** Godot 4.7 varsayılanları kullanılır. Play'in güncel hedef API şartı M8'de kontrol edilecek.
 - **Paket adı** (`com.<yayıncı>.gravityhopper`) Play'e ilk yüklemeden sonra değiştirilemez. Karar D-06'da.
-- **Web çıktısı** (arkadaşlara link için): tek iş parçacıklı (single-threaded, `web_nothreads_*` şablonları kurulu) dışa aktarma.
-  - Barındırma kullanıcı kararıdır (D-12, M1-13).
-  - Depo **özel** olduğu için GitHub Pages ücretsiz planda kullanılamaz; Pages ücretsiz planda yalnızca açık depolarda çalışır.
-  - Seçenekler: itch.io (ücretsiz, gizli bağlantılı taslak sayfa) ya da yalnızca web çıktısını içeren ayrı bir açık depo.
+- **Web çıktısı** (arkadaşlara link için): tek iş parçacıklı (single-threaded, `web_nothreads_*` şablonları kurulu) dışa aktarma. Sunucuda özel başlık (COOP/COEP) gerektirmez.
+  - **Barındırma: itch.io** (D-12, kullanıcı kararı, ADR-027). Sayfa "Restricted" ve şifreli olur; şifre linke gömülebilir (`?password=…`). Şifre depoya yazılmaz.
+  - Elenen seçenekler: özel depodan GitHub Pages (ücretli plan), açık GitHub deposu (şifre yok), Cloudflare Pages / Netlify / GitLab Pages (ek hesap ve kurulum).
+  - Yükleme: ilk sürümde kullanıcı tarayıcıdan zip yükler. İleride istenirse itch.io'nun `butler` aracıyla otomatikleşir (API anahtarı kullanıcıda kalır).
+  - **Ön ayar** "Web" (`export_presets.cfg` → `preset.1`): `variant/thread_support=false`, masaüstü ve mobil doku sıkıştırması açık, dışlama filtresi Android ile aynı.
+  - **Araç** `tools/web_build.ps1`:
+    - Yayın çıktısını `builds/web/`'e alır ve itch.io zip'ini (`builds/gravity-hopper-web.zip`, `index.html` kökte) hazırlar.
+    - `-Smoke` ile ayrıca debug çıktısını alır. Yerel `python -m http.server` sunar, görünmez Edge'i (yoksa Chrome) DevTools bağlantı noktasıyla açar.
+    - Tarayıcı konsolundaki `EVENT run_started` satırlarından oyunun açıldığını doğrular; `-Shot` ile ekran görüntüsü alır.
+  - **Boyut (M1-13):** `index.wasm` 37,7 MB (zip'te 9,8 MB), `index.pck` 0,12 MB.
+  - **Tarayıcı denemesi:** WebGL 2.0, tek iş parçacığı; 15 sn'de 5 tur başladı ve bitti.
+  - Ders: Görünmez tarayıcının `--virtual-time-budget` kipi WebAssembly derlemesini beklemez, açılış ekranında kalır. Bu yüzden gerçek zamanlı bekleme + DevTools ekran görüntüsü kullanılır.
 
 ## 15. Test ve doğrulama
 
@@ -667,6 +675,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-024 | 2026-10-07 | `TuningConfig` değerleri GDD birimlerinde (m, m/sn, sn) tutulur; kod `to_px()` ile çevirir. Her alan `@export_range` ile aralık ve birim taşır; geçerli değerler `.tres`'tedir | Kaydırıcılar tasarım belgesiyle aynı dili konuşur (ör. 12 m/sn = S1). Ayar paneli alanları elle tanımlamadan kurar |
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
+| ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
 
 ## 18. Açık teknik sorular
 
