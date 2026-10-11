@@ -101,7 +101,7 @@
 - [x] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
   *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak sonucu M1-16 kapısında sorulacak.)*
 - [x] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD). *(Değerler zaten `.tres`'teydi; GDD §13.1 ve `approved_tuning` yazıldı, telefondaki kayıt dosyası silindi.)*
-- [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.** *(Gözden geçirme yapıldı 2026-10-11: M2 19 atomik göreve bölündü. Kapı senin onayını bekliyor; ertelenen M1-13 kapıyı engellemez.)*
+- [x] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.** *(Gözden geçirme yapıldı 2026-10-11: M2 19 atomik göreve bölündü. Kapı, senin kararınla M2-19'daki birleşik kapıya taşındı (ADR-028); M1 orada M2 ile birlikte kontrol edilir. Ertelenen M1-13 kapıyı engellemez.)*
 
 ## M2 — Sonsuz ve adil
 
@@ -157,8 +157,8 @@
 
 **Kapanış**
 
-- [ ] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu?
-- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪
+- [ ] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi.
+- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır.
 
 ## M3 — Görsel ve işitsel kimlik
 
