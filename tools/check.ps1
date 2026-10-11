@@ -1,6 +1,7 @@
 ﻿# Projenin tam kontrolü: içe aktarma + tüm GDScript dosyalarının uyarılar hataya çekilerek derlenmesi
 # + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd)
-# + kod denetimi (gdlint, kurallar kökteki gdlintrc'de).
+# + kod denetimi (gdlint, kurallar kökteki gdlintrc'de)
+# + otomatik testler (gdUnit4, tests/ altındaki tüm test takımları).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
 # Çıkış kodu 0 = temiz. Godot'nun ekransız modu uyarıları yazdırmadığı için geçici bir
 # override.cfg ile "Warn" seviyesindeki kurallar "Error" yapılır; dosya her durumda silinir.
@@ -55,6 +56,28 @@ if (-not (Test-Path -LiteralPath $GdLint)) {
 		if ($LASTEXITCODE -ne 0) { Write-Output "GDLINT SORUNLU:"; $lint; $code = 1 }
 		else { Write-Output "OK   gdlint" }
 	} finally { Pop-Location }
+}
+
+# 5) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
+#    betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. -c: ilk hatada durma.
+#    Raporlar proje dışına (user://gdunit-reports) yazılır. Sıfırdan farklı her çıkış sorundur
+#    (başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı).
+$tests = & $Godot --headless --path $root -s -d --remote-debug tcp://127.0.0.1:0 `
+	"res://addons/gdUnit4/bin/GdUnitCmdTool.gd" -a "res://tests" -c --ignoreHeadlessMode -rd "user://gdunit-reports" 2>&1 |
+	ForEach-Object { "$_" -replace "\x1b\[[0-9;]*m", "" }
+$testCode = $LASTEXITCODE
+$summary = $tests | Where-Object { $_ -match "^Overall Summary" } | Select-Object -First 1
+if ($testCode -ne 0) {
+	Write-Output "TESTLER BAŞARISIZ (çıkış $testCode):"
+	# Başarısız testin satırı ve ardından gelen beklenen/gelen değer satırları; kapalı bağlantı
+	# noktasının bilerek ürettiği "remote" hataları gösterilmez.
+	$clean = $tests | Where-Object { $_ -notmatch "remote port number|Remote Debugger" }
+	$clean | Select-String -Pattern " FAILED |SCRIPT ERROR|orphan nodes? detected" -Context 0, 6 |
+		Select-Object -First 10 | ForEach-Object { $_.Line; $_.Context.PostContext | Where-Object { $_.Trim() } }
+	if ($summary) { $summary }
+	$code = 1
+} else {
+	Write-Output ("OK   testler: " + ($summary -replace "^Overall Summary: ", ""))
 }
 
 if ($code -eq 0) { Write-Output "SONUÇ: TEMİZ" } else { Write-Output "SONUÇ: SORUN VAR" }

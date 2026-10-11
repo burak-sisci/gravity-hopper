@@ -122,10 +122,11 @@ gravity-hopper/
 │
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), deploy.ps1 (M0-08),
 │                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12), web_build.ps1 (M1-13)
-├── tests/                    # (M2) Otomatik testler (gdUnit4)
+├── tests/                    # Otomatik testler (gdUnit4, M2-01); klasörler scripts/ ile aynı (tests/systems/run_rng_test.gd)
 └── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
     ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
-    └── …                     # gdUnit4 (M2), Play Games ve AdMob (M7)
+    ├── gdUnit4/              # gdUnit4 6.2.2 (M2-01); dışa aktarmada dışlanır
+    └── …                     # Play Games ve AdMob (M7)
 ```
 
 Kurallar:
@@ -563,7 +564,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ## 14. Android ve dağıtım
 
-- Dışa aktarma ön ayarı "Android" (`export_presets.cfg`, depoda), **Runnable** olarak işaretli: arm64-v8a + armeabi-v7a (eski 32-bit cihazlar için), immersive mod, dışlama filtresi `tools/*, tests/*`.
+- Dışa aktarma ön ayarı "Android" (`export_presets.cfg`, depoda), **Runnable** olarak işaretli: arm64-v8a + armeabi-v7a (eski 32-bit cihazlar için), immersive mod, dışlama filtresi `tools/*, tests/*, addons/gdUnit4/*`.
   - **Kullanıcı:** telefon bağlıyken editörün sağ üstündeki Android simgesine tek tık.
   - **Claude:** `tools/deploy.ps1`, yani dışa aktarma + `adb install` + başlatma + ekran görüntüsü + Godot günlüğündeki hatalar.
   - **adb sunucusu tuzağı (M1-05):** Sunucu kapalıyken bir adb komutu onu başlatır ve sunucu, o komutun çıktı borusunu miras alıp hiç kapatmaz. Komut PowerShell borusuna bağlıysa (`| Select-Object`) çağıran sonsuza kadar bekler.
@@ -604,15 +605,26 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Katman | Nasıl | Ne zaman |
 | --- | --- | --- |
-| **Tam kontrol** | `tools/check.ps1`, dört adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir, (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1). `TEMİZ` = sıfır hata, sıfır uyarı | Her görevde |
+| **Tam kontrol** | `tools/check.ps1`, beş adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir (test betikleri dahil), (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1), (5) gdUnit4 testleri. `TEMİZ` = sıfır hata, sıfır uyarı, başarısız test yok | Her görevde |
 | Kod denetimi (anlık) | Claude Code kancası: düzenlenen `.gd` dosyasında `gdlint` | Her `.gd` düzenlemesinde, otomatik |
 | Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi; asıl kanıt telefonun ekran görüntüsü | Görsel değişikliklerde |
 | Davranış denemesi (geçici) | Ekransız `--script` deneme betikleri (scratchpad'de, aşağıdaki derse uygun). M2-02'de gdUnit4 testlerine taşınır | M1 boyunca |
 | Telefon denemesi | `tools/deploy.ps1` + `adb logcat` (debug olay günlüğü `EVENT …`) + gerekirse `adb shell input tap` (önce ekran görüntüsüyle oyunun tam ekran olduğu doğrulanır) | Oynanış değişikliklerinde |
 | Web denemesi | `tools/web_build.ps1 -Smoke` (görünmez tarayıcı, konsoldaki olay günlüğü) | Web sürümü hazırlanırken |
-| Otomatik test | **gdUnit4** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi; sahne koşucusuyla dokunuş taklidi yapan oynanış testleri | M2'den itibaren |
+| Otomatik test | **gdUnit4 6.2.2** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi, oynanış davranışları. Ayrıntı aşağıda | M2'den itibaren, her görevde (tam kontrolün 5. adımı) |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
 | Oyun testi | Kullanıcı: PC → Redmi → web linki | Her kilometre taşında |
+
+**gdUnit4 testleri (M2-01):**
+
+- **Yer:** Testler `tests/` altında, `scripts/` ile aynı klasör düzeninde durur (`tests/systems/run_rng_test.gd`). Her dosya `extends GdUnitTestSuite`, test fonksiyonları `test_` ile başlar. Statik tip ve `gdlint` kuralları testlere de uygulanır.
+- **Koşturma** (`check.ps1` 5. adım): `<godot> --headless --path . -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests -c --ignoreHeadlessMode -rd user://gdunit-reports`
+  - `--remote-debug` kapalı bir bağlantı noktasına yönlenir; betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. Bunun ürettiği "remote port" hata satırları beklenendir ve filtrelenir.
+  - `-c`: ilk hatada durmaz. Raporlar proje dışına (`user://gdunit-reports`) yazılır.
+  - Sıfırdan farklı her çıkış sorundur: başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı.
+- **Ekransız modda girdi:** gdUnit4 uyarır, ekransız modda Godot'nun girdi olayları sahneye taşınmaz. Dokunuş testleri bu yüzden `get_tree().root.push_input(olay, true)` ile yapılır (M1'deki denemelerde çalıştığı görüldü).
+- **Dışa aktarma:** `addons/gdUnit4/*` ve `tests/*` her iki ön ayarda dışlanır; APK'da yok (M2-01'de denetlendi).
+- **Kabul (M2-01):** Bilerek bozulan bir test tam kontrolü `SORUN VAR`'a çevirdi ve beklenen/gelen değeri satır numarasıyla gösterdi.
 
 > **Ders (M1-04), ekransız deneme betikleri (gdUnit4 gelene kadar, M2-01):** `--script` ile verilen betik, autoload'lar kaydedilmeden derlenir.
 > - Betik, `Events` kullanan bir sınıfa (ör. `Player`) adıyla başvurursa o sınıfın derlemesi bozulur ve sahnedeki düğüm betiksiz kalır.
@@ -702,7 +714,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 
 | Araç | Ne işe yarar | Lisans | Godot 4.7 | Durum |
 | --- | --- | --- | --- | --- |
-| **gdUnit4** (godot-gdunit-labs) | Birim testleri + sahne koşucusu: dokunma simülasyonu, kare ilerletme, sinyal bekleme; komut satırı, HTML/JUnit rapor | MIT | ✅ 4.7 ve 4.7.1 listelenmiş | ✅ ADR-014 (M2-01) |
+| **gdUnit4** (godot-gdunit-labs) | Birim testleri + sahne koşucusu: dokunma simülasyonu, kare ilerletme, sinyal bekleme; komut satırı, HTML/JUnit rapor | MIT | ✅ 6.2.x 4.7 / 4.7.1 için listelenmiş, 4.7.2'de çalışıyor | ✅ ADR-014 (6.2.2, M2-01) |
 | GUT (bitwes) | Birim testleri, komut satırı | MIT | ✅ `godot_4_7` dalı (9.7.1) | ❌ ADR-014 (gdUnit4 seçildi) |
 | **gdtoolkit** (Scony) | `gdlint` (adlandırma ve stil denetimi), `gdformat` | MIT | 4.5.0; projemizin 4.7 sözdizimini okuyor (M0-12) | ✅ ADR-015, ADR-022 (4.5.0, M0-12) |
 | GDScript-formatter (GDQuest) | Rust ile hızlı biçimlendirici + linter, kod sıralaması | MIT | Belirtilmemiş | 📖 gdtoolkit takılırsa yedek |
