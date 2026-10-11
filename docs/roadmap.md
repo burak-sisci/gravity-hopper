@@ -123,7 +123,7 @@
   - Parça havuzları, `RunRng` ile ağırlıklı seçim, kameranın 2 ekran önünü dolu tutma, havuza iade ve sıfırlama.
   - `SpikeSpawner` ve "Geçici engeller (M1)" ayarları kaldırılır.
   *Kabul:* Tur sırasında düğüm oluşturulmuyor (test: düğüm sayısı sabit); Redmi'de kesintisiz akış.
-- [ ] **M2-05** 🤖 Parça doğrulama aracı (`tools/`, `check.ps1`'e bağlı): Her parça, izinli her sektör hızında çözülebilir mi? Ölçütler: iki zorunlu çevirme arası ≥ geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür.
+- [x] **M2-05** 🤖 Parça doğrulama aracı (`tools/`, `check.ps1`'e bağlı): Her parça, izinli her sektör hızında çözülebilir mi? Ölçütler: iki zorunlu çevirme arası ≥ geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür.
   *Kabul:* Bilerek çözülemez yapılan bir parçayı yakalıyor.
 - [ ] **M2-06** 🤖 İlk 12–15 desen parçası (yalnızca diken; S1–S2 zorluğu).
   *Kabul:* Doğrulama temiz; Redmi'de 2 dakikalık akış tekrar etmeden oynanıyor.

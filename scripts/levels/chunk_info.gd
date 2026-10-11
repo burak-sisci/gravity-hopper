@@ -47,6 +47,11 @@ static func beat_px(climb_speed: float, bpm: float) -> float:
 	return TuningConfig.to_px(climb_speed) * SECONDS_PER_MINUTE / bpm
 
 
+## Tasarımdaki bir konumun dünyadaki karşılığı: y vuruş boyuna, x koridor genişliğine ölçeklenir.
+static func world_position(design: Vector2, world_beat_px: float, half_width: float) -> Vector2:
+	return Vector2(design.x * half_width / DESIGN_HALF_WIDTH, design.y * world_beat_px / BEAT_GRID_PX)
+
+
 ## Parçanın öğeleri: doğrudan çocuk olan Node2D'ler.
 func items() -> Array[Node2D]:
 	var result: Array[Node2D] = []
@@ -54,6 +59,11 @@ func items() -> Array[Node2D]:
 		if child is Node2D:
 			result.append(child as Node2D)
 	return result
+
+
+## Öğenin tasarımdaki konumu (parça yerleşmiş olsa da). Parça ağaçta değilse şu anki konumudur.
+func design_position(item: Node2D) -> Vector2:
+	return _design_positions.get(item, item.position)
 
 
 func allows_sector(sector: int) -> bool:
@@ -74,11 +84,8 @@ func top_y() -> float:
 ## Konumlar _ready'de alındığı için parça ağaçta olmalı.
 func layout(world_beat_px: float, half_width: float) -> void:
 	laid_out_beat_px = world_beat_px
-	var y_scale: float = world_beat_px / BEAT_GRID_PX
-	var x_scale: float = half_width / DESIGN_HALF_WIDTH
 	for item: Node2D in _design_positions:
-		var design: Vector2 = _design_positions[item]
-		item.position = Vector2(design.x * x_scale, design.y * y_scale)
+		item.position = world_position(_design_positions[item], world_beat_px, half_width)
 
 
 ## Tasarım kurallarına uymayan her şeyi listeler; boşsa parça geçerlidir. Testler ve doğrulama
@@ -89,7 +96,7 @@ func design_errors() -> PackedStringArray:
 		errors.append("sektör aralığı ters: %d > %d" % [min_sector, max_sector])
 	var top: float = -length_beats * BEAT_GRID_PX
 	for item: Node2D in items():
-		var at: Vector2 = _design_positions.get(item, item.position)
+		var at: Vector2 = design_position(item)
 		if not _on_step(at.y, Y_STEP_PX) or at.y > 0.0 or at.y < top:
 			errors.append("%s: y=%s yarım vuruşa oturmuyor ya da 0…%s dışında" % [
 				item.name, at.y, top,

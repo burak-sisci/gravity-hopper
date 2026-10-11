@@ -195,7 +195,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
   5. Güvenli boşluğun genişliği
 - **Hız tavanı:**
   - Engelin ekranda belirmesiyle oyuncuya ulaşması arasındaki süre ~1,2 sn'nin altına inmez.
-  - İki zorunlu çevirme arasındaki süre, çevirme süresi + tepki payının altına inmez.
+  - İki zorunlu çevirme arasındaki süre, çevirme süresi + tepki payının altına inmez. Tepki payı başlangıçta **0,2 sn** (iki çevirme arası en az ≈ 0,57 sn); M2-18 oyun testinde gözden geçirilir.
   - Tavandan sonra zorluk yalnızca desenlerle artar.
 - **Hız hissi, gerçek hızdan ucuzdur:** paralaks katmanları, hız çizgileri, uzayan iz ve yoğunlaşan müzik oyunu gerçekte hızlandırmadan daha hızlı hissettirir.
 - **Oyuncu hızı değil baskıyı etkiler** (bkz. §14).

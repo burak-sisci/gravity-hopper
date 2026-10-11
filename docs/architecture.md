@@ -122,7 +122,8 @@ gravity-hopper/
 │   └── debug/                # Debug araçları
 │
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), deploy.ps1 (M0-08),
-│                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12), web_build.ps1 (M1-13)
+│                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12), web_build.ps1 (M1-13),
+│                             #   chunk_validator.gd + validate_chunks.gd (M2-05)
 ├── tests/                    # Otomatik testler (gdUnit4, M2-01); klasörler scripts/ ile aynı (tests/systems/run_rng_test.gd)
 └── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
     ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
@@ -349,7 +350,16 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
   - **Yerleştirme günlüğü:** `placed_names`, `placed_bottoms` (testler, M2-17).
   - **Ölçüm** (Redmi, M2-04): ölümsüz modda 391 m kesintisiz akış, günlükte havuz uyarısı yok; ölümden yeni tura 346–360 ms (M1'deki 348–360 ms ile aynı, havuz kurulumu fark edilmiyor).
-- **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. Parçaları izinli her sektör hızında denetleyen doğrulama aracı M2-05'te yazılır ve `check.ps1`'e bağlanır. Ölçütler: iki zorunlu çevirme arası; engelin ≥ 1,2 sn önceden görünmesi (onaylı ileri görüş 28 m ile 22 m/sn tavanında 1,27 sn, GDD §13.1).
+- **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür (onaylı ileri görüş 28 m ile 22 m/sn tavanında 1,27 sn, GDD §13.1).
+- **Parça doğrulama aracı** (M2-05): `tools/chunk_validator.gd` (`ChunkValidator`) + `tools/validate_chunks.gd`; tam kontrolün 4. adımı. Yeni parça tasarlarken tek başına da çalışır: `<godot> --headless --path . --script res://tools/validate_chunks.gd -- res://scenes/levels/chunks/x.tscn`.
+  - **Model:** Parça izinli her sektör hızında kare kare (60 Hz) denenir. Duvardan duvara geçiş `Player` ile aynı fizikle hesaplanır (≈ 22 kare). Oyuncu kusursuz zamanlar ama insandır: yere indikten sonra en az **tepki payı (0,2 sn = 12 kare)** bekler.
+  - **Durumlar:** Duvarda (taraf, inişten beri kare) ve geçişte (hedef, çevirmeden beri kare). Sondan başa "buradan parçanın sonuna sağ çıkılabilir mi?" tablosu kurulur.
+  - **Birleşim yeri kuralı:** Parça **her giriş durumundan** geçilebilmeli: iki duvarda yeni inmiş olarak ve önceki parçadan kalan yarım geçişin her karesinden. Böylece parçalar hangi sırayla gelirse gelsin birleşim yeri de adildir. Sonuç: parçanın ilk ~1,5 vuruşuna duvar tehlikesi konamaz (S1'de 1. vuruştaki diken yakalanır).
+  - **Ek denetimler:** Tehlike kutusu parçanın sınırından taşmaz. Her sektörün en az bir parçası vardır. Kamera kuralı her sektör hızında (`(ileri görüş − kutunun yarı boyu) / hız ≥ 1,2 sn`).
+  - **Temkin:** Tehlikeler kutu (AABB) olarak alınır; dikenin üçgeni yerine kutusu, birkaç piksel (≈ 0,01 sn) temkinlidir.
+  - **Hava geçişi sayılır:** İki duvarda aynı yükseklikteki diken çifti, geçişin ortasında aralarından süzülerek geçilebilir; araç bunu çözülebilir sayar (oyunda da öyle). Çözülemez örnek için iki duvar bir vuruş boyunca kapatılır (`tools/fixtures/chunk_unsolvable.tscn`).
+  - **Hata iletisi:** Hangi sektörde, hangi girişten, kaçıncı saniyede ve hangi tehlikelere çarpılarak geçilemediği: `S1: sol duvardan girişte 2,05 sn sonra geçilemiyor: SpikeRight35 (3,5. vuruş); SpikeLeft35 (3,5. vuruş)`.
+  - Sektör hızları ve BPM şimdilik araçta sabit tablo (GDD §12); M2-08'de `SectorDef`'ten okunur.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine ve ekran boyuna bağlı değildir.
   - `Run.rng`'yi yalnızca `ChunkSpawner` çeker. Rastgelelik isteyen başka bir sistem gelirse kendi `RunRng` akışını alır (tohumdan türetilmiş). Yoksa çekilişlerin sırası kare zamanlamasına ve ekran boyuna göre değişir, harita da değişir.
   - Seçim havuzun doluluğuna bakmaz. Havuz tükenirse (olmaması gerekir) `ObjectPool` uyarı yazıp yeni örnek oluşturur; harita bozulmaz, sorun testte görünür.
@@ -624,20 +634,20 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Katman | Nasıl | Ne zaman |
 | --- | --- | --- |
-| **Tam kontrol** | `tools/check.ps1`, beş adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir (test betikleri dahil), (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1), (5) gdUnit4 testleri. `TEMİZ` = sıfır hata, sıfır uyarı, başarısız test yok | Her görevde |
+| **Tam kontrol** | `tools/check.ps1`, altı adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir (test betikleri dahil), (3) sahne denetimi (`scene_tool.gd check`), (4) desen parçası doğrulama (`validate_chunks.gd`, §8.2), (5) `gdlint` (§13.1), (6) gdUnit4 testleri. `TEMİZ` = sıfır hata, sıfır uyarı, başarısız test yok | Her görevde |
 | Kod denetimi (anlık) | Claude Code kancası: düzenlenen `.gd` dosyasında `gdlint` | Her `.gd` düzenlemesinde, otomatik |
 | Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi; asıl kanıt telefonun ekran görüntüsü | Görsel değişikliklerde |
 | Davranış denemesi (geçici) | Ekransız `--script` deneme betikleri (scratchpad'de, aşağıdaki derse uygun). M2-02'de gdUnit4 testlerine taşındı; yalnızca tek seferlik ölçümler için | M1 boyunca |
 | Telefon denemesi | `tools/deploy.ps1` + `adb logcat` (debug olay günlüğü `EVENT …`) + gerekirse `adb shell input tap` (önce ekran görüntüsüyle oyunun tam ekran olduğu doğrulanır) | Oynanış değişikliklerinde |
 | Web denemesi | `tools/web_build.ps1 -Smoke` (görünmez tarayıcı, konsoldaki olay günlüğü) | Web sürümü hazırlanırken |
-| Otomatik test | **gdUnit4 6.2.2** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi, oynanış davranışları. Ayrıntı aşağıda | M2'den itibaren, her görevde (tam kontrolün 5. adımı) |
+| Otomatik test | **gdUnit4 6.2.2** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi, oynanış davranışları. Ayrıntı aşağıda | M2'den itibaren, her görevde (tam kontrolün 6. adımı) |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
 | Oyun testi | Kullanıcı: PC → Redmi → web linki | Her kilometre taşında |
 
 **gdUnit4 testleri (M2-01):**
 
-- **Yer:** Testler `tests/` altında, `scripts/` ile aynı klasör düzeninde durur (`tests/systems/run_rng_test.gd`). Her dosya `extends GdUnitTestSuite`, test fonksiyonları `test_` ile başlar. Statik tip ve `gdlint` kuralları testlere de uygulanır.
-- **Koşturma** (`check.ps1` 5. adım): `<godot> --headless --path . --fixed-fps 60 -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests -c --ignoreHeadlessMode -rd user://gdunit-reports`
+- **Yer:** Testler `tests/` altında, `scripts/` ile aynı klasör düzeninde durur (`tests/systems/run_rng_test.gd`); geliştirici araçlarının testleri `tests/tools/`'ta. Her dosya `extends GdUnitTestSuite`, test fonksiyonları `test_` ile başlar. Statik tip ve `gdlint` kuralları testlere de uygulanır.
+- **Koşturma** (`check.ps1` 6. adım): `<godot> --headless --path . --fixed-fps 60 -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests -c --ignoreHeadlessMode -rd user://gdunit-reports`
   - `--remote-debug` kapalı bir bağlantı noktasına yönlenir; betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. Bunun ürettiği "remote port" hata satırları beklenendir ve filtrelenir.
   - `--fixed-fps 60`: her karede tam bir fizik adımı; kare sayan testler makinenin hızından bağımsızdır.
   - `-c`: ilk hatada durmaz. Raporlar proje dışına (`user://gdunit-reports`) yazılır.
@@ -656,6 +666,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/tools/chunk_validator_test.gd` (M2-05) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -733,6 +744,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
+| ADR-030 | 2026-10-11 | Parça doğrulama kare kare durum aramasıyla yapılır (geçiş fiziği Player'la aynı, tepki payı 0,2 sn); parça her giriş durumundan (yarım geçişler dahil) geçilebilmeli; tehlikeler kutu olarak alınır (M2-05) | Analitik "iki zorunlu çevirme arası" formülü havada geçişleri ve tehlike boylarını hesaba katamıyordu. Her giriş durumu kuralı birleşim yerlerini parça çiftlerini tek tek denemeden adil kılar. Tepki payı başlangıç değeridir; M2-18 oyun testinde gözden geçirilir |
 | ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |
 | ADR-028 | 2026-10-11 | Kilometre taşı kapısı istisnası (kullanıcı kararı, .clauderules §9): M1 kapısı beklenmeden M2'ye geçilir; M1 ve M2 birlikte M2-19'da kontrol edilir. M1 kapı soruları (iki başparmak sonucu S-07, ilk izlenim, P-04) oraya taşındı. Yalnızca M1→M2 için geçerlidir; sonraki kapılar aynen sürer | Kullanıcı hızlanmak ve iki aşamayı tek seferde denetlemek istedi. Risk: M1 hissiyle ilgili bir itiraz M2 işini etkileyebilir. Önlem: değerler TuningConfig'te; his değişikliği M2'yi bozmaz |
 

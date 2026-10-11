@@ -1,5 +1,6 @@
 ﻿# Projenin tam kontrolü: içe aktarma + tüm GDScript dosyalarının uyarılar hataya çekilerek derlenmesi
 # + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd)
+# + desen parçası doğrulama (her parça her sektör hızında adil mi; tools/validate_chunks.gd)
 # + kod denetimi (gdlint, kurallar kökteki gdlintrc'de)
 # + otomatik testler (gdUnit4, tests/ altındaki tüm test takımları).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
@@ -46,7 +47,13 @@ $sceneCode = $LASTEXITCODE
 $scene | Where-Object { $_ -match "^(HATA|KURAL|NOT|SAHNE)|SCRIPT ERROR|ERROR:" }
 if ($sceneCode -ne 0) { $code = 1 }
 
-# 4) Kod denetimi: adlandırma, sıralama, satır uzunluğu (gdlint; addons/ ve .godot/ hariç)
+# 4) Desen parçası doğrulama: kütüphanedeki her parça izinli her sektör hızında adil mi
+$chunks = & $Godot --headless --path $root --script "res://tools/validate_chunks.gd" 2>&1 | ForEach-Object { "$_" }
+$chunksCode = $LASTEXITCODE
+$chunks | Where-Object { $_ -match "^PARÇA|SCRIPT ERROR|ERROR:" }
+if ($chunksCode -ne 0) { $code = 1 }
+
+# 5) Kod denetimi: adlandırma, sıralama, satır uzunluğu (gdlint; addons/ ve .godot/ hariç)
 if (-not (Test-Path -LiteralPath $GdLint)) {
 	Write-Output "GDLINT YOK: $GdLint (kurulum: docs/architecture.md §13.1)"; $code = 1
 } else {
@@ -58,7 +65,7 @@ if (-not (Test-Path -LiteralPath $GdLint)) {
 	} finally { Pop-Location }
 }
 
-# 5) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
+# 6) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
 #    betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. -c: ilk hatada durma.
 #    Raporlar proje dışına (user://gdunit-reports) yazılır. Sıfırdan farklı her çıkış sorundur
 #    (başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı).
