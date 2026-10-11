@@ -23,6 +23,7 @@ signal shield_changed(active: bool)
 # --- İlerleme ---
 signal height_changed(meters: int)
 signal sector_entered(index: int)
+signal chunk_placed(chunk_id: StringName, difficulty: int)
 signal glimmer_collected(value: int)
 signal near_miss(combo: int)
 signal combo_ended

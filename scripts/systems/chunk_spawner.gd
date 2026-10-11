@@ -7,6 +7,7 @@ extends Node2D
 ## Belirlenimcilik: sıradaki parçayı yalnızca RunRng ve sektör seçer; ekran boyu yalnızca
 ## parçanın ne zaman yerleştiğini değiştirir, hangisi olduğunu değil. Bu yüzden Run.rng'yi
 ## yalnızca bu düğüm çeker. Havuzlar en uzun ekrana göre kurulur; tükenmeleri seçimi değiştirmez.
+## Her yerleştirmede Events.chunk_placed yayar (debug olay günlüğü, zorluk ölçümü).
 
 ## Görünür alanın üstünde dolu tutulan alan (ekran boyu cinsinden).
 const AHEAD_SCREENS: float = 2.0
@@ -102,6 +103,7 @@ func _place_next() -> bool:
 	placed_names.append(_ids[index])
 	placed_bottoms.append(_next_bottom)
 	_next_bottom = chunk.top_y()
+	Events.chunk_placed.emit(_ids[index], chunk.difficulty)
 	return true
 
 

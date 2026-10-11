@@ -125,7 +125,7 @@
   *Kabul:* Tur sırasında düğüm oluşturulmuyor (test: düğüm sayısı sabit); Redmi'de kesintisiz akış.
 - [x] **M2-05** 🤖 Parça doğrulama aracı (`tools/`, `check.ps1`'e bağlı): Her parça, izinli her sektör hızında çözülebilir mi? Ölçütler: iki zorunlu çevirme arası ≥ geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür.
   *Kabul:* Bilerek çözülemez yapılan bir parçayı yakalıyor.
-- [ ] **M2-06** 🤖 İlk 12–15 desen parçası (yalnızca diken; S1–S2 zorluğu).
+- [x] **M2-06** 🤖 İlk 12–15 desen parçası (yalnızca diken; S1–S2 zorluğu).
   *Kabul:* Doğrulama temiz; Redmi'de 2 dakikalık akış tekrar etmeden oynanıyor.
 
 **Ritim ve sektörler**

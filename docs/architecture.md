@@ -255,6 +255,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
 | `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
 | `sector_entered` | `index: int` | Run | HUD (afiş), AudioManager (müzik) |
+| `chunk_placed` | `chunk_id: StringName, difficulty: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int` | Run | HUD, AudioManager |
 | `combo_ended` | — | Run | HUD |
@@ -339,6 +340,18 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   4. Dünyaya yerleşim `layout(vuruş_px, yarı_genişlik)`: konumlar tasarımdan yeniden hesaplanır (birikmez); x koridor genişliğiyle orantılı ölçeklenir, böylece duvar öğeleri genişlik ayarı değişse de duvarda kalır.
   5. `min_sector ≤ max_sector`. Tehlike türü etiketlenmez (çocuklardan okunur); etiketler seçim içindir (ör. `intro`, `breather`).
   6. Dosya adı: `<ana tehlike>_<desen>_<nn>.tscn` (örnek: `spike_zigzag_01.tscn`: 8 vuruş, 2. vuruşta sol, 4.'de sağ, 6.'da sol diken).
+  7. Öğe adı taraf + vuruş: `SpikeLeft2`, `SpikeRight4_5` (doğrulayıcı iletilerinde bu adlar görünür).
+- **İlk parça seti** (M2-06, yalnızca diken, 15 parça):
+
+  | Zorluk | Parçalar | Sektör | Desen |
+  | --- | --- | --- | --- |
+  | 1 | `spike_single_01/02`, `spike_wall_01/02`, `spike_pair_01` | S1–S3 | Tek diken; bir duvar boyu 4 diken; aynı duvarda iki diken |
+  | 2 | `spike_zigzag_01/02`, `spike_switch_01/02` | S1–S5 | 2 vuruşta bir taraf değiştiren; iki dikenlik blok sonra öbür duvar |
+  | 3 | `spike_zigzag_03/04`, `spike_ladder_01`, `spike_long_01`, `spike_tease_01` | S1–S5 | 1,5 vuruşluk zikzak; ikişerli merdiven; uzun bloklar; karışık |
+  | 4 | `spike_triple_01` | S1–S5 | 1,5 vuruş arayla dört zorunlu çevirme |
+
+  - Doğrulama: 65 sektör denemesi, 0 hata. İlk diken en erken 2. vuruşta (birleşim yeri kuralı).
+  - **Ölçüm** (Redmi, ölümsüz mod, 2 dk): 1577 m, 28 parça yerleşti, 12'si farklı, art arda aynı parça yok; günlükte uyarı yok. Ölümden yeni tura 371–386 ms (15 parçanın havuzu tur başında kuruluyor: M2-04'e göre ≈ +25 ms).
 - `ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, M2-04):
   - **Kütüphane:** seçilebilecek parçalar `ChunkLibrary` kaynağında (`data/chunks/chunk_library.tres`) elle listelenir. Yayın sürümünde `res://` klasörü güvenle taranamaz; test, klasördeki her parçanın listede olduğunu denetler.
   - Görünür alanın üstünde **2 ekranlık** alanı dolu tutar. Önce üst kenarı ekranın 100 px altına inen parçaları havuza döndürür, sonra ekler.

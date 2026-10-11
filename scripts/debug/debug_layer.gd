@@ -121,6 +121,8 @@ func _connect_event_log() -> void:
 		_log_event("player_died cause=%s" % GameTypes.DeathCause.keys()[cause]))
 	Events.run_started.connect(func(run_seed: int, start_sector: int) -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
+	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int) -> void:
+		_log_event("chunk_placed id=%s difficulty=%d" % [chunk_id, difficulty]))
 	Events.run_ended.connect(func(result: RunResult) -> void:
 		_log_event("run_ended height=%d cause=%s" % [
 			result.height_m, GameTypes.DeathCause.keys()[result.cause],

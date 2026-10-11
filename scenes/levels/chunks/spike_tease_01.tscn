@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+
+[node name="SpikeTease01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 3
+length_beats = 8
+
+[node name="SpikeRight2" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -200)
+scale = Vector2(-1, 1)
+
+[node name="SpikeRight2_5" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -250)
+scale = Vector2(-1, 1)
+
+[node name="SpikeLeft4" parent="." instance=ExtResource("2_spike")]
+position = Vector2(-450, -400)
+
+[node name="SpikeRight5_5" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -550)
+scale = Vector2(-1, 1)
+
+[node name="SpikeRight6" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -600)
+scale = Vector2(-1, 1)
