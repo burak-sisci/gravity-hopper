@@ -8,10 +8,13 @@ const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 ## M1 geçici akışı: ölümden bu kadar sonra tur kendiliğinden yeniden başlar.
 ## M5'te sonuç ekranı ve "Tekrar" düğmesi (Events.retry_requested) bunun yerini alır.
 const AUTO_RESTART_DELAY: float = 0.35
-## M1'de sektör seçimi yok; her tur S1'den başlar.
+## Oyun açılınca ilk tur S1'den başlar. Sektör seçimi (M5) ve debug 5 tuşu
+## Events.start_requested ile başka bir sektörden başlatır.
 const START_SECTOR: int = 1
 
 var _run: Run
+## Yeniden başlama (ölüm, Tekrar) son seçilen sektörden olur (kontrol noktası).
+var _start_sector: int = START_SECTOR
 
 @onready var _world: Node2D = %World
 @onready var _debug: CanvasLayer = %Debug
@@ -22,6 +25,7 @@ func _ready() -> void:
 		_debug.add_child((load(DEBUG_LAYER_PATH) as PackedScene).instantiate())
 	Events.run_ended.connect(_on_run_ended)
 	Events.retry_requested.connect(_start_run)
+	Events.start_requested.connect(_on_start_requested)
 	_start_run()
 
 
@@ -34,8 +38,16 @@ func _start_run() -> void:
 	var run_seed: int = GameManager.new_run_seed()
 	_run = RUN_SCENE.instantiate() as Run
 	_run.run_seed = run_seed
+	_run.start_sector = _start_sector
 	_world.add_child(_run)
-	GameManager.begin_run(run_seed, START_SECTOR)
+	# Run, katalog dışı sektörü sınırlar; duyurulan sektör gerçek başlangıçtır.
+	_start_sector = _run.start_sector
+	GameManager.begin_run(run_seed, _start_sector)
+
+
+func _on_start_requested(sector: int) -> void:
+	_start_sector = sector
+	_start_run()
 
 
 func _on_run_ended(_result: RunResult) -> void:

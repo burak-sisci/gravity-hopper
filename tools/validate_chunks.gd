@@ -8,6 +8,7 @@ extends SceneTree
 
 const LIBRARY_PATH: String = "res://data/chunks/chunk_library.tres"
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
+const SECTORS_PATH: String = "res://data/sectors/sector_catalog.tres"
 
 
 func _initialize() -> void:
@@ -18,7 +19,9 @@ func _initialize() -> void:
 	if from_library:
 		scenes = (load(LIBRARY_PATH) as ChunkLibrary).chunks
 	var tuning: TuningConfig = load(TUNING_PATH) as TuningConfig
-	var validator: ChunkValidator = ChunkValidator.new(tuning, ChunkValidator.player_body_size())
+	var sectors: SectorCatalog = load(SECTORS_PATH) as SectorCatalog
+	var validator: ChunkValidator = ChunkValidator.new(
+			tuning, ChunkValidator.player_body_size(), sectors)
 	var errors: int = 0
 	var trials: int = 0
 	var chunks: Array[ChunkInfo] = []
@@ -29,13 +32,13 @@ func _initialize() -> void:
 			errors += 1
 			continue
 		chunks.append(chunk)
-		trials += chunk.max_sector - chunk.min_sector + 1
+		trials += maxi(0, mini(chunk.max_sector, sectors.count()) - chunk.min_sector + 1)
 		for message: String in validator.chunk_errors(chunk):
 			print("PARÇA HATA %s: %s" % [scene.resource_path.get_file(), message])
 			errors += 1
 	var global_errors: PackedStringArray = validator.view_errors()
 	if from_library:
-		global_errors.append_array(ChunkValidator.coverage_errors(chunks))
+		global_errors.append_array(validator.coverage_errors(chunks))
 	for message: String in global_errors:
 		print("PARÇA HATA %s" % message)
 		errors += 1

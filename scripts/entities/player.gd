@@ -12,6 +12,8 @@ const INVINCIBLE_ALPHA: float = 0.45
 
 ## Ayarlar Run tarafından atanır (aşağı çağrı).
 var tuning: TuningConfig
+## Tırmanış hızı (m/sn); Run, bulunulan sektörden atar (M2-08).
+var climb_speed: float = 0.0
 
 ## Aktif duvar yönü: -1 sol, +1 sağ.
 var _gravity_dir: float = -1.0
@@ -67,7 +69,7 @@ func _physics_process(delta: float) -> void:
 			_buffer_left -= delta
 	# Dikey: tırmanış doğrudan konumla, tam sabit hızda. Engeller vuruş ızgarasına göre
 	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı.
-	position.y -= TuningConfig.to_px(tuning.climb_speed) * delta
+	position.y -= TuningConfig.to_px(climb_speed) * delta
 
 
 ## Aktif duvar sağda mı (Run ve testler için).

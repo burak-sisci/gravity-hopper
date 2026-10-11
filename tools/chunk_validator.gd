@@ -17,11 +17,6 @@ const MIN_WARNING_TIME: float = 1.2
 ## Yere inişle bir sonraki çevirme arasında insanın en az ihtiyaç duyduğu süre (GDD §13).
 ## Başlangıç değeri; M2-18 oyun testinde gözden geçirilir.
 const REACTION_MARGIN: float = 0.2
-## Sektörlerin tırmanış hızı (m/sn) ve temposu (BPM), GDD §12. M2-08'de SectorDef'ten okunur.
-const SECTOR_SPEEDS: Array[Vector2] = [
-	Vector2(12.0, 100.0), Vector2(14.0, 110.0), Vector2(16.0, 120.0),
-	Vector2(18.0, 128.0), Vector2(20.0, 140.0),
-]
 const PHYSICS_DT: float = 1.0 / 60.0
 ## Tehlike fizik katmanı (project.godot → layer_names: hazard = 3. katman).
 const HAZARD_LAYER: int = 4
@@ -29,11 +24,14 @@ const PLAYER_SCENE_PATH: String = "res://scenes/entities/player.tscn"
 
 var _tuning: TuningConfig
 var _body_size: Vector2
+## Sektörlerin hızı ve temposu buradan okunur; katalogda olmayan sektörler denenmez.
+var _sectors: SectorCatalog
 
 
-func _init(tuning: TuningConfig, body_size: Vector2) -> void:
+func _init(tuning: TuningConfig, body_size: Vector2, sectors: SectorCatalog) -> void:
 	_tuning = tuning
 	_body_size = body_size
+	_sectors = sectors
 
 
 ## Oyuncu gövdesinin boyu, sahnesinden (örnek oluşturmadan) okunur.
@@ -53,19 +51,20 @@ static func player_body_size() -> Vector2:
 func view_errors() -> PackedStringArray:
 	var errors: PackedStringArray = PackedStringArray()
 	var reach: float = TuningConfig.to_px(_tuning.lookahead) - _hurt_half().y
-	for i: int in SECTOR_SPEEDS.size():
-		var warning: float = reach / TuningConfig.to_px(SECTOR_SPEEDS[i].x)
+	for sector: int in range(1, _sectors.count() + 1):
+		var warning: float = reach / _sectors.def_at(sector).climb_px()
 		if warning < MIN_WARNING_TIME:
 			errors.append("S%d: engel %s sn önceden görünüyor (en az %s)" % [
-				i + 1, ("%.2f" % warning).replace(".", ","), ("%.1f" % MIN_WARNING_TIME).replace(".", ","),
+				sector, ("%.2f" % warning).replace(".", ","),
+				("%.1f" % MIN_WARNING_TIME).replace(".", ","),
 			])
 	return errors
 
 
 ## Her sektörde en az bir parça seçilebilmeli; yoksa ChunkSpawner o sektörde durur.
-static func coverage_errors(chunks: Array[ChunkInfo]) -> PackedStringArray:
+func coverage_errors(chunks: Array[ChunkInfo]) -> PackedStringArray:
 	var errors: PackedStringArray = PackedStringArray()
-	for sector: int in range(1, SECTOR_SPEEDS.size() + 1):
+	for sector: int in range(1, _sectors.count() + 1):
 		var found: bool = false
 		for chunk: ChunkInfo in chunks:
 			found = found or chunk.allows_sector(sector)
@@ -74,12 +73,12 @@ static func coverage_errors(chunks: Array[ChunkInfo]) -> PackedStringArray:
 	return errors
 
 
-## Parçanın izinli tüm sektörlerdeki sorunları; boşsa parça geçerlidir.
+## Parçanın izinli tüm sektörlerdeki (katalogda olanlar) sorunları; boşsa parça geçerlidir.
 func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 	var errors: PackedStringArray = chunk.design_errors()
 	if not errors.is_empty():
 		return errors
-	for sector: int in range(chunk.min_sector, chunk.max_sector + 1):
+	for sector: int in range(chunk.min_sector, mini(chunk.max_sector, _sectors.count()) + 1):
 		for message: String in sector_errors(chunk, sector):
 			errors.append("S%d: %s" % [sector, message])
 	return errors
@@ -87,8 +86,8 @@ func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 
 ## Parçanın tek bir sektör hızındaki sorunları.
 func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
-	var speed: Vector2 = SECTOR_SPEEDS[sector - 1]
-	var beat: float = ChunkInfo.beat_px(speed.x, speed.y)
+	var def: SectorDef = _sectors.def_at(sector)
+	var beat: float = def.beat_px()
 	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
 	var hazards: Array[Rect2] = []
 	var names: Array[String] = []
@@ -105,7 +104,7 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 	if not errors.is_empty() or hazards.is_empty():
 		return errors
 	var sim: Simulation = Simulation.new(hazards, _hurt_half(), half_width - _body_size.x * 0.5,
-			TuningConfig.to_px(speed.x), top, _tuning)
+			def.climb_px(), top, _tuning)
 	var failure: String = sim.first_failure(names)
 	if not failure.is_empty():
 		errors.append(failure)

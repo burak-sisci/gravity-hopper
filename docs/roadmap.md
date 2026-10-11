@@ -132,7 +132,7 @@
 
 - [x] **M2-07** 🤖 `Conductor`: BPM'den vuruş zamanı, `Events.beat`, kodla üretilen metronom sesi (dış varlık yok), parçaların vuruşa hizalanması. S-03 için ilk gecikme ölçümü.
   *Kabul:* Dikenler metronomla aynı anda geçiyor (günlük + kulak testi).
-- [ ] **M2-08** 🤖 `SectorDef` + S1–S3 kaynakları: ad anahtarları TR/EN, BPM, hız, uzunluk, izinli tehlikeler, zorluk aralığı, geçici palet. Sektör ilerleyişi ve hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır). Debug `5` tuşu (sonraki sektör).
+- [x] **M2-08** 🤖 `SectorDef` + S1–S3 kaynakları: ad anahtarları TR/EN, BPM, hız, uzunluk, izinli tehlikeler, zorluk aralığı, geçici palet. Sektör ilerleyişi ve hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır). Debug `5` tuşu (sonraki sektör).
   *Kabul:* Her sektörde tırmanış hızı doğru (test); S1 → S2 → S3 geçiliyor.
 - [ ] **M2-09** 🤖 Sektör geçişi: "nefes alma" boşluğu, `Events.sector_entered`, HUD'da sektör afişi (TR/EN), geçici palet tonu.
   *Kabul:* Geçişte engel yok, afiş görünüyor (Redmi ekran görüntüsü).

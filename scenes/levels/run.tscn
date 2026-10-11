@@ -8,11 +8,13 @@
 [ext_resource type="Script" path="res://scripts/systems/chunk_spawner.gd" id="6_chunks"]
 [ext_resource type="Resource" path="res://data/chunks/chunk_library.tres" id="7_library"]
 [ext_resource type="Script" path="res://scripts/systems/conductor.gd" id="8_conductor"]
+[ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="9_sectors"]
 
 [node name="Run" type="Node2D"]
 process_physics_priority = 1
 script = ExtResource("1_run")
 tuning = ExtResource("2_tuning")
+sectors = ExtResource("9_sectors")
 
 [node name="Conductor" type="Node" parent="."]
 unique_name_in_owner = true

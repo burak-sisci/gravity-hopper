@@ -206,7 +206,7 @@ Telefonda ayar paneliyle oynandı; başlangıç değerleri değiştirilmeden ona
 
 | Değer | Onaylı | Not |
 | --- | --- | --- |
-| Tırmanış hızı (S1) | 12 m/sn | Diğer sektörlerin hızları §12'deki tabloda |
+| Tırmanış hızı (S1) | 12 m/sn | Diğer sektörlerin hızları §12'deki tabloda; M2-08'den beri `data/sectors/` kaynaklarında |
 | Duvara çekim ivmesi | 300 m/sn² | Bu ikisiyle duvardan duvara geçiş ≈ 0,37 sn |
 | En yüksek yan hız | 64 m/sn | |
 | Dokunma tamponu | 0,12 sn | Duvara varmadan hemen önceki dokunuş affedilir |

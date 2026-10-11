@@ -93,6 +93,21 @@ func test_keys_toggle_panel_invincibility_and_slow_motion() -> void:
 	assert_bool(get_tree().debug_collisions_hint).is_false()
 
 
+func test_key_5_starts_next_sector() -> void:
+	var sectors: Array[int] = []
+	var on_started: Callable = func(_seed: int, start_sector: int) -> void:
+		sectors.append(start_sector)
+	Events.run_started.connect(on_started)
+	_push_key(KEY_5)
+	_push_key(KEY_KP_5)
+	# Son sektörden sonra (S3) aynı sektör yeniden başlar.
+	_push_key(KEY_5)
+	Events.run_started.disconnect(on_started)
+	assert_array(sectors).is_equal([2, 3, 3])
+	await _frames(1)
+	assert_int((_main.get_node("%World").get_child(0) as Run).sector).is_equal(3)
+
+
 func test_invincibility_survives_restart() -> void:
 	_push_key(KEY_2)
 	Events.retry_requested.emit()

@@ -6,6 +6,7 @@ const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigz
 const UNSOLVABLE_SCENE: PackedScene = preload("res://tools/fixtures/chunk_unsolvable.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const LEFT: float = -450.0
 const RIGHT: float = 450.0
 
@@ -13,7 +14,7 @@ var _validator: ChunkValidator
 
 
 func before_test() -> void:
-	_validator = ChunkValidator.new(_tuning(), ChunkValidator.player_body_size())
+	_validator = ChunkValidator.new(_tuning(), ChunkValidator.player_body_size(), SECTORS)
 
 
 func test_reads_player_body_from_scene() -> void:
@@ -29,24 +30,26 @@ func test_both_walls_blocked_is_caught() -> void:
 	# İki duvar bir vuruş boyunca dikenli: tek geçiş bu kadar uzun havada kalamaz.
 	var chunk: ChunkInfo = auto_free(UNSOLVABLE_SCENE.instantiate()) as ChunkInfo
 	var errors: PackedStringArray = _validator.chunk_errors(chunk)
-	assert_int(errors.size()).is_equal(5)
+	# Katalogdaki her sektörde (S1–S3) geçilemez.
+	assert_int(errors.size()).is_equal(3)
 	assert_str(errors[0]).starts_with("S1").contains("geçilemiyor").contains("Spike")
 
 
 func test_spike_pair_can_be_passed_mid_flip() -> void:
 	# Aynı yükseklikte iki duvarda diken: geçişin ortasında aralarından süzülmek mümkün.
 	var chunk: ChunkInfo = _chunk(6, [Vector3(LEFT, -300, 1), Vector3(RIGHT, -300, -1)])
-	assert_array(_validator.sector_errors(chunk, 5)).is_empty()
+	assert_array(_validator.sector_errors(chunk, 3)).is_empty()
 
 
 func test_flips_too_close_fail_at_high_speed() -> void:
-	# Her vuruşta taraf değiştiren dikenler: S5'te (vuruş 0,43 sn) iki çevirme arası
-	# geçiş + tepki payından (≈ 0,57 sn) kısa kalır.
+	# Yarım vuruşta bir taraf değiştiren dikenler: S3'te (yarım vuruş 0,25 sn) iki çevirme arası
+	# geçiş + tepki payından (≈ 0,57 sn) çok kısa; tek geçişin havadaki kısmı da iki dikeni örtmüyor.
+	# (Her vuruşta taraf değiştirmek S3'te çözülebiliyor: bazı dikenler havada geçilir.)
 	var chunk: ChunkInfo = _chunk(8, [
-		Vector3(LEFT, -200, 1), Vector3(RIGHT, -300, -1), Vector3(LEFT, -400, 1),
-		Vector3(RIGHT, -500, -1), Vector3(LEFT, -600, 1),
+		Vector3(LEFT, -200, 1), Vector3(RIGHT, -250, -1), Vector3(LEFT, -300, 1),
+		Vector3(RIGHT, -350, -1), Vector3(LEFT, -400, 1),
 	])
-	assert_array(_validator.sector_errors(chunk, 5)).is_not_empty()
+	assert_array(_validator.sector_errors(chunk, 3)).is_not_empty()
 	# Aynı dikenler iki vuruş arayla her sektörde adil.
 	var relaxed: ChunkInfo = _chunk(8, [
 		Vector3(LEFT, -200, 1), Vector3(RIGHT, -400, -1), Vector3(LEFT, -600, 1),
@@ -70,21 +73,20 @@ func test_hazard_crossing_chunk_edge_is_caught() -> void:
 func test_view_rule_uses_lookahead() -> void:
 	assert_array(_validator.view_errors()).is_empty()
 	var short_view: TuningConfig = _tuning()
-	short_view.lookahead = 20.0
+	short_view.lookahead = 15.0
 	var errors: PackedStringArray = ChunkValidator.new(
-			short_view, ChunkValidator.player_body_size()).view_errors()
-	# 20 m ileri görüş: S1'de 1,62 sn yeter, S4'te 1,08 sn ve S5'te 0,97 sn yetmez.
+			short_view, ChunkValidator.player_body_size(), SECTORS).view_errors()
+	# 15 m ileri görüş: S1'de 1,20 sn yeter, S2'de 1,03 sn ve S3'te 0,90 sn yetmez.
 	assert_int(errors.size()).is_equal(2)
-	assert_str(errors[0]).starts_with("S4")
+	assert_str(errors[0]).starts_with("S2")
 
 
 func test_every_sector_needs_a_chunk() -> void:
 	var early: ChunkInfo = _chunk(4, [])
 	early.max_sector = 2
 	var chunks: Array[ChunkInfo] = [early]
-	var errors: PackedStringArray = ChunkValidator.coverage_errors(chunks)
-	assert_array(Array(errors)).contains_exactly(["S3 için parça yok", "S4 için parça yok",
-			"S5 için parça yok"])
+	var errors: PackedStringArray = _validator.coverage_errors(chunks)
+	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
 
 
 ## Diken listesinden parça kurar: (x, tasarım y, scale.x).

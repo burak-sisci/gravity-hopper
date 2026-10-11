@@ -164,6 +164,7 @@ Main (Node)                           scenes/main.tscn
 2. `begin_run` durumu `RUNNING` yapar ve `Events.run_started` yayar.
 3. `Player` ölünce `GameManager` `RunResult` oluşturur (yükseklik `Events.height_changed`'den), durumu `RESULTS` yapar ve `Events.run_ended` yayar.
 4. M1 geçici akışı: `Main`, `run_ended`'den 0,35 sn sonra yeni tur kurar. M5'te sonuç ekranı gelir; "Tekrar" düğmesi `Events.retry_requested` yayar, `Main` bunu zaten dinliyor.
+5. **Başlangıç sektörü (M2-08):** `Events.start_requested(sector)` gelince `Main` o sektörden yeni tur kurar (sektör seçimi M5, şimdilik debug `5`). `Run` katalog dışı numarayı sınırlar; `Main` sınırlanmış numarayı `begin_run`'a verir. Ölümden ve "Tekrar"dan sonraki turlar son seçilen sektörden başlar (kontrol noktası). `GameManager`, `sector_entered`'dan ulaşılan en yüksek sektörü `RunResult.sector_reached`'e yazar.
 
 Ölçüm: ekransız denemede ölümden yeni tura 22 kare (0,37 sn); Redmi'de 7 turda 348–360 ms.
 
@@ -261,7 +262,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `combo_ended` | — | Run | HUD |
 | `wall_proximity_changed` | `ratio: float` (0 uzak – 1 yakın) | PressureSystem | HUD (kenar vinyeti), AudioManager |
 | `beat` | `index: int` | Conductor | Arka plan, HUD (nabız) |
-| `start_requested` | `sector: int` | UI | GameManager |
+| `start_requested` | `sector: int` | UI (M5), debug katmanı (`5`, M2-08) | Main (o sektörden yeni tur) |
 | `retry_requested` / `revive_requested` / `menu_requested` | — | UI | GameManager |
 | `pause_requested` / `resume_requested` | — | UI | GameManager |
 | `glimmers_changed` | `total: int` | Progression | UI |
@@ -293,7 +294,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 ### 8.1 Hareket (Player)
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
-- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-08'de `SectorDef`'e taşınır. Bütün hareket değerleri `TuningConfig`'te metre birimindedir (§10).
+- **Dikey:** Sabit tırmanış hızı; değer bulunulan sektörden gelir (`SectorDef.climb_speed`, M2-08). `Run` atar: `Player.climb_speed` (m/sn). Diğer hareket değerleri `TuningConfig`'te metre birimindedir (§10).
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
   - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-11'de gelir.
@@ -358,7 +359,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
   - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli parçalar arasından seçer. Şimdilik ağırlıklar eşit; hedef zorluk eğrisi ve son N parçayı tekrar etmeme M2-10'da.
   - Sektör geçişlerine "nefes alma" parçası koyar (M2-09).
-  - Tempo şimdilik `ChunkSpawner.bpm` (100, S1) ve `TuningConfig.climb_speed`'den; M2-08'de `SectorDef`'ten gelir.
+  - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px()`) dizilir; ızgarası sektörün başladığı yükseklikten başlar. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır ve sıradaki sektör tam sınırdan başlar. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar katalogdaki en kısa vuruşa göre kurulur.
   - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
   - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
   - **Yerleştirme günlüğü:** `placed_names`, `placed_bottoms` (testler, M2-17).
@@ -372,7 +373,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Temkin:** Tehlikeler kutu (AABB) olarak alınır; dikenin üçgeni yerine kutusu, birkaç piksel (≈ 0,01 sn) temkinlidir.
   - **Hava geçişi sayılır:** İki duvarda aynı yükseklikteki diken çifti, geçişin ortasında aralarından süzülerek geçilebilir; araç bunu çözülebilir sayar (oyunda da öyle). Çözülemez örnek için iki duvar bir vuruş boyunca kapatılır (`tools/fixtures/chunk_unsolvable.tscn`).
   - **Hata iletisi:** Hangi sektörde, hangi girişten, kaçıncı saniyede ve hangi tehlikelere çarpılarak geçilemediği: `S1: sol duvardan girişte 2,05 sn sonra geçilemiyor: SpikeRight35 (3,5. vuruş); SpikeLeft35 (3,5. vuruş)`.
-  - Sektör hızları ve BPM şimdilik araçta sabit tablo (GDD §12); M2-08'de `SectorDef`'ten okunur.
+  - Sektör hızları ve BPM `SectorCatalog`'dan okunur (M2-08); katalogda olmayan sektörler (S4–S5, M4-07) denenmez.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine ve ekran boyuna bağlı değildir.
   - `Run.rng`'yi yalnızca `ChunkSpawner` çeker. Rastgelelik isteyen başka bir sistem gelirse kendi `RunRng` akışını alır (tohumdan türetilmiş). Yoksa çekilişlerin sırası kare zamanlamasına ve ekran boyuna göre değişir, harita da değişir.
   - Seçim havuzun doluluğuna bakmaz. Havuz tükenirse (olmaması gerekir) `ObjectPool` uyarı yazıp yeni örnek oluşturur; harita bozulmaz, sorun testte görünür.
@@ -392,7 +393,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - Diriliş ve duraklatma sonrasında müzik `run_time`'a göre konumlanır.
 - **Uygulama (M2-07):**
   - `Conductor` (`scripts/systems/conductor.gd`, Run'ın çocuğu): `run_time` ve `bpm` (`@export`, şimdilik 100; M2-08'de `SectorDef`). `Run._physics_process` her adımda önce `advance(delta)` çağırır; böylece `run_time` oyuncunun konumuyla aynı adımda ilerler. Geçilen her vuruşta `Events.beat(index)` (1'den başlar).
-  - Tempo tek yerde: `Run`, `Conductor.bpm`'i `ChunkSpawner`'a verir (vuruş ızgarası ile ritim aynı).
+  - Tempo sektörden gelir (M2-08): `Run`, `Conductor.set_tempo(bpm, başlangıç_anı)` çağırır; vuruşlar o andan sayılır, ses `beat_time()`'a (ızgaranın başından beri geçen süre) hizalanır.
+  - **Hız basamağı (M2-08):** Oyuncu sektör sınırını geçtiği adımda `Run` hızı ve tempoyu değiştirir ve `Events.sector_entered` yayar. Oyuncu o adımda sınırı biraz aşmıştır; yeni ızgaranın başlangıç anı `run_time − aşma / yeni_hız` alınır. Böylece yeni sektördeki engeller de tam vuruş anlarında geçer (test: kısa sektörlerle S1→S2→S3, her sektörde diken geçişi yarım vuruştan ≤ 1 kare uzak). Telefonda S2 → S3 geçişi 71,40 sn'de oldu (1000 m ÷ 14 m/sn = 71,43 sn); metronom kayması S2'de −18…−26 ms.
   - **Vuruşa hizalama:** Oyuncu turun başındaki yüksekliğinden vuruş ızgarasıyla tırmanır; parçalar tam vuruşta, öğeler yarım vuruşta durur. Bu yüzden her diken yarım vuruş anında geçer. Test: gerçek turda 1500 karede her diken geçişi yarım vuruştan ≤ 1 kare uzak (`tests/systems/conductor_test.gd`); ilk parçanın tam vuruşa yuvarlanması kaldırılınca test hata veriyor.
   - **Ses:** `Conductor` her adımda `AudioManager.sync_beat_clock(run_time, bpm)` çağırır (autoload servis çağrısı; ses düğümü autoload'un kendi çocuğudur). Müzik gelene kadar kodla üretilen bir ölçülük metronom çalar (`AudioStreamWAV`, 44,1 kHz, 4 vuruş, ilk vuruş vurgulu; dış dosya yok). `Music` ve `SFX` ses yolları `default_bus_layout.tres`'te.
   - **Hizalama:** Döngü, duyulan konumu `run_time`'a denk gelecek yerden çalar (`play(run_time + gecikme)`). Kayma 15 karelik ortalamayla ölçülür (konum karıştırma tamponu kadar titrer). 40 ms'yi aşarsa yeniden konumlanır. Çalmadan ya da konumlamadan sonra 0,5 sn ölçülmez. Turun ilk düzeltmesi hemen, sonrakiler ölçüde en fazla bir kez yapılır.
@@ -457,8 +459,9 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
-| `SectorDef` | `data/sectors/sector_01.tres` … | İsim anahtarı, palet, BPM, tırmanış hızı, uzunluk, izinli tehlikeler, zorluk aralığı, müzik |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
+| `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
@@ -566,6 +569,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `2` | Ölümsüzlük | M1-12 |
   | `3` | Çarpışma kutularını göster | M1-12 |
   | `4` | Yavaş çekim | M1-12 |
+  | `5` | Sonraki sektörün başından yeni tur (son sektörde aynı sektör); paneldeki "Sektör ›" düğmesi | M2-08 |
   | `5` | Sonraki sektöre atla | M2-08 |
   | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
   | `7` | FPS / kare süresi | M1-02 |
@@ -695,6 +699,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/data/sector_catalog_test.gd` (M2-08) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları |
+  | `tests/levels/run_sector_test.gd` (M2-08) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07) | Metronom bir ölçü, vuruşlarda tık, döngü sonundan sonra sessiz pay |
   | `tests/tools/chunk_validator_test.gd` (M2-05) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
@@ -775,6 +781,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
+| ADR-032 | 2026-10-11 | Sektörler veri kaynağı (`SectorDef` + `SectorCatalog`); tırmanış hızı `TuningConfig`'ten sektöre taşındı. Sektör sınırları kesin yükseklikte; parça sınırı aşmaz, sığmayan kalan boş kalır. Başlangıç sektörü `Events.start_requested` ile seçilir, sonraki turlar aynı sektörden başlar (M2-08) | GDD'deki sektör tablosu tek yerde; doğrulayıcı ve oyun aynı değerleri okur. Kesin sınır yükseklikleri HUD'u, kontrol noktalarını ve testleri basit tutar; sınırdaki boşluk M2-09'daki "nefes alma" anının temelidir |
 | ADR-031 | 2026-10-11 | Ritim saati `Conductor` Run'ın içinde, sesi `AudioManager` çalar; `Conductor` her adımda oyun zamanını servis çağrısıyla bildirir. Ses, ortalama kayma 40 ms'yi aşınca ve ölçüde en fazla bir kez yeniden konumlanır (M2-07) | Autoload sahne düğümüne erişmeden saate uyar; müzik (M3) aynı yolu kullanır. Her karede konumlamak Android'de ses iş parçacığını yordu; ölçüm titremesi ortalamayla süzülür |
 | ADR-030 | 2026-10-11 | Parça doğrulama kare kare durum aramasıyla yapılır (geçiş fiziği Player'la aynı, tepki payı 0,2 sn); parça her giriş durumundan (yarım geçişler dahil) geçilebilmeli; tehlikeler kutu olarak alınır (M2-05) | Analitik "iki zorunlu çevirme arası" formülü havada geçişleri ve tehlike boylarını hesaba katamıyordu. Her giriş durumu kuralı birleşim yerlerini parça çiftlerini tek tek denemeden adil kılar. Tepki payı başlangıç değeridir; M2-18 oyun testinde gözden geçirilir |
 | ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |

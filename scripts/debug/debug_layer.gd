@@ -23,6 +23,8 @@ var _key_actions: Dictionary[int, Callable] = {}
 var _debug_menu: CanvasLayer
 var _aspect_index: int = 0
 var _invincible: bool = false
+## Oyuncunun bulunduğu sektör (run_started ve sector_entered'dan izlenir).
+var _sector: int = 1
 
 @onready var _tuning_panel: Control = %TuningPanel
 @onready var _invincible_button: Button = %InvincibleButton
@@ -38,6 +40,7 @@ func _ready() -> void:
 		_collisions_button.button_pressed = not get_tree().debug_collisions_hint)
 	_bind_key(KEY_4, KEY_KP_4, func() -> void:
 		_slow_button.button_pressed = is_equal_approx(Engine.time_scale, 1.0))
+	_bind_key(KEY_5, KEY_KP_5, _on_next_sector_pressed)
 	_bind_key(KEY_6, KEY_KP_6, _cycle_aspect)
 	_bind_key(KEY_7, KEY_KP_7, _cycle_fps)
 	_key_actions[KEY_R] = _on_restart_pressed
@@ -49,9 +52,11 @@ func _ready() -> void:
 	if INVINCIBLE_ARG in OS.get_cmdline_user_args():
 		_invincible_button.button_pressed = true
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
-	Events.run_started.connect(func(_run_seed: int, _start_sector: int) -> void:
+	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:
+		_sector = start_sector
 		if _invincible:
 			Events.debug_invincibility_changed.emit(true))
+	Events.sector_entered.connect(func(index: int) -> void: _sector = index)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -93,6 +98,11 @@ func _on_restart_pressed() -> void:
 	Events.retry_requested.emit()
 
 
+## Sonraki sektörün başından yeni tur (kontrol noktası yolu; son sektörde aynı sektör).
+func _on_next_sector_pressed() -> void:
+	Events.start_requested.emit(_sector + 1)
+
+
 ## Üst sıradaki rakam tuşu ve sayısal tuş takımındaki karşılığı aynı işi yapar.
 func _bind_key(key: Key, keypad_key: Key, action: Callable) -> void:
 	_key_actions[key] = action
@@ -125,6 +135,8 @@ func _connect_event_log() -> void:
 		_log_event("player_died cause=%s" % GameTypes.DeathCause.keys()[cause]))
 	Events.run_started.connect(func(run_seed: int, start_sector: int) -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
+	Events.sector_entered.connect(func(index: int) -> void:
+		_log_event("sector_entered index=%d" % index))
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d" % [chunk_id, difficulty]))
 	Events.run_ended.connect(func(result: RunResult) -> void:

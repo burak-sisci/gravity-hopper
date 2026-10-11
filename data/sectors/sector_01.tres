@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SectorDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/sector_def.gd" id="1_sector"]
+
+[resource]
+script = ExtResource("1_sector")
+name_key = &"SECTOR_1_NAME"
+bpm = 100.0
+climb_speed = 12.0
+length = 750.0
+allowed_hazards = Array[StringName]([&"spike"])
+min_difficulty = 1
+max_difficulty = 3
+ambient_color = Color(0.3, 0.85, 0.95, 1)

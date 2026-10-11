@@ -5,8 +5,9 @@ extends Node
 ## değerini aynı orana çeker (ritim senkronu, ADR-008).
 ##
 ## M2-07: müzik gelene kadar (M3) kodla üretilen bir ölçülük metronom döngüsü çalar. Conductor
-## her fizik adımında sync_beat_clock() ile oyun zamanını bildirir; döngü, duyulan konumu oyun
-## zamanına eşit olacak şekilde hizalanır. Müzik de aynı yolu kullanacak.
+## her fizik adımında sync_beat_clock() ile vuruş saatini (tempo ızgarasının başından beri geçen
+## oyun zamanı) bildirir; döngü, duyulan konumu bu saate eşit olacak şekilde hizalanır. Müzik de
+## aynı yolu kullanacak. Sektör değişince tempo ve saat yeniden başlar; döngü yeniden kurulur.
 ## Duyulan konum = çalma konumu + son karıştırmadan beri geçen süre − çıkış gecikmesi.
 ## Tur başlayınca çalar, oyuncu ölünce durur.
 ##
@@ -46,7 +47,7 @@ var _clock_active: bool = false
 ## Döngü çalmaya başlatıldı mı. play()'den hemen sonra `playing` hâlâ false olabildiği için
 ## kendi bayrağımız tutulur; yoksa her karede yeniden play() çağrılır.
 var _clock_playing: bool = false
-var _last_run_time: float = 0.0
+var _last_beat_time: float = 0.0
 ## Son çalma ya da yeniden konumlamanın oyun zamanı; bekleme ve ölçü sınırı buna göre.
 var _placed_at: float = 0.0
 var _drift_samples: PackedFloat32Array = PackedFloat32Array()
@@ -65,8 +66,8 @@ func _ready() -> void:
 	Events.player_died.connect(_on_player_died)
 
 
-## Conductor her fizik adımında çağırır: metronom döngüsünü oyun zamanına hizalar.
-func sync_beat_clock(run_time: float, bpm: float) -> void:
+## Conductor her fizik adımında çağırır: metronom döngüsünü vuruş saatine hizalar.
+func sync_beat_clock(beat_time: float, bpm: float) -> void:
 	if not _clock_active:
 		return
 	_metronome.pitch_scale = Engine.time_scale
@@ -76,12 +77,12 @@ func sync_beat_clock(run_time: float, bpm: float) -> void:
 		_metronome.stream = make_metronome(bpm)
 		_clock_playing = false
 	var bar: float = BEATS_PER_BAR * Conductor.SECONDS_PER_MINUTE / bpm
-	if not _clock_playing or run_time < _last_run_time:
-		_place_clock(run_time, bar)
-	elif run_time - _placed_at >= SETTLE_TIME:
-		_measure_drift(run_time, bar)
-	_last_run_time = run_time
-	_report(run_time, bar)
+	if not _clock_playing or beat_time < _last_beat_time:
+		_place_clock(beat_time, bar)
+	elif beat_time - _placed_at >= SETTLE_TIME:
+		_measure_drift(beat_time, bar)
+	_last_beat_time = beat_time
+	_report(beat_time, bar)
 
 
 ## Bir ölçülük metronom: her vuruşta sönen kısa bir sinüs tıkı. Dış ses dosyası yoktur.
@@ -107,21 +108,21 @@ static func make_metronome(bpm: float) -> AudioStreamWAV:
 	return stream
 
 
-## Döngüyü, duyulan konumu oyun zamanına denk gelecek yerden çalar.
-func _place_clock(run_time: float, bar: float) -> void:
+## Döngüyü, duyulan konumu vuruş saatine denk gelecek yerden çalar.
+func _place_clock(beat_time: float, bar: float) -> void:
 	var latency: float = AudioServer.get_output_latency() * Engine.time_scale
-	_metronome.play(fposmod(run_time + latency, bar))
+	_metronome.play(fposmod(beat_time + latency, bar))
 	_clock_playing = true
-	_placed_at = run_time
+	_placed_at = beat_time
 	_drift_samples.clear()
 
 
 ## Kaymayı pencere ortalamasıyla ölçer; sınır aşılırsa (ölçüde en fazla bir kez) yeniden konumlar.
-func _measure_drift(run_time: float, bar: float) -> void:
+func _measure_drift(beat_time: float, bar: float) -> void:
 	var latency: float = AudioServer.get_output_latency() * Engine.time_scale
 	var heard: float = _metronome.get_playback_position() \
 			+ AudioServer.get_time_since_last_mix() * Engine.time_scale - latency
-	_drift_samples.append(wrapf(heard - run_time, -bar * 0.5, bar * 0.5))
+	_drift_samples.append(wrapf(heard - beat_time, -bar * 0.5, bar * 0.5))
 	if _drift_samples.size() < DRIFT_WINDOW:
 		return
 	var average: float = 0.0
@@ -132,17 +133,17 @@ func _measure_drift(run_time: float, bar: float) -> void:
 	_last_drift = average
 	_max_drift = maxf(_max_drift, absf(average))
 	# Turun ilk düzeltmesi hemen (başlangıç takılması), sonrakiler ölçüde en fazla bir kez.
-	if absf(average) > DRIFT_LIMIT and (_resyncs == 0 or run_time - _placed_at >= bar):
+	if absf(average) > DRIFT_LIMIT and (_resyncs == 0 or beat_time - _placed_at >= bar):
 		_resyncs += 1
 		if OS.is_debug_build():
 			print("AUDIO resync drift=%d ms" % roundi(average * 1000.0))
-		_place_clock(run_time, bar)
+		_place_clock(beat_time, bar)
 
 
 func _on_run_started(_run_seed: int, _start_sector: int) -> void:
 	_clock_active = true
 	_clock_playing = false
-	_last_run_time = 0.0
+	_last_beat_time = 0.0
 	_resyncs = 0
 	_max_drift = 0.0
 	_reported_bar = 0
@@ -160,10 +161,10 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 
 
 ## Debug build'de birkaç ölçüde bir senkron raporu (S-03 ölçümü).
-func _report(run_time: float, bar: float) -> void:
+func _report(beat_time: float, bar: float) -> void:
 	if not OS.is_debug_build():
 		return
-	var bar_index: int = floori(run_time / bar)
+	var bar_index: int = floori(beat_time / bar)
 	if bar_index < _reported_bar + REPORT_EVERY_BARS:
 		return
 	_reported_bar = bar_index

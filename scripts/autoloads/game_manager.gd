@@ -12,11 +12,13 @@ var state: AppState = AppState.BOOT
 
 var _run_seed: int = 0
 var _height_m: int = 0
+var _sector_reached: int = 1
 
 
 func _ready() -> void:
 	Events.player_died.connect(_on_player_died)
 	Events.height_changed.connect(_on_height_changed)
+	Events.sector_entered.connect(_on_sector_entered)
 
 
 ## Durumu değiştirir. Geçersiz geçişlerin engellenmesi M5-01'de eklenecek.
@@ -33,12 +35,17 @@ func new_run_seed() -> int:
 func begin_run(run_seed: int, start_sector: int) -> void:
 	_run_seed = run_seed
 	_height_m = 0
+	_sector_reached = start_sector
 	change_state(AppState.RUNNING)
 	Events.run_started.emit(run_seed, start_sector)
 
 
 func _on_height_changed(meters: int) -> void:
 	_height_m = meters
+
+
+func _on_sector_entered(index: int) -> void:
+	_sector_reached = maxi(_sector_reached, index)
 
 
 func _on_player_died(cause: GameTypes.DeathCause) -> void:
@@ -49,4 +56,5 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	result.height_m = _height_m
 	result.cause = cause
 	result.run_seed = _run_seed
+	result.sector_reached = _sector_reached
 	Events.run_ended.emit(result)

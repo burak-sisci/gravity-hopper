@@ -3,6 +3,7 @@ extends GdUnitTestSuite
 ## boşluksuz ve vuruş ızgarasında, tur sırasında düğüm oluşmaz, harita ekran boyuna bağlı değil.
 
 const LIBRARY: ChunkLibrary = preload("res://data/chunks/chunk_library.tres")
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigzag_01.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
@@ -83,11 +84,45 @@ func test_chunks_outside_sector_are_not_chosen() -> void:
 	var spawner: ChunkSpawner = _make(library, 9)
 	_scroll(spawner, 0.0, SCROLL_PX, VIEW_HEIGHT)
 	# S1'de yalnızca örnek parça (8 vuruş) seçilebilir.
-	var gaps: Array[float] = _chunk_heights(spawner)
-	assert_array(gaps).not_contains([4.0 * S1_BEAT_PX])
-	spawner.sector = 2
-	_scroll(spawner, SCROLL_PX, SCROLL_PX * 2.0, VIEW_HEIGHT)
-	assert_array(_chunk_heights(spawner)).contains([4.0 * S1_BEAT_PX])
+	assert_array(_chunk_heights(spawner)).not_contains([4.0 * S1_BEAT_PX])
+	# S2'den başlayan turda 4 vuruşluk parça da gelir (S2 vuruşu 381,82 px).
+	var in_s2: ChunkSpawner = _make(library, 9, 2)
+	_scroll(in_s2, 0.0, SCROLL_PX, VIEW_HEIGHT)
+	var s2_four_beats: float = snappedf(4.0 * SECTORS.def_at(2).beat_px(), 0.01)
+	assert_array(_chunk_heights(in_s2)).contains([s2_four_beats])
+
+
+func test_chunks_stop_at_sector_boundary() -> void:
+	# Kısa sektörler: S1 ve S2 100'er m. Parça sınırı aşmaz; S2 tam sınırdan, kendi vuruşuyla başlar.
+	var sectors: SectorCatalog = _short_sectors(100.0)
+	var spawner: ChunkSpawner = auto_free(ChunkSpawner.new()) as ChunkSpawner
+	spawner.library = LIBRARY
+	add_child(spawner)
+	spawner.setup(RunRng.new(5), _tuning(), sectors, 1, 0.0)
+	_scroll(spawner, 0.0, SCROLL_PX, VIEW_HEIGHT)
+	assert_int(spawner.placement_sector()).is_equal(3)
+	var s1_end: float = -TuningConfig.to_px(100.0)
+	var s2_end: float = -TuningConfig.to_px(200.0)
+	var s2_beat: float = sectors.def_at(2).beat_px()
+	var started_s2: bool = false
+	for i: int in spawner.placed_bottoms.size():
+		var bottom: float = spawner.placed_bottoms[i]
+		if bottom > s1_end + 0.01:
+			continue
+		if not started_s2:
+			started_s2 = true
+			assert_float(bottom).is_equal_approx(s1_end, 0.01)
+		if bottom > s2_end + 0.01:
+			# S2'deki her parça S2 ızgarasında ve S2'nin sonunu aşmıyor.
+			var beats: float = (s1_end - bottom) / s2_beat
+			assert_float(beats).is_equal_approx(roundf(beats), 0.001)
+	assert_bool(started_s2).is_true()
+	for i: int in range(1, spawner.placed_bottoms.size()):
+		var top: float = spawner.placed_bottoms[i]
+		var bottom: float = spawner.placed_bottoms[i - 1]
+		# Hiçbir parça bir sınırın iki yanına taşmaz.
+		for edge: float in [s1_end, s2_end]:
+			assert_bool(bottom > edge + 0.01 and top < edge - 0.01).is_false()
 
 
 func test_wider_corridor_moves_wall_hazards() -> void:
@@ -117,12 +152,22 @@ func test_run_creates_no_nodes_during_play() -> void:
 	assert_int((run.get_node("%ChunkSpawner") as ChunkSpawner).pools_grown()).is_equal(0)
 
 
-func _make(library: ChunkLibrary, run_seed: int) -> ChunkSpawner:
+func _make(library: ChunkLibrary, run_seed: int, sector: int = 1) -> ChunkSpawner:
 	var spawner: ChunkSpawner = auto_free(ChunkSpawner.new()) as ChunkSpawner
 	spawner.library = library
 	add_child(spawner)
-	spawner.setup(RunRng.new(run_seed), _tuning(), 0.0)
+	spawner.setup(RunRng.new(run_seed), _tuning(), SECTORS, sector, 0.0)
 	return spawner
+
+
+## Gerçek S1–S3'ün kısa kopyası (hız ve tempo aynı, boylar kısa).
+func _short_sectors(length: float) -> SectorCatalog:
+	var sectors: SectorCatalog = SectorCatalog.new()
+	for i: int in SECTORS.count():
+		var def: SectorDef = SECTORS.def_at(i + 1).duplicate() as SectorDef
+		def.length = length
+		sectors.sectors.append(def)
+	return sectors
 
 
 ## Oyuncu 0'dan climbed kadar tırmanmışken kameranın göreceği alan (Run ile aynı kural).
