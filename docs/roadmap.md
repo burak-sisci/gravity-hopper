@@ -98,9 +98,9 @@
   *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.
 - [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma: itch.io, şifreli sayfa (D-12, ADR-027). *(Claude'un kısmı tamam: Web ön ayarı, `tools/web_build.ps1`, zip, tarayıcı denemesi. Kalan: senin itch.io sayfasını açıp zip'i yüklemen. ⏸ Ertelendi, kullanıcı kararı 2026-10-08; istediğin zaman kaldığı yerden sürer, M1 kapısını beklemez.)*
   *Kabul:* Tarayıcıda oynanabilir bir link var.
-- [ ] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
-  *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti.
-- [ ] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD).
+- [x] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
+  *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak sonucu M1-16 kapısında sorulacak.)*
+- [x] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD). *(Değerler zaten `.tres`'teydi; GDD §13.1 ve `approved_tuning` yazıldı, telefondaki kayıt dosyası silindi.)*
 - [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.**
 
 ## M2 — Sonsuz ve adil

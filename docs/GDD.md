@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-07 (M0 gözden geçirmesi, tasarım değişmedi) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-11 (M1-15: onaylanan his değerleri §13.1'e işlendi) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -199,6 +199,22 @@ Maliyet formülü: `taban × 2^(seviye-1)`
   - Tavandan sonra zorluk yalnızca desenlerle artar.
 - **Hız hissi, gerçek hızdan ucuzdur:** paralaks katmanları, hız çizgileri, uzayan iz ve yoğunlaşan müzik oyunu gerçekte hızlandırmadan daha hızlı hissettirir.
 - **Oyuncu hızı değil baskıyı etkiler** (bkz. §14).
+
+### 13.1 Onaylanan his değerleri (M1-14, 2026-10-11)
+
+Telefonda ayar paneliyle oynandı; başlangıç değerleri değiştirilmeden onaylandı. Geçerli kaynak: `data/tuning/default_tuning.tres`.
+
+| Değer | Onaylı | Not |
+| --- | --- | --- |
+| Tırmanış hızı (S1) | 12 m/sn | Diğer sektörlerin hızları §12'deki tabloda |
+| Duvara çekim ivmesi | 300 m/sn² | Bu ikisiyle duvardan duvara geçiş ≈ 0,37 sn |
+| En yüksek yan hız | 64 m/sn | |
+| Dokunma tamponu | 0,12 sn | Duvara varmadan hemen önceki dokunuş affedilir |
+| Çarpışma kutusu | görselin %70'i | |
+| İleri görüş (oyuncunun üstünde) | 28 m | S1'de engel 2,3 sn önce görünür; 22 m/sn tavanında 1,27 sn (≥ 1,2 sn kuralı tutuyor) |
+| Koridor genişliği | 18 m | |
+
+Diken aralığı (10 m) ve ilk dikene kadar boşluk (25 m) M1'in geçici engel akışına aittir; tasarım değeri değildir, M2'de desen parçaları gelir.
 
 ## 14. Çöküş duvarı (baskı)
 

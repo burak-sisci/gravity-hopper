@@ -495,6 +495,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
     - Duraklat / Devam: `get_tree().paused`; debug katmanı `ALWAYS` olduğu için çalışır.
     - FPS ve Kapat.
   - **Açılış:** Debug build'de kayıt dosyası varsa değerleri paylaşılan örneğe kopyalanır. Bu, ilk turdan önce olur, çünkü `Main` debug katmanını turdan önce yükler.
+  - **Onaydan sonra kayıt silinir:** Onaylanan değerler `.tres`'e ve GDD'ye geçince telefondaki ve PC'deki kayıt dosyası silinir (`adb shell run-as com.gravityhopper.dev rm files/tuning_override.tres`). Yoksa ileride değişen varsayılanları sessizce ezer (M1-15'te yapıldı).
   - **Claude dosyayı okur:**
     - PC: `%APPDATA%\Godot\app_userdata\Gravity Hopper\tuning_override.tres`.
     - Telefon: `adb shell run-as com.gravityhopper.dev cat files/tuning_override.tres` (debug paketi `run-as`'a izin veriyor; M1-11'de denendi).
