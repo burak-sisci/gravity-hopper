@@ -114,7 +114,7 @@ gravity-hopper/
 │   ├── autoloads/            # Global servisler (bkz. §6)
 │   ├── components/           # Bağımsız parçalar: Hurtbox, GrazeDetector, Magnet…
 │   ├── entities/             # Varlık betikleri (sahnelerle aynı ad)
-│   ├── levels/               # run.gd, chunk_info.gd
+│   ├── levels/               # run.gd, corridor.gd, chunk_info.gd (M2-03)
 │   ├── systems/              # ChunkSpawner, Conductor, PressureSystem, ObjectPool, RunRng
 │   ├── data/                 # Resource sınıf tanımları (TuningConfig, SectorDef…)
 │   ├── ui/                   # UI betikleri
@@ -325,10 +325,18 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ### 8.2 Bölüm üretimi (desen parçaları)
 
-- **Desen parçası (chunk)** = `scenes/levels/chunks/` altında bir sahne. Kökünde `ChunkInfo` betiği bulunur:
-  - `difficulty` (1–10), `min_sector`, `max_sector`, `length_beats`, `tags`.
+- **Desen parçası (chunk)** = `scenes/levels/chunks/` altında bir sahne. Kökü `Node2D` + `ChunkInfo` betiği (`scripts/levels/chunk_info.gd`, M2-03):
+  - `difficulty` (1–10), `min_sector`, `max_sector` (1–5), `length_beats` (1–64), `tags` (`Array[StringName]`).
+  - Öğeler kökün doğrudan çocuklarıdır (tehlike sahneleri, ileride Glimmer). `items()` bunları verir.
 - Parçalar **vuruş biriminde** tasarlanır: editörde 1 vuruş = 100 px dikey ızgara. Parça yerleştirilirken y konumları sektörün vuruş uzunluğuna göre ölçeklenir: `y_dünya = y_yerel / 100 × vuruş_px(sektör)`. Şekiller esnemez, yalnızca konumlar ölçeklenir.
-- `vuruş_px(sektör) = tırmanış_hızı × 60 / BPM`.
+- `vuruş_px(sektör) = tırmanış_hızı × 60 / BPM` → `ChunkInfo.beat_px(hız_m_sn, bpm)`. S1: 360 px (0,6 sn), S3: 400 px, S5: ≈ 429 px.
+- **Parça tasarım kuralları** (`ChunkInfo.design_errors()` denetler; test `tests/levels/chunk_info_test.gd` klasördeki her parçaya uygular):
+  1. Kök parçanın **alt kenarıdır** (oyuncunun ilk vardığı yer); parça yukarı uzanır: öğelerin y'si `0` ile `-length_beats × 100` arasında.
+  2. Öğeler **yarım vuruşa** oturur (y, 50'nin katı) ve yatayda 1 m adımına (x, 50'nin katı). Editörde ızgara yaklaştırması 50 × 50 px yapılır.
+  3. Koridor tasarımda 18 m çizilir: duvarlar x = ±450. Duvara yapışık öğe tam ±450'de durur ve **koridora bakar** (sol duvarda `scale.x = 1`, sağda `-1`).
+  4. Dünyaya yerleşim `layout(vuruş_px, yarı_genişlik)`: konumlar tasarımdan yeniden hesaplanır (birikmez); x koridor genişliğiyle orantılı ölçeklenir, böylece duvar öğeleri genişlik ayarı değişse de duvarda kalır.
+  5. `min_sector ≤ max_sector`. Tehlike türü etiketlenmez (çocuklardan okunur); etiketler seçim içindir (ör. `intro`, `breather`).
+  6. Dosya adı: `<ana tehlike>_<desen>_<nn>.tscn` (örnek: `spike_zigzag_01.tscn`: 8 vuruş, 2. vuruşta sol, 4.'de sağ, 6.'da sol diken).
 - `ChunkSpawner`:
   - Kameranın 2 ekran önünü dolu tutar.
   - Sıradaki parçayı `RunRng` ile, sektör içi ilerlemeye göre hedef zorluk eğrisinden ağırlıklı seçer.
@@ -636,6 +644,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/main_test.gd` | Tur kurulumu, ölümden yeni tura ≤ 30 kare (0,5 sn), sonuçta yükseklik/neden/tohum, sonuç ekranında ikinci ölümün yok sayılması, `retry_requested` |
   | `tests/debug/debug_layer_test.gd` | DBG'ye dokunuş çevirmez (oyun alanına dokunuş çevirir), DBG paneli açar/kapatır, her aralıklı ayar için bir kaydırıcı, tuşlar 1/2/3/4, ölümsüzlüğün yeni tura taşınması |
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
+  | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
 
