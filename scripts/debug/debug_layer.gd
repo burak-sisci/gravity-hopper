@@ -8,6 +8,8 @@ const MENU_STYLE_COUNT: int = 3
 const DEBUG_MENU_PATH: String = "res://addons/debug_menu/debug_menu.tscn"
 ## Telefonda okunabilsin diye eklentinin katmanı büyütülür.
 const DEBUG_MENU_SCALE: float = 2.0
+## Başlatma argümanı (`-- --invincible`): uzun denemelerde ölümsüzlük baştan açık olur.
+const INVINCIBLE_ARG: String = "--invincible"
 ## Ekran oranı denemesi (yalnızca PC, architecture.md §3): dikey pencere boyutları.
 const ASPECT_WINDOWS: Array[Vector2i] = [
 	Vector2i(450, 800), Vector2i(450, 1000), Vector2i(600, 800),
@@ -44,6 +46,8 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_place_debug_menu)
 	_place_debug_menu()
 	_connect_event_log()
+	if INVINCIBLE_ARG in OS.get_cmdline_user_args():
+		_invincible_button.button_pressed = true
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
 	Events.run_started.connect(func(_run_seed: int, _start_sector: int) -> void:
 		if _invincible:

@@ -4,6 +4,7 @@ extends Node2D
 ## yalnızca Events ile seslenir. Kamera oyuncuyu izler; koridor ve desen parçaları kameraya
 ## göre yenilenir. Tam metre değiştikçe Events.height_changed yayar.
 ## process_physics_priority = 1: Run oyuncudan sonra çalışır, kamera bu adımın konumunu izler.
+## Ritim saati (Conductor) de burada, oyuncuyla aynı adımda ilerletilir (§8.3).
 
 @export var tuning: TuningConfig
 ## Turun tohumu; Main, GameManager'dan alıp verir. 0 ise (sahne tek başına çalıştırılınca)
@@ -15,6 +16,7 @@ var rng: RunRng
 var _start_y: float = 0.0
 var _height_m: int = 0
 
+@onready var _conductor: Conductor = %Conductor
 @onready var _corridor: Corridor = %Corridor
 @onready var _chunks: ChunkSpawner = %ChunkSpawner
 @onready var _camera: GameCamera = %GameCamera
@@ -30,12 +32,14 @@ func _ready() -> void:
 	_start_y = _player.position.y
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
+	_chunks.bpm = _conductor.bpm
 	_chunks.setup(rng, tuning, _player.position.y)
 	_update_view()
 	_camera.reset_physics_interpolation()
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_conductor.advance(delta)
 	_update_view()
 	var meters: int = floori((_start_y - _player.position.y) / TuningConfig.PX_PER_M)
 	if meters != _height_m:

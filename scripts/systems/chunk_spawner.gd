@@ -16,9 +16,9 @@ const RELEASE_MARGIN: float = 100.0
 
 ## Seçilebilecek parçalar.
 @export var library: ChunkLibrary
-## Sektörün temposu (vuruş/dk). M2-08'de SectorDef'ten gelir; şimdilik S1 (GDD §12).
-@export var bpm: float = 100.0
 
+## Sektörün temposu (vuruş/dk); Run, Conductor'ınkini verir (vuruş ızgarası ve ritim aynı olsun).
+var bpm: float = 100.0
 ## Şu anki sektör (1–5). M2-08'de sektör ilerleyişi değiştirir.
 var sector: int = 1
 ## Yerleştirme günlüğü: sırayla her parçanın adı ve alt kenarı (testler, belirlenimcilik).

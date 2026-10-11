@@ -188,7 +188,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M2-04):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M2-07):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
@@ -390,6 +390,21 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - **Dokunuşlar müziğe göre yargılanmaz** (Android ses gecikmesi cihazdan cihaza değişir). Müzik yalnızca bölüm yerleşimini belirler.
 - **Zaman ölçeği kuralı:** `Engine.time_scale` değiştiğinde (kıl payı yavaş çekimi, duraklatma) `AudioManager` müziğin `pitch_scale` değerini aynı orana çeker. Bu, bant yavaşlaması gibi bir efekt verir ve senkronu korur.
 - Diriliş ve duraklatma sonrasında müzik `run_time`'a göre konumlanır.
+- **Uygulama (M2-07):**
+  - `Conductor` (`scripts/systems/conductor.gd`, Run'ın çocuğu): `run_time` ve `bpm` (`@export`, şimdilik 100; M2-08'de `SectorDef`). `Run._physics_process` her adımda önce `advance(delta)` çağırır; böylece `run_time` oyuncunun konumuyla aynı adımda ilerler. Geçilen her vuruşta `Events.beat(index)` (1'den başlar).
+  - Tempo tek yerde: `Run`, `Conductor.bpm`'i `ChunkSpawner`'a verir (vuruş ızgarası ile ritim aynı).
+  - **Vuruşa hizalama:** Oyuncu turun başındaki yüksekliğinden vuruş ızgarasıyla tırmanır; parçalar tam vuruşta, öğeler yarım vuruşta durur. Bu yüzden her diken yarım vuruş anında geçer. Test: gerçek turda 1500 karede her diken geçişi yarım vuruştan ≤ 1 kare uzak (`tests/systems/conductor_test.gd`); ilk parçanın tam vuruşa yuvarlanması kaldırılınca test hata veriyor.
+  - **Ses:** `Conductor` her adımda `AudioManager.sync_beat_clock(run_time, bpm)` çağırır (autoload servis çağrısı; ses düğümü autoload'un kendi çocuğudur). Müzik gelene kadar kodla üretilen bir ölçülük metronom çalar (`AudioStreamWAV`, 44,1 kHz, 4 vuruş, ilk vuruş vurgulu; dış dosya yok). `Music` ve `SFX` ses yolları `default_bus_layout.tres`'te.
+  - **Hizalama:** Döngü, duyulan konumu `run_time`'a denk gelecek yerden çalar (`play(run_time + gecikme)`). Kayma 15 karelik ortalamayla ölçülür (konum karıştırma tamponu kadar titrer). 40 ms'yi aşarsa yeniden konumlanır. Çalmadan ya da konumlamadan sonra 0,5 sn ölçülmez. Turun ilk düzeltmesi hemen, sonrakiler ölçüde en fazla bir kez yapılır.
+  - Tur başlayınca çalar, oyuncu ölünce durur. `pitch_scale` = `Engine.time_scale`.
+  - **Ölçüm (S-03, Redmi):**
+    - `AudioServer.get_output_latency()` Android'de **0 ms** dönüyor (PC'de 10 ms). Gerçek donanım gecikmesi koddan bilinemez; duyulan tık o kadar geç kalır. Telafi için ileride oyuncunun ayarlayacağı bir "ses kaydırma" ayarı gerekir (M5 ayarlar). Kulak testi M2-18'de.
+    - 77 sn ölümsüz turda kayma ±20 ms içinde kaldı, yeniden konumlama gerekmedi. 40 ms sınırı uygun.
+    - Tur başında, havuz kurulumu bir kare takılmasına yol açıyor; fizik kaçırdığı adımları art arda çalıştırınca oyun saati ileri atlıyor ve ses −50…−119 ms geride kalıyor (PC'de de). İlk düzeltme 0,6 sn içinde yapılıyor.
+  - **Dersler (M2-07):**
+    - **Döngülü `AudioStreamWAV` koddan üretilirken `loop_end`'den sonra sessiz bir pay bırakılır** (`LOOP_TAIL_SAMPLES` = 64). Pay yokken Redmi'de (karıştırma hızı = akış hızı = 44,1 kHz) her döngü sonunda ses iş parçacığı çöktü (SIGSEGV; çökme kaydında örnek sayısı 105840 görünüyordu). PC'de (48 kHz, örnek hızı dönüştürmeli yol) görülmedi.
+    - Her karede `seek()` yapılmaz: `seek` = durdur + çal; ölçüm titremesine göre her karede konumlamak ses iş parçacığını yorar. Ortalama + bekleme + ölçü sınırı kullanılır.
+    - `play()`'den hemen sonra `playing` hâlâ `false` olabilir; çalma durumu ayrı bir bayrakla tutulur.
 
 ### 8.4 Çöküş duvarı (PressureSystem)
 
@@ -565,6 +580,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **`R`:** `Events.retry_requested` yayar; `Main` turu yeniden kurar.
   - Ekransız denemede 10 durum geçti: ölümsüzken 400 karede ölüm yok, R sonrası ölümsüzlük sürüyor, kapatınca diken öldürüyor, çarpışma kutuları açılıp kapanıyor, yavaş çekimde 60 karede tam 180 px.
   - Redmi'de ölümsüzlük düğmesiyle 8 sn'de ölümsüz 143 m tırmanıldı.
+  - **Başlatma argümanı (M2-07):** `<godot> --path . -- --invincible` ölümsüzlüğü baştan açar (PC'de uzun denemeler). Telefonda argüman verilemiyor (Godot'nun asıl etkinliği dışa açık değil); orada düğme kullanılır.
 - **Telefonda:** Küçük, yarı saydam bir debug düğmesi paneli açar. Düğme yalnızca debug build'de görünür; yeri, HUD ile çakışmayacak şekilde M1-02'de seçilir.
   - Düğme bir `Control` olduğu için dokunuş arayüzde kalır ve çevirme yapmaz (§8.1, `_unhandled_input`).
   - Eski plandaki "köşeye üçlü dokunuş" bırakıldı: o dokunuşların her biri aynı zamanda yerçekimini çevirirdi.
@@ -679,6 +695,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
+  | `tests/autoloads/audio_manager_test.gd` (M2-07) | Metronom bir ölçü, vuruşlarda tık, döngü sonundan sonra sessiz pay |
   | `tests/tools/chunk_validator_test.gd` (M2-05) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
@@ -757,6 +775,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
+| ADR-031 | 2026-10-11 | Ritim saati `Conductor` Run'ın içinde, sesi `AudioManager` çalar; `Conductor` her adımda oyun zamanını servis çağrısıyla bildirir. Ses, ortalama kayma 40 ms'yi aşınca ve ölçüde en fazla bir kez yeniden konumlanır (M2-07) | Autoload sahne düğümüne erişmeden saate uyar; müzik (M3) aynı yolu kullanır. Her karede konumlamak Android'de ses iş parçacığını yordu; ölçüm titremesi ortalamayla süzülür |
 | ADR-030 | 2026-10-11 | Parça doğrulama kare kare durum aramasıyla yapılır (geçiş fiziği Player'la aynı, tepki payı 0,2 sn); parça her giriş durumundan (yarım geçişler dahil) geçilebilmeli; tehlikeler kutu olarak alınır (M2-05) | Analitik "iki zorunlu çevirme arası" formülü havada geçişleri ve tehlike boylarını hesaba katamıyordu. Her giriş durumu kuralı birleşim yerlerini parça çiftlerini tek tek denemeden adil kılar. Tepki payı başlangıç değeridir; M2-18 oyun testinde gözden geçirilir |
 | ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |
 | ADR-028 | 2026-10-11 | Kilometre taşı kapısı istisnası (kullanıcı kararı, .clauderules §9): M1 kapısı beklenmeden M2'ye geçilir; M1 ve M2 birlikte M2-19'da kontrol edilir. M1 kapı soruları (iki başparmak sonucu S-07, ilk izlenim, P-04) oraya taşındı. Yalnızca M1→M2 için geçerlidir; sonraki kapılar aynen sürer | Kullanıcı hızlanmak ve iki aşamayı tek seferde denetlemek istedi. Risk: M1 hissiyle ilgili bir itiraz M2 işini etkileyebilir. Önlem: değerler TuningConfig'te; his değişikliği M2'yi bozmaz |

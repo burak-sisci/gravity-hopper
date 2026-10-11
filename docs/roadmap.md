@@ -130,7 +130,7 @@
 
 **Ritim ve sektörler**
 
-- [ ] **M2-07** 🤖 `Conductor`: BPM'den vuruş zamanı, `Events.beat`, kodla üretilen metronom sesi (dış varlık yok), parçaların vuruşa hizalanması. S-03 için ilk gecikme ölçümü.
+- [x] **M2-07** 🤖 `Conductor`: BPM'den vuruş zamanı, `Events.beat`, kodla üretilen metronom sesi (dış varlık yok), parçaların vuruşa hizalanması. S-03 için ilk gecikme ölçümü.
   *Kabul:* Dikenler metronomla aynı anda geçiyor (günlük + kulak testi).
 - [ ] **M2-08** 🤖 `SectorDef` + S1–S3 kaynakları: ad anahtarları TR/EN, BPM, hız, uzunluk, izinli tehlikeler, zorluk aralığı, geçici palet. Sektör ilerleyişi ve hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır). Debug `5` tuşu (sonraki sektör).
   *Kabul:* Her sektörde tırmanış hızı doğru (test); S1 → S2 → S3 geçiliyor.
@@ -157,7 +157,7 @@
 
 **Kapanış**
 
-- [ ] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi.
+- [ ] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi. M2-07'den: metronom kulak testi (dikenler tıkla aynı anda mı geçiyor, tık geç mi kalıyor? S-03).
 - [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır.
 
 ## M3 — Görsel ve işitsel kimlik
