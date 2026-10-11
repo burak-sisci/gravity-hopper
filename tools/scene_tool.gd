@@ -110,7 +110,9 @@ func _connection_lines(node: Node, scene_root: Node) -> PackedStringArray:
 				continue
 			var callable: Callable = connection["callable"]
 			var target: Node = callable.get_object() as Node
-			var target_name: String = String(scene_root.get_path_to(target)) if target != null else "?"
+			var target_name: String = "?"
+			if target != null:
+				target_name = _state_path_label(scene_root.get_path_to(target), scene_root)
 			lines.append("%s.%s → %s.%s()" % [
 				scene_root.get_path_to(node), signal_name, target_name, callable.get_method(),
 			])

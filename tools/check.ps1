@@ -62,7 +62,8 @@ if (-not (Test-Path -LiteralPath $GdLint)) {
 #    betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. -c: ilk hatada durma.
 #    Raporlar proje dışına (user://gdunit-reports) yazılır. Sıfırdan farklı her çıkış sorundur
 #    (başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı).
-$tests = & $Godot --headless --path $root -s -d --remote-debug tcp://127.0.0.1:0 `
+#    --fixed-fps 60: her karede tam bir fizik adımı; kare sayan testler makineden bağımsız olur.
+$tests = & $Godot --headless --path $root --fixed-fps 60 -s -d --remote-debug tcp://127.0.0.1:0 `
 	"res://addons/gdUnit4/bin/GdUnitCmdTool.gd" -a "res://tests" -c --ignoreHeadlessMode -rd "user://gdunit-reports" 2>&1 |
 	ForEach-Object { "$_" -replace "\x1b\[[0-9;]*m", "" }
 $testCode = $LASTEXITCODE

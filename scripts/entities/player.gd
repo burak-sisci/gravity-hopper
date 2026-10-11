@@ -32,7 +32,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _is_tap(event):
+	if is_tap(event):
 		get_viewport().set_input_as_handled()
 		_flip_requested = true
 
@@ -79,6 +79,21 @@ func is_alive() -> bool:
 	return _alive
 
 
+## Bir girdi olayı çevirme dokunuşu mu? Her parmağın basışı sayılır; dokunuştan türetilen
+## sahte fare olayı yok sayılır, yoksa her dokunuş iki kez sayılır (S-07). PC'de sol tık ve boşluk.
+static func is_tap(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch:
+		return (event as InputEventScreenTouch).pressed
+	if event is InputEventMouseButton:
+		var mouse: InputEventMouseButton = event as InputEventMouseButton
+		return mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT \
+				and mouse.device != InputEvent.DEVICE_ID_EMULATION
+	if event is InputEventKey:
+		var key: InputEventKey = event as InputEventKey
+		return key.pressed and not key.echo and key.keycode == KEY_SPACE
+	return false
+
+
 ## Kalkan M2-16'da gelir; o zamana kadar her darbe ölümdür.
 func _on_hurtbox_hit() -> void:
 	if not _alive or _invincible:
@@ -97,18 +112,3 @@ func _on_debug_invincibility_changed(enabled: bool) -> void:
 func _flip() -> void:
 	_gravity_dir = -_gravity_dir
 	Events.player_flipped.emit()
-
-
-## Her parmağın basışı sayılır; dokunuştan türetilen sahte fare olayı yok sayılır, yoksa her
-## dokunuş iki kez sayılır (S-07). PC'de sol tık ve boşluk.
-static func _is_tap(event: InputEvent) -> bool:
-	if event is InputEventScreenTouch:
-		return (event as InputEventScreenTouch).pressed
-	if event is InputEventMouseButton:
-		var mouse: InputEventMouseButton = event as InputEventMouseButton
-		return mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT \
-				and mouse.device != InputEvent.DEVICE_ID_EMULATION
-	if event is InputEventKey:
-		var key: InputEventKey = event as InputEventKey
-		return key.pressed and not key.echo and key.keycode == KEY_SPACE
-	return false

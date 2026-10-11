@@ -112,7 +112,7 @@
 
 - [x] **M2-01** 🤖 gdUnit4 (sürümü sabit, CREDITS) + `tests/` yapısı + komut satırı koşucusu; `tools/check.ps1`'e 5. adım "testler". İlk testler `RunRng` için (aynı tohum aynı dizi, farklı tohum farklı dizi, `make_seed` 0 vermez).
   *Kabul:* Tam kontrol testleri çalıştırıyor; bilerek bozulan bir test `SORUN VAR` veriyor.
-- [ ] **M2-02** 🤖 M1 davranışlarının kalıcı testleri: M1'deki geçici deneme betikleri gdUnit4'e taşınır. Kapsam: tırmanışın tam sabit olması, yalnızca duvardayken çevirme, dokunma tamponu, girdi kuralları (sahte fare, iki parmak), debug düğmesine dokunuşun çevirme sayılmaması, ölümden yeni tura < 0,5 sn.
+- [x] **M2-02** 🤖 M1 davranışlarının kalıcı testleri: M1'deki geçici deneme betikleri gdUnit4'e taşınır. Kapsam: tırmanışın tam sabit olması, yalnızca duvardayken çevirme, dokunma tamponu, girdi kuralları (sahte fare, iki parmak), debug düğmesine dokunuşun çevirme sayılmaması, ölümden yeni tura < 0,5 sn.
   *Kabul:* Testler geçiyor ve tam kontrolde çalışıyor.
 
 **Desen sistemi**

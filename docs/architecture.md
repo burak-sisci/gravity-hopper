@@ -320,7 +320,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - M0-10'da doğrulandı:
     - Ekransız denemede 8 durumun hepsi beklendiği gibi: tık, bırakma, sahte fare, iki parmak, parmak kaldırma, boşluk, tuş tekrarı.
     - Redmi'de adb ile 3 dokunuş = 3 sayım.
-    - Gerçek iki başparmak denemesi M1-14'te kullanıcı yapacak (adb ile taklit edilemiyor). Girdi kodunun örneği: `scripts/debug/tap_test.gd` → `_is_tap`.
+    - Gerçek iki başparmak denemesi M2-18'de kullanıcı yapacak (S-07; adb ile taklit edilemiyor).
+  - Kural tek yerde: `Player.is_tap(event)`; testi `tests/entities/player_test.gd` (M2-02).
 
 ### 8.2 Bölüm üretimi (desen parçaları)
 
@@ -608,7 +609,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | **Tam kontrol** | `tools/check.ps1`, beş adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir (test betikleri dahil), (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1), (5) gdUnit4 testleri. `TEMİZ` = sıfır hata, sıfır uyarı, başarısız test yok | Her görevde |
 | Kod denetimi (anlık) | Claude Code kancası: düzenlenen `.gd` dosyasında `gdlint` | Her `.gd` düzenlemesinde, otomatik |
 | Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi; asıl kanıt telefonun ekran görüntüsü | Görsel değişikliklerde |
-| Davranış denemesi (geçici) | Ekransız `--script` deneme betikleri (scratchpad'de, aşağıdaki derse uygun). M2-02'de gdUnit4 testlerine taşınır | M1 boyunca |
+| Davranış denemesi (geçici) | Ekransız `--script` deneme betikleri (scratchpad'de, aşağıdaki derse uygun). M2-02'de gdUnit4 testlerine taşındı; yalnızca tek seferlik ölçümler için | M1 boyunca |
 | Telefon denemesi | `tools/deploy.ps1` + `adb logcat` (debug olay günlüğü `EVENT …`) + gerekirse `adb shell input tap` (önce ekran görüntüsüyle oyunun tam ekran olduğu doğrulanır) | Oynanış değişikliklerinde |
 | Web denemesi | `tools/web_build.ps1 -Smoke` (görünmez tarayıcı, konsoldaki olay günlüğü) | Web sürümü hazırlanırken |
 | Otomatik test | **gdUnit4 6.2.2** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi, oynanış davranışları. Ayrıntı aşağıda | M2'den itibaren, her görevde (tam kontrolün 5. adımı) |
@@ -618,13 +619,32 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 **gdUnit4 testleri (M2-01):**
 
 - **Yer:** Testler `tests/` altında, `scripts/` ile aynı klasör düzeninde durur (`tests/systems/run_rng_test.gd`). Her dosya `extends GdUnitTestSuite`, test fonksiyonları `test_` ile başlar. Statik tip ve `gdlint` kuralları testlere de uygulanır.
-- **Koşturma** (`check.ps1` 5. adım): `<godot> --headless --path . -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests -c --ignoreHeadlessMode -rd user://gdunit-reports`
+- **Koşturma** (`check.ps1` 5. adım): `<godot> --headless --path . --fixed-fps 60 -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests -c --ignoreHeadlessMode -rd user://gdunit-reports`
   - `--remote-debug` kapalı bir bağlantı noktasına yönlenir; betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. Bunun ürettiği "remote port" hata satırları beklenendir ve filtrelenir.
+  - `--fixed-fps 60`: her karede tam bir fizik adımı; kare sayan testler makinenin hızından bağımsızdır.
   - `-c`: ilk hatada durmaz. Raporlar proje dışına (`user://gdunit-reports`) yazılır.
   - Sıfırdan farklı her çıkış sorundur: başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı.
 - **Ekransız modda girdi:** gdUnit4 uyarır, ekransız modda Godot'nun girdi olayları sahneye taşınmaz. Dokunuş testleri bu yüzden `get_tree().root.push_input(olay, true)` ile yapılır (M1'deki denemelerde çalıştığı görüldü).
 - **Dışa aktarma:** `addons/gdUnit4/*` ve `tests/*` her iki ön ayarda dışlanır; APK'da yok (M2-01'de denetlendi).
 - **Kabul (M2-01):** Bilerek bozulan bir test tam kontrolü `SORUN VAR`'a çevirdi ve beklenen/gelen değeri satır numarasıyla gösterdi.
+- **M1 davranış testleri (M2-02):**
+
+  | Dosya | Neyi sabitler |
+  | --- | --- |
+  | `tests/entities/player_test.gd` | Sol duvara yerleşme, tırmanışın tam sabit olması (60 karede 600 px), yalnızca duvardayken çevirme, dokunma tamponu (ayardan okunur, pencere dışı dokunuş düşer), `Player.is_tap` kuralları (sahte fare, ikinci parmak, tuş tekrarı) |
+  | `tests/entities/player_death_test.gd` | Kendi duvarındaki diken bir kez öldürür, öbür duvardaki öldürmez, ölü oyuncu donar, debug ölümsüzlüğü |
+  | `tests/main_test.gd` | Tur kurulumu, ölümden yeni tura ≤ 30 kare (0,5 sn), sonuçta yükseklik/neden/tohum, sonuç ekranında ikinci ölümün yok sayılması, `retry_requested` |
+  | `tests/debug/debug_layer_test.gd` | DBG'ye dokunuş çevirmez (oyun alanına dokunuş çevirir), DBG paneli açar/kapatır, her aralıklı ayar için bir kaydırıcı, tuşlar 1/2/3/4, ölümsüzlüğün yeni tura taşınması |
+  | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
+
+  - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
+
+> **Ders (M2-02), sahne testleri:**
+> - `await get_tree().physics_frame` sinyali adım işlenmeden önce gelir. Dokunuşun etkisini görmek için iki kare beklenir.
+> - Oyuncu testleri ayarı diskten taze yükler (`CACHE_MODE_IGNORE`). Paylaşılan örneği canlı panel ya da kayıtlı ayar dosyası değiştirmiş olabilir.
+> - Genel durum (zaman ölçeği, çarpışma çizimi, ölümsüzlük, dil) `after_test`'te geri alınır.
+> - `main.tscn` kuran test, ölüm sonrasındaki yeniden başlama zamanlayıcısı bitmeden sahneyi bırakmaz; askıdaki `await` silinmiş düğümde uyanırdı.
+> - Telefondaki dokunuş, test içinde iki olayla taklit edilir: `InputEventScreenTouch` (çevirme) ve `DEVICE_ID_EMULATION` cihazlı fare tıklaması (düğmeye basma).
 
 > **Ders (M1-04), ekransız deneme betikleri (gdUnit4 gelene kadar, M2-01):** `--script` ile verilen betik, autoload'lar kaydedilmeden derlenir.
 > - Betik, `Events` kullanan bir sınıfa (ör. `Player`) adıyla başvurursa o sınıfın derlemesi bozulur ve sahnedeki düğüm betiksiz kalır.
