@@ -69,8 +69,8 @@ func _start_run() -> void:
 	await _frames(SETTLE_FRAMES)
 
 
-## Duvara yapışık bir diken ekler. Tur başındaki ilk geçici diken 25 m ileride olduğu için
-## bu testlerdeki dikenler ondan önce gelir.
+## Duvara yapışık bir diken ekler. Tur başındaki ilk desen parçası 28,8 m ileride başladığı
+## için bu testlerdeki dikenler ondan önce gelir.
 func _add_spike(on_left: bool, y: float) -> void:
 	var spike: Node2D = SPIKE_SCENE.instantiate() as Node2D
 	spike.position = Vector2(-WALL_EDGE_X if on_left else WALL_EDGE_X, y)

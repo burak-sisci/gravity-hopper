@@ -119,7 +119,7 @@
 
 - [x] **M2-03** 🤖 Desen parçası biçimi: `ChunkInfo` (zorluk, sektör aralığı, vuruş uzunluğu, etiketler), vuruş ızgarası (1 vuruş = 100 px), parça tasarım kuralları (`architecture.md` §8.2), bir örnek parça.
   *Kabul:* Örnek parça ızgaraya oturuyor; `ChunkInfo` değerleri testle okunuyor.
-- [ ] **M2-04** 🤖 `ObjectPool` + `ChunkSpawner`:
+- [x] **M2-04** 🤖 `ObjectPool` + `ChunkSpawner`:
   - Parça havuzları, `RunRng` ile ağırlıklı seçim, kameranın 2 ekran önünü dolu tutma, havuza iade ve sıfırlama.
   - `SpikeSpawner` ve "Geçici engeller (M1)" ayarları kaldırılır.
   *Kabul:* Tur sırasında düğüm oluşturulmuyor (test: düğüm sayısı sabit); Redmi'de kesintisiz akış.

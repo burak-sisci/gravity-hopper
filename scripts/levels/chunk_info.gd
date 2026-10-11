@@ -30,6 +30,9 @@ const SECONDS_PER_MINUTE: float = 60.0
 ## Seçim etiketleri (ör. intro, breather). Tehlike türü etiketlenmez; çocuklardan okunur.
 @export var tags: Array[StringName] = []
 
+## layout'un son kullandığı vuruş boyu (px); parçanın dünyadaki boyu buna göredir.
+var laid_out_beat_px: float = BEAT_GRID_PX
+
 ## Çocukların tasarımdaki konumları; yerleşim her çağrıda bunlardan yeniden hesaplanır.
 var _design_positions: Dictionary[Node2D, Vector2] = {}
 
@@ -62,9 +65,15 @@ func height_px(world_beat_px: float) -> float:
 	return length_beats * world_beat_px
 
 
+## Parçanın dünyadaki üst kenarı (son yerleşime göre).
+func top_y() -> float:
+	return position.y - height_px(laid_out_beat_px)
+
+
 ## Tasarım konumlarını dünyaya ölçekler. Tekrar çağrılabilir (havuzdan gelen parça, yeni sektör).
 ## Konumlar _ready'de alındığı için parça ağaçta olmalı.
 func layout(world_beat_px: float, half_width: float) -> void:
+	laid_out_beat_px = world_beat_px
 	var y_scale: float = world_beat_px / BEAT_GRID_PX
 	var x_scale: float = half_width / DESIGN_HALF_WIDTH
 	for item: Node2D in _design_positions:

@@ -214,7 +214,7 @@ Telefonda ayar paneliyle oynandı; başlangıç değerleri değiştirilmeden ona
 | İleri görüş (oyuncunun üstünde) | 28 m | S1'de engel 2,3 sn önce görünür; 22 m/sn tavanında 1,27 sn (≥ 1,2 sn kuralı tutuyor) |
 | Koridor genişliği | 18 m | |
 
-Diken aralığı (10 m) ve ilk dikene kadar boşluk (25 m) M1'in geçici engel akışına aittir; tasarım değeri değildir, M2'de desen parçaları gelir.
+Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır (S1'de 28,8 m). M1'in geçici diken aralığı (10 m) M2-04'te desen parçalarıyla kalktı.
 
 ## 14. Çöküş duvarı (baskı)
 

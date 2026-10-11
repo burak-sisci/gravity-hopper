@@ -43,3 +43,24 @@ func range_float(from: float, to: float) -> float:
 ## Olasılık p (0–1) ile true.
 func chance(p: float) -> bool:
 	return _rng.randf() < p
+
+
+## Ağırlıklara göre bir sıra numarası seçer (ağırlığı 0 olan hiç seçilmez). Tek çekiliş kullanır.
+## Ağırlıkların toplamı 0 ise -1 döndürür.
+func weighted_index(weights: Array[float]) -> int:
+	var total: float = 0.0
+	for weight: float in weights:
+		total += maxf(weight, 0.0)
+	if total <= 0.0:
+		return -1
+	var pick: float = _rng.randf() * total
+	var last: int = -1
+	for i: int in weights.size():
+		if weights[i] <= 0.0:
+			continue
+		last = i
+		pick -= weights[i]
+		if pick < 0.0:
+			return i
+	# Yuvarlama payı: çekiliş toplamın tam ucuna düşerse son geçerli seçenek.
+	return last

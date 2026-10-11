@@ -47,3 +47,24 @@ func _draws(seed_value: int) -> Array[float]:
 	for i: int in SEQUENCE_LENGTH:
 		out.append(rng.next_float())
 	return out
+
+
+func test_weighted_index_skips_zero_weights_and_follows_ratio() -> void:
+	var rng: RunRng = RunRng.new(5)
+	var weights: Array[float] = [0.0, 1.0, 3.0, 0.0]
+	var counts: Array[int] = [0, 0, 0, 0]
+	for i: int in 4000:
+		counts[rng.weighted_index(weights)] += 1
+	assert_int(counts[0] + counts[3]).is_equal(0)
+	# 1:3 oranı; 4000 çekilişte ±%10 pay.
+	assert_float(float(counts[2]) / counts[1]).is_between(2.7, 3.3)
+
+
+func test_weighted_index_is_deterministic_and_handles_empty() -> void:
+	var a: RunRng = RunRng.new(11)
+	var b: RunRng = RunRng.new(11)
+	var weights: Array[float] = [2.0, 1.0, 0.5]
+	for i: int in SEQUENCE_LENGTH:
+		assert_int(a.weighted_index(weights)).is_equal(b.weighted_index(weights))
+	var none: Array[float] = [0.0, 0.0]
+	assert_int(a.weighted_index(none)).is_equal(-1)

@@ -5,7 +5,8 @@
 [ext_resource type="Script" path="res://scripts/levels/corridor.gd" id="3_corridor"]
 [ext_resource type="Script" path="res://scripts/components/game_camera.gd" id="4_camera"]
 [ext_resource type="PackedScene" path="res://scenes/entities/player.tscn" id="5_player"]
-[ext_resource type="Script" path="res://scripts/levels/spike_spawner.gd" id="6_spikes"]
+[ext_resource type="Script" path="res://scripts/systems/chunk_spawner.gd" id="6_chunks"]
+[ext_resource type="Resource" path="res://data/chunks/chunk_library.tres" id="7_library"]
 
 [node name="Run" type="Node2D"]
 process_physics_priority = 1
@@ -16,9 +17,10 @@ tuning = ExtResource("2_tuning")
 unique_name_in_owner = true
 script = ExtResource("3_corridor")
 
-[node name="SpikeSpawner" type="Node2D" parent="."]
+[node name="ChunkSpawner" type="Node2D" parent="."]
 unique_name_in_owner = true
-script = ExtResource("6_spikes")
+script = ExtResource("6_chunks")
+library = ExtResource("7_library")
 
 [node name="Player" parent="." instance=ExtResource("5_player")]
 unique_name_in_owner = true

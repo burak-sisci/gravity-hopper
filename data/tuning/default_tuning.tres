@@ -11,5 +11,4 @@ input_buffer_time = 0.12
 hurtbox_scale = 0.7
 lookahead = 28.0
 corridor_width = 18.0
-spike_spacing = 10.0
-spike_start_gap = 25.0
+run_start_gap = 25.0

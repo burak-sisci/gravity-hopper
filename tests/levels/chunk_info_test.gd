@@ -5,6 +5,7 @@ extends GdUnitTestSuite
 const CHUNK_DIR: String = "res://scenes/levels/chunks/"
 const SAMPLE_PATH: String = "res://scenes/levels/chunks/spike_zigzag_01.tscn"
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
+const LIBRARY: ChunkLibrary = preload("res://data/chunks/chunk_library.tres")
 ## GDD §12: S1 12 m/sn, 100 BPM; S3 16 m/sn, 120 BPM.
 const S1_BEAT_PX: float = 360.0
 const S3_BEAT_PX: float = 400.0
@@ -32,6 +33,13 @@ func test_every_chunk_fits_the_grid() -> void:
 			var errors: PackedStringArray = (root as ChunkInfo).design_errors()
 			assert_array(errors).override_failure_message(
 					"%s: %s" % [path, "; ".join(errors)]).is_empty()
+
+
+func test_every_chunk_is_in_the_library() -> void:
+	var listed: PackedStringArray = PackedStringArray()
+	for scene: PackedScene in LIBRARY.chunks:
+		listed.append(scene.resource_path)
+	assert_array(Array(listed)).contains_exactly_in_any_order(Array(_chunk_paths()))
 
 
 func test_design_errors_catch_rule_breaks() -> void:

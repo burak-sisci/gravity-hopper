@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ChunkLibrary" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/chunk_library.gd" id="1_library"]
+[ext_resource type="PackedScene" path="res://scenes/levels/chunks/spike_zigzag_01.tscn" id="2_zigzag"]
+
+[resource]
+script = ExtResource("1_library")
+chunks = Array[PackedScene]([ExtResource("2_zigzag")])

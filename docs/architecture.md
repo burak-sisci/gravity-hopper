@@ -96,6 +96,7 @@ gravity-hopper/
 │
 ├── data/                     # İçerik ve ayar kaynakları (.tres)
 │   ├── tuning/               # TuningConfig (hareket, kamera, adalet, basınç)
+│   ├── chunks/               # ChunkLibrary: oyundaki desen parçalarının listesi (M2-04)
 │   ├── sectors/              # SectorDef + paletler
 │   ├── upgrades/             # UpgradeDef
 │   └── trails/               # TrailDef (kozmetik izler)
@@ -186,7 +187,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M1-08):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%SpikeSpawner` (`scripts/levels/spike_spawner.gd`, geçici) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M2-04):** `Run` → `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
@@ -337,21 +338,26 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   4. Dünyaya yerleşim `layout(vuruş_px, yarı_genişlik)`: konumlar tasarımdan yeniden hesaplanır (birikmez); x koridor genişliğiyle orantılı ölçeklenir, böylece duvar öğeleri genişlik ayarı değişse de duvarda kalır.
   5. `min_sector ≤ max_sector`. Tehlike türü etiketlenmez (çocuklardan okunur); etiketler seçim içindir (ör. `intro`, `breather`).
   6. Dosya adı: `<ana tehlike>_<desen>_<nn>.tscn` (örnek: `spike_zigzag_01.tscn`: 8 vuruş, 2. vuruşta sol, 4.'de sağ, 6.'da sol diken).
-- `ChunkSpawner`:
-  - Kameranın 2 ekran önünü dolu tutar.
-  - Sıradaki parçayı `RunRng` ile, sektör içi ilerlemeye göre hedef zorluk eğrisinden ağırlıklı seçer.
-  - Son N parçayı tekrar etmez.
-  - Sektör geçişlerine "nefes alma" parçası koyar.
+- `ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, M2-04):
+  - **Kütüphane:** seçilebilecek parçalar `ChunkLibrary` kaynağında (`data/chunks/chunk_library.tres`) elle listelenir. Yayın sürümünde `res://` klasörü güvenle taranamaz; test, klasördeki her parçanın listede olduğunu denetler.
+  - Görünür alanın üstünde **2 ekranlık** alanı dolu tutar. Önce üst kenarı ekranın 100 px altına inen parçaları havuza döndürür, sonra ekler.
+  - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
+  - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli parçalar arasından seçer. Şimdilik ağırlıklar eşit; hedef zorluk eğrisi ve son N parçayı tekrar etmeme M2-10'da.
+  - Sektör geçişlerine "nefes alma" parçası koyar (M2-09).
+  - Tempo şimdilik `ChunkSpawner.bpm` (100, S1) ve `TuningConfig.climb_speed`'den; M2-08'de `SectorDef`'ten gelir.
+  - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
+  - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
+  - **Yerleştirme günlüğü:** `placed_names`, `placed_bottoms` (testler, M2-17).
+  - **Ölçüm** (Redmi, M2-04): ölümsüz modda 391 m kesintisiz akış, günlükte havuz uyarısı yok; ölümden yeni tura 346–360 ms (M1'deki 348–360 ms ile aynı, havuz kurulumu fark edilmiyor).
 - **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. Parçaları izinli her sektör hızında denetleyen doğrulama aracı M2-05'te yazılır ve `check.ps1`'e bağlanır. Ölçütler: iki zorunlu çevirme arası; engelin ≥ 1,2 sn önceden görünmesi (onaylı ileri görüş 28 m ile 22 m/sn tavanında 1,27 sn, GDD §13.1).
-- **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine bağlı değildir.
+- **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine ve ekran boyuna bağlı değildir.
+  - `Run.rng`'yi yalnızca `ChunkSpawner` çeker. Rastgelelik isteyen başka bir sistem gelirse kendi `RunRng` akışını alır (tohumdan türetilmiş). Yoksa çekilişlerin sırası kare zamanlamasına ve ekran boyuna göre değişir, harita da değişir.
+  - Seçim havuzun doluluğuna bakmaz. Havuz tükenirse (olmaması gerekir) `ObjectPool` uyarı yazıp yeni örnek oluşturur; harita bozulmaz, sorun testte görünür.
+  - Test: aynı tohum 16:9 ve 20:9 ekranda aynı parça dizisini veriyor (`tests/systems/chunk_spawner_test.gd`).
 - **`RunRng`** (`scripts/systems/run_rng.gd`): tur tohumuyla kurulan `RandomNumberGenerator` sarmalayıcısı; oynanıştaki tek rastgelelik kaynağı (.clauderules §5). M1-08'de yazıldı, M2-01'de gdUnit4 testleriyle sabitlenir.
   - Metotlar `next_float()`, `range_int()`, `range_float()`, `chance()`, `make_seed()`. `randf` ya da `seed` gibi adlar genel fonksiyonları gölgeler ve katı kontrolde hata verir.
   - `Run.rng`'nin sahibi `Run`'dır. `Run.run_seed` 0 ise `RunRng.make_seed()` kullanılır; M1-09'dan sonra tohumu `GameManager` verir.
-- **Geçici engel yerleştirici** (`SpikeSpawner`, M1-08; M2'de `ChunkSpawner` yerini alır):
-  - 20 diken tur başında oluşturulur. İlk diken `spike_start_gap` (25 m) ileride, aralık `spike_spacing` (10 m); ikisi de `TuningConfig` → "Geçici engeller (M1)" grubunda. `SpikeSpawner` ve bu grup M2-04'te `ChunkSpawner` gelince kaldırılır.
-  - Görünür alanın 100 px altına inen diken en öndekinin bir aralık ilerisine taşınır; tarafını `RunRng.chance(0.5)` seçer.
-  - Taşıma hep aynı sırayla yapıldığı için k'nci dikenin tarafı k'nci çekilişten gelir. Ekran boyu ve kare zamanlaması diziyi değiştirmez.
-  - Ekransız deneme: aynı tohumla kurulan iki tur aynı taraf dizisini verdi, farklı tohum farklı diziyi; havuz 20'de sabit kaldı. Redmi'de dikenler göründü ve dokunulmayınca oyuncu ilk sol dikende öldü.
+- **Geçici engel yerleştirici** (`SpikeSpawner`, M1-08 – M2-04): düz aralıklı, tarafı rastgele dikenler. M2-04'te `ChunkSpawner` gelince kaldırıldı; "Geçici engeller (M1)" ayar grubu (`spike_spacing`, `spike_start_gap`) da kalktı, yerine `run_start_gap` geldi.
 
 ### 8.3 Ritim (Conductor)
 
@@ -383,8 +389,11 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ### 8.7 Nesne havuzu
 
-- `ObjectPool`: sahne başına önceden oluşturulmuş örnekler; `acquire()` / `release()` (M2-04).
-- M1'deki geçici engel yerleştirici de bu kurala uyar. Tur başında sabit sayıda diken oluşturulur; ekranın altından çıkan diken yeniden yukarı taşınır.
+- `ObjectPool` (`scripts/systems/object_pool.gd`, `RefCounted`, M2-04): sahne başına önceden oluşturulmuş örnekler.
+  - `reserve(n)` tur kurulurken örnekleri oluşturur; `acquire()` / `release()` tur sırasında. `peek()` sahnenin verisini okumak için ilk örneği verir.
+  - Boştaki örnek gizli ve `PROCESS_MODE_DISABLED`'dır. İçindeki `Area2D`'ler de fizik dünyasından çıkar (`disable_mode` = REMOVE); testle doğrulandı.
+  - Havuz tükenirse uyarı yazar, yeni örnek oluşturur ve `grown` sayacını artırır. Testler `grown == 0` bekler.
+- Desen parçaları **bütün olarak** havuzlanır: parçanın içindeki tehlikeler parçayla birlikte gelir (§8.2). Tur başında parça başına birkaç kopya oluşur; tur sırasında düğüm sayısı sabittir (test: 900 karelik turda düğüm sayısı değişmiyor).
 - Ekran altından çıkan desen parçaları havuza döner ve sıfırlanır: hareketli engeller baştan başlar, Glimmer'lar yeniden etkinleşir.
 
 ## 9. Görsel mimari
@@ -410,12 +419,13 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`), Geçici engeller (M1) (`spike_spacing`, `spike_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`climb_speed`, `gravity_accel`, `max_side_speed`), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … | İsim anahtarı, palet, BPM, tırmanış hızı, uzunluk, izinli tehlikeler, zorluk aralığı, müzik |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
+| `ChunkLibrary` | `data/chunks/chunk_library.tres` | Oyunda kullanılan desen parçası sahnelerinin listesi (M2-04) |
 | `RunResult` | (kod, `RefCounted`) | Yükseklik, Glimmer, kıl payı sayısı, ölüm nedeni, ulaşılan sektör, tohum |
 | `GameTypes` | (kod, `RefCounted`) | Paylaşılan enum'lar: `DeathCause`, `Quality`. Autoload'ların iç enum'ları tip olarak kullanılamadığı için ortak türler burada durur |
 
@@ -644,6 +654,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/main_test.gd` | Tur kurulumu, ölümden yeni tura ≤ 30 kare (0,5 sn), sonuçta yükseklik/neden/tohum, sonuç ekranında ikinci ölümün yok sayılması, `retry_requested` |
   | `tests/debug/debug_layer_test.gd` | DBG'ye dokunuş çevirmez (oyun alanına dokunuş çevirir), DBG paneli açar/kapatır, her aralıklı ayar için bir kaydırıcı, tuşlar 1/2/3/4, ölümsüzlüğün yeni tura taşınması |
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
+  | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
+  | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -721,6 +733,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
+| ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |
 | ADR-028 | 2026-10-11 | Kilometre taşı kapısı istisnası (kullanıcı kararı, .clauderules §9): M1 kapısı beklenmeden M2'ye geçilir; M1 ve M2 birlikte M2-19'da kontrol edilir. M1 kapı soruları (iki başparmak sonucu S-07, ilk izlenim, P-04) oraya taşındı. Yalnızca M1→M2 için geçerlidir; sonraki kapılar aynen sürer | Kullanıcı hızlanmak ve iki aşamayı tek seferde denetlemek istedi. Risk: M1 hissiyle ilgili bir itiraz M2 işini etkileyebilir. Önlem: değerler TuningConfig'te; his değişikliği M2'yi bozmaz |
 
 ## 18. Açık teknik sorular
