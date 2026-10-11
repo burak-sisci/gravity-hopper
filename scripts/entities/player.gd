@@ -79,7 +79,7 @@ func is_alive() -> bool:
 	return _alive
 
 
-## Kalkan M2-12'de gelir; o zamana kadar her darbe ölümdür.
+## Kalkan M2-16'da gelir; o zamana kadar her darbe ölümdür.
 func _on_hurtbox_hit() -> void:
 	if not _alive or _invincible:
 		return

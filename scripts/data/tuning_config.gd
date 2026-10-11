@@ -11,7 +11,7 @@ extends Resource
 const PX_PER_M: float = 50.0
 
 @export_group("Hareket")
-## Sabit tırmanış hızı. M1'de geçicidir; M2-06'da sektörlerden (SectorDef) gelir. S1 = 12 m/sn.
+## Sabit tırmanış hızı. M1'de geçicidir; M2-08'de sektörlerden (SectorDef) gelir. S1 = 12 m/sn.
 @export_range(4.0, 30.0, 0.5, "suffix:m/sn") var climb_speed: float = 12.0
 ## Oyuncuyu aktif duvara çeken yan ivme. Yüksek değer, çevirmeden sonra daha çabuk hızlanır.
 @export_range(50.0, 600.0, 5.0, "suffix:m/sn²") var gravity_accel: float = 300.0

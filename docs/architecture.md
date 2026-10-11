@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-07 (M0 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-11 (M1 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı ve M1 çekirdek oynanışı doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -151,7 +151,7 @@ Main (Node)                           scenes/main.tscn
 > - `scenes/debug/tap_test.tscn`: girdi kurallarının başvuru örneği.
 > - `scenes/ui/tap_hint.tscn`: FTUE'deki "dokun" eli ikonunun nabız davranışı için. FTUE metinsizdir (GDD §18).
 >
-> Şimdilik `UI` boş; HUD M1-10'da gelir.
+> `UI`'de şimdilik yalnızca HUD (`UI/Hud`, M1-10) var; menüler M5'te gelir.
 
 **Sahne geçişleri: `GameManager` karar verir, `Main` uygular (ADR-026).** Autoload'lar sahne düğümlerine erişmediği için (.clauderules §3) `World` ve `UI` kaplarının içeriğini kök sahne `Main` (`scripts/main.gd`) değiştirir. `GameManager` tohumu seçer, durumu tutar, sonucu (`RunResult`) oluşturur ve `Events` ile duyurur. Uygulama durumları: `BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → (RUNNING | MENU | SHOP)`.
 
@@ -202,7 +202,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | 3 `hazard` | 4 | Tehlikeler (`Area2D`, `monitoring = false`, pasif) | — |
 | — | 0 | Oyuncunun `Hurtbox`'ı (`Area2D`, `monitorable = false`) | `hazard` |
 
-Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi görevlerinde alır (M2-09, M2-10).
+Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi görevlerinde alır (M2-13, M2-14).
 
 ### 5.3 UI sahneleri (`scenes/ui/`)
 
@@ -289,10 +289,10 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 ### 8.1 Hareket (Player)
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
-- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-06'da `SectorDef`'e taşınır. Bütün hareket değerleri `TuningConfig`'te metre birimindedir (§10).
+- **Dikey:** Sabit tırmanış hızı (`velocity.y = -climb_speed`); değer aktif sektörden gelir. M1'de sektör yoktur; hız `TuningConfig`'teki geçici `climb_speed` alanından gelir (S1: 12 m/sn = 600 px/sn). M2-08'de `SectorDef`'e taşınır. Bütün hareket değerleri `TuningConfig`'te metre birimindedir (§10).
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
-  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-08'de gelir.
+  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-11'de gelir.
   - **Dokunma tamponu:** Havadayken yapılan dokunuş kısa bir süre (başlangıç 0,12 sn) saklanır ve duvara değince uygulanır.
 - **Uygulama (M1-04, `scripts/entities/player.gd`, `Player`):**
   - **Eksenler ayrıdır.** Yatay hareket `move_and_slide()` ile yalnızca yatay hızla yapılır (duvar teması). Dikey tırmanış doğrudan konumla yapılır: `position.y -= climb × delta`.
@@ -332,13 +332,13 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Sıradaki parçayı `RunRng` ile, sektör içi ilerlemeye göre hedef zorluk eğrisinden ağırlıklı seçer.
   - Son N parçayı tekrar etmez.
   - Sektör geçişlerine "nefes alma" parçası koyar.
-- **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. M2'de parçaları sektör hızlarında denetleyen bir doğrulama betiği yazılacak.
+- **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı. Parçaları izinli her sektör hızında denetleyen doğrulama aracı M2-05'te yazılır ve `check.ps1`'e bağlanır. Ölçütler: iki zorunlu çevirme arası; engelin ≥ 1,2 sn önceden görünmesi (onaylı ileri görüş 28 m ile 22 m/sn tavanında 1,27 sn, GDD §13.1).
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine bağlı değildir.
 - **`RunRng`** (`scripts/systems/run_rng.gd`): tur tohumuyla kurulan `RandomNumberGenerator` sarmalayıcısı; oynanıştaki tek rastgelelik kaynağı (.clauderules §5). M1-08'de yazıldı, M2-01'de gdUnit4 testleriyle sabitlenir.
   - Metotlar `next_float()`, `range_int()`, `range_float()`, `chance()`, `make_seed()`. `randf` ya da `seed` gibi adlar genel fonksiyonları gölgeler ve katı kontrolde hata verir.
   - `Run.rng`'nin sahibi `Run`'dır. `Run.run_seed` 0 ise `RunRng.make_seed()` kullanılır; M1-09'dan sonra tohumu `GameManager` verir.
 - **Geçici engel yerleştirici** (`SpikeSpawner`, M1-08; M2'de `ChunkSpawner` yerini alır):
-  - 20 diken tur başında oluşturulur. İlk diken `spike_start_gap` (25 m) ileride, aralık `spike_spacing` (10 m); ikisi de `TuningConfig` → "Geçici engeller (M1)" grubunda.
+  - 20 diken tur başında oluşturulur. İlk diken `spike_start_gap` (25 m) ileride, aralık `spike_spacing` (10 m); ikisi de `TuningConfig` → "Geçici engeller (M1)" grubunda. `SpikeSpawner` ve bu grup M2-04'te `ChunkSpawner` gelince kaldırılır.
   - Görünür alanın 100 px altına inen diken en öndekinin bir aralık ilerisine taşınır; tarafını `RunRng.chance(0.5)` seçer.
   - Taşıma hep aynı sırayla yapıldığı için k'nci dikenin tarafı k'nci çekilişten gelir. Ekran boyu ve kare zamanlaması diziyi değiştirmez.
   - Ekransız deneme: aynı tohumla kurulan iki tur aynı taraf dizisini verdi, farklı tohum farklı diziyi; havuz 20'de sabit kaldı. Redmi'de dikenler göründü ve dokunulmayınca oyuncu ilk sol dikende öldü.
@@ -373,7 +373,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ### 8.7 Nesne havuzu
 
-- `ObjectPool`: sahne başına önceden oluşturulmuş örnekler; `acquire()` / `release()` (M2-03).
+- `ObjectPool`: sahne başına önceden oluşturulmuş örnekler; `acquire()` / `release()` (M2-04).
 - M1'deki geçici engel yerleştirici de bu kurala uyar. Tur başında sabit sayıda diken oluşturulur; ekranın altından çıkan diken yeniden yukarı taşınır.
 - Ekran altından çıkan desen parçaları havuza döner ve sıfırlanır: hareketli engeller baştan başlar, Glimmer'lar yeniden etkinleşir.
 
@@ -478,7 +478,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 ## 13. Debug araçları (yalnızca debug build)
 
 - **Debug katmanı** (`scenes/debug/debug_layer.tscn` + `scripts/debug/debug_layer.gd`, M1-02): Tüm debug araçları bu sahnede toplanır. `Main` (`scripts/main.gd`), sahneyi `Debug` (`CanvasLayer` 100) altına yalnızca `OS.is_debug_build()` iken `load()` ile yükler; yayın sürümünde hiç yüklenmez.
-  - Oyun dünyasını tanımaz. İsteklerini `Events` sinyalleriyle iletir; bunlar M1'de eklenir ve kataloğa yazılır.
+  - Oyun dünyasını tanımaz. İsteklerini `Events` sinyalleriyle iletir (`debug_invincibility_changed`, `retry_requested`; §7.2).
   - Kök `Control` tam ekrandır ama `mouse_filter = IGNORE` taşır, yani dokunuşları yutmaz. `process_mode = ALWAYS` olduğu için oyun duraklatılınca da çalışır.
   - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
   - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Ayar panelini açıp kapatır (M1-11); FPS görünümü panelin içindeki düğmede ve `7` tuşunda.
@@ -500,7 +500,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
     - PC: `%APPDATA%\Godot\app_userdata\Gravity Hopper\tuning_override.tres`.
     - Telefon: `adb shell run-as com.gravityhopper.dev cat files/tuning_override.tres` (debug paketi `run-as`'a izin veriyor; M1-11'de denendi).
   - Ekransız deneme (13 durum): satırların kurulması, canlı etki (15 m/sn = 750 px/sn), kaydetme, yeni turda korunma, sıfırlama, açılışta kayıtlı dosyanın uygulanması. Redmi'de kaydırıcı → Kaydet → dosya okundu → Sıfırla → dosya silindi.
-- **PC tuşları** (M1'de kesinleşecek):
+- **PC tuşları** (M1'de kesinleşti; `5` M2-08'de gelir):
 
   | Tuş | İşlev | Görev |
   | --- | --- | --- |
@@ -508,7 +508,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `2` | Ölümsüzlük | M1-12 |
   | `3` | Çarpışma kutularını göster | M1-12 |
   | `4` | Yavaş çekim | M1-12 |
-  | `5` | Sonraki sektöre atla | M2-06 |
+  | `5` | Sonraki sektöre atla | M2-08 |
   | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
   | `7` | FPS / kare süresi | M1-02 |
   | `R` | Anında yeniden başla | M1-12 |
@@ -606,7 +606,10 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | --- | --- | --- |
 | **Tam kontrol** | `tools/check.ps1`, dört adım: (1) içe aktarma, (2) tüm betikler "Warn" seviyesindeki kurallar geçici `override.cfg` ile "Error"a çekilerek derlenir, (3) sahne denetimi (`scene_tool.gd check`), (4) `gdlint` (§13.1). `TEMİZ` = sıfır hata, sıfır uyarı | Her görevde |
 | Kod denetimi (anlık) | Claude Code kancası: düzenlenen `.gd` dosyasında `gdlint` | Her `.gd` düzenlemesinde, otomatik |
-| Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi | Görsel değişikliklerde |
+| Görsel kontrol | Movie Maker ile kare yakalayıp Claude'un incelemesi; asıl kanıt telefonun ekran görüntüsü | Görsel değişikliklerde |
+| Davranış denemesi (geçici) | Ekransız `--script` deneme betikleri (scratchpad'de, aşağıdaki derse uygun). M2-02'de gdUnit4 testlerine taşınır | M1 boyunca |
+| Telefon denemesi | `tools/deploy.ps1` + `adb logcat` (debug olay günlüğü `EVENT …`) + gerekirse `adb shell input tap` (önce ekran görüntüsüyle oyunun tam ekran olduğu doğrulanır) | Oynanış değişikliklerinde |
+| Web denemesi | `tools/web_build.ps1 -Smoke` (görünmez tarayıcı, konsoldaki olay günlüğü) | Web sürümü hazırlanırken |
 | Otomatik test | **gdUnit4** (MIT): RNG belirlenimciliği, desen üretimi, ekonomi, kayıt sürüm geçişi; sahne koşucusuyla dokunuş taklidi yapan oynanış testleri | M2'den itibaren |
 | Ekonomi simülasyonu | "Kaç turda ne alınır?" betiği | M4 |
 | Oyun testi | Kullanıcı: PC → Redmi → web linki | Her kilometre taşında |
@@ -629,7 +632,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ### 16.1 Ölçüm (M0-09, Redmi Note 12)
 
-Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez. Başka bir cihazda yeniden ölçmek için sahne geçici olarak ana sahne yapılıp yüklenir (M1-12'de debug paneline bir düğme olarak bağlanabilir); PC'de `<godot> --path . res://scenes/debug/glow_bench.tscn`.
+Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, oyuncu + iz, ızgara ve HUD, tam ekran 1080×2400. Her mod 4 sn ölçüldü, iki kez. Başka bir cihazda yeniden ölçmek için sahne geçici olarak ana sahne yapılıp yüklenir (gerekirse debug paneline bir düğme olarak bağlanır); PC'de `<godot> --path . res://scenes/debug/glow_bench.tscn`.
 
 | Mod | Ort. kare süresi | p95 | FPS | GPU doluluğu |
 | --- | --- | --- | --- | --- |
@@ -672,7 +675,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-020 | 2026-10-07 | Neon parlama **nesne başına sahte parlama** ile yapılır (toplamsal çizgi kopyaları + ışık lekeleri); `WorldEnvironment` glow kullanılmaz. `godot-debug-menu` commit `ff12461`'e sabitlendi; autoload değil, debug build'de koddan yüklenir | Redmi'de glow kare süresini 8,4 → 17,5 ms'ye çıkarıp 120 FPS'yi 57'ye düşürüyor; sahte parlama ölçülebilir kare kaybı yaratmıyor (≈ +0,9 ms GPU), her cihazda aynı görünüyor ve HUD'u etkilemiyor (§9, §16.1) |
 | ADR-021 | 2026-10-07 | Sahne aracı başvuruları sahneyi ağaca eklemeden örnekleyip Godot'nun kendi çözümlemesiyle dener. `get_parent()` ve `..` yollarını da hata sayar. `tools/check.ps1`'in 3. adımıdır ve `tools/fixtures/` düzeneğiyle kendini sınar | Metin ayrıştırarak `%Ad` sahipliğini taklit etmek hataya açık; gerçek çözümleme çalışma anıyla birebir aynı. §3'teki kurallar oyun çalıştırılmadan zorlanır |
 | ADR-022 | 2026-10-07 | gdtoolkit 4.5.0, proje dışındaki bir sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`). Varsayılan kurallar + satır ≤ 100 karakter. Kanca exec biçiminde (`python` + `tools/lint_hook.py`, yalnızca standart kütüphane). `check.ps1`'in 4. adımı tüm projeyi denetler | Sanal ortam sistem Python'una karışmaz ve tek klasörle silinir. Exec biçimi Git Bash / PowerShell tırnak farklarından etkilenmez, ayar dosyasında kullanıcıya özel yol gerekmez. Varsayılan kurallar zaten stil rehberimizle aynı |
-| ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
+| ADR-023 | 2026-10-07 | M0 gözden geçirmesi: (1) debug araçları autoload değil, `Main/Debug`'a yalnızca debug build'de yüklenen `debug_layer.tscn`. (2) Telefonda panel köşeye üçlü dokunuşla değil, debug düğmesiyle açılır. (3) `RunRng` M1-08'e alındı; M1'in geçici engelleri de geri dönüştürülür (havuz kuralı). (4) Coyote süresi duvar boşluklarıyla birlikte M2-08'e taşındı (M1 gözden geçirmesinden sonraki numarasıyla M2-11) | (1) Autoload'lar yayın sürümüne de girer. (2) Her dokunuş aynı zamanda çevirme yapar. (3) .clauderules §5 ve §6 M1'de de geçerli. (4) Boşluk olmadan coyote süresi denenemez |
 | ADR-024 | 2026-10-07 | `TuningConfig` değerleri GDD birimlerinde (m, m/sn, sn) tutulur; kod `to_px()` ile çevirir. Her alan `@export_range` ile aralık ve birim taşır; geçerli değerler `.tres`'tedir | Kaydırıcılar tasarım belgesiyle aynı dili konuşur (ör. 12 m/sn = S1). Ayar paneli alanları elle tanımlamadan kurar |
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
@@ -684,11 +687,11 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | --- | --- | --- |
 | S-01 | ✅ Çözüldü (M0-09): Glow çalışıyor ve güzel ama Redmi'de kare süresi 8,4 → 17,5 ms (57 FPS). Sahte parlama seçildi (ADR-020) | — |
 | S-02 | ✅ Çözüldü (M0-09): Evet. `background_canvas_max_layer` = 0 iken katman 10'daki HUD parlamıyor (telefonda doğrulandı) | — |
-| S-03 | Android'de müzik kayma eşiği ve gecikme telafisi | M2-05 / M3 |
+| S-03 | Android'de müzik kayma eşiği ve gecikme telafisi | M2-07 / M3 |
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
 | S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
-| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesi kaldı | M1-14 |
+| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesinin sonucunu kullanıcı M1-16 kapısında bildirir | M1-16 |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)

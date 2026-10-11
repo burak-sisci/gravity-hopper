@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-10-07 (M0 Planlama Gözden Geçirmesi: M1 atomik hale getirildi)
+> Son güncelleme: 2026-10-11 (M1 Planlama Gözden Geçirmesi: M2 atomik hale getirildi, 19 görev)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -10,7 +10,7 @@
 - **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte. 🤖 görevler arasında senin onayın beklenmez; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler (ADR-025).
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
-- **Kademeli planlama:** M0–M2 ayrıntılı, M3–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
+- **Kademeli planlama:** M0–M2 ayrıntılı (M2 atomik), M3–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
 
 ## Genel bakış
 
@@ -101,39 +101,64 @@
 - [x] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
   *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak sonucu M1-16 kapısında sorulacak.)*
 - [x] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD). *(Değerler zaten `.tres`'teydi; GDD §13.1 ve `approved_tuning` yazıldı, telefondaki kayıt dosyası silindi.)*
-- [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.**
+- [ ] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.** *(Gözden geçirme yapıldı 2026-10-11: M2 19 atomik göreve bölündü. Kapı senin onayını bekliyor; ertelenen M1-13 kapıyı engellemez.)*
 
 ## M2 — Sonsuz ve adil
 
 **Hedef:** Bitmeyen, adil ve giderek zorlaşan bir tırmanış.
+*(M1 gözden geçirmesinde atomik hale getirildi, 2026-10-11. Şekiller hâlâ gri kutular; neon görünüm M3'te.)*
 
-- [ ] **M2-01** 🤖 gdUnit4 test altyapısı (sürümü sabit) + `RunRng` testleri (`RunRng` M1-08'de yazıldı).
-  *Kabul:* Aynı tohum aynı sayı dizisini veriyor (test).
-- [ ] **M2-02** 🤖 Desen parçası biçimi: `ChunkInfo`, vuruş birimli ızgara, parça tasarım kuralları (belgeye).
-  *Kabul:* Örnek bir parça editörde ızgaraya oturuyor.
-- [ ] **M2-03** 🤖 `ObjectPool` + `ChunkSpawner`: parça seçimi, önden doldurma, havuza iade.
-  *Kabul:* Tur sırasında `instantiate` / `queue_free` yok (profil ile).
-- [ ] **M2-04** 🤖 İlk 12–15 desen parçası (S1–S2 zorluğu).
-  *Kabul:* Her parça doğrulama betiğinden geçiyor.
-- [ ] **M2-05** 🤖 `Conductor`: BPM, vuruş sinyali, metronom sesi, dünya-vuruş hizası (S-03 ilk ölçüm).
-  *Kabul:* Engeller metronomla aynı anda geliyor.
-- [ ] **M2-06** 🤖 `SectorDef` kaynakları + sektör ilerleyişi: hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır), geçici palet, "nefes alma" geçişi, debug `5` tuşu (sonraki sektör).
-  *Kabul:* S1→S2→S3 geçişleri çalışıyor.
-- [ ] **M2-07** 🤖 Zorluk eğrisi: sektör içi hedef zorluk, parça ağırlıkları, hız tavanı.
-  *Kabul:* Sektör sonu başından belirgin şekilde zor.
-- [ ] **M2-08** 🤖 Yeni tehlikeler: duvar boşluğu (düşme) + coyote süresi, veri bloğu, lazer kapısı (vuruşa bağlı).
-  *Kabul:* Her biri en az 3 parçada kullanılıyor; boşluğa girdikten hemen sonraki çevirme kaybolmuyor.
-- [ ] **M2-09** 🤖 Glimmer (havuzlu) ve riskli yol yerleşimi; sayaç HUD'da.
-  *Kabul:* Toplama sinyalle HUD'a yansıyor.
-- [ ] **M2-10** 🤖 `GrazeDetector` + kombo sayacı.
-  *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok.
-- [ ] **M2-11** 🤖 `PressureSystem` + geçici çöküş duvarı görseli.
-  *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor.
-- [ ] **M2-12** 🤖 Kalkan mekaniği (test için debug ile verilir).
-  *Kabul:* Tek darbeyi emiyor, duvarı çekiyor.
-- [ ] **M2-13** 🤖 Belirlenimcilik testi: aynı tohum → aynı parça dizisi (gdUnit4).
-- [ ] **M2-14** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu?
-- [ ] **M2-15** 🤝 Planlama Gözden Geçirmesi → 🚪
+**Test altyapısı**
+
+- [ ] **M2-01** 🤖 gdUnit4 (sürümü sabit, CREDITS) + `tests/` yapısı + komut satırı koşucusu; `tools/check.ps1`'e 5. adım "testler". İlk testler `RunRng` için (aynı tohum aynı dizi, farklı tohum farklı dizi, `make_seed` 0 vermez).
+  *Kabul:* Tam kontrol testleri çalıştırıyor; bilerek bozulan bir test `SORUN VAR` veriyor.
+- [ ] **M2-02** 🤖 M1 davranışlarının kalıcı testleri: M1'deki geçici deneme betikleri gdUnit4'e taşınır. Kapsam: tırmanışın tam sabit olması, yalnızca duvardayken çevirme, dokunma tamponu, girdi kuralları (sahte fare, iki parmak), debug düğmesine dokunuşun çevirme sayılmaması, ölümden yeni tura < 0,5 sn.
+  *Kabul:* Testler geçiyor ve tam kontrolde çalışıyor.
+
+**Desen sistemi**
+
+- [ ] **M2-03** 🤖 Desen parçası biçimi: `ChunkInfo` (zorluk, sektör aralığı, vuruş uzunluğu, etiketler), vuruş ızgarası (1 vuruş = 100 px), parça tasarım kuralları (`architecture.md` §8.2), bir örnek parça.
+  *Kabul:* Örnek parça ızgaraya oturuyor; `ChunkInfo` değerleri testle okunuyor.
+- [ ] **M2-04** 🤖 `ObjectPool` + `ChunkSpawner`:
+  - Parça havuzları, `RunRng` ile ağırlıklı seçim, kameranın 2 ekran önünü dolu tutma, havuza iade ve sıfırlama.
+  - `SpikeSpawner` ve "Geçici engeller (M1)" ayarları kaldırılır.
+  *Kabul:* Tur sırasında düğüm oluşturulmuyor (test: düğüm sayısı sabit); Redmi'de kesintisiz akış.
+- [ ] **M2-05** 🤖 Parça doğrulama aracı (`tools/`, `check.ps1`'e bağlı): Her parça, izinli her sektör hızında çözülebilir mi? Ölçütler: iki zorunlu çevirme arası ≥ geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür.
+  *Kabul:* Bilerek çözülemez yapılan bir parçayı yakalıyor.
+- [ ] **M2-06** 🤖 İlk 12–15 desen parçası (yalnızca diken; S1–S2 zorluğu).
+  *Kabul:* Doğrulama temiz; Redmi'de 2 dakikalık akış tekrar etmeden oynanıyor.
+
+**Ritim ve sektörler**
+
+- [ ] **M2-07** 🤖 `Conductor`: BPM'den vuruş zamanı, `Events.beat`, kodla üretilen metronom sesi (dış varlık yok), parçaların vuruşa hizalanması. S-03 için ilk gecikme ölçümü.
+  *Kabul:* Dikenler metronomla aynı anda geçiyor (günlük + kulak testi).
+- [ ] **M2-08** 🤖 `SectorDef` + S1–S3 kaynakları: ad anahtarları TR/EN, BPM, hız, uzunluk, izinli tehlikeler, zorluk aralığı, geçici palet. Sektör ilerleyişi ve hız basamağı (`climb_speed` `TuningConfig`'ten buraya taşınır). Debug `5` tuşu (sonraki sektör).
+  *Kabul:* Her sektörde tırmanış hızı doğru (test); S1 → S2 → S3 geçiliyor.
+- [ ] **M2-09** 🤖 Sektör geçişi: "nefes alma" boşluğu, `Events.sector_entered`, HUD'da sektör afişi (TR/EN), geçici palet tonu.
+  *Kabul:* Geçişte engel yok, afiş görünüyor (Redmi ekran görüntüsü).
+- [ ] **M2-10** 🤖 Zorluk eğrisi: sektör içi hedef zorluk, parça ağırlıkları, son N parçayı tekrar etmeme.
+  *Kabul:* Sektör sonunda seçilen parçaların zorluk ortalaması başından belirgin yüksek (günlükle ölçülü).
+
+**Yeni tehlikeler ve sistemler**
+
+- [ ] **M2-11** 🤖 Duvar boşluğu: parçalar boşluk aralıkları tanımlar, koridor o aralıkta duvarsız kalır. Koridordan düşme → `player_died(FELL)`. Coyote süresi (`TuningConfig`).
+  *Kabul:* Boşluktan düşülüyor; boşluğa girdikten hemen sonraki çevirme kaybolmuyor (test).
+- [ ] **M2-12** 🤖 Veri bloğu ve vuruşa bağlı lazer kapısı + her biriyle en az 3 parça.
+  *Kabul:* Doğrulama temiz; lazer vuruşla aynı anda açılıp kapanıyor.
+- [ ] **M2-13** 🤖 Glimmer: havuzlu toplanabilir (parça içinde), toplama alanı, `glimmer_collected`, `RunStats`, HUD sayacı, riskli yola yerleşim kuralı.
+  *Kabul:* Toplama sinyalle HUD'a yansıyor; tur sonunda `RunResult.glimmers` doğru.
+- [ ] **M2-14** 🤖 `GrazeDetector` + kombo (2,5 sn zincir, ×2 / ×3), `near_miss` / `combo_ended`.
+  *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok (test).
+- [ ] **M2-15** 🤖 `PressureSystem` + geçici çöküş duvarı görseli, `player_died(WALL)`, `wall_proximity_changed`; Glimmer ve kıl payı duvarı iter.
+  *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor (test + Redmi).
+- [ ] **M2-16** 🤖 Kalkan (test için debug ile verilir): tek darbeyi emer, 1 sn dokunulmazlık, duvarı çeker, `shield_changed`.
+  *Kabul:* Tek darbeyi emiyor, duvarı çekiyor (test).
+- [ ] **M2-17** 🤖 Belirlenimcilik testi: aynı tohum + başlangıç sektörü → aynı parça dizisi ve konumları (gdUnit4).
+
+**Kapanış**
+
+- [ ] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu?
+- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪
 
 ## M3 — Görsel ve işitsel kimlik
 

@@ -10,8 +10,8 @@
     "task": "M1-16",
     "task_title": "🤝 Planlama Gözden Geçirmesi + M1 kapısı: belgeler birlikte okunur, M2 atomikleştirilir; kullanıcı oynayıp M1'i onaylar",
     "owner": "user+claude",
-    "status": "in_progress",
-    "note": "Kapıda kullanıcıya sorulacak: iki başparmak denemesinin sonucu (S-07) ve 'ilk 30 saniye eğlenceli mi' izlenimi (M1-14'te yalnızca 'kaydettim, hiçbir ayarı değiştirmedim' dedi).",
+    "status": "awaiting_user",
+    "note": "Planlama Gözden Geçirmesi yapıldı (2026-10-11): M2 19 atomik görev, M2 numaraları kod yorumları dahil güncellendi, eskimiş notlar düzeltildi. Kapıda kullanıcıya sorulacak: iki başparmak denemesinin sonucu (S-07) ve 'ilk 30 saniye eğlenceli mi' izlenimi; sonra M1 onayı.",
     "deferred": [
       { "task": "M1-13", "reason": "Kullanıcı kararı (2026-10-08): itch.io yüklemesi şimdilik atlandı.", "resume": "Kullanıcı itch.io sayfasını açıp builds/gravity-hopper-web.zip'i yükler (yeni sürüm için tools/web_build.ps1 -Smoke). M1 kapısını beklemez." }
     ],
@@ -74,11 +74,11 @@
   "open_technical_questions": [
     { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "resolved", "answer": "Glow çalışıyor (Canvas arka plan, 3B kamera gerekmez; hdr_scale 0.2, eşik 0.3, yoğunluk 2.0) ama Redmi'de kare süresi 8,4 → 17,5 ms, 120 → 57 FPS. Sahte parlama 8,4 ms (≈ +0,9 ms GPU) → ADR-020: sahte parlama." },
     { "id": "S-02", "question": "HUD'u parlamadan background_canvas_max_layer ile ayırmak", "resolve_in": "M0-09", "status": "resolved", "answer": "Evet: max_layer 0 iken katman 10'daki HUD parlamıyor (telefonda doğrulandı). Sahte parlamada sorun zaten yok." },
-    { "id": "S-03", "question": "Android'de müzik kayma eşiği ve gecikme telafisi", "resolve_in": "M2-05", "status": "open" },
+    { "id": "S-03", "question": "Android'de müzik kayma eşiği ve gecikme telafisi", "resolve_in": "M2-07", "status": "open" },
     { "id": "S-04", "question": "Godot 4.7 Android debug anahtarını otomatik oluşturuyor mu?", "resolve_in": "M0-08", "status": "resolved", "answer": "Evet: %APPDATA%/Godot/keystores/debug.keystore otomatik oluştu; Java ve SDK yolları da editör ayarlarına kendiliğinden yazıldı." },
     { "id": "S-05", "question": "Play Games ve AdMob eklentilerinin 4.7 uyumlu sürümleri", "resolve_in": "M7", "status": "open" },
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-11", "status": "open" },
-    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-14", "status": "open", "note": "M0-10: headless 8 durum geçti; Redmi'de adb ile 3 dokunuş = 3 sayım. Kalan: gerçek iki başparmak denemesi; adb ile taklit edilemediği için M1-14 his testinde kullanıcı yapar (ADR-025)." },
+    { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M1-16", "status": "open", "note": "M0-10: headless 8 durum geçti; Redmi'de adb ile 3 dokunuş = 3 sayım. Kalan: gerçek iki başparmak denemesinin sonucu; kullanıcı M1-16 kapısında bildirir (M1-14'te değerleri kaydetti ama bu sonucu söylemedi)." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." }
   ],
 
@@ -142,13 +142,13 @@
   "temp_files": [],
 
   "docs_reviewed": {
-    "CLAUDE.md": "2026-10-07",
-    ".clauderules": "2026-10-07",
-    "docs/architecture.md": "2026-10-07",
-    "docs/GDD.md": "2026-10-07",
-    "docs/roadmap.md": "2026-10-07",
-    "docs/state.json": "2026-10-07",
-    "CREDITS.md": "2026-10-07"
+    "CLAUDE.md": "2026-10-11",
+    ".clauderules": "2026-10-11",
+    "docs/architecture.md": "2026-10-11",
+    "docs/GDD.md": "2026-10-11",
+    "docs/roadmap.md": "2026-10-11",
+    "docs/state.json": "2026-10-11",
+    "CREDITS.md": "2026-10-11"
   },
 
   "last_session": {
