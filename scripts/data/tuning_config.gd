@@ -33,6 +33,9 @@ const PX_PER_M: float = 50.0
 ## Tur başında ilk desen parçasına kadar boş mesafe. Vuruş ızgarası bozulmasın diye yukarı,
 ## tam vuruşa yuvarlanır (S1'de 25 m → 4 vuruş = 28,8 m).
 @export_range(5.0, 60.0, 1.0, "suffix:m") var run_start_gap: float = 25.0
+## Yeni sektörün başındaki engelsiz "nefes alma" süresi (GDD §12: 2–3 sn). Yeni sektörün hızıyla
+## ölçülür ve tam vuruşa yukarı yuvarlanır.
+@export_range(0.0, 5.0, 0.1, "suffix:sn") var sector_breath: float = 2.5
 
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.

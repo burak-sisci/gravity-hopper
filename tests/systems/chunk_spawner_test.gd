@@ -104,6 +104,9 @@ func test_chunks_stop_at_sector_boundary() -> void:
 	var s1_end: float = -TuningConfig.to_px(100.0)
 	var s2_end: float = -TuningConfig.to_px(200.0)
 	var s2_beat: float = sectors.def_at(2).beat_px()
+	# Nefes alma: 2,5 sn × 700 px/sn = 1750 px → 4,58 vuruş → 5 vuruş boş (M2-09).
+	var breath_beats: float = ceilf(sectors.def_at(2).climb_px() * 2.5 / s2_beat)
+	assert_float(breath_beats).is_equal(5.0)
 	var started_s2: bool = false
 	for i: int in spawner.placed_bottoms.size():
 		var bottom: float = spawner.placed_bottoms[i]
@@ -111,16 +114,18 @@ func test_chunks_stop_at_sector_boundary() -> void:
 			continue
 		if not started_s2:
 			started_s2 = true
-			assert_float(bottom).is_equal_approx(s1_end, 0.01)
+			assert_float(bottom).is_equal_approx(s1_end - breath_beats * s2_beat, 0.01)
 		if bottom > s2_end + 0.01:
 			# S2'deki her parça S2 ızgarasında ve S2'nin sonunu aşmıyor.
 			var beats: float = (s1_end - bottom) / s2_beat
 			assert_float(beats).is_equal_approx(roundf(beats), 0.001)
 	assert_bool(started_s2).is_true()
-	for i: int in range(1, spawner.placed_bottoms.size()):
-		var top: float = spawner.placed_bottoms[i]
-		var bottom: float = spawner.placed_bottoms[i - 1]
-		# Hiçbir parça bir sınırın iki yanına taşmaz.
+	# Hiçbir parça bir sınırın iki yanına taşmaz (üst kenar, parçanın kendi boyundan).
+	var lengths: Dictionary[StringName, int] = _library_lengths()
+	for i: int in spawner.placed_bottoms.size():
+		var bottom: float = spawner.placed_bottoms[i]
+		var sector: int = 1 if bottom > s1_end + 0.01 else (2 if bottom > s2_end + 0.01 else 3)
+		var top: float = bottom - lengths[spawner.placed_names[i]] * sectors.def_at(sector).beat_px()
 		for edge: float in [s1_end, s2_end]:
 			assert_bool(bottom > edge + 0.01 and top < edge - 0.01).is_false()
 
@@ -158,6 +163,16 @@ func _make(library: ChunkLibrary, run_seed: int, sector: int = 1) -> ChunkSpawne
 	add_child(spawner)
 	spawner.setup(RunRng.new(run_seed), _tuning(), SECTORS, sector, 0.0)
 	return spawner
+
+
+## Kütüphanedeki parçaların boyu (vuruş), dosya adına göre.
+func _library_lengths() -> Dictionary[StringName, int]:
+	var lengths: Dictionary[StringName, int] = {}
+	for scene: PackedScene in LIBRARY.chunks:
+		var info: ChunkInfo = scene.instantiate() as ChunkInfo
+		lengths[StringName(scene.resource_path.get_file().get_basename())] = info.length_beats
+		info.free()
+	return lengths
 
 
 ## Gerçek S1–S3'ün kısa kopyası (hız ve tempo aynı, boylar kısa).

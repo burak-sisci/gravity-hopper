@@ -11,3 +11,4 @@ hurtbox_scale = 0.7
 lookahead = 28.0
 corridor_width = 18.0
 run_start_gap = 25.0
+sector_breath = 2.5

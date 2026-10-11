@@ -6,6 +6,7 @@ extends Node2D
 ##
 ## Sektörler (M2-08): her sektör kendi vuruş boyuyla dizilir ve ızgarası sektörün başladığı
 ## yükseklikten başlar. Sektörün sonuna sığmayan kalan boş bırakılır; parça sınırı aşmaz.
+## Yeni sektör, tam vuruşa yuvarlanmış bir "nefes alma" boşluğuyla başlar (M2-09).
 ##
 ## Belirlenimcilik: sıradaki parçayı yalnızca RunRng ve sektör seçer; ekran boyu yalnızca
 ## parçanın ne zaman yerleştiğini değiştirir, hangisi olduğunu değil. Bu yüzden Run.rng'yi
@@ -27,6 +28,7 @@ var placed_names: Array[StringName] = []
 var placed_bottoms: Array[float] = []
 
 var _rng: RunRng
+var _tuning: TuningConfig
 var _sectors: SectorCatalog
 ## Sıradaki parçanın yerleşeceği sektör (oyuncunun sektöründen önde gider).
 var _sector: int = 1
@@ -46,6 +48,7 @@ var _half_width: float = 0.0
 func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sector: int,
 		start_y: float) -> void:
 	_rng = rng
+	_tuning = tuning
 	_sectors = sectors
 	_sector = start_sector
 	_base_height = sectors.start_height(start_sector)
@@ -106,9 +109,13 @@ func _end_y(sector: int) -> float:
 func _place_next() -> bool:
 	var end_y: float = _end_y(_sector)
 	if _next_bottom <= end_y + EDGE_EPSILON:
-		# Sınıra varıldı: sonraki sektörün ızgarası tam sınırdan başlar.
-		_next_bottom = end_y
+		# Sınıra varıldı: sonraki sektörün ızgarası tam sınırdan başlar; ilk parça nefes alma
+		# boşluğundan sonra, tam vuruşta.
 		_sector += 1
+		var next: SectorDef = _sectors.def_at(_sector)
+		var next_beat: float = next.beat_px()
+		var breath: float = next.climb_px() * _tuning.sector_breath
+		_next_bottom = end_y - ceilf(breath / next_beat - EDGE_EPSILON) * next_beat
 		return true
 	var beat: float = _sectors.def_at(_sector).beat_px()
 	var room: float = _next_bottom - end_y

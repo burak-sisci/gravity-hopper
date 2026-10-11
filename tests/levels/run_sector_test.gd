@@ -51,6 +51,11 @@ func test_speed_steps_and_spikes_stay_on_beat() -> void:
 				if previous_y > y and player.position.y <= y:
 					passes[run.sector] += 1
 					var t: float = conductor.beat_time()
+					# Nefes alma (M2-09): yeni sektörün ilk 2,5 sn'sinde diken geçmez.
+					if run.sector > 1:
+						assert_float(t).override_failure_message(
+								"S%d'ye girdikten %.2f sn sonra diken" % [run.sector, t]
+						).is_greater_equal(2.5)
 					var off: float = absf(t - roundf(t / half_beat) * half_beat)
 					assert_float(off).override_failure_message(
 							"S%d: %s yarım vuruştan %.4f sn uzak" % [run.sector, item.name, off]
@@ -64,6 +69,9 @@ func test_speed_steps_and_spikes_stay_on_beat() -> void:
 		assert_int(passes[sector]).override_failure_message(
 				"S%d'de diken geçişi yok" % sector).is_greater(0)
 	assert_float(conductor.bpm).is_equal(SECTORS.def_at(3).bpm)
+	# Geçici palet tonu S3'ün rengine geçti (geçiş 0,6 sn, S3'e çok önce girildi).
+	var corridor: Corridor = run.get_node("%Corridor") as Corridor
+	assert_bool(corridor.tint().is_equal_approx(SECTORS.def_at(3).ambient_color)).is_true()
 
 
 func test_start_sector_sets_height_and_speed() -> void:

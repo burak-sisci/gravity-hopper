@@ -12,10 +12,18 @@ const MAX_VIEW_HEIGHT: float = 3200.0
 ## M1 gri kutuları: parçalar sırayla açık ve koyu boyanır, böylece kayma gözle görülür.
 const COLOR_LIGHT: Color = Color(0.42, 0.45, 0.52)
 const COLOR_DARK: Color = Color(0.3, 0.33, 0.4)
+## Geçici palet tonu (M2-09): duvarlar sektörün rengine bu oranda çekilir. Kesin palet M3'te.
+const TINT_WEIGHT: float = 0.35
+## Ton geçişinin süresi (yalnızca görsel).
+const TINT_TIME: float = 0.6
 
 var _left: Array[StaticBody2D] = []
 var _right: Array[StaticBody2D] = []
 var _ring_height: float = 0.0
+var _visuals: Array[Polygon2D] = []
+var _base_colors: Array[Color] = []
+var _tint: Color = Color.WHITE
+var _tint_tween: Tween
 
 
 ## Duvar parçalarını oluşturur; en üstteki parçanın üst kenarı top_y olur.
@@ -31,6 +39,22 @@ func build(top_y: float) -> void:
 		var y: float = top_y + (i + 0.5) * SEGMENT_HEIGHT
 		_left.append(_make_segment(shape, color, y))
 		_right.append(_make_segment(shape, color, y))
+
+
+## Duvarları sektörün geçici rengine doğru tonlar; instant değilse yumuşak geçişle.
+func set_tint(color: Color, instant: bool = false) -> void:
+	if _tint_tween != null:
+		_tint_tween.kill()
+	if instant:
+		_apply_tint(color)
+		return
+	_tint_tween = create_tween()
+	_tint_tween.tween_method(_apply_tint, _tint, color, TINT_TIME)
+
+
+## Şu anki ton rengi (testler).
+func tint() -> Color:
+	return _tint
 
 
 ## Duvarları koridor genişliğine yerleştirir ve görünür alanın altında kalan parçaları yukarı
@@ -51,6 +75,12 @@ func _place(segment: StaticBody2D, x: float, view_bottom: float) -> void:
 	segment.reset_physics_interpolation()
 
 
+func _apply_tint(color: Color) -> void:
+	_tint = color
+	for i: int in _visuals.size():
+		_visuals[i].color = _base_colors[i].lerp(color, TINT_WEIGHT)
+
+
 func _make_segment(shape: RectangleShape2D, color: Color, y: float) -> StaticBody2D:
 	var body: StaticBody2D = StaticBody2D.new()
 	body.position = Vector2(0.0, y)
@@ -65,5 +95,7 @@ func _make_segment(shape: RectangleShape2D, color: Color, y: float) -> StaticBod
 	])
 	visual.color = color
 	body.add_child(visual)
+	_visuals.append(visual)
+	_base_colors.append(color)
 	add_child(body)
 	return body

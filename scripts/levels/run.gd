@@ -52,6 +52,7 @@ func _ready() -> void:
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
+	_corridor.set_tint(def.ambient_color, true)
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y)
 	_update_view()
 	_camera.reset_physics_interpolation()
@@ -78,6 +79,7 @@ func _enter_sector(next: int) -> void:
 	_player.climb_speed = def.climb_speed
 	_conductor.set_tempo(def.bpm, _conductor.run_time - overshoot / def.climb_px())
 	_next_boundary_y = _boundary_y(next)
+	_corridor.set_tint(def.ambient_color)
 	Events.sector_entered.emit(next)
 
 

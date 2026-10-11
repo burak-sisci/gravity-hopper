@@ -192,6 +192,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 **Şu anki hâli (M2-07):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
+  - **Geçici palet tonu (M2-09):** `set_tint(renk)` duvarları sektörün `ambient_color`'una %35 oranında çeker; geçiş 0,6 sn'lik tween (yalnızca görsel). `Run` tur başında anında, sektöre girişte yumuşak çağırır. Kesin palet ve renk dalgası M3'te.
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
   - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
   - Görünür alanın altında kalan parça bir halka boyu yukarı taşınır ve `reset_physics_interpolation()` çağrılır.
@@ -255,7 +256,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `player_flipped` | — | Player | AudioManager (ses, titreşim) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
 | `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
-| `sector_entered` | `index: int` | Run | HUD (afiş), AudioManager (müzik) |
+| `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı; AudioManager (müzik, M3) |
 | `chunk_placed` | `chunk_id: StringName, difficulty: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int` | Run | HUD, AudioManager |
@@ -358,7 +359,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Görünür alanın üstünde **2 ekranlık** alanı dolu tutar. Önce üst kenarı ekranın 100 px altına inen parçaları havuza döndürür, sonra ekler.
   - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
   - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli parçalar arasından seçer. Şimdilik ağırlıklar eşit; hedef zorluk eğrisi ve son N parçayı tekrar etmeme M2-10'da.
-  - Sektör geçişlerine "nefes alma" parçası koyar (M2-09).
+  - **Nefes alma (M2-09):** Yeni sektör, `TuningConfig.sector_breath` (2,5 sn, GDD §12) kadar engelsiz başlar. Süre yeni sektörün hızıyla px'e çevrilip tam vuruşa yukarı yuvarlanır (S2: 5 vuruş = 2,73 sn; S3: 5 vuruş = 2,5 sn); ızgara bozulmaz. Eski sektörün sonuna sığmayan kalan da bu boşluğa eklenir.
   - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px()`) dizilir; ızgarası sektörün başladığı yükseklikten başlar. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır ve sıradaki sektör tam sınırdan başlar. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar katalogdaki en kısa vuruşa göre kurulur.
   - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
   - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
@@ -459,7 +460,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -521,6 +522,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - **Bulut kaydı** (Play Games Saved Games): M7'de değerlendirilecek.
 
 ## 12. Yerelleştirme
+
+- **HUD sektör afişi (M2-09):** `HUD_SECTOR` ("SECTOR %d · %s" / "SEKTÖR %d · %s") + sektör adı anahtarı; yazı rengi sektörün geçici rengi. Ekranın %30 yüksekliğinde, 2 sn görünür, 0,4 sn'de söner. HUD adları `SectorCatalog` kaynağından okur (veri; dünyaya erişmez).
 
 - `localization/translations.csv`: `keys,en,tr` sütunları. Godot bunu içe aktarıp çeviri kaynağına dönüştürür.
   - Koddan atanan metinler `tr("KEY")` ile gösterilir.
@@ -699,8 +702,9 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/ui/hud_test.gd` (M2-09 eki) | Sektör afişi: `sector_entered`'da ad (EN/TR), 2,4 sn'de sönme; sonraki sektörden başlayan turda görünür, S1'den başlayan turda gizli |
   | `tests/data/sector_catalog_test.gd` (M2-08) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları |
-  | `tests/levels/run_sector_test.gd` (M2-08) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, tempo; S2'den başlayan turda yükseklik ve hız |
+  | `tests/levels/run_sector_test.gd` (M2-08, M2-09) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, koridor tonu S3 rengi, tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07) | Metronom bir ölçü, vuruşlarda tık, döngü sonundan sonra sessiz pay |
   | `tests/tools/chunk_validator_test.gd` (M2-05) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |

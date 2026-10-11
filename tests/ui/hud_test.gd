@@ -46,6 +46,29 @@ func test_language_change_rewrites_text() -> void:
 	assert_str(_best_label().text).is_equal("EN İYİ 37 m")
 
 
+func test_sector_banner_shows_name_and_fades() -> void:
+	Events.run_started.emit(1, 1)
+	assert_bool(_banner().visible).is_false()
+	Events.sector_entered.emit(2)
+	assert_bool(_banner().visible).is_true()
+	assert_str(_banner().text).is_equal("SECTOR 2 · DATA STREAM")
+	TranslationServer.set_locale("tr")
+	await get_tree().process_frame
+	assert_str(_banner().text).is_equal("SEKTÖR 2 · VERİ AKIŞI")
+	# 2 sn görünür, 0,4 sn'de söner (60 Hz'de 144 kare).
+	for i: int in 150:
+		await get_tree().process_frame
+	assert_bool(_banner().visible).is_false()
+
+
+func test_banner_on_start_from_later_sector() -> void:
+	Events.run_started.emit(1, 3)
+	assert_bool(_banner().visible).is_true()
+	assert_str(_banner().text).is_equal("SECTOR 3 · FIREWALL")
+	Events.run_started.emit(2, 1)
+	assert_bool(_banner().visible).is_false()
+
+
 func _result(height_m: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m
@@ -58,3 +81,7 @@ func _height_label() -> Label:
 
 func _best_label() -> Label:
 	return _hud.get_node("%BestLabel") as Label
+
+
+func _banner() -> Label:
+	return _hud.get_node("%SectorBanner") as Label
