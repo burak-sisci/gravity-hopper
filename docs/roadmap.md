@@ -153,7 +153,7 @@
   *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor (test + Redmi).
 - [x] **M2-16** 🤖 Kalkan (test için debug ile verilir): tek darbeyi emer, 1 sn dokunulmazlık, duvarı çeker, `shield_changed`.
   *Kabul:* Tek darbeyi emiyor, duvarı çekiyor (test).
-- [ ] **M2-17** 🤖 Belirlenimcilik testi: aynı tohum + başlangıç sektörü → aynı parça dizisi ve konumları (gdUnit4).
+- [x] **M2-17** 🤖 Belirlenimcilik testi: aynı tohum + başlangıç sektörü → aynı parça dizisi ve konumları (gdUnit4).
 
 **Kapanış**
 
