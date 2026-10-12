@@ -63,6 +63,8 @@ func _physics_process(delta: float) -> void:
 	if _player.position.y <= _next_boundary_y:
 		_enter_sector(sector + 1)
 	_update_view()
+	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
+	_chunks.set_beat(_conductor.beat_time() / _conductor.beat_length())
 	var meters: int = floori(_start_height + (_start_y - _player.position.y) / TuningConfig.PX_PER_M)
 	if meters != _height_m:
 		_height_m = meters

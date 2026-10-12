@@ -8,6 +8,10 @@ extends RefCounted
 ## zamanlar ama insandır: yere indikten sonra en az REACTION_MARGIN bekler. Böylece iki çevirme
 ## arası en az "geçiş süresi + tepki payı" olur (GDD §13).
 ##
+## Lazer (M2-12): ışın yalnızca açık olduğu karelerde tehlikedir. Açık olup olmadığı oyundaki
+## kuralla (Laser.is_on_at) oyuncunun parça içindeki vuruş konumundan hesaplanır; parçalar tam
+## vuruşta başladığı için bu, oyundaki vuruş saatiyle aynıdır.
+##
 ## Duvar boşluğu (M2-11): gövde tamamen boşluğun içindeyken o duvarda (ya da oraya inerken)
 ## bulunmak düşmek sayılır. Coyote süresi tanınmaz; doğrulama oyundan biraz daha sıkıdır.
 ##
@@ -98,6 +102,8 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
 	var hazards: Array[Rect2] = []
 	var hazard_names: Array[String] = []
+	## Her tehlike kutusunun lazeri (sürekli tehlikelerde null).
+	var lasers: Array[Laser] = []
 	var gaps: Array[Vector3] = []
 	var gap_names: Array[String] = []
 	var errors: PackedStringArray = PackedStringArray()
@@ -119,11 +125,13 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 				errors.append("%s parçanın sınırından taşıyor" % item.name)
 			hazards.append(rect)
 			hazard_names.append(label)
+			lasers.append(item as Laser)
 	if not errors.is_empty() or (hazards.is_empty() and gaps.is_empty()):
 		return errors
 	var sim: Simulation = Simulation.new(hazards, _hurt_half(), half_width - _body_size.x * 0.5,
 			def.climb_px(), top, _tuning)
 	sim.set_gaps(gaps)
+	sim.set_lasers(lasers, beat)
 	# Simulation sıra numarasıyla okur: önce tehlike kutuları, sonra boşluklar.
 	var names: Array[String] = hazard_names + gap_names
 	var failure: String = sim.first_failure(names)
@@ -143,6 +151,18 @@ func _hazard_rects(item: Node2D, world: Vector2) -> Array[Rect2]:
 	if area == null or not (area.collision_layer & HAZARD_LAYER):
 		return rects
 	var item_xform: Transform2D = Transform2D(item.rotation, item.scale, item.skew, world)
+	if item is Laser:
+		# Lazerin şekli _ready'de kurulur; ağaçta olmayan parçada kutu dışa açık değerlerden alınır.
+		var beam: Rect2 = (item as Laser).beam_rect()
+		var corners: PackedVector2Array = item_xform * PackedVector2Array([
+			beam.position, Vector2(beam.end.x, beam.position.y), beam.end,
+			Vector2(beam.position.x, beam.end.y),
+		])
+		var box: Rect2 = Rect2(corners[0], Vector2.ZERO)
+		for corner: Vector2 in corners:
+			box = box.expand(corner)
+		rects.append(box)
+		return rects
 	for child: Node in item.get_children():
 		var points: PackedVector2Array = PackedVector2Array()
 		if child is CollisionPolygon2D:
@@ -172,6 +192,9 @@ class Simulation:
 	var _hazards: Array[Rect2]
 	## Duvar boşluğu bölgeleri: (duvar -1/+1, üst y, alt y); o duvarda bu y'de bulunmak düşmektir.
 	var _gaps: Array[Vector3] = []
+	## Her tehlike kutusunun lazeri (null = sürekli) ve dünyadaki vuruş boyu.
+	var _lasers: Array[Laser] = []
+	var _beat_px: float = 1.0
 	var _hurt_half: Vector2
 	var _wall_x: float
 	var _step_y: float
@@ -206,6 +229,10 @@ class Simulation:
 
 	func set_gaps(gaps: Array[Vector3]) -> void:
 		_gaps = gaps
+
+	func set_lasers(lasers: Array[Laser], beat_px: float) -> void:
+		_lasers = lasers
+		_beat_px = beat_px
 
 	## Güvenli olmayan ilk giriş durumunun açıklaması; hepsi güvenliyse boş.
 	func first_failure(names: Array[String]) -> String:
@@ -277,7 +304,11 @@ class Simulation:
 		var y: float = _y_of(frame)
 		var body: Rect2 = Rect2(Vector2(_x_of(state), y) - _hurt_half, _hurt_half * 2.0)
 		var result: Array[int] = []
+		# Oyuncunun parça içindeki vuruş konumu (parçanın alt kenarı 0. vuruş).
+		var beat: float = -y / _beat_px
 		for i: int in _hazards.size():
+			if i < _lasers.size() and _lasers[i] != null and not _lasers[i].is_on_at(beat):
+				continue
 			if body.intersects(_hazards[i]):
 				result.append(i)
 		if state < _wall_count():

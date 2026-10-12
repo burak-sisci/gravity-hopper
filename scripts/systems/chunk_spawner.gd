@@ -95,6 +95,12 @@ func active_chunks() -> Array[ChunkInfo]:
 	return _active.duplicate()
 
 
+## Vuruş konumunu etkin parçalara iletir (lazerler, M2-12).
+func set_beat(beat: float) -> void:
+	for chunk: ChunkInfo in _active:
+		chunk.set_beat(beat)
+
+
 ## Etkin parçalardaki duvar boşlukları: (duvar -1/+1, üst y, alt y). Run koridora bildirir.
 func active_gaps() -> Array[Vector3]:
 	var result: Array[Vector3] = []

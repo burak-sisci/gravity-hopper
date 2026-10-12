@@ -5,6 +5,7 @@ extends GdUnitTestSuite
 const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigzag_01.tscn")
 const UNSOLVABLE_SCENE: PackedScene = preload("res://tools/fixtures/chunk_unsolvable.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
+const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const LEFT: float = -450.0
@@ -91,6 +92,30 @@ func test_single_gap_is_fair_and_needs_its_sector() -> void:
 	assert_array(_validator.chunk_errors(chunk)).is_empty()
 
 
+func test_closed_laser_gate_depends_on_phase() -> void:
+	# İki duvardan koridoru tamamen kapatan ışınlar, 3. vuruşta.
+	var lit: ChunkInfo = _chunk(6, [])
+	lit.min_sector = 3
+	_add_laser(lit, LEFT, -300, 450.0, 0.0)
+	_add_laser(lit, RIGHT, -300, 450.0, 0.0)
+	# Vuruşta yanıyor: oyuncu geçerken açık, geçilemez.
+	assert_array(_validator.sector_errors(lit, 3)).is_not_empty()
+	var dark: ChunkInfo = _chunk(6, [])
+	dark.min_sector = 3
+	_add_laser(dark, LEFT, -300, 450.0, 0.5)
+	_add_laser(dark, RIGHT, -300, 450.0, 0.5)
+	# Yarım vuruşta yanıyor: oyuncu tam vuruşta geçerken kapalı, zararsız (aldatıcı lazer).
+	assert_array(_validator.sector_errors(dark, 3)).is_empty()
+
+
+func test_laser_needs_its_sector() -> void:
+	var chunk: ChunkInfo = _chunk(6, [])
+	chunk.min_sector = 2
+	_add_laser(chunk, LEFT, -300, 450.0, 0.0)
+	assert_array(Array(_validator.chunk_errors(chunk))).contains(
+			["S2: 'laser' bu sektörde izinli değil"])
+
+
 func test_view_rule_uses_lookahead() -> void:
 	assert_array(_validator.view_errors()).is_empty()
 	var short_view: TuningConfig = _tuning()
@@ -108,6 +133,16 @@ func test_every_sector_needs_a_chunk() -> void:
 	var chunks: Array[ChunkInfo] = [early]
 	var errors: PackedStringArray = _validator.coverage_errors(chunks)
 	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
+
+
+func _add_laser(chunk: ChunkInfo, x: float, y: float, length: float, phase: float) -> void:
+	var laser: Laser = LASER_SCENE.instantiate() as Laser
+	laser.name = "Laser%d" % chunk.get_child_count()
+	laser.position = Vector2(x, y)
+	laser.scale.x = 1.0 if x < 0.0 else -1.0
+	laser.length = length
+	laser.on_phase = phase
+	chunk.add_child(laser)
 
 
 func _add_gap(chunk: ChunkInfo, x: float, y: float, length: float) -> void:

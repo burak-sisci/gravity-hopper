@@ -35,11 +35,15 @@ var laid_out_beat_px: float = BEAT_GRID_PX
 
 ## Çocukların tasarımdaki konumları; yerleşim her çağrıda bunlardan yeniden hesaplanır.
 var _design_positions: Dictionary[Node2D, Vector2] = {}
+## Vuruşla yanıp sönen lazerler (M2-12).
+var _lasers: Array[Laser] = []
 
 
 func _ready() -> void:
 	for item: Node2D in items():
 		_design_positions[item] = item.position
+		if item is Laser:
+			_lasers.append(item as Laser)
 
 
 ## Bir sektörün dünyadaki vuruş boyu (px): tırmanış hızı × 60 / BPM.
@@ -50,6 +54,13 @@ static func beat_px(climb_speed: float, bpm: float) -> float:
 ## Tasarımdaki bir konumun dünyadaki karşılığı: y vuruş boyuna, x koridor genişliğine ölçeklenir.
 static func world_position(design: Vector2, world_beat_px: float, half_width: float) -> Vector2:
 	return Vector2(design.x * half_width / DESIGN_HALF_WIDTH, design.y * world_beat_px / BEAT_GRID_PX)
+
+
+## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere iletir. Parça tam
+## vuruşta başladığı için lazerlerin evresi parçanın yerinden bağımsızdır.
+func set_beat(beat: float) -> void:
+	for laser: Laser in _lasers:
+		laser.set_beat(beat)
 
 
 ## Parçanın duvar boşlukları (M2-11).

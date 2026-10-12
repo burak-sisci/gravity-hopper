@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+[ext_resource type="PackedScene" path="res://scenes/entities/block.tscn" id="3_block"]
+[ext_resource type="PackedScene" path="res://scenes/entities/laser.tscn" id="4_laser"]
+
+[node name="BlockCenter01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 2
+min_sector = 2
+length_beats = 6
+
+[node name="Block3" parent="." instance=ExtResource("3_block")]
+position = Vector2(0, -300)

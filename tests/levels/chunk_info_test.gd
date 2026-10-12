@@ -67,6 +67,10 @@ func test_gap_rules_and_hazard_types() -> void:
 	assert_int(chunk.design_errors().size()).is_equal(3)
 	var mixed: ChunkInfo = _load("res://scenes/levels/chunks/gap_spike_01.tscn")
 	assert_array(mixed.hazard_types()).contains_exactly_in_any_order([&"gap", &"spike"])
+	var blocks: ChunkInfo = _load("res://scenes/levels/chunks/block_spike_01.tscn")
+	assert_array(blocks.hazard_types()).contains_exactly_in_any_order([&"block", &"spike"])
+	var lasers: ChunkInfo = _load("res://scenes/levels/chunks/laser_gate_01.tscn")
+	assert_array(lasers.hazard_types()).contains_exactly([&"laser"])
 	# Boşluğun dünyadaki aralığı vuruşla ölçeklenir (S2: 381,82 px).
 	mixed.position = Vector2(0, -1000)
 	mixed.layout(381.82, 450.0)

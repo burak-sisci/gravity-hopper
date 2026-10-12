@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+[ext_resource type="PackedScene" path="res://scenes/entities/block.tscn" id="3_block"]
+[ext_resource type="PackedScene" path="res://scenes/entities/laser.tscn" id="4_laser"]
+
+[node name="BlockSpike01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 3
+min_sector = 2
+length_beats = 8
+
+[node name="SpikeLeft2" parent="." instance=ExtResource("2_spike")]
+position = Vector2(-450, -200)
+
+[node name="Block4" parent="." instance=ExtResource("3_block")]
+position = Vector2(0, -400)
+
+[node name="SpikeRight6" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -600)
+scale = Vector2(-1, 1)

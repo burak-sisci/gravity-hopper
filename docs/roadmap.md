@@ -143,7 +143,7 @@
 
 - [x] **M2-11** 🤖 Duvar boşluğu: parçalar boşluk aralıkları tanımlar, koridor o aralıkta duvarsız kalır. Koridordan düşme → `player_died(FELL)`. Coyote süresi (`TuningConfig`).
   *Kabul:* Boşluktan düşülüyor; boşluğa girdikten hemen sonraki çevirme kaybolmuyor (test).
-- [ ] **M2-12** 🤖 Veri bloğu ve vuruşa bağlı lazer kapısı + her biriyle en az 3 parça.
+- [x] **M2-12** 🤖 Veri bloğu ve vuruşa bağlı lazer kapısı + her biriyle en az 3 parça.
   *Kabul:* Doğrulama temiz; lazer vuruşla aynı anda açılıp kapanıyor.
 - [ ] **M2-13** 🤖 Glimmer: havuzlu toplanabilir (parça içinde), toplama alanı, `glimmer_collected`, `RunStats`, HUD sayacı, riskli yola yerleşim kuralı.
   *Kabul:* Toplama sinyalle HUD'a yansıyor; tur sonunda `RunResult.glimmers` doğru.

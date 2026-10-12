@@ -75,7 +75,7 @@ Karakter iki dikey duvar arasındaki bir koridorda **yukarı** tırmanır ve her
 | **Diken** | Duvara yapışık, sabit. Olduğun duvarda diken varsa diğer duvara geç. | S1 |
 | **Duvar boşluğu** | Duvarda açıklık; tutunduğun duvar biterse koridordan düşersin. | S2 |
 | **Veri bloğu** | Koridorun ortasında süzülen blok; geçiş yolunu keser. | S2 |
-| **Lazer kapısı** | Vuruşa göre açılıp kapanan yatay lazer. | S3 |
+| **Lazer kapısı** | Vuruşa göre açılıp kapanan yatay lazer: duvardan uzanan ışın her vuruşta yanar, yarım vuruşta söner. İki duvardan kısa ışınlar ortada bir açıklık bırakır; oradan ancak tam zamanlanmış bir çevirmeyle, havadayken geçilir. Yarım vuruşta yanan ışın aldatıcıdır: geçerken kapalıdır. | S3 |
 | **Dönen şekil** | Vuruş temposunda dönen köşeli engel. | S4 |
 | **Hareketli blok** | Duvarlar arasında ritimle gidip gelen blok. | S4 |
 
