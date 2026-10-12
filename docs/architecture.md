@@ -254,7 +254,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `run_started` | `run_seed: int, start_sector: int` | GameManager (`Main` turu kurduktan sonra `begin_run` ile) | HUD, AudioManager |
 | `run_ended` | `result: RunResult` | GameManager | Sonuç ekranı |
 | `pause_changed` | `paused: bool` | GameManager | HUD, AudioManager |
-| `player_died` | `cause: GameTypes.DeathCause` (HAZARD, FELL, WALL) | Player, PressureSystem | GameManager, HUD, AudioManager |
+| `player_died` | `cause: GameTypes.DeathCause` (HAZARD, FELL, WALL) | Player (WALL: PressureSystem → Run → `Player.die`, M2-15) | GameManager, HUD, AudioManager |
 | `player_revived` | — | GameManager | HUD, AudioManager |
 | `player_flipped` | — | Player | AudioManager (ses, titreşim) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
@@ -434,6 +434,11 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - Olaylar mesafeyi değiştirir: Glimmer → iter, kıl payı → iter, kalkan kırılması → çeker. Değerler `TuningConfig`'te.
 - `distance_m ≤ 0` → `Events.player_died(WALL)`. Yakınlık, `wall_proximity_changed` ile yayınlanır.
 - Görsel (`CollapseWall`), oyuncunun `distance_m × 50 px` altında çizilir.
+- **Uygulama (M2-15):**
+  - `PressureSystem` (`scripts/systems/pressure_system.gd`, Run'ın çocuğu): `setup(başlangıç, en_fazla, sürünme)`, `advance(delta)` (Run, oyuncu canlıyken çağırır), `push()`, `pull()`; mesafe sıfıra inince yukarı `wall_reached`. Run bunu `Player.die(WALL)`'a bağlar: bütün ölümleri oyuncu duyurur ve oyuncu donar; debug ölümsüzlüğünde yok sayılır.
+  - Değerler: başlangıç 20 m, en fazla 30 m, Glimmer +1 m, kıl payı +3 m, kalkan −8 m (M2-16) → `TuningConfig` "Baskı" grubu. Sürünme sektörden: `SectorDef.wall_creep` (S1 0,3; S2 0,425; S3 0,55 m/sn; GDD'deki S1 0,3 → S5 0,8 aralığının doğrusal ara değerleri).
+  - Geçici görsel `scenes/entities/collapse_wall.tscn`: kırık üst kenarlı koyu kırmızı bant ve parlak kenar çizgisi; Run her adımda oyuncunun mesafe × 50 px altına koyar. Kesin görsel (glitch) M3'te.
+  - Yakınlık: `1 − mesafe_px / (ekranın alt kenarı − oyuncu)`; 0 duvar ekranın altındayken, 1 oyuncuya değince. 0,01'den az değişim yayılmaz. HUD'da kenarlarda kırmızı vinyet (`%WallVignette`, radyal geçiş dokusu, saydamlık = oran × 0,85, dokunuşu yutmaz). Gerilim sesi M3'te.
 
 ### 8.5 Kıl payı (GrazeDetector)
 
@@ -490,7 +495,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -734,6 +739,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/systems/pressure_system_test.gd` (M2-15) | Sürünme, itmede üst sınır, çekme, tek seferlik `wall_reached`; hızlı sürünmeli turda 2 sn'de `WALL` ölümü, görsel oyuncunun mesafe × 50 px altında, yakınlık artarak 1'e varıyor; ölümsüzken ölüm yok; Glimmer +1 m, kıl payı +3 m |
   | `tests/entities/near_miss_test.gd` (M2-14) | 60 px yanından geçen tehlike kıl payı, 130 px'ten geçen değil, değen (ölümsüzken) değil; 0,5 sn arayla üç kıl payında kombo 1-2-3, çarpan ×2, 2,5 sn sonra `combo_ended` ve ×1; `RunResult.near_misses` |
   | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan |
   | `tests/entities/laser_test.gd` (M2-12) | Açık pencere vuruşa ortalı (ve `on_phase` 0,5), `set_beat` şekli ve görüntüyü açıp kapatıyor, ışın boyu `length`'ten; gerçek turda her vuruş adımında açık, yarım vuruşta kapalı |

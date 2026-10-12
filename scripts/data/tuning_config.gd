@@ -27,6 +27,15 @@ const PX_PER_M: float = 50.0
 ## oyuncu düşmüş sayılır (coyote süresi, GDD §4).
 @export_range(0.0, 0.25, 0.01, "suffix:sn") var coyote_time: float = 0.1
 
+@export_group("Baskı")
+## Tur başında çöküş duvarının oyuncunun altındaki mesafesi ve en fazla mesafe (GDD §14).
+@export_range(5.0, 60.0, 1.0, "suffix:m") var wall_start_distance: float = 20.0
+@export_range(10.0, 80.0, 1.0, "suffix:m") var wall_max_distance: float = 30.0
+## Duvarı iten ve çeken olaylar (GDD §14): Glimmer, kıl payı, kalkanla darbe (M2-16).
+@export_range(0.0, 5.0, 0.5, "suffix:m") var glimmer_push: float = 1.0
+@export_range(0.0, 10.0, 0.5, "suffix:m") var near_miss_push: float = 3.0
+@export_range(0.0, 20.0, 0.5, "suffix:m") var shield_pull: float = 8.0
+
 @export_group("Kıl payı")
 ## Kıl payı alanının çarpışma kutusundan her yandaki fazlası (GDD §15; başlangıç 40 px).
 @export_range(0.2, 2.0, 0.1, "suffix:m") var graze_margin: float = 0.8

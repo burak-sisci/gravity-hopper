@@ -6,6 +6,8 @@ extends Control
 ## Metinler çeviri anahtarlarıyla kodda kurulur; dil değişince yeniden yazılır.
 ## Kök düğüm dokunuşları yutmaz (mouse_filter = IGNORE); yoksa dokunuş çevirme olmazdı.
 
+## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
+const VIGNETTE_MAX_ALPHA: float = 0.85
 ## Afişin ekranda kaldığı süre ve sönme süresi (sn).
 const BANNER_TIME: float = 2.0
 const BANNER_FADE: float = 0.4
@@ -25,6 +27,7 @@ var _banner_tween: Tween
 @onready var _best_label: Label = %BestLabel
 @onready var _sector_banner: Label = %SectorBanner
 @onready var _glimmer_label: Label = %GlimmerLabel
+@onready var _vignette: TextureRect = %WallVignette
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _ready() -> void:
 	Events.run_ended.connect(_on_run_ended)
 	Events.sector_entered.connect(_show_banner)
 	Events.glimmer_collected.connect(_on_glimmer_collected)
+	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
 	_sector_banner.visible = false
 	_refresh()
 
@@ -45,11 +49,17 @@ func _notification(what: int) -> void:
 func _on_run_started(_run_seed: int, start_sector: int) -> void:
 	_height_m = 0
 	_glimmers = 0
+	_vignette.modulate.a = 0.0
 	if start_sector > 1:
 		_show_banner(start_sector)
 	else:
 		_hide_banner()
 	_refresh()
+
+
+## Duvar ekrana girince kenarlar kızarır; oyuncuya yaklaştıkça koyulaşır.
+func _on_wall_proximity_changed(ratio: float) -> void:
+	_vignette.modulate.a = ratio * VIGNETTE_MAX_ALPHA
 
 
 func _on_glimmer_collected(value: int) -> void:

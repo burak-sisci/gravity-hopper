@@ -149,7 +149,7 @@
   *Kabul:* Toplama sinyalle HUD'a yansıyor; tur sonunda `RunResult.glimmers` doğru.
 - [x] **M2-14** 🤖 `GrazeDetector` + kombo (2,5 sn zincir, ×2 / ×3), `near_miss` / `combo_ended`.
   *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok (test).
-- [ ] **M2-15** 🤖 `PressureSystem` + geçici çöküş duvarı görseli, `player_died(WALL)`, `wall_proximity_changed`; Glimmer ve kıl payı duvarı iter.
+- [x] **M2-15** 🤖 `PressureSystem` + geçici çöküş duvarı görseli, `player_died(WALL)`, `wall_proximity_changed`; Glimmer ve kıl payı duvarı iter.
   *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor (test + Redmi).
 - [ ] **M2-16** 🤖 Kalkan (test için debug ile verilir): tek darbeyi emer, 1 sn dokunulmazlık, duvarı çeker, `shield_changed`.
   *Kabul:* Tek darbeyi emiyor, duvarı çekiyor (test).

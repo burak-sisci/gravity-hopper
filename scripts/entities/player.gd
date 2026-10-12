@@ -121,6 +121,17 @@ static func is_tap(event: InputEvent) -> bool:
 	return false
 
 
+## Oyuncuyu öldürür (çöküş duvarı gibi dışarıdan gelen ölümler; Run çağırır).
+## Ölümsüzken yok sayılır.
+func die(cause: GameTypes.DeathCause) -> void:
+	if not _alive or _invincible:
+		return
+	_alive = false
+	_flip_requested = false
+	_buffer_left = 0.0
+	Events.player_died.emit(cause)
+
+
 ## Kalkan M2-16'da gelir; o zamana kadar her darbe ölümdür.
 func _on_hurtbox_hit(area: Area2D) -> void:
 	# Değen tehlike, kalkan ya da ölümsüzlükle geçilse de kıl payı sayılmaz.

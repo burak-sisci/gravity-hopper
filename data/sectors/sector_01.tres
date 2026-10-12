@@ -7,6 +7,7 @@ script = ExtResource("1_sector")
 name_key = &"SECTOR_1_NAME"
 bpm = 100.0
 climb_speed = 12.0
+wall_creep = 0.3
 length = 750.0
 allowed_hazards = Array[StringName]([&"spike"])
 min_difficulty = 1

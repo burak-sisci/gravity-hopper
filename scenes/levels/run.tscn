@@ -9,6 +9,8 @@
 [ext_resource type="Resource" path="res://data/chunks/chunk_library.tres" id="7_library"]
 [ext_resource type="Script" path="res://scripts/systems/conductor.gd" id="8_conductor"]
 [ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="9_sectors"]
+[ext_resource type="Script" path="res://scripts/systems/pressure_system.gd" id="10_pressure"]
+[ext_resource type="PackedScene" path="res://scenes/entities/collapse_wall.tscn" id="11_wall"]
 
 [node name="Run" type="Node2D"]
 process_physics_priority = 1
@@ -28,6 +30,13 @@ script = ExtResource("3_corridor")
 unique_name_in_owner = true
 script = ExtResource("6_chunks")
 library = ExtResource("7_library")
+
+[node name="PressureSystem" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("10_pressure")
+
+[node name="CollapseWall" parent="." instance=ExtResource("11_wall")]
+unique_name_in_owner = true
 
 [node name="Player" parent="." instance=ExtResource("5_player")]
 unique_name_in_owner = true

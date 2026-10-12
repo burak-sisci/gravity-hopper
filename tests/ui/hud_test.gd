@@ -56,6 +56,16 @@ func test_glimmer_counter() -> void:
 	assert_str(_glimmer_label().text).is_equal("0 GLIMMER")
 
 
+func test_wall_vignette_follows_proximity() -> void:
+	var vignette: TextureRect = _hud.get_node("%WallVignette") as TextureRect
+	assert_float(vignette.modulate.a).is_equal(0.0)
+	Events.wall_proximity_changed.emit(0.5)
+	assert_float(vignette.modulate.a).is_equal_approx(0.425, 0.0001)
+	assert_int(vignette.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
+	Events.run_started.emit(3, 1)
+	assert_float(vignette.modulate.a).is_equal(0.0)
+
+
 func test_sector_banner_shows_name_and_fades() -> void:
 	Events.run_started.emit(1, 1)
 	assert_bool(_banner().visible).is_false()
