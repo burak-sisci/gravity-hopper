@@ -210,7 +210,7 @@ Telefonda ayar paneliyle oynandı; başlangıç değerleri değiştirilmeden ona
 | Tırmanış hızı (S1) | 12 m/sn | Diğer sektörlerin hızları §12'deki tabloda; M2-08'den beri `data/sectors/` kaynaklarında |
 | Duvara çekim ivmesi | 300 m/sn² | Bu ikisiyle duvardan duvara geçiş ≈ 0,37 sn |
 | En yüksek yan hız | 64 m/sn | |
-| Dokunma tamponu | 0,12 sn | Duvara varmadan hemen önceki dokunuş affedilir |
+| Dokunma tamponu | 0,45 sn (2026-10-13; M1'de 0,12 sn) | Havadaki her dokunuş inişte uygulanır: hızlı çift dokunuş "git ve hemen geri dön" olur (kullanıcı geri bildirimi, M2-18) |
 | Çarpışma kutusu | görselin %70'i | |
 | İleri görüş (oyuncunun üstünde) | 28 m | S1'de engel 2,3 sn önce görünür; 22 m/sn tavanında 1,27 sn (≥ 1,2 sn kuralı tutuyor) |
 | Koridor genişliği | 18 m | |

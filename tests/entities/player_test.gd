@@ -41,16 +41,18 @@ func test_tap_on_wall_flips_to_other_wall() -> void:
 	assert_float(_player.position.x).is_equal_approx(WALL_X, 0.5)
 
 
-func test_early_tap_in_air_is_ignored() -> void:
+func test_fast_double_tap_goes_and_comes_back() -> void:
 	await _start_run()
 	_tap()
 	await _frames(INPUT_SETTLE_FRAMES + 4)
-	# Geçişin başında (tampon süresinin çok dışında) yapılan dokunuş kaybolur.
+	# Geçişin başındaki ikinci dokunuş saklanır (tampon geçişten uzun) ve inişte uygulanır:
+	# oyuncu sağ duvara varıp hemen sola döner (ADR-036).
 	_tap()
 	await _frames_until_on_wall()
-	await _frames(10)
-	assert_bool(_player.is_gravity_right()).is_true()
-	assert_float(_player.position.x).is_equal_approx(WALL_X, 0.5)
+	await _frames(INPUT_SETTLE_FRAMES)
+	assert_bool(_player.is_gravity_right()).is_false()
+	await _frames_until_on_wall()
+	assert_float(_player.position.x).is_equal_approx(-WALL_X, 0.5)
 
 
 func test_tap_just_before_landing_is_buffered() -> void:
@@ -69,6 +71,8 @@ func test_tap_just_before_landing_is_buffered() -> void:
 
 func test_tap_outside_buffer_window_is_dropped() -> void:
 	await _start_run()
+	# Kısa tamponla (M1'deki 0,12 sn) inişten 12 kare önceki dokunuş pencerenin dışında kalır.
+	_run.tuning.input_buffer_time = 0.12
 	var transit: int = await _measure_transit()
 	_tap()
 	await _frames(transit - 12)

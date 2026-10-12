@@ -6,7 +6,7 @@
 script = ExtResource("1_tuning")
 gravity_accel = 300.0
 max_side_speed = 64.0
-input_buffer_time = 0.12
+input_buffer_time = 0.45
 hurtbox_scale = 0.7
 coyote_time = 0.1
 shield_grace = 1.0

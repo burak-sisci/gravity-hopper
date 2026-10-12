@@ -19,8 +19,10 @@ const PX_PER_M: float = 50.0
 
 @export_group("Adalet")
 ## Havadayken yapılan dokunuşun saklanma süresi. Oyuncu bu süre içinde duvara değerse
-## çevirme kaybolmaz, uygulanır (dokunma tamponu).
-@export_range(0.0, 0.3, 0.01, "suffix:sn") var input_buffer_time: float = 0.12
+## çevirme kaybolmaz, uygulanır (dokunma tamponu). Geçişten (≈ 0,37 sn) uzun olduğu için geçişin
+## herhangi bir anındaki dokunuş inişte uygulanır: hızlı çift dokunuş "git ve geri dön" olur
+## (kullanıcı geri bildirimi, ADR-036; M1'de 0,12 sn idi).
+@export_range(0.0, 0.6, 0.01, "suffix:sn") var input_buffer_time: float = 0.45
 ## Çarpışma kutusunun görsele oranı. Küçük değer daha affedicidir.
 @export_range(0.4, 1.0, 0.05) var hurtbox_scale: float = 0.7
 ## Duvar biter bitmez (boşluk) çevirme bu süre daha yapılabilir; süre dolunca koridorun dışındaki
