@@ -143,6 +143,8 @@ func _connect_event_log() -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
 	Events.sector_entered.connect(func(index: int) -> void:
 		_log_event("sector_entered index=%d" % index))
+	Events.near_miss.connect(func(combo: int) -> void: _log_event("near_miss combo=%d" % combo))
+	Events.combo_ended.connect(_log_event.bind("combo_ended"))
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))
 	Events.run_ended.connect(func(result: RunResult) -> void:

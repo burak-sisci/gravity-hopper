@@ -147,7 +147,7 @@
   *Kabul:* Doğrulama temiz; lazer vuruşla aynı anda açılıp kapanıyor.
 - [x] **M2-13** 🤖 Glimmer: havuzlu toplanabilir (parça içinde), toplama alanı, `glimmer_collected`, `RunStats`, HUD sayacı, riskli yola yerleşim kuralı.
   *Kabul:* Toplama sinyalle HUD'a yansıyor; tur sonunda `RunResult.glimmers` doğru.
-- [ ] **M2-14** 🤖 `GrazeDetector` + kombo (2,5 sn zincir, ×2 / ×3), `near_miss` / `combo_ended`.
+- [x] **M2-14** 🤖 `GrazeDetector` + kombo (2,5 sn zincir, ×2 / ×3), `near_miss` / `combo_ended`.
   *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok (test).
 - [ ] **M2-15** 🤖 `PressureSystem` + geçici çöküş duvarı görseli, `player_died(WALL)`, `wall_proximity_changed`; Glimmer ve kıl payı duvarı iter.
   *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor (test + Redmi).

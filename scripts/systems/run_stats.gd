@@ -7,6 +7,8 @@ extends RefCounted
 var glimmers: int = 0
 ## Glimmer değerinin çarpanı (kıl payı kombosu, M2-14).
 var multiplier: int = 1
+## Bu turdaki kıl payı sayısı.
+var near_misses: int = 0
 
 
 ## Bir Glimmer'ı sayar; kazanılan değeri döndürür.

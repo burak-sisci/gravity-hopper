@@ -27,6 +27,15 @@ const PX_PER_M: float = 50.0
 ## oyuncu düşmüş sayılır (coyote süresi, GDD §4).
 @export_range(0.0, 0.25, 0.01, "suffix:sn") var coyote_time: float = 0.1
 
+@export_group("Kıl payı")
+## Kıl payı alanının çarpışma kutusundan her yandaki fazlası (GDD §15; başlangıç 40 px).
+@export_range(0.2, 2.0, 0.1, "suffix:m") var graze_margin: float = 0.8
+## Bu süre içinde gelen yeni kıl payı komboyu uzatır.
+@export_range(0.5, 5.0, 0.1, "suffix:sn") var combo_window: float = 2.5
+## Glimmer çarpanı ×2 ve ×3 olduğu kombo uzunlukları (ilk değerler).
+@export_range(2, 10, 1) var combo_x2_at: int = 3
+@export_range(3, 20, 1) var combo_x3_at: int = 6
+
 @export_group("Toplama")
 ## Oyuncunun Glimmer toplama alanının yarıçapı (gövdeden büyük: affedici toplama, M2-13).
 @export_range(0.5, 4.0, 0.1, "suffix:m") var pickup_radius: float = 1.5

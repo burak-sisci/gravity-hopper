@@ -6,9 +6,14 @@ extends CharacterBody2D
 ## Girdi olayları yalnızca not edilir; karar bir sonraki fizik adımında verilir (.clauderules §5).
 ## Çevirince Events.player_flipped yayar. Hurtbox bir tehlikeye değince yalnızca
 ## Events.player_died yayar ve donar; tehlikenin koduna dokunmaz (architecture.md §7.3).
+## Kıl payı (M2-14): GrazeDetector bir tehlikenin çarpmadan geçtiğini bildirince yukarı near_missed
+## yayar; Run komboyu yönetir.
 ## Duvar boşluğu (M2-11): duvar bitince oyuncu dışarı kayar. Coyote süresince çevirme hâlâ olur;
 ## süre dolduğunda koridorun dışındaysa player_died(FELL). Debug ölümsüzlüğünde duvar çizgisine
 ## geri konur.
+
+## Bir tehlike çarpışma kutusuna değmeden kıl payı alanından geçti (Run bağlar).
+signal near_missed
 
 ## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
 const INVINCIBLE_ALPHA: float = 0.45
@@ -31,11 +36,13 @@ var _coyote_left: float = 0.0
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
 @onready var _collector: Collector = $Collector
+@onready var _graze: GrazeDetector = $GrazeDetector
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_hurtbox.hit.connect(_on_hurtbox_hit)
+	_graze.grazed.connect(_on_grazed)
 	Events.debug_invincibility_changed.connect(_on_debug_invincibility_changed)
 
 
@@ -49,7 +56,9 @@ func _physics_process(delta: float) -> void:
 	if not _alive:
 		return
 	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
-	_hurtbox.set_size((_body.shape as RectangleShape2D).size * tuning.hurtbox_scale)
+	var hurt_size: Vector2 = (_body.shape as RectangleShape2D).size * tuning.hurtbox_scale
+	_hurtbox.set_size(hurt_size)
+	_graze.set_size(hurt_size, TuningConfig.to_px(tuning.graze_margin))
 	_collector.set_radius(TuningConfig.to_px(tuning.pickup_radius))
 	if _flip_requested:
 		_flip_requested = false
@@ -113,13 +122,20 @@ static func is_tap(event: InputEvent) -> bool:
 
 
 ## Kalkan M2-16'da gelir; o zamana kadar her darbe ölümdür.
-func _on_hurtbox_hit() -> void:
+func _on_hurtbox_hit(area: Area2D) -> void:
+	# Değen tehlike, kalkan ya da ölümsüzlükle geçilse de kıl payı sayılmaz.
+	_graze.mark_hit(area)
 	if not _alive or _invincible:
 		return
 	_alive = false
 	_flip_requested = false
 	_buffer_left = 0.0
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+
+
+func _on_grazed() -> void:
+	if _alive:
+		near_missed.emit()
 
 
 func _on_debug_invincibility_changed(enabled: bool) -> void:

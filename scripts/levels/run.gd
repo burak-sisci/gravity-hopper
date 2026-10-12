@@ -30,6 +30,9 @@ var _start_height: float = 0.0
 ## Oyuncunun sıradaki sektöre geçeceği dünya y'si (son sektörde -INF).
 var _next_boundary_y: float = -INF
 var _height_m: int = 0
+## Kıl payı kombosu (M2-14): zincir uzunluğu ve son kıl payının oyun zamanı.
+var _combo: int = 0
+var _last_graze_time: float = 0.0
 
 @onready var _conductor: Conductor = %Conductor
 @onready var _corridor: Corridor = %Corridor
@@ -57,6 +60,7 @@ func _ready() -> void:
 	_corridor.set_tint(def.ambient_color, true)
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
+	_player.near_missed.connect(_on_near_missed)
 	_update_view()
 	_camera.reset_physics_interpolation()
 
@@ -68,6 +72,10 @@ func _physics_process(delta: float) -> void:
 	_update_view()
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
 	_chunks.set_beat(_conductor.beat_time() / _conductor.beat_length())
+	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:
+		_combo = 0
+		stats.multiplier = 1
+		Events.combo_ended.emit()
 	var meters: int = floori(_start_height + (_start_y - _player.position.y) / TuningConfig.PX_PER_M)
 	if meters != _height_m:
 		_height_m = meters
@@ -86,6 +94,22 @@ func _enter_sector(next: int) -> void:
 	_next_boundary_y = _boundary_y(next)
 	_corridor.set_tint(def.ambient_color)
 	Events.sector_entered.emit(next)
+
+
+## Kıl payı: pencere içindeyse kombo uzar, değilse yeni zincir başlar. Glimmer çarpanı
+## kombo uzunluğuna göre ×1 / ×2 / ×3 (GDD §15).
+func _on_near_missed() -> void:
+	var now: float = _conductor.run_time
+	_combo = _combo + 1 if _combo > 0 and now - _last_graze_time <= tuning.combo_window else 1
+	_last_graze_time = now
+	stats.near_misses += 1
+	if _combo >= tuning.combo_x3_at:
+		stats.multiplier = 3
+	elif _combo >= tuning.combo_x2_at:
+		stats.multiplier = 2
+	else:
+		stats.multiplier = 1
+	Events.near_miss.emit(_combo)
 
 
 func _on_glimmer_collected(value: int) -> void:

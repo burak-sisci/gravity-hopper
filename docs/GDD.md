@@ -239,7 +239,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
   - Kısa bir yavaş çekim (0,5×, 0,25 sn). Müzik de aynı oranda yavaşlar, bant yavaşlaması gibi.
   - "KIL PAYI!" yazısı ve parlama.
   - Çöküş duvarı geri itilir.
-- **Kombo:** 2,5 sn içinde gelen her yeni kıl payı zinciri uzatır. Zincir büyüdükçe Glimmer çarpanı ×2, ×3'e çıkar.
+- **Kombo:** 2,5 sn içinde gelen her yeni kıl payı zinciri uzatır. Zincir büyüdükçe Glimmer çarpanı ×2, ×3'e çıkar (ilk değerler: 3. kıl payında ×2, 6.'da ×3; M2-14). Kıl payı alanı oyuncunun çarpışma kutusundan her yanda 0,8 m büyüktür.
 - Yavaş çekim her kıl payında tekrarlanırsa yorucu olabilir: zincirin ilk halkasında ve kombo eşiklerinde tetiklenir (ayarla kesinleşecek).
 
 ## 16. Ritim

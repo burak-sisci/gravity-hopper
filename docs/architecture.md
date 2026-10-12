@@ -439,6 +439,11 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 - `Hurtbox`'tan biraz büyük bir `Area2D` kullanılır (başlangıç +40 px).
 - Bir tehlike bu alandan, `Hurtbox`'a hiç değmeden çıkarsa → kıl payı. `Run` kombo sayacını yönetir ve `Events.near_miss(combo)` yayar.
+- **Uygulama (M2-14):**
+  - `GrazeDetector` (`scripts/components/graze_detector.gd`, oyuncunun çocuğu, maske `hazard`): çarpışma kutusu + her yanda `TuningConfig.graze_margin` (0,8 m = 40 px). İçeri giren tehlikeleri izler; çıkan tehlike çarpışma kutusuna değmediyse yukarı `grazed` yayar. `Hurtbox.hit(alan)` değen alanı taşır; `Player` onu `mark_hit()` ile işaretler (kalkan ya da ölümsüzlükle geçilse de kıl payı sayılmaz).
+  - `Player.near_missed` (yalnızca canlıyken) → `Run`: son kıl payından bu yana `combo_window` (2,5 sn, oyun zamanı) geçmediyse kombo uzar, geçtiyse 1'den başlar. Çarpan `RunStats.multiplier`: kombo ≥ `combo_x2_at` (3) → ×2, ≥ `combo_x3_at` (6) → ×3 (ilk değerler). Her kıl payında `Events.near_miss(kombo)`; pencere dolunca `Events.combo_ended` ve çarpan 1. `GameManager` sayıyı `RunResult.near_misses`'a yazar.
+  - Yavaş çekim, "KIL PAYI!" yazısı ve parlama (GDD §15) görsel geri bildirimdir: M3'te. Çöküş duvarını itme M2-15'te.
+  - **Yanlış pozitif ölçümü:** Ölümsüz, dokunuşsuz oyuncu (sol duvarda kalır, sol duvardaki tehlikelere değer, sağdakilerden uzaktır) S1 ve S3'te 4000'er karede 0 kıl payı saydı.
 
 ### 8.6 Toplanabilirler ve mıknatıs
 
@@ -485,7 +490,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -729,6 +734,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/entities/near_miss_test.gd` (M2-14) | 60 px yanından geçen tehlike kıl payı, 130 px'ten geçen değil, değen (ölümsüzken) değil; 0,5 sn arayla üç kıl payında kombo 1-2-3, çarpan ×2, 2,5 sn sonra `combo_ended` ve ×1; `RunResult.near_misses` |
   | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan |
   | `tests/entities/laser_test.gd` (M2-12) | Açık pencere vuruşa ortalı (ve `on_phase` 0,5), `set_beat` şekli ve görüntüyü açıp kapatıyor, ışın boyu `length`'ten; gerçek turda her vuruş adımında açık, yarım vuruşta kapalı |
   | `tests/levels/corridor_test.gd` (M2-11) | Boşluksuz duvar tam katı; boşluk yalnızca kendi duvarını, tam kenarından keser; boşluk kalkınca duvar geri gelir; düğüm sayısı sabit |
