@@ -40,9 +40,10 @@
   "pending_user_decisions": [
     {
       "id": "D-02",
-      "question": "Müzik kaynağı: BPM'i belli CC0 müzik paketleri mi, BeepBox ile kendi bestemiz mi?",
+      "question": "Müzik yaklaşımı: oyuna özel katmanlı müzik (besteci) mi, CC-BY kütüphaneler mi? Popüler şarkılar lisans ve BPM nedeniyle elendi. Ayrıntı: docs/music_research.md",
       "needed_by": "M3",
-      "recommendation": "M2'de metronomla ilerle; M3'te önce CC0 paketleri dene, sektör kimliğine uymazsa BeepBox'ta basit döngüler."
+      "asked": "2026-10-13",
+      "recommendation": "Bütçe varsa bağımsız besteciyle oyuna özel, sektör BPM'lerinde katmanlı (adaptif) müzik; yoksa CC-BY kütüphanelerden sektör başına parça, BPM'ler parçalara göre. Yapay zekâ yalnızca deneme/örnek için. Kullanıcıya sorular: bütçe, 3–5 referans parça, yapay zekâya onay, lisans kuralına 'sözleşmeli ısmarlama eser' eklenmesi."
     },
     {
       "id": "D-03",
@@ -138,6 +139,10 @@
     },
     "temporary_m1": { "spike_spacing": "10 m", "spike_start_gap": "25 m" }
   },
+
+  "future_requests": [
+    { "requested": "2026-10-13", "request": "Görünüş ve hikâye yeniden yapılandırması", "when": "Güncel plandaki adımlar bitince (kullanıcı: 'en sona bırakalım'); yayından önce mi sonra mı, M7 sonunda konuşulur." }
+  ],
 
   "temp_files": [],
 

@@ -297,7 +297,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
-| D-02 | Müzik kaynağı: CC0 paketler mi, BeepBox ile kendi bestemiz mi? | M3 |
+| D-02 | Müzik yaklaşımı: oyuna özel katmanlı müzik (besteci) mi, CC-BY kütüphaneler mi? Popüler şarkılar lisans ve BPM nedeniyle elendi; araştırma `docs/music_research.md` (2026-10-13) | M3 |
 | D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
 | D-04 | Günlük meydan okumada deneme hakkı | M7 |
 | — | Sektör renklerinin kesin tonları | M3 |

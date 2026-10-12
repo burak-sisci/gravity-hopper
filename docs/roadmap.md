@@ -173,7 +173,7 @@
 - [ ] **M3-07** 🤖 Kıl payı yavaş çekimi (müzikle birlikte) + "KIL PAYI!" + kombo göstergesi
 - [ ] **M3-08** 🤖 Hız hissi efektleri: paralaks, hız çizgileri
 - [ ] **M3-09** 🤝 Ses efektleri (D-05'e göre üretim)
-- [ ] **M3-10** 🤝 Sektör müzikleri (D-02'ye göre) + gerçek müzikle ritim senkronu
+- [ ] **M3-10** 🤝 Sektör müzikleri (D-02'ye göre; araştırma ve öneri `docs/music_research.md`) + gerçek müzikle ritim senkronu: katmanlar (`AudioStreamSynchronized`), sektör geçişi ölçü sınırında, kombo/duvar olaylarıyla katman değişimi
 - [ ] **M3-11** 🤝 Font seçimi (S-06) + HUD stili; sektör renklerinin kesinleşmesi
 - [ ] **M3-12** 🤖 Redmi'de performans kontrolü (kare süresi ≤ 10 ms)
 - [ ] **M3-13** 🤝 Oyun testi (sesi açık) + Planlama Gözden Geçirmesi → 🚪
@@ -248,6 +248,10 @@
 - [ ] **M8-06** 👤 Kapalı test: **en az 12 kişi, 14 gün kesintisiz** (Google'ın zorunlu kuralı)
 - [ ] **M8-07** 🤖 Test geri bildirimleriyle düzeltmeler
 - [ ] **M8-08** 🤝 Üretime yayın 🚀
+
+## Sonra (kullanıcı isteği, 2026-10-13)
+
+- [ ] 🤝 **Görünüş ve hikâye yeniden yapılandırması:** güncel plandaki adımlar bitince ele alınır. Yayından önce mi sonra mı olacağı M7 sonunda konuşulur.
 
 ---
 
