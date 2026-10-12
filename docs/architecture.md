@@ -438,7 +438,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - `PressureSystem` (`scripts/systems/pressure_system.gd`, Run'ın çocuğu): `setup(başlangıç, en_fazla, sürünme)`, `advance(delta)` (Run, oyuncu canlıyken çağırır), `push()`, `pull()`; mesafe sıfıra inince yukarı `wall_reached`. Run bunu `Player.die(WALL)`'a bağlar: bütün ölümleri oyuncu duyurur ve oyuncu donar; debug ölümsüzlüğünde yok sayılır.
   - Değerler: başlangıç 20 m, en fazla 30 m, Glimmer +1 m, kıl payı +3 m, kalkan −8 m (M2-16) → `TuningConfig` "Baskı" grubu. Sürünme sektörden: `SectorDef.wall_creep` (S1 0,3; S2 0,425; S3 0,55 m/sn; GDD'deki S1 0,3 → S5 0,8 aralığının doğrusal ara değerleri).
   - Geçici görsel `scenes/entities/collapse_wall.tscn`: kırık üst kenarlı koyu kırmızı bant ve parlak kenar çizgisi; Run her adımda oyuncunun mesafe × 50 px altına koyar. Kesin görsel (glitch) M3'te.
-  - Yakınlık: `1 − mesafe_px / (ekranın alt kenarı − oyuncu)`; 0 duvar ekranın altındayken, 1 oyuncuya değince. 0,01'den az değişim yayılmaz. HUD'da kenarlarda kırmızı vinyet (`%WallVignette`, radyal geçiş dokusu, saydamlık = oran × 0,85, dokunuşu yutmaz). Gerilim sesi M3'te.
+  - Yakınlık: `1 − mesafe_px / (ekranın alt kenarı − oyuncu)`; 0 duvar ekranın altındayken, 1 oyuncuya değince. 0,01'den az değişim yayılmaz. HUD'da kenarlarda kırmızı vinyet (`%WallVignette`, radyal geçiş dokusu yalnızca dış %30'da kırmızı, saydamlık = oran × 0,6, dokunuşu yutmaz). İlk değerler (dış %45, × 0,85) Redmi'de duvar yaklaşınca ekranın çoğunu kızartıp engelleri okunmaz yapıyordu (M2-15 cihaz denemesi). Gerilim sesi M3'te.
+  - **Redmi denemesi (2026-10-12, ölümsüz, S3):** sektör afişi, kehribar ton, duvar boşlukları, veri blokları, lazerler, Glimmer sayacı (1→3), çöküş duvarının ~36 sn'de oyuncuya yetişmesi ve vinyet görüldü. M2-11, M2-12 ve M2-13'ün bekleyen cihaz denemeleri de bununla tamamlandı.
 
 ### 8.5 Kıl payı (GrazeDetector)
 

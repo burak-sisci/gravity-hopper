@@ -7,7 +7,7 @@ extends Control
 ## Kök düğüm dokunuşları yutmaz (mouse_filter = IGNORE); yoksa dokunuş çevirme olmazdı.
 
 ## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
-const VIGNETTE_MAX_ALPHA: float = 0.85
+const VIGNETTE_MAX_ALPHA: float = 0.6
 ## Afişin ekranda kaldığı süre ve sönme süresi (sn).
 const BANNER_TIME: float = 2.0
 const BANNER_FADE: float = 0.4

@@ -4,7 +4,7 @@
 [ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="2_sectors"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
-offsets = PackedFloat32Array(0.55, 1)
+offsets = PackedFloat32Array(0.7, 1)
 colors = PackedColorArray(1, 0.1, 0.15, 0, 1, 0.1, 0.15, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]

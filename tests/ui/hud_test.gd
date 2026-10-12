@@ -60,7 +60,7 @@ func test_wall_vignette_follows_proximity() -> void:
 	var vignette: TextureRect = _hud.get_node("%WallVignette") as TextureRect
 	assert_float(vignette.modulate.a).is_equal(0.0)
 	Events.wall_proximity_changed.emit(0.5)
-	assert_float(vignette.modulate.a).is_equal_approx(0.425, 0.0001)
+	assert_float(vignette.modulate.a).is_equal_approx(0.3, 0.0001)
 	assert_int(vignette.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
 	Events.run_started.emit(3, 1)
 	assert_float(vignette.modulate.a).is_equal(0.0)
