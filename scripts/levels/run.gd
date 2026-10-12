@@ -21,6 +21,8 @@ extends Node2D
 var rng: RunRng
 ## Oyuncunun bulunduğu sektör.
 var sector: int = 1
+## Turun istatistikleri (Glimmer, kombo; §8.6).
+var stats: RunStats = RunStats.new()
 
 var _start_y: float = 0.0
 ## Başlangıç sektörünün başladığı yükseklik (m); HUD yüksekliği buradan sayar.
@@ -54,6 +56,7 @@ func _ready() -> void:
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_corridor.set_tint(def.ambient_color, true)
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y)
+	_chunks.glimmer_collected.connect(_on_glimmer_collected)
 	_update_view()
 	_camera.reset_physics_interpolation()
 
@@ -83,6 +86,10 @@ func _enter_sector(next: int) -> void:
 	_next_boundary_y = _boundary_y(next)
 	_corridor.set_tint(def.ambient_color)
 	Events.sector_entered.emit(next)
+
+
+func _on_glimmer_collected(value: int) -> void:
+	Events.glimmer_collected.emit(stats.add_glimmer(value))
 
 
 ## Sektörün bittiği dünya y'si (son sektörde -INF).

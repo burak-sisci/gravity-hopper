@@ -6,6 +6,7 @@ const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigz
 const UNSOLVABLE_SCENE: PackedScene = preload("res://tools/fixtures/chunk_unsolvable.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
+const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const LEFT: float = -450.0
@@ -116,6 +117,24 @@ func test_laser_needs_its_sector() -> void:
 			["S2: 'laser' bu sektörde izinli değil"])
 
 
+func test_glimmer_rules() -> void:
+	# Üç dikenle çevrili Glimmer'a dokunmadan yaklaşılamaz (toplama yarıçapı 75 px geniş: tek
+	# dikenin yanındaki Glimmer geçiş sırasında sıyırarak alınabilir). Tehlikeden uzak Glimmer
+	# riskli yolda değil; sağ duvardaki, dikenle aynı vuruştaki Glimmer ikisini de geçer.
+	var chunk: ChunkInfo = _chunk(8, [
+		Vector3(LEFT, -250, 1), Vector3(LEFT, -300, 1), Vector3(LEFT, -350, 1),
+	])
+	_add_glimmer(chunk, -450, -300)
+	_add_glimmer(chunk, 400, -750)
+	_add_glimmer(chunk, 400, -300)
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 1)
+	assert_int(errors.size()).is_equal(2)
+	if errors.size() < 2:
+		return
+	assert_str(errors[0]).contains("Glimmer3").contains("toplanamıyor")
+	assert_str(errors[1]).contains("Glimmer4").contains("riskli yolda değil")
+
+
 func test_view_rule_uses_lookahead() -> void:
 	assert_array(_validator.view_errors()).is_empty()
 	var short_view: TuningConfig = _tuning()
@@ -133,6 +152,13 @@ func test_every_sector_needs_a_chunk() -> void:
 	var chunks: Array[ChunkInfo] = [early]
 	var errors: PackedStringArray = _validator.coverage_errors(chunks)
 	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
+
+
+func _add_glimmer(chunk: ChunkInfo, x: float, y: float) -> void:
+	var glimmer: Glimmer = GLIMMER_SCENE.instantiate() as Glimmer
+	glimmer.name = "Glimmer%d" % chunk.get_child_count()
+	glimmer.position = Vector2(x, y)
+	chunk.add_child(glimmer)
 
 
 func _add_laser(chunk: ChunkInfo, x: float, y: float, length: float, phase: float) -> void:

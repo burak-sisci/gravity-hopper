@@ -30,6 +30,7 @@ var _coyote_left: float = 0.0
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
+@onready var _collector: Collector = $Collector
 
 
 func _ready() -> void:
@@ -49,6 +50,7 @@ func _physics_process(delta: float) -> void:
 		return
 	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
 	_hurtbox.set_size((_body.shape as RectangleShape2D).size * tuning.hurtbox_scale)
+	_collector.set_radius(TuningConfig.to_px(tuning.pickup_radius))
 	if _flip_requested:
 		_flip_requested = false
 		if is_on_wall() or _coyote_left > 0.0:

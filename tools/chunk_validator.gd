@@ -8,6 +8,10 @@ extends RefCounted
 ## zamanlar ama insandır: yere indikten sonra en az REACTION_MARGIN bekler. Böylece iki çevirme
 ## arası en az "geçiş süresi + tepki payı" olur (GDD §13).
 ##
+## Glimmer (M2-13): her Glimmer adil bir yolda toplanabilmeli (girişten sona güvenli bir yol,
+## toplama alanı Glimmer'a değiyor) ve riskli yolda olmalı: bir tehlikeye ya da boşluğa dikeyde
+## en fazla bir vuruş uzakta.
+##
 ## Lazer (M2-12): ışın yalnızca açık olduğu karelerde tehlikedir. Açık olup olmadığı oyundaki
 ## kuralla (Laser.is_on_at) oyuncunun parça içindeki vuruş konumundan hesaplanır; parçalar tam
 ## vuruşta başladığı için bu, oyundaki vuruş saatiyle aynıdır.
@@ -126,7 +130,13 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 			hazards.append(rect)
 			hazard_names.append(label)
 			lasers.append(item as Laser)
-	if not errors.is_empty() or (hazards.is_empty() and gaps.is_empty()):
+	if not errors.is_empty():
+		return errors
+	if hazards.is_empty() and gaps.is_empty():
+		# Tehlikesiz parçada Glimmer riskli yolda olamaz.
+		for item: Node2D in chunk.items():
+			if item is Glimmer:
+				errors.append("%s riskli yolda değil: parçada tehlike yok" % item.name)
 		return errors
 	var sim: Simulation = Simulation.new(hazards, _hurt_half(), half_width - _body_size.x * 0.5,
 			def.climb_px(), top, _tuning)
@@ -137,7 +147,37 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 	var failure: String = sim.first_failure(names)
 	if not failure.is_empty():
 		errors.append(failure)
+		return errors
+	errors.append_array(_glimmer_errors(chunk, sim, beat, half_width, hazards, gaps))
 	return errors
+
+
+## Glimmer kuralları: adil bir yolda toplanabilir ve bir vuruş yakınında tehlike var.
+func _glimmer_errors(chunk: ChunkInfo, sim: Simulation, beat: float, half_width: float,
+		hazards: Array[Rect2], gaps: Array[Vector3]) -> PackedStringArray:
+	var errors: PackedStringArray = PackedStringArray()
+	var pickup: float = TuningConfig.to_px(_tuning.pickup_radius)
+	for item: Node2D in chunk.items():
+		if not item is Glimmer:
+			continue
+		var at: Vector2 = ChunkInfo.world_position(chunk.design_position(item), beat, half_width)
+		if not sim.collectible(at, pickup + _glimmer_radius(item as Glimmer)):
+			errors.append("%s hiçbir adil yolda toplanamıyor" % item.name)
+		var near: bool = false
+		for rect: Rect2 in hazards:
+			near = near or (at.y > rect.position.y - beat and at.y < rect.end.y + beat)
+		for zone: Vector3 in gaps:
+			near = near or (at.y > zone.y - beat and at.y < zone.z + beat)
+		if not near:
+			errors.append("%s riskli yolda değil: bir vuruş içinde tehlike yok" % item.name)
+	return errors
+
+
+static func _glimmer_radius(glimmer: Glimmer) -> float:
+	var shape: CollisionShape2D = glimmer.get_node_or_null("Shape") as CollisionShape2D
+	if shape != null and shape.shape is CircleShape2D:
+		return (shape.shape as CircleShape2D).radius
+	return 0.0
 
 
 func _hurt_half() -> Vector2:
@@ -202,6 +242,8 @@ class Simulation:
 	var _frames: int
 	## Yere indikten sonra çevirmeye izin verilen kare.
 	var _dwell: int
+	## Her karenin "buradan sona sağ çıkılır" tablosu (Glimmer toplanabilirliği için saklanır).
+	var _safe_by_frame: Array[PackedByteArray] = []
 	## Geçiş kare sayısı ve her karedeki x (sağa doğru; sola doğru için ters işaret).
 	var _transit: PackedFloat32Array = PackedFloat32Array()
 
@@ -324,6 +366,7 @@ class Simulation:
 		var safe: PackedByteArray = PackedByteArray()
 		safe.resize(count)
 		safe.fill(1)
+		_safe_by_frame.resize(_frames + 1)
 		for frame: int in range(_frames, -1, -1):
 			var current: PackedByteArray = PackedByteArray()
 			current.resize(count)
@@ -338,7 +381,36 @@ class Simulation:
 						current[state] = 1
 						break
 			safe = current
+			_safe_by_frame[frame] = current
 		return safe
+
+	## Girişten sona güvenli bir yolda, oyuncunun merkezi center'a radius kadar yaklaşıyor mu?
+	## first_failure'dan sonra çağrılır (güvenli tablo kurulmuş olmalı).
+	func collectible(center: Vector2, radius: float) -> bool:
+		var count: int = _state_count()
+		var current: PackedByteArray = PackedByteArray()
+		current.resize(count)
+		for state: int in _entry_states():
+			current[state] = _safe_by_frame[0][state]
+		for frame: int in range(0, _frames + 1):
+			var y: float = _y_of(frame)
+			if absf(y - center.y) <= radius:
+				for state: int in count:
+					if current[state] == 1 and Vector2(_x_of(state), y).distance_to(center) <= radius:
+						return true
+			if frame == _frames:
+				break
+			var next_frame: PackedByteArray = PackedByteArray()
+			next_frame.resize(count)
+			var safe_next: PackedByteArray = _safe_by_frame[frame + 1]
+			for state: int in count:
+				if current[state] == 0:
+					continue
+				for next: int in _next_states(state):
+					if safe_next[next] == 1:
+						next_frame[next] = 1
+			current = next_frame
+		return false
 
 	## Girişten ileriye: tüm yolların tükendiği karede neye çarpıldığını anlatır.
 	func _explain(entry: int, names: Array[String]) -> String:

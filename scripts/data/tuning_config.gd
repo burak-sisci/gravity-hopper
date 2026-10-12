@@ -27,6 +27,10 @@ const PX_PER_M: float = 50.0
 ## oyuncu düşmüş sayılır (coyote süresi, GDD §4).
 @export_range(0.0, 0.25, 0.01, "suffix:sn") var coyote_time: float = 0.1
 
+@export_group("Toplama")
+## Oyuncunun Glimmer toplama alanının yarıçapı (gövdeden büyük: affedici toplama, M2-13).
+@export_range(0.5, 4.0, 0.1, "suffix:m") var pickup_radius: float = 1.5
+
 @export_group("Kamera ve dünya")
 ## Kameranın oyuncunun üstünde gösterdiği mesafe; her cihazda aynıdır (sabit ileri görüş kuralı).
 ## Üst sınır, en kısa ekranda (16:9, 38,4 m) oyuncunun altında pay kalacak şekilde seçildi.

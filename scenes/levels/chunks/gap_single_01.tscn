@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
 [ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
 [ext_resource type="Script" path="res://scripts/levels/wall_gap.gd" id="3_gap"]
+[ext_resource type="PackedScene" path="res://scenes/entities/glimmer.tscn" id="9_glimmer"]
 
 [node name="GapSingle01" type="Node2D"]
 script = ExtResource("1_info")
@@ -14,3 +15,6 @@ length_beats = 6
 position = Vector2(-450, -200)
 script = ExtResource("3_gap")
 length = 150.0
+
+[node name="GlimmerLeft1_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -150)

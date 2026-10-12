@@ -175,7 +175,9 @@ func test_wider_corridor_moves_wall_hazards() -> void:
 	spawner.update_view(-LOOKAHEAD_PX, -LOOKAHEAD_PX + VIEW_HEIGHT, 500.0)
 	for chunk: ChunkInfo in spawner.active_chunks():
 		for item: Node2D in chunk.items():
-			assert_float(absf(item.position.x)).is_equal_approx(500.0, 0.01)
+			# Duvardaki öğeler duvarda kalır (Glimmer'lar koridorun içinde orantılı kayar).
+			if is_equal_approx(absf(chunk.design_position(item).x), ChunkInfo.DESIGN_HALF_WIDTH):
+				assert_float(absf(item.position.x)).is_equal_approx(500.0, 0.01)
 
 
 func test_run_creates_no_nodes_during_play() -> void:

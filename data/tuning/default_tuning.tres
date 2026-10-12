@@ -9,6 +9,7 @@ max_side_speed = 64.0
 input_buffer_time = 0.12
 hurtbox_scale = 0.7
 coyote_time = 0.1
+pickup_radius = 1.5
 lookahead = 28.0
 corridor_width = 18.0
 run_start_gap = 25.0

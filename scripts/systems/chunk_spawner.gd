@@ -17,6 +17,9 @@ extends Node2D
 ## yalnızca bu düğüm çeker. Havuzlar en uzun ekrana göre kurulur; tükenmeleri seçimi değiştirmez.
 ## Her yerleştirmede Events.chunk_placed yayar (debug olay günlüğü, zorluk ölçümü).
 
+## Etkin bir parçadaki Glimmer toplandı (M2-13); Run, RunStats'a verir.
+signal glimmer_collected(value: int)
+
 ## Görünür alanın üstünde dolu tutulan alan (ekran boyu cinsinden).
 const AHEAD_SCREENS: float = 2.0
 ## Parçanın üst kenarı görünür alanın bu kadar altına inince havuza döner.
@@ -189,6 +192,9 @@ func _place_next() -> bool:
 		weights.append(exp(-0.5 * gap * gap))
 	var index: int = candidates[_rng.weighted_index(weights)]
 	var chunk: ChunkInfo = _pools[index].acquire() as ChunkInfo
+	chunk.reset()
+	if not chunk.glimmer_collected.is_connected(glimmer_collected.emit):
+		chunk.glimmer_collected.connect(glimmer_collected.emit)
 	chunk.position = Vector2(0.0, _next_bottom)
 	chunk.layout(beat, _half_width)
 	chunk.reset_physics_interpolation()

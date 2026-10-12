@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
 [ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+[ext_resource type="PackedScene" path="res://scenes/entities/glimmer.tscn" id="9_glimmer"]
 
 [node name="SpikeZigzag01" type="Node2D"]
 script = ExtResource("1_info")
@@ -18,3 +19,6 @@ scale = Vector2(-1, 1)
 
 [node name="SpikeLeft6" parent="." instance=ExtResource("2_spike")]
 position = Vector2(-450, -600)
+
+[node name="GlimmerMid3" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(0, -300)

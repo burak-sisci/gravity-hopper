@@ -203,6 +203,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Katman | Değer | Kimde | Neyi algılar (mask) |
 | --- | --- | --- | --- |
+| `collector` (M2-13) | 8 | Oyuncunun `Collector` alanı | — (yalnızca algılanır) |
+| `collectible` (M2-13) | 16 | `Glimmer` | `collector` |
 | 1 `world` | 1 | Duvar parçaları (`StaticBody2D`) | — |
 | 2 `player` | 2 | Oyuncu gövdesi (`CharacterBody2D`) | `world` |
 | 3 `hazard` | 4 | Tehlikeler (`Area2D`, `monitoring = false`, pasif) | — |
@@ -441,8 +443,15 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 ### 8.6 Toplanabilirler ve mıknatıs
 
 - Glimmer'lar desen parçalarının içinde yerleşiktir (belirlenimci).
-- Mıknatıs alanındaki Glimmer'lar oyuncuya doğru çekilir.
+- Mıknatıs alanındaki Glimmer'lar oyuncuya doğru çekilir (M4).
 - Toplanan değer ve kombo çarpanı `RunStats` içinde hesaplanır. `RunStats` turun istatistiklerini tutan, `Run`'a ait bir `RefCounted` nesnedir.
+- **Uygulama (M2-13):**
+  - `scenes/entities/glimmer.tscn` + `Glimmer` (`Area2D`, katman `collectible` = 16, maske `collector` = 8): yuvarlak (yarıçap 18 px), yeşil. Oyuncunun toplama alanı değince kendini gizler, şeklini (ertelenmiş) kapatır ve yukarı `collected(value)` yayar; ikinci değme sayılmaz.
+  - `Collector` (`scripts/components/collector.gd`): oyuncunun çocuğu, katman `collector`, yarıçap `TuningConfig.pickup_radius` (1,5 m = 75 px; gövdeden büyük, affedici). Oyuncu Glimmer'ın kodunu çağırmaz; Glimmer alanı algılar.
+  - **Yukarı sinyal zinciri:** `Glimmer.collected` → `ChunkInfo.glimmer_collected` → `ChunkSpawner.glimmer_collected` → `Run` → `RunStats.add_glimmer()` (değer × `multiplier`; kombo M2-14) → `Events.glimmer_collected(kazanılan)`. `GameManager` toplamı `RunResult.glimmers`'a, HUD sağ üstteki sayaca (`HUD_GLIMMERS`) yazar.
+  - **Havuz:** `ChunkSpawner` parçayı havuzdan alınca `ChunkInfo.reset()` çağırır; Glimmer'lar yeniden etkinleşir.
+  - **Yerleşim kuralları** (doğrulayıcı): Glimmer adil bir yolda toplanabilir olmalı (güvenli tablo her kare için saklanır, girişten ileriye güvenli durumlarda gidilir; toplama yarıçapı + Glimmer yarıçapı) ve **riskli yolda** olmalı: bir tehlikeye ya da boşluğa dikeyde en fazla bir vuruş uzakta. Toplama yarıçapı geniş olduğu için tek dikenin yanındaki Glimmer, geçiş sırasında dikeni sıyırarak alınabilir (kıl payı).
+  - Glimmer'lı parçalar: `spike_single_01/02` (dikenin önünde, aynı duvarda), `spike_zigzag_01/02` (geçişin ortasında), `spike_switch_01` (bloklar arasında), `gap_single_01` (boşluktan önce), `block_center_01` (bloktan önce, ortada), `laser_gate_01` (kapının açıklığında).
 
 ### 8.7 Nesne havuzu
 
@@ -476,7 +485,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -539,6 +548,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ## 12. Yerelleştirme
 
+- **HUD Glimmer sayacı (M2-13):** sağ üstte `HUD_GLIMMERS` ("%d GLIMMER"), yeşil; `run_started`'da sıfırlanır, `glimmer_collected` değerlerini toplar.
 - **HUD sektör afişi (M2-09):** `HUD_SECTOR` ("SECTOR %d · %s" / "SEKTÖR %d · %s") + sektör adı anahtarı; yazı rengi sektörün geçici rengi. Ekranın %30 yüksekliğinde, 2 sn görünür, 0,4 sn'de söner. HUD adları `SectorCatalog` kaynağından okur (veri; dünyaya erişmez).
 
 - `localization/translations.csv`: `keys,en,tr` sütunları. Godot bunu içe aktarıp çeviri kaynağına dönüştürür.
@@ -719,6 +729,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan |
   | `tests/entities/laser_test.gd` (M2-12) | Açık pencere vuruşa ortalı (ve `on_phase` 0,5), `set_beat` şekli ve görüntüyü açıp kapatıyor, ışın boyu `length`'ten; gerçek turda her vuruş adımında açık, yarım vuruşta kapalı |
   | `tests/levels/corridor_test.gd` (M2-11) | Boşluksuz duvar tam katı; boşluk yalnızca kendi duvarını, tam kenarından keser; boşluk kalkınca duvar geri gelir; düğüm sayısı sabit |
   | `tests/entities/player_fall_test.gd` (M2-11) | Boşluktan `FELL` ile düşülür; duvar bittikten 2 kare sonraki dokunuş çevirir ve oyuncu öbür duvara varır; coyote dolduktan sonraki dokunuş kurtarmaz |
@@ -728,7 +739,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/levels/run_sector_test.gd` (M2-08, M2-09) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, koridor tonu S3 rengi, tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07) | Metronom bir ölçü, vuruşlarda tık, döngü sonundan sonra sessiz pay |
-  | `tests/tools/chunk_validator_test.gd` (M2-05; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
+  | `tests/tools/chunk_validator_test.gd` (M2-05; M2-13 eki: çevrili Glimmer toplanamaz, tehlikeden uzak Glimmer riskli değil; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -738,6 +749,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 > - Oyuncu testleri ayarı diskten taze yükler (`CACHE_MODE_IGNORE`). Paylaşılan örneği canlı panel ya da kayıtlı ayar dosyası değiştirmiş olabilir.
 > - Genel durum (zaman ölçeği, çarpışma çizimi, ölümsüzlük, dil) `after_test`'te geri alınır.
 > - `main.tscn` kuran test, ölüm sonrasındaki yeniden başlama zamanlayıcısı bitmeden sahneyi bırakmaz; askıdaki `await` silinmiş düğümde uyanırdı.
+> - Testte sinyal yaymak için oluşturulan düğümler `auto_free()` ile sarılır; yoksa gdUnit4 "orphan" sayar (M2-13).
 > - Test yerel değişkenlerine `before` / `after` gibi adlar verilmez: `GdUnitTestSuite`'in fonksiyonlarını gölgeler ve katı kontrol betiği derlemez (M2-04 ve M2-11'de iki kez yaşandı).
 > - Telefondaki dokunuş, test içinde iki olayla taklit edilir: `InputEventScreenTouch` (çevirme) ve `DEVICE_ID_EMULATION` cihazlı fare tıklaması (düğmeye basma).
 

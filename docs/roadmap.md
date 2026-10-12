@@ -145,7 +145,7 @@
   *Kabul:* Boşluktan düşülüyor; boşluğa girdikten hemen sonraki çevirme kaybolmuyor (test).
 - [x] **M2-12** 🤖 Veri bloğu ve vuruşa bağlı lazer kapısı + her biriyle en az 3 parça.
   *Kabul:* Doğrulama temiz; lazer vuruşla aynı anda açılıp kapanıyor.
-- [ ] **M2-13** 🤖 Glimmer: havuzlu toplanabilir (parça içinde), toplama alanı, `glimmer_collected`, `RunStats`, HUD sayacı, riskli yola yerleşim kuralı.
+- [x] **M2-13** 🤖 Glimmer: havuzlu toplanabilir (parça içinde), toplama alanı, `glimmer_collected`, `RunStats`, HUD sayacı, riskli yola yerleşim kuralı.
   *Kabul:* Toplama sinyalle HUD'a yansıyor; tur sonunda `RunResult.glimmers` doğru.
 - [ ] **M2-14** 🤖 `GrazeDetector` + kombo (2,5 sn zincir, ×2 / ×3), `near_miss` / `combo_ended`.
   *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok (test).

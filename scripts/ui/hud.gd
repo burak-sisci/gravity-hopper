@@ -13,6 +13,7 @@ const BANNER_FADE: float = 0.4
 ## Sektör adları ve renkleri için (veri; dünyaya erişim değil).
 @export var sectors: SectorCatalog
 
+var _glimmers: int = 0
 var _height_m: int = 0
 ## Bu uygulama oturumundaki en iyi yükseklik; kalıcı rekor M4'te Progression'a taşınır.
 var _best_m: int = 0
@@ -23,6 +24,7 @@ var _banner_tween: Tween
 @onready var _height_label: Label = %HeightLabel
 @onready var _best_label: Label = %BestLabel
 @onready var _sector_banner: Label = %SectorBanner
+@onready var _glimmer_label: Label = %GlimmerLabel
 
 
 func _ready() -> void:
@@ -30,6 +32,7 @@ func _ready() -> void:
 	Events.height_changed.connect(_on_height_changed)
 	Events.run_ended.connect(_on_run_ended)
 	Events.sector_entered.connect(_show_banner)
+	Events.glimmer_collected.connect(_on_glimmer_collected)
 	_sector_banner.visible = false
 	_refresh()
 
@@ -41,10 +44,16 @@ func _notification(what: int) -> void:
 
 func _on_run_started(_run_seed: int, start_sector: int) -> void:
 	_height_m = 0
+	_glimmers = 0
 	if start_sector > 1:
 		_show_banner(start_sector)
 	else:
 		_hide_banner()
+	_refresh()
+
+
+func _on_glimmer_collected(value: int) -> void:
+	_glimmers += value
 	_refresh()
 
 
@@ -82,6 +91,7 @@ func _refresh() -> void:
 	_height_label.text = tr("HUD_HEIGHT") % _height_m
 	_best_label.text = tr("HUD_BEST") % _best_m
 	_best_label.visible = _best_m > 0
+	_glimmer_label.text = tr("HUD_GLIMMERS") % _glimmers
 	if _banner_sector > 0 and sectors != null:
 		var def: SectorDef = sectors.def_at(_banner_sector)
 		_sector_banner.text = tr("HUD_SECTOR") % [_banner_sector, tr(def.name_key)]

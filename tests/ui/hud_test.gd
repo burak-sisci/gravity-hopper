@@ -46,6 +46,16 @@ func test_language_change_rewrites_text() -> void:
 	assert_str(_best_label().text).is_equal("EN İYİ 37 m")
 
 
+func test_glimmer_counter() -> void:
+	Events.run_started.emit(1, 1)
+	assert_str(_glimmer_label().text).is_equal("0 GLIMMER")
+	Events.glimmer_collected.emit(1)
+	Events.glimmer_collected.emit(3)
+	assert_str(_glimmer_label().text).is_equal("4 GLIMMER")
+	Events.run_started.emit(2, 1)
+	assert_str(_glimmer_label().text).is_equal("0 GLIMMER")
+
+
 func test_sector_banner_shows_name_and_fades() -> void:
 	Events.run_started.emit(1, 1)
 	assert_bool(_banner().visible).is_false()
@@ -81,6 +91,10 @@ func _height_label() -> Label:
 
 func _best_label() -> Label:
 	return _hud.get_node("%BestLabel") as Label
+
+
+func _glimmer_label() -> Label:
+	return _hud.get_node("%GlimmerLabel") as Label
 
 
 func _banner() -> Label:

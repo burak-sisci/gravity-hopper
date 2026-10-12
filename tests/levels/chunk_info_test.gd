@@ -18,7 +18,8 @@ func test_sample_chunk_values_are_read() -> void:
 	assert_int(chunk.max_sector).is_equal(5)
 	assert_int(chunk.length_beats).is_equal(8)
 	assert_array(chunk.tags).contains_exactly([&"zigzag"])
-	assert_int(chunk.items().size()).is_equal(3)
+	# Üç diken ve bir Glimmer (M2-13).
+	assert_int(chunk.items().size()).is_equal(4)
 
 
 func test_every_chunk_fits_the_grid() -> void:
