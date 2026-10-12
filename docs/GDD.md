@@ -187,6 +187,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 ## 13. Hız ve zorluk
 
 - **Hız, sektörle ve müzikle birlikte artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar.
+- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
   2. Engel sıklığı

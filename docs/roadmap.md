@@ -136,7 +136,7 @@
   *Kabul:* Her sektörde tırmanış hızı doğru (test); S1 → S2 → S3 geçiliyor.
 - [x] **M2-09** 🤖 Sektör geçişi: "nefes alma" boşluğu, `Events.sector_entered`, HUD'da sektör afişi (TR/EN), geçici palet tonu.
   *Kabul:* Geçişte engel yok, afiş görünüyor (Redmi ekran görüntüsü).
-- [ ] **M2-10** 🤖 Zorluk eğrisi: sektör içi hedef zorluk, parça ağırlıkları, son N parçayı tekrar etmeme.
+- [x] **M2-10** 🤖 Zorluk eğrisi: sektör içi hedef zorluk, parça ağırlıkları, son N parçayı tekrar etmeme.
   *Kabul:* Sektör sonunda seçilen parçaların zorluk ortalaması başından belirgin yüksek (günlükle ölçülü).
 
 **Yeni tehlikeler ve sistemler**

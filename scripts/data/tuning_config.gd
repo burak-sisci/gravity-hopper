@@ -37,6 +37,13 @@ const PX_PER_M: float = 50.0
 ## ölçülür ve tam vuruşa yukarı yuvarlanır.
 @export_range(0.0, 5.0, 0.1, "suffix:sn") var sector_breath: float = 2.5
 
+@export_group("Zorluk")
+## Sektör içi hedef zorluğun çevresinde seçim genişliği (zorluk birimi). Küçük değer hedefe yakın
+## parçaları seçer; büyük değer daha karışık bir akış verir (M2-10).
+@export_range(0.3, 3.0, 0.1) var difficulty_spread: float = 0.5
+## Son kaç parça yeniden seçilmez. Sektör sonunda sığan başka parça yoksa kural esner.
+@export_range(0, 6, 1) var no_repeat_count: int = 3
+
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.
 static func to_px(meters: float) -> float:

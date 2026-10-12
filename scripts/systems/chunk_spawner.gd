@@ -8,6 +8,10 @@ extends Node2D
 ## yükseklikten başlar. Sektörün sonuna sığmayan kalan boş bırakılır; parça sınırı aşmaz.
 ## Yeni sektör, tam vuruşa yuvarlanmış bir "nefes alma" boşluğuyla başlar (M2-09).
 ##
+## Zorluk eğrisi (M2-10): hedef zorluk, sektör içindeki ilerlemeyle SectorDef.min_difficulty'den
+## max_difficulty'ye çıkar. Her parçanın ağırlığı zorluğunun hedefe yakınlığıyla çan eğrisi gibi
+## azalır (genişlik TuningConfig.difficulty_spread). Son no_repeat_count parça yeniden seçilmez.
+##
 ## Belirlenimcilik: sıradaki parçayı yalnızca RunRng ve sektör seçer; ekran boyu yalnızca
 ## parçanın ne zaman yerleştiğini değiştirir, hangisi olduğunu değil. Bu yüzden Run.rng'yi
 ## yalnızca bu düğüm çeker. Havuzlar en uzun ekrana göre kurulur; tükenmeleri seçimi değiştirmez.
@@ -23,9 +27,12 @@ const EDGE_EPSILON: float = 0.01
 ## Seçilebilecek parçalar.
 @export var library: ChunkLibrary
 
-## Yerleştirme günlüğü: sırayla her parçanın adı ve alt kenarı (testler, belirlenimcilik).
+## Yerleştirme günlüğü: sırayla her parçanın adı, alt kenarı, zorluğu ve o andaki hedef zorluk
+## (testler, belirlenimcilik, zorluk ölçümü).
 var placed_names: Array[StringName] = []
 var placed_bottoms: Array[float] = []
+var placed_difficulties: Array[int] = []
+var placed_targets: Array[float] = []
 
 var _rng: RunRng
 var _tuning: TuningConfig
@@ -93,12 +100,34 @@ func placement_sector() -> int:
 	return _sector
 
 
+## Sıradaki parçanın yerinde hedef zorluk: sektör içindeki ilerlemeyle min → max (son sektör,
+## boyunu aşınca en zor değerde kalır).
+func target_difficulty() -> float:
+	var def: SectorDef = _sectors.def_at(_sector)
+	var sector_start: float = _start_y \
+			- TuningConfig.to_px(_sectors.start_height(_sector) - _base_height)
+	var climbed: float = sector_start - _next_bottom
+	var progress: float = clampf(climbed / TuningConfig.to_px(def.length), 0.0, 1.0)
+	return lerpf(def.min_difficulty, def.max_difficulty, progress)
+
+
 ## Havuzlar tükenip tur sırasında örnek oluşturuldu mu? (testler)
 func pools_grown() -> int:
 	var total: int = 0
 	for pool: ObjectPool in _pools:
 		total += pool.grown
 	return total
+
+
+## Son no_repeat_count parçayı çıkarır; hiçbiri kalmıyorsa (sektör sonu) kural esner.
+func _without_recent(fitting: Array[int]) -> Array[int]:
+	var first: int = maxi(0, placed_names.size() - _tuning.no_repeat_count)
+	var recent: Array[StringName] = placed_names.slice(first)
+	var result: Array[int] = []
+	for i: int in fitting:
+		if not recent.has(_ids[i]):
+			result.append(i)
+	return result if not result.is_empty() else fitting
 
 
 ## Sektörün bittiği dünya y'si; son sektör bitmez (-INF).
@@ -120,24 +149,28 @@ func _place_next() -> bool:
 	var beat: float = _sectors.def_at(_sector).beat_px()
 	var room: float = _next_bottom - end_y
 	var allowed: bool = false
-	var candidates: Array[int] = []
-	var weights: Array[float] = []
+	var fitting: Array[int] = []
 	for i: int in _pools.size():
 		var info: ChunkInfo = _pools[i].peek() as ChunkInfo
 		if not info.allows_sector(_sector):
 			continue
 		allowed = true
 		if info.height_px(beat) <= room + EDGE_EPSILON:
-			candidates.append(i)
-			# Eşit ağırlık; sektör içi zorluk eğrisi M2-10'da.
-			weights.append(1.0)
+			fitting.append(i)
 	if not allowed:
 		push_error("ChunkSpawner: sektör %d için parça yok" % _sector)
 		return false
-	if candidates.is_empty():
+	if fitting.is_empty():
 		# Sektörün sonuna hiçbir parça sığmıyor: kalan boş kalır.
 		_next_bottom = end_y
 		return true
+	var candidates: Array[int] = _without_recent(fitting)
+	var target: float = target_difficulty()
+	var weights: Array[float] = []
+	for i: int in candidates:
+		var difficulty: int = (_pools[i].peek() as ChunkInfo).difficulty
+		var gap: float = (difficulty - target) / _tuning.difficulty_spread
+		weights.append(exp(-0.5 * gap * gap))
 	var index: int = candidates[_rng.weighted_index(weights)]
 	var chunk: ChunkInfo = _pools[index].acquire() as ChunkInfo
 	chunk.position = Vector2(0.0, _next_bottom)
@@ -147,6 +180,8 @@ func _place_next() -> bool:
 	_active_pools.append(_pools[index])
 	placed_names.append(_ids[index])
 	placed_bottoms.append(_next_bottom)
+	placed_difficulties.append(chunk.difficulty)
+	placed_targets.append(target)
 	_next_bottom = chunk.top_y()
-	Events.chunk_placed.emit(_ids[index], chunk.difficulty)
+	Events.chunk_placed.emit(_ids[index], chunk.difficulty, _sector)
 	return true

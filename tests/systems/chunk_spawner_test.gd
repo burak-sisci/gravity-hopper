@@ -130,6 +130,45 @@ func test_chunks_stop_at_sector_boundary() -> void:
 			assert_bool(bottom > edge + 0.01 and top < edge - 0.01).is_false()
 
 
+func test_difficulty_rises_through_sector() -> void:
+	# S1: hedef zorluk 1 → 3. Beş tohumda S1'in ilk ve son üçte birindeki parçalar karşılaştırılır.
+	var s1_px: float = TuningConfig.to_px(SECTORS.def_at(1).length)
+	var early: Array[int] = []
+	var late: Array[int] = []
+	for run_seed: int in [11, 22, 33, 44, 55]:
+		var spawner: ChunkSpawner = _make(LIBRARY, run_seed)
+		_scroll(spawner, 0.0, s1_px, VIEW_HEIGHT)
+		var previous_target: float = 0.0
+		for i: int in spawner.placed_bottoms.size():
+			var climbed: float = -spawner.placed_bottoms[i]
+			if climbed >= s1_px:
+				break
+			assert_float(spawner.placed_targets[i]).is_greater_equal(previous_target)
+			previous_target = spawner.placed_targets[i]
+			if climbed < s1_px / 3.0:
+				early.append(spawner.placed_difficulties[i])
+			elif climbed > s1_px * 2.0 / 3.0:
+				late.append(spawner.placed_difficulties[i])
+	var early_mean: float = _mean(early)
+	var late_mean: float = _mean(late)
+	assert_float(late_mean - early_mean).override_failure_message(
+			"Sektör başı %.2f, sonu %.2f" % [early_mean, late_mean]).is_greater_equal(1.0)
+
+
+func test_recent_chunks_are_not_repeated() -> void:
+	var spawner: ChunkSpawner = _make(LIBRARY, 8)
+	var s1_px: float = TuningConfig.to_px(SECTORS.def_at(1).length)
+	_scroll(spawner, 0.0, s1_px, VIEW_HEIGHT)
+	var names: Array[StringName] = spawner.placed_names
+	for i: int in names.size():
+		# Sektörün son 4000 px'inde sığan parça azalır; orada kural esneyebilir.
+		if -spawner.placed_bottoms[i] > s1_px - 4000.0:
+			break
+		var recent: Array[StringName] = names.slice(maxi(0, i - 3), i)
+		assert_bool(recent.has(names[i])).override_failure_message(
+				"%d. parça %s son üç parçada var: %s" % [i, names[i], recent]).is_false()
+
+
 func test_wider_corridor_moves_wall_hazards() -> void:
 	var spawner: ChunkSpawner = _make(LIBRARY, 1)
 	_view(spawner, 0.0, VIEW_HEIGHT)
@@ -228,6 +267,13 @@ func _chunk_heights(spawner: ChunkSpawner) -> Array[float]:
 	for i: int in range(1, spawner.placed_bottoms.size()):
 		heights.append(snappedf(spawner.placed_bottoms[i - 1] - spawner.placed_bottoms[i], 0.01))
 	return heights
+
+
+func _mean(values: Array[int]) -> float:
+	var total: float = 0.0
+	for value: int in values:
+		total += value
+	return total / maxi(values.size(), 1)
 
 
 func _count_nodes(root: Node) -> int:

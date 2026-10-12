@@ -66,7 +66,11 @@ func _on_close_pressed() -> void:
 
 
 func _on_slider_changed(value: float, property: StringName) -> void:
-	_tuning.set(property, value)
+	# Tam sayı alanlara (ör. no_repeat_count) tam sayı yazılır.
+	if typeof(_tuning.get(property)) == TYPE_INT:
+		_tuning.set(property, roundi(value))
+	else:
+		_tuning.set(property, value)
 	_update_label(property)
 
 

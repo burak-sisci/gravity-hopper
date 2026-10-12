@@ -55,7 +55,11 @@ func _physics_process(delta: float) -> void:
 	var max_side: float = TuningConfig.to_px(tuning.max_side_speed)
 	var accel: float = TuningConfig.to_px(tuning.gravity_accel)
 	velocity = Vector2(clampf(velocity.x + _gravity_dir * accel * delta, -max_side, max_side), 0.0)
+	# Duvar parçalarının birleşim yerinde kayma dikeyde ≈ 0,02 px itebiliyor (M2-10'da ölçüldü);
+	# dikey konum yalnızca tırmanıştan gelsin diye geri alınır.
+	var climb_y: float = position.y
 	move_and_slide()
+	position.y = climb_y
 	# Duvara yaslanınca yan hız sıfırlanır; yoksa duvarın içine doğru birikir ve çevirmeden
 	# sonra önce o hızı eritmek gerekir (karakter duvardan geç ayrılırdı).
 	if is_on_wall():

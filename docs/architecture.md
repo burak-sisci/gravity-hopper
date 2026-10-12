@@ -257,7 +257,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
 | `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
 | `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı; AudioManager (müzik, M3) |
-| `chunk_placed` | `chunk_id: StringName, difficulty: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
+| `chunk_placed` | `chunk_id: StringName, difficulty: int, sector: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int` | Run | HUD, AudioManager |
 | `combo_ended` | — | Run | HUD |
@@ -296,6 +296,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
 - **Dikey:** Sabit tırmanış hızı; değer bulunulan sektörden gelir (`SectorDef.climb_speed`, M2-08). `Run` atar: `Player.climb_speed` (m/sn). Diğer hareket değerleri `TuningConfig`'te metre birimindedir (§10).
+  - `move_and_slide()` duvar parçalarının birleşim yerinde dikeyde ≈ 0,02 px itebiliyordu (M2-10'da testte görüldü). `Player` bu payı hemen geri alır; böylece her adım tam `hız × delta`'dır.
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
   - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-11'de gelir.
@@ -358,7 +359,9 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Kütüphane:** seçilebilecek parçalar `ChunkLibrary` kaynağında (`data/chunks/chunk_library.tres`) elle listelenir. Yayın sürümünde `res://` klasörü güvenle taranamaz; test, klasördeki her parçanın listede olduğunu denetler.
   - Görünür alanın üstünde **2 ekranlık** alanı dolu tutar. Önce üst kenarı ekranın 100 px altına inen parçaları havuza döndürür, sonra ekler.
   - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
-  - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli parçalar arasından seçer. Şimdilik ağırlıklar eşit; hedef zorluk eğrisi ve son N parçayı tekrar etmeme M2-10'da.
+  - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli ve sığan parçalar arasından seçer.
+  - **Zorluk eğrisi (M2-10):** Hedef zorluk sektör içindeki ilerlemeyle `SectorDef.min_difficulty`'den `max_difficulty`'ye doğrusal çıkar (son sektör boyunu aşınca en zorda kalır; `target_difficulty()`). Ağırlık `exp(−½ · ((zorluk − hedef) / difficulty_spread)²)` (çan eğrisi; `TuningConfig.difficulty_spread` = 0,5). Son `no_repeat_count` (3) parça yeniden seçilmez; sığan başka parça yoksa kural esner. Günlük: `placed_difficulties`, `placed_targets`; olay günlüğünde `chunk_placed … difficulty=… sector=…`.
+    - **Ölçüm** (gerçek oyun, ekransız, ölümsüz, 5 tur, S1'in 13 parçası): ilk üçte bir ortalama zorluk 1,45, son üçte bir 2,40. Genişlik 1,0 iken fark 0,58 idi (hedef 1'de bile 2 zorluklu parçalar %60 ağırlık alıyordu), 0,7'de 0,65. Sektör başının 1'e inmemesinin nedeni içerik: S1'de yalnızca 5 kolay parça var ve tekrar yasağı 3'ünü dışlıyor; parça sayısı arttıkça (M2-12) eğri keskinleşir.
   - **Nefes alma (M2-09):** Yeni sektör, `TuningConfig.sector_breath` (2,5 sn, GDD §12) kadar engelsiz başlar. Süre yeni sektörün hızıyla px'e çevrilip tam vuruşa yukarı yuvarlanır (S2: 5 vuruş = 2,73 sn; S3: 5 vuruş = 2,5 sn); ızgara bozulmaz. Eski sektörün sonuna sığmayan kalan da bu boşluğa eklenir.
   - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px()`) dizilir; ızgarası sektörün başladığı yükseklikten başlar. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır ve sıradaki sektör tam sınırdan başlar. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar katalogdaki en kısa vuruşa göre kurulur.
   - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
@@ -460,7 +463,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`). Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -703,6 +706,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/systems/chunk_spawner_test.gd` (M2-10 eki) | Beş tohumda S1'in son üçte birindeki ortalama zorluk ilk üçte birinkinden ≥ 1 yüksek, hedef zorluk hiç düşmüyor; sektör sonu dışında son 3 parça tekrar etmiyor |
   | `tests/ui/hud_test.gd` (M2-09 eki) | Sektör afişi: `sector_entered`'da ad (EN/TR), 2,4 sn'de sönme; sonraki sektörden başlayan turda görünür, S1'den başlayan turda gizli |
   | `tests/data/sector_catalog_test.gd` (M2-08) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları |
   | `tests/levels/run_sector_test.gd` (M2-08, M2-09) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, koridor tonu S3 rengi, tempo; S2'den başlayan turda yükseklik ve hız |

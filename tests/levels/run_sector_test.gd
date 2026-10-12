@@ -41,8 +41,8 @@ func test_speed_steps_and_spikes_stay_on_beat() -> void:
 		if not speeds.has(previous_sector):
 			speeds[previous_sector] = step
 		else:
-			# Duvar parçalarının birleşim yerinde move_and_slide ≈ 0,01 px dikey kayma üretebiliyor.
-			assert_float(step).is_equal_approx(speeds[previous_sector], 0.02)
+			# Adım tam sabit (Player, kaymanın dikey payını geri alır; M2-10).
+			assert_float(step).is_equal_approx(speeds[previous_sector], 0.002)
 		previous_sector = run.sector
 		var half_beat: float = conductor.beat_length() * 0.5
 		for chunk: ChunkInfo in spawner.active_chunks():

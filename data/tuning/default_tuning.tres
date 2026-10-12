@@ -12,3 +12,5 @@ lookahead = 28.0
 corridor_width = 18.0
 run_start_gap = 25.0
 sector_breath = 2.5
+difficulty_spread = 0.5
+no_repeat_count = 3
