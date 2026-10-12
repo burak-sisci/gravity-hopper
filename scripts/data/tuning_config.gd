@@ -23,6 +23,9 @@ const PX_PER_M: float = 50.0
 @export_range(0.0, 0.3, 0.01, "suffix:sn") var input_buffer_time: float = 0.12
 ## Çarpışma kutusunun görsele oranı. Küçük değer daha affedicidir.
 @export_range(0.4, 1.0, 0.05) var hurtbox_scale: float = 0.7
+## Duvar biter bitmez (boşluk) çevirme bu süre daha yapılabilir; süre dolunca koridorun dışındaki
+## oyuncu düşmüş sayılır (coyote süresi, GDD §4).
+@export_range(0.0, 0.25, 0.01, "suffix:sn") var coyote_time: float = 0.1
 
 @export_group("Kamera ve dünya")
 ## Kameranın oyuncunun üstünde gösterdiği mesafe; her cihazda aynıdır (sabit ileri görüş kuralı).

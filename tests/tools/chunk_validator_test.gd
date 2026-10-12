@@ -70,6 +70,27 @@ func test_hazard_crossing_chunk_edge_is_caught() -> void:
 	assert_str(_validator.sector_errors(chunk, 1)[0]).contains("taşıyor")
 
 
+func test_gaps_on_both_walls_are_caught() -> void:
+	# İki duvarda aynı anda 3 vuruşluk boşluk: oyuncu o kadar uzun havada kalamaz.
+	var chunk: ChunkInfo = _chunk(8, [])
+	chunk.min_sector = 2
+	_add_gap(chunk, LEFT, -200, 300.0)
+	_add_gap(chunk, RIGHT, -200, 300.0)
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 2)
+	assert_array(errors).is_not_empty()
+	assert_str(errors[0]).contains("Gap")
+
+
+func test_single_gap_is_fair_and_needs_its_sector() -> void:
+	var chunk: ChunkInfo = _chunk(6, [])
+	_add_gap(chunk, LEFT, -200, 150.0)
+	# Boşluk S2'den önce izinli değil (SectorDef.allowed_hazards).
+	var errors: PackedStringArray = _validator.chunk_errors(chunk)
+	assert_array(Array(errors)).contains(["S1: 'gap' bu sektörde izinli değil"])
+	chunk.min_sector = 2
+	assert_array(_validator.chunk_errors(chunk)).is_empty()
+
+
 func test_view_rule_uses_lookahead() -> void:
 	assert_array(_validator.view_errors()).is_empty()
 	var short_view: TuningConfig = _tuning()
@@ -87,6 +108,14 @@ func test_every_sector_needs_a_chunk() -> void:
 	var chunks: Array[ChunkInfo] = [early]
 	var errors: PackedStringArray = _validator.coverage_errors(chunks)
 	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
+
+
+func _add_gap(chunk: ChunkInfo, x: float, y: float, length: float) -> void:
+	var gap: WallGap = WallGap.new()
+	gap.name = "Gap%d" % chunk.get_child_count()
+	gap.position = Vector2(x, y)
+	gap.length = length
+	chunk.add_child(gap)
 
 
 ## Diken listesinden parça kurar: (x, tasarım y, scale.x).

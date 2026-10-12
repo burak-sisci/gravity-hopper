@@ -6,6 +6,9 @@ extends CharacterBody2D
 ## Girdi olayları yalnızca not edilir; karar bir sonraki fizik adımında verilir (.clauderules §5).
 ## Çevirince Events.player_flipped yayar. Hurtbox bir tehlikeye değince yalnızca
 ## Events.player_died yayar ve donar; tehlikenin koduna dokunmaz (architecture.md §7.3).
+## Duvar boşluğu (M2-11): duvar bitince oyuncu dışarı kayar. Coyote süresince çevirme hâlâ olur;
+## süre dolduğunda koridorun dışındaysa player_died(FELL). Debug ölümsüzlüğünde duvar çizgisine
+## geri konur.
 
 ## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
 const INVINCIBLE_ALPHA: float = 0.45
@@ -22,6 +25,8 @@ var _flip_requested: bool = false
 var _buffer_left: float = 0.0
 var _alive: bool = true
 var _invincible: bool = false
+## Duvardan ayrıldıktan sonra çevirmenin hâlâ kabul edildiği süre (coyote). Çevirince sıfırlanır.
+var _coyote_left: float = 0.0
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
@@ -46,7 +51,7 @@ func _physics_process(delta: float) -> void:
 	_hurtbox.set_size((_body.shape as RectangleShape2D).size * tuning.hurtbox_scale)
 	if _flip_requested:
 		_flip_requested = false
-		if is_on_wall():
+		if is_on_wall() or _coyote_left > 0.0:
 			_flip()
 		else:
 			_buffer_left = tuning.input_buffer_time
@@ -64,6 +69,9 @@ func _physics_process(delta: float) -> void:
 	# sonra önce o hızı eritmek gerekir (karakter duvardan geç ayrılırdı).
 	if is_on_wall():
 		velocity.x = 0.0
+		_coyote_left = tuning.coyote_time
+	else:
+		_coyote_left = maxf(_coyote_left - delta, 0.0)
 	# Dokunma tamponu: havadayken yapılan dokunuş, duvara değilen adımda uygulanır.
 	if _buffer_left > 0.0:
 		if is_on_wall():
@@ -74,6 +82,8 @@ func _physics_process(delta: float) -> void:
 	# Dikey: tırmanış doğrudan konumla, tam sabit hızda. Engeller vuruş ızgarasına göre
 	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı.
 	position.y -= TuningConfig.to_px(climb_speed) * delta
+	if _coyote_left <= 0.0:
+		_check_fall()
 
 
 ## Aktif duvar sağda mı (Run ve testler için).
@@ -117,4 +127,23 @@ func _on_debug_invincibility_changed(enabled: bool) -> void:
 
 func _flip() -> void:
 	_gravity_dir = -_gravity_dir
+	# Coyote çevirmesinde dışarı doğru birikmiş hız silinir; geçiş duvardan başlar gibi olur.
+	velocity.x = 0.0
+	_coyote_left = 0.0
 	Events.player_flipped.emit()
+
+
+## Koridorun dışına çıkan oyuncu düşmüştür (duvar çizgisi + gövdenin yarısı).
+func _check_fall() -> void:
+	var half_body: float = (_body.shape as RectangleShape2D).size.x * 0.5
+	var edge: float = TuningConfig.to_px(tuning.corridor_width) * 0.5 + half_body
+	if absf(position.x) <= edge:
+		return
+	if _invincible:
+		position.x = signf(position.x) * (edge - 2.0 * half_body)
+		velocity.x = 0.0
+		return
+	_alive = false
+	_flip_requested = false
+	_buffer_left = 0.0
+	Events.player_died.emit(GameTypes.DeathCause.FELL)

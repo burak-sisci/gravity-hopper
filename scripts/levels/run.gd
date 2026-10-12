@@ -92,5 +92,7 @@ func _boundary_y(index: int) -> float:
 func _update_view() -> void:
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	var half_width: float = TuningConfig.to_px(tuning.corridor_width) * 0.5
-	_corridor.update_view(_camera.view_bottom(), half_width)
 	_chunks.update_view(_camera.view_top(), _camera.view_bottom(), half_width)
+	# Parçaların duvar boşlukları koridora bildirilir; koridor o aralıklarda duvarsız kalır.
+	_corridor.set_gaps(_chunks.active_gaps())
+	_corridor.update_view(_camera.view_bottom(), half_width)

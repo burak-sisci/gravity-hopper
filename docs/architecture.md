@@ -192,6 +192,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 **Şu anki hâli (M2-07):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
 
 - **Corridor:**
+  - **Duvar boşlukları (M2-11):** `Run` her adımda `ChunkSpawner.active_gaps()` (duvar, üst y, alt y) listesini `set_gaps()` ile bildirir. Liste değişince ya da bir parça taşınınca her duvar parçası, boşlukların dışında kalan katı aralıklara bölünür: parça başına en fazla 3 parçacık (`CollisionShape2D` + `Polygon2D`, tur başında oluşturulur; yalnızca boy ve yer değişir, kullanılmayan kapatılır). Sınırlar tam boşluk kenarındadır. Test: `tests/levels/corridor_test.gd`.
   - **Geçici palet tonu (M2-09):** `set_tint(renk)` duvarları sektörün `ambient_color`'una %35 oranında çeker; geçiş 0,6 sn'lik tween (yalnızca görsel). `Run` tur başında anında, sektöre girişte yumuşak çağırır. Kesin palet ve renk dalgası M3'te.
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
   - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
@@ -296,6 +297,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 - `CharacterBody2D`, `motion_mode = FLOATING`.
 - **Dikey:** Sabit tırmanış hızı; değer bulunulan sektörden gelir (`SectorDef.climb_speed`, M2-08). `Run` atar: `Player.climb_speed` (m/sn). Diğer hareket değerleri `TuningConfig`'te metre birimindedir (§10).
+- **Duvar boşluğu ve coyote (M2-11):** Boşlukta duvara değmeyen oyuncu dışarı doğru hızlanır. Duvardan ayrıldıktan sonra `TuningConfig.coyote_time` (0,1 sn) boyunca çevirme hâlâ kabul edilir; coyote çevirmesinde dışarı doğru birikmiş hız silinir. Süre dolduğunda oyuncu koridorun dışındaysa (duvar çizgisi + gövdenin yarısı) `Events.player_died(FELL)`. Normal çevirmede coyote sıfırlanır (havada ikinci çevirme yok). Debug ölümsüzlüğünde oyuncu duvar çizgisine geri konur.
   - `move_and_slide()` duvar parçalarının birleşim yerinde dikeyde ≈ 0,02 px itebiliyordu (M2-10'da testte görüldü). `Player` bu payı hemen geri alır; böylece her adım tam `hız × delta`'dır.
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
@@ -344,6 +346,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   5. `min_sector ≤ max_sector`. Tehlike türü etiketlenmez (çocuklardan okunur); etiketler seçim içindir (ör. `intro`, `breather`).
   6. Dosya adı: `<ana tehlike>_<desen>_<nn>.tscn` (örnek: `spike_zigzag_01.tscn`: 8 vuruş, 2. vuruşta sol, 4.'de sağ, 6.'da sol diken).
   7. Öğe adı taraf + vuruş: `SpikeLeft2`, `SpikeRight4_5` (doğrulayıcı iletilerinde bu adlar görünür).
+  8. **Duvar boşluğu (M2-11):** `WallGap` öğesi (`scripts/levels/wall_gap.gd`, betikli `Node2D`): konumu boşluğun alt ucu, x = ±450 (hangi duvar), `length` yarım vuruş katı (100 = 1 vuruş); boy vuruşla ölçeklenir, parçanın içinde kalır. Ad: `GapLeft2`. `ChunkInfo.gaps()`, `gap_range()`.
+  9. **İzinli tehlikeler:** `ChunkInfo.hazard_types()` (tehlike sahnesinin dosya adı, boşluk için `gap`) parçanın her sektöründe `SectorDef.allowed_hazards` içinde olmalı; doğrulayıcı denetler (boşluk S2'den itibaren).
 - **İlk parça seti** (M2-06, yalnızca diken, 15 parça):
 
   | Zorluk | Parçalar | Sektör | Desen |
@@ -354,6 +358,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | 4 | `spike_triple_01` | S1–S5 | 1,5 vuruş arayla dört zorunlu çevirme |
 
   - Doğrulama: 65 sektör denemesi, 0 hata. İlk diken en erken 2. vuruşta (birleşim yeri kuralı).
+  - **Boşluklu parçalar (M2-11, S2–S5):** `gap_single_01/02` (zorluk 2: tek tarafta 1,5 vuruşluk boşluk), `gap_switch_01` (3: önce sol, sonra sağ boşluk), `gap_spike_01` (3: sol boşluk, ardından sağda diken). Kütüphane 19 parça; doğrulama 53 deneme, 0 hata.
   - **Ölçüm** (Redmi, ölümsüz mod, 2 dk): 1577 m, 28 parça yerleşti, 12'si farklı, art arda aynı parça yok; günlükte uyarı yok. Ölümden yeni tura 371–386 ms (15 parçanın havuzu tur başında kuruluyor: M2-04'e göre ≈ +25 ms).
 - `ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, M2-04):
   - **Kütüphane:** seçilebilecek parçalar `ChunkLibrary` kaynağında (`data/chunks/chunk_library.tres`) elle listelenir. Yayın sürümünde `res://` klasörü güvenle taranamaz; test, klasördeki her parçanın listede olduğunu denetler.
@@ -376,6 +381,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Ek denetimler:** Tehlike kutusu parçanın sınırından taşmaz. Her sektörün en az bir parçası vardır. Kamera kuralı her sektör hızında (`(ileri görüş − kutunun yarı boyu) / hız ≥ 1,2 sn`).
   - **Temkin:** Tehlikeler kutu (AABB) olarak alınır; dikenin üçgeni yerine kutusu, birkaç piksel (≈ 0,01 sn) temkinlidir.
   - **Hava geçişi sayılır:** İki duvarda aynı yükseklikteki diken çifti, geçişin ortasında aralarından süzülerek geçilebilir; araç bunu çözülebilir sayar (oyunda da öyle). Çözülemez örnek için iki duvar bir vuruş boyunca kapatılır (`tools/fixtures/chunk_unsolvable.tscn`).
+  - **Duvar boşluğu (M2-11):** Gövde tamamen boşluğun içindeyken (boşluk her iki uçtan gövdenin yarısı kadar daraltılır) o duvarda bulunmak ya da oraya inmek düşmektir. Coyote süresi tanınmaz: doğrulama oyundan biraz daha sıkıdır, parçalar coyote'a dayanmaz. İzinli tehlike türleri de sektör sektör denetlenir.
   - **Hata iletisi:** Hangi sektörde, hangi girişten, kaçıncı saniyede ve hangi tehlikelere çarpılarak geçilemediği: `S1: sol duvardan girişte 2,05 sn sonra geçilemiyor: SpikeRight35 (3,5. vuruş); SpikeLeft35 (3,5. vuruş)`.
   - Sektör hızları ve BPM `SectorCatalog`'dan okunur (M2-08); katalogda olmayan sektörler (S4–S5, M4-07) denenmez.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine ve ekran boyuna bağlı değildir.
@@ -463,7 +469,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -590,7 +596,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **`R`:** `Events.retry_requested` yayar; `Main` turu yeniden kurar.
   - Ekransız denemede 10 durum geçti: ölümsüzken 400 karede ölüm yok, R sonrası ölümsüzlük sürüyor, kapatınca diken öldürüyor, çarpışma kutuları açılıp kapanıyor, yavaş çekimde 60 karede tam 180 px.
   - Redmi'de ölümsüzlük düğmesiyle 8 sn'de ölümsüz 143 m tırmanıldı.
-  - **Başlatma argümanı (M2-07):** `<godot> --path . -- --invincible` ölümsüzlüğü baştan açar (PC'de uzun denemeler). Telefonda argüman verilemiyor (Godot'nun asıl etkinliği dışa açık değil); orada düğme kullanılır.
+  - **Başlatma argümanları (M2-07, M2-11):** `<godot> --path . -- --invincible` ölümsüzlüğü baştan açar (PC'de uzun denemeler); `--start-sector=2` ilk turu o sektörden başlatır (kare yakalama). Telefonda argüman verilemiyor (Godot'nun asıl etkinliği dışa açık değil); orada düğme kullanılır.
 - **Telefonda:** Küçük, yarı saydam bir debug düğmesi paneli açar. Düğme yalnızca debug build'de görünür; yeri, HUD ile çakışmayacak şekilde M1-02'de seçilir.
   - Düğme bir `Control` olduğu için dokunuş arayüzde kalır ve çevirme yapmaz (§8.1, `_unhandled_input`).
   - Eski plandaki "köşeye üçlü dokunuş" bırakıldı: o dokunuşların her biri aynı zamanda yerçekimini çevirirdi.
@@ -706,13 +712,15 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/levels/corridor_test.gd` (M2-11) | Boşluksuz duvar tam katı; boşluk yalnızca kendi duvarını, tam kenarından keser; boşluk kalkınca duvar geri gelir; düğüm sayısı sabit |
+  | `tests/entities/player_fall_test.gd` (M2-11) | Boşluktan `FELL` ile düşülür; duvar bittikten 2 kare sonraki dokunuş çevirir ve oyuncu öbür duvara varır; coyote dolduktan sonraki dokunuş kurtarmaz |
   | `tests/systems/chunk_spawner_test.gd` (M2-10 eki) | Beş tohumda S1'in son üçte birindeki ortalama zorluk ilk üçte birinkinden ≥ 1 yüksek, hedef zorluk hiç düşmüyor; sektör sonu dışında son 3 parça tekrar etmiyor |
   | `tests/ui/hud_test.gd` (M2-09 eki) | Sektör afişi: `sector_entered`'da ad (EN/TR), 2,4 sn'de sönme; sonraki sektörden başlayan turda görünür, S1'den başlayan turda gizli |
   | `tests/data/sector_catalog_test.gd` (M2-08) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları |
   | `tests/levels/run_sector_test.gd` (M2-08, M2-09) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, koridor tonu S3 rengi, tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07) | Metronom bir ölçü, vuruşlarda tık, döngü sonundan sonra sessiz pay |
-  | `tests/tools/chunk_validator_test.gd` (M2-05) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
+  | `tests/tools/chunk_validator_test.gd` (M2-05, M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor; tek boşluk S2'de adil, S1'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -722,6 +730,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 > - Oyuncu testleri ayarı diskten taze yükler (`CACHE_MODE_IGNORE`). Paylaşılan örneği canlı panel ya da kayıtlı ayar dosyası değiştirmiş olabilir.
 > - Genel durum (zaman ölçeği, çarpışma çizimi, ölümsüzlük, dil) `after_test`'te geri alınır.
 > - `main.tscn` kuran test, ölüm sonrasındaki yeniden başlama zamanlayıcısı bitmeden sahneyi bırakmaz; askıdaki `await` silinmiş düğümde uyanırdı.
+> - Test yerel değişkenlerine `before` / `after` gibi adlar verilmez: `GdUnitTestSuite`'in fonksiyonlarını gölgeler ve katı kontrol betiği derlemez (M2-04 ve M2-11'de iki kez yaşandı).
 > - Telefondaki dokunuş, test içinde iki olayla taklit edilir: `InputEventScreenTouch` (çevirme) ve `DEVICE_ID_EMULATION` cihazlı fare tıklaması (düğmeye basma).
 
 > **Ders (M1-04), ekransız deneme betikleri (gdUnit4 gelene kadar, M2-01):** `--script` ile verilen betik, autoload'lar kaydedilmeden derlenir.
@@ -790,6 +799,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
+| ADR-034 | 2026-10-12 | Duvar boşluğu parça öğesidir (`WallGap`); koridor parçaları boşluk kenarlarında tam bölünür (parça başına en fazla 3 parçacık, tur başında oluşturulur). Coyote süresi oyunda var, doğrulamada yok; düşme coyote dolunca koridor dışında olmaktır (M2-11) | Boşluk yerleri vuruş ızgarasına bağlı ve rastgele uzunlukta; sabit küçük duvar parçaları kenarları ±50 px kaydırırdı. Doğrulamanın daha sıkı olması parçaların affedici süreye dayanmamasını sağlar |
 | ADR-033 | 2026-10-12 | Kullanıcıyla telefon üzerinden iki yönlü iletişim ntfy.sh ile (kullanıcı kararı). Bildirim yalnızca üç durumda: otonom çalışma bitti, kullanıcı olmadan çözülemeyen sorun, kullanıcı durdurdu. Kullanıcının yazdıkları her görev bitiminde okunur; otonom çalışma bitince arka planda bir dinleyici (`-Wait`) cevabı bekler. Konuya yazılan her mesaj kullanıcınındır (kullanıcı kararı: konu adı tahmin edilemez) | Kullanıcı ekrandan uzakken de haberdar olur ve cevap verebilir; gürültü olmasın diye bildirim seyrek. Acil durumda kullanıcı ekrana geçer. Remote Control şimdilik gerekmiyor (kullanıcı kararı). Konu herkese açık olduğu için bildirimlerde gizli bilgi olmaz |
 | ADR-032 | 2026-10-11 | Sektörler veri kaynağı (`SectorDef` + `SectorCatalog`); tırmanış hızı `TuningConfig`'ten sektöre taşındı. Sektör sınırları kesin yükseklikte; parça sınırı aşmaz, sığmayan kalan boş kalır. Başlangıç sektörü `Events.start_requested` ile seçilir, sonraki turlar aynı sektörden başlar (M2-08) | GDD'deki sektör tablosu tek yerde; doğrulayıcı ve oyun aynı değerleri okur. Kesin sınır yükseklikleri HUD'u, kontrol noktalarını ve testleri basit tutar; sınırdaki boşluk M2-09'daki "nefes alma" anının temelidir |
 | ADR-031 | 2026-10-11 | Ritim saati `Conductor` Run'ın içinde, sesi `AudioManager` çalar; `Conductor` her adımda oyun zamanını servis çağrısıyla bildirir. Ses, ortalama kayma 40 ms'yi aşınca ve ölçüde en fazla bir kez yeniden konumlanır (M2-07) | Autoload sahne düğümüne erişmeden saate uyar; müzik (M3) aynı yolu kullanır. Her karede konumlamak Android'de ses iş parçacığını yordu; ölçüm titremesi ortalamayla süzülür |

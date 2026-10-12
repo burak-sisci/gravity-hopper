@@ -43,7 +43,7 @@ Her tasarım kararı bu dört sütuna göre tartılır:
 - **Ekrana herhangi bir yere dokun → yerçekimi diğer duvara döner.** Başka kontrol yok.
 - Çevirme yalnızca bir duvara tutunurken yapılabilir. Oyuncuyu kollayan iki kural var:
   - Havadayken yapılan dokunuş kaybolmaz; duvara değince uygulanır (dokunma tamponu).
-  - Duvar boşluğuna girdikten hemen sonra da çevirme yapılabilir (coyote süresi).
+  - Duvar boşluğuna girdikten hemen sonra da çevirme yapılabilir (coyote süresi, 0,1 sn; M2-11).
 - Duraklatma düğmesi sağ üstte. Ona dokunmak çevirme sayılmaz.
 
 ## 5. Çekirdek döngü

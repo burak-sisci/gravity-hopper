@@ -8,6 +8,9 @@ extends RefCounted
 ## zamanlar ama insandır: yere indikten sonra en az REACTION_MARGIN bekler. Böylece iki çevirme
 ## arası en az "geçiş süresi + tepki payı" olur (GDD §13).
 ##
+## Duvar boşluğu (M2-11): gövde tamamen boşluğun içindeyken o duvarda (ya da oraya inerken)
+## bulunmak düşmek sayılır. Coyote süresi tanınmaz; doğrulama oyundan biraz daha sıkıdır.
+##
 ## Parça her giriş durumundan geçilebilmeli: iki duvarda yeni inmiş olarak ve önceki parçadan
 ## kalan yarım geçişlerin her anında. Böylece parçalar hangi sırayla gelirse gelsin birleşim
 ## yeri de adil kalır. Tehlikeler kutu (AABB) olarak alınır; bu, birkaç piksel temkinlidir.
@@ -79,6 +82,10 @@ func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 	if not errors.is_empty():
 		return errors
 	for sector: int in range(chunk.min_sector, mini(chunk.max_sector, _sectors.count()) + 1):
+		var allowed: Array[StringName] = _sectors.def_at(sector).allowed_hazards
+		for type: StringName in chunk.hazard_types():
+			if not allowed.has(type):
+				errors.append("S%d: '%s' bu sektörde izinli değil" % [sector, type])
 		for message: String in sector_errors(chunk, sector):
 			errors.append("S%d: %s" % [sector, message])
 	return errors
@@ -90,21 +97,35 @@ func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
 	var beat: float = def.beat_px()
 	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
 	var hazards: Array[Rect2] = []
-	var names: Array[String] = []
+	var hazard_names: Array[String] = []
+	var gaps: Array[Vector3] = []
+	var gap_names: Array[String] = []
 	var errors: PackedStringArray = PackedStringArray()
 	var top: float = -chunk.height_px(beat)
+	var body_half_h: float = _body_size.y * 0.5
 	for item: Node2D in chunk.items():
 		var world: Vector2 = ChunkInfo.world_position(chunk.design_position(item), beat, half_width)
+		var item_beat: float = -chunk.design_position(item).y / ChunkInfo.BEAT_GRID_PX
+		var label: String = "%s (%s. vuruş)" % [item.name, String.num(item_beat, 1).replace(".", ",")]
+		if item is WallGap:
+			# Gövde tamamen boşluktayken duvar yoktur: bölge her iki uçtan gövdenin yarısı kadar dar.
+			var gap: WallGap = item as WallGap
+			var gap_top: float = world.y - gap.length * beat / ChunkInfo.BEAT_GRID_PX
+			if world.y - gap_top > 2.0 * body_half_h:
+				gaps.append(Vector3(gap.side(), gap_top + body_half_h, world.y - body_half_h))
+				gap_names.append(label)
 		for rect: Rect2 in _hazard_rects(item, world):
 			if rect.position.y < top or rect.end.y > 0.0:
 				errors.append("%s parçanın sınırından taşıyor" % item.name)
 			hazards.append(rect)
-			var item_beat: float = -chunk.design_position(item).y / ChunkInfo.BEAT_GRID_PX
-			names.append("%s (%s. vuruş)" % [item.name, String.num(item_beat, 1).replace(".", ",")])
-	if not errors.is_empty() or hazards.is_empty():
+			hazard_names.append(label)
+	if not errors.is_empty() or (hazards.is_empty() and gaps.is_empty()):
 		return errors
 	var sim: Simulation = Simulation.new(hazards, _hurt_half(), half_width - _body_size.x * 0.5,
 			def.climb_px(), top, _tuning)
+	sim.set_gaps(gaps)
+	# Simulation sıra numarasıyla okur: önce tehlike kutuları, sonra boşluklar.
+	var names: Array[String] = hazard_names + gap_names
 	var failure: String = sim.first_failure(names)
 	if not failure.is_empty():
 		errors.append(failure)
@@ -149,6 +170,8 @@ class Simulation:
 	extends RefCounted
 
 	var _hazards: Array[Rect2]
+	## Duvar boşluğu bölgeleri: (duvar -1/+1, üst y, alt y); o duvarda bu y'de bulunmak düşmektir.
+	var _gaps: Array[Vector3] = []
 	var _hurt_half: Vector2
 	var _wall_x: float
 	var _step_y: float
@@ -180,6 +203,9 @@ class Simulation:
 			vx = minf(vx + accel * PHYSICS_DT, max_side)
 			x = minf(x + vx * PHYSICS_DT, _wall_x)
 			_transit.append(x)
+
+	func set_gaps(gaps: Array[Vector3]) -> void:
+		_gaps = gaps
 
 	## Güvenli olmayan ilk giriş durumunun açıklaması; hepsi güvenliyse boş.
 	func first_failure(names: Array[String]) -> String:
@@ -245,13 +271,20 @@ class Simulation:
 	func _y_of(frame: int) -> float:
 		return _start_y - frame * _step_y
 
-	## Kutunun değdiği tehlikelerin sıra numaraları.
-	func _hits(frame: int, x: float) -> Array[int]:
-		var body: Rect2 = Rect2(Vector2(x, _y_of(frame)) - _hurt_half, _hurt_half * 2.0)
+	## Durumun bu karede değdiği tehlikelerin sıra numaraları; duvar boşlukları tehlikelerden sonra
+	## numaralanır ve yalnızca o duvarda (duvar durumunda) olana dokunur.
+	func _hits(frame: int, state: int) -> Array[int]:
+		var y: float = _y_of(frame)
+		var body: Rect2 = Rect2(Vector2(_x_of(state), y) - _hurt_half, _hurt_half * 2.0)
 		var result: Array[int] = []
 		for i: int in _hazards.size():
 			if body.intersects(_hazards[i]):
 				result.append(i)
+		if state < _wall_count():
+			var side: float = 1.0 if _side(state) == 1 else -1.0
+			for i: int in _gaps.size():
+				if _gaps[i].x == side and y > _gaps[i].y and y < _gaps[i].z:
+					result.append(_hazards.size() + i)
 		return result
 
 	## Sondan başa: safe[s] = bu karede s'de canlıyken parçanın sonuna sağ çıkılabilir mi?
@@ -264,7 +297,7 @@ class Simulation:
 			var current: PackedByteArray = PackedByteArray()
 			current.resize(count)
 			for state: int in count:
-				if not _hits(frame, _x_of(state)).is_empty():
+				if not _hits(frame, state).is_empty():
 					continue
 				if frame == _frames:
 					current[state] = 1
@@ -292,7 +325,7 @@ class Simulation:
 							candidates.append(next)
 			hit_names.clear()
 			for state: int in candidates:
-				var hits: Array[int] = _hits(frame, _x_of(state))
+				var hits: Array[int] = _hits(frame, state)
 				if hits.is_empty():
 					next_alive.append(state)
 				for i: int in hits:

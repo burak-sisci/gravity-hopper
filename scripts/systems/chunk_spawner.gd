@@ -95,6 +95,16 @@ func active_chunks() -> Array[ChunkInfo]:
 	return _active.duplicate()
 
 
+## Etkin parçalardaki duvar boşlukları: (duvar -1/+1, üst y, alt y). Run koridora bildirir.
+func active_gaps() -> Array[Vector3]:
+	var result: Array[Vector3] = []
+	for chunk: ChunkInfo in _active:
+		for gap: WallGap in chunk.gaps():
+			var span: Vector2 = chunk.gap_range(gap)
+			result.append(Vector3(gap.side(), span.x, span.y))
+	return result
+
+
 ## Sıradaki parçanın yerleşeceği sektör (testler).
 func placement_sector() -> int:
 	return _sector

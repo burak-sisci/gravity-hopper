@@ -10,6 +10,8 @@ const DEBUG_MENU_PATH: String = "res://addons/debug_menu/debug_menu.tscn"
 const DEBUG_MENU_SCALE: float = 2.0
 ## Başlatma argümanı (`-- --invincible`): uzun denemelerde ölümsüzlük baştan açık olur.
 const INVINCIBLE_ARG: String = "--invincible"
+## Başlatma argümanı (`-- --start-sector=2`): ilk tur o sektörden başlar (kare yakalama, M2-11).
+const START_SECTOR_ARG: String = "--start-sector="
 ## Ekran oranı denemesi (yalnızca PC, architecture.md §3): dikey pencere boyutları.
 const ASPECT_WINDOWS: Array[Vector2i] = [
 	Vector2i(450, 800), Vector2i(450, 1000), Vector2i(600, 800),
@@ -49,8 +51,12 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_place_debug_menu)
 	_place_debug_menu()
 	_connect_event_log()
-	if INVINCIBLE_ARG in OS.get_cmdline_user_args():
-		_invincible_button.button_pressed = true
+	for arg: String in OS.get_cmdline_user_args():
+		if arg == INVINCIBLE_ARG:
+			_invincible_button.button_pressed = true
+		elif arg.begins_with(START_SECTOR_ARG):
+			# Main, start_requested'i bu karenin sonunda dinlemeye başlar; istek bir sonraki karede.
+			Events.start_requested.emit.call_deferred(int(arg.trim_prefix(START_SECTOR_ARG)))
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
 	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:
 		_sector = start_sector

@@ -56,6 +56,25 @@ func test_design_errors_catch_rule_breaks() -> void:
 	assert_int(chunk.design_errors().size()).is_equal(5)
 
 
+func test_gap_rules_and_hazard_types() -> void:
+	var chunk: ChunkInfo = auto_free(ChunkInfo.new()) as ChunkInfo
+	chunk.length_beats = 4
+	_add_gap(chunk, Vector2(-300, -100), 100.0) # duvarda değil
+	_add_gap(chunk, Vector2(450, -300), 200.0) # parçanın üstünden taşıyor
+	_add_gap(chunk, Vector2(-450, -100), 120.0) # boy yarım vuruşun katı değil
+	_add_gap(chunk, Vector2(450, -100), 150.0) # kurala uygun
+	add_child(chunk)
+	assert_int(chunk.design_errors().size()).is_equal(3)
+	var mixed: ChunkInfo = _load("res://scenes/levels/chunks/gap_spike_01.tscn")
+	assert_array(mixed.hazard_types()).contains_exactly_in_any_order([&"gap", &"spike"])
+	# Boşluğun dünyadaki aralığı vuruşla ölçeklenir (S2: 381,82 px).
+	mixed.position = Vector2(0, -1000)
+	mixed.layout(381.82, 450.0)
+	var span: Vector2 = mixed.gap_range(mixed.gaps()[0])
+	assert_vector(span).is_equal_approx(Vector2(-1000 - 3.5 * 381.82, -1000 - 2.0 * 381.82),
+			Vector2(0.01, 0.01))
+
+
 func test_beat_px_follows_speed_and_bpm() -> void:
 	assert_float(ChunkInfo.beat_px(12.0, 100.0)).is_equal_approx(S1_BEAT_PX, 0.001)
 	assert_float(ChunkInfo.beat_px(16.0, 120.0)).is_equal_approx(S3_BEAT_PX, 0.001)
@@ -88,6 +107,13 @@ func _load(path: String) -> ChunkInfo:
 	var chunk: ChunkInfo = auto_free((load(path) as PackedScene).instantiate()) as ChunkInfo
 	add_child(chunk)
 	return chunk
+
+
+func _add_gap(chunk: ChunkInfo, at: Vector2, length: float) -> void:
+	var gap: WallGap = WallGap.new()
+	gap.position = at
+	gap.length = length
+	chunk.add_child(gap)
 
 
 func _add_spike(chunk: ChunkInfo, at: Vector2, facing: float) -> void:

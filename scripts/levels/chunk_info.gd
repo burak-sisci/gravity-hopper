@@ -52,6 +52,37 @@ static func world_position(design: Vector2, world_beat_px: float, half_width: fl
 	return Vector2(design.x * half_width / DESIGN_HALF_WIDTH, design.y * world_beat_px / BEAT_GRID_PX)
 
 
+## Parçanın duvar boşlukları (M2-11).
+func gaps() -> Array[WallGap]:
+	var result: Array[WallGap] = []
+	for child: Node in get_children():
+		if child is WallGap:
+			result.append(child as WallGap)
+	return result
+
+
+## Boşluğun dünyadaki aralığı (parçanın ebeveyninin uzayında): x = üst y, y = alt y. Son
+## yerleşime göre; boy vuruşla ölçeklenir.
+func gap_range(gap: WallGap) -> Vector2:
+	var bottom: float = position.y + gap.position.y
+	return Vector2(bottom - gap.length * laid_out_beat_px / BEAT_GRID_PX, bottom)
+
+
+## Parçadaki tehlike türleri: tehlike sahnesinin dosya adı (spike) ve boşluklar için gap.
+## Sektörün izinli tehlikeleriyle karşılaştırılır (SectorDef.allowed_hazards).
+func hazard_types() -> Array[StringName]:
+	var result: Array[StringName] = []
+	for item: Node2D in items():
+		var type: StringName = &""
+		if item is WallGap:
+			type = &"gap"
+		elif item is CollisionObject2D and not item.scene_file_path.is_empty():
+			type = StringName(item.scene_file_path.get_file().get_basename())
+		if not type.is_empty() and not result.has(type):
+			result.append(type)
+	return result
+
+
 ## Parçanın öğeleri: doğrudan çocuk olan Node2D'ler.
 func items() -> Array[Node2D]:
 	var result: Array[Node2D] = []
@@ -103,11 +134,25 @@ func design_errors() -> PackedStringArray:
 			])
 		if not _on_step(at.x, X_STEP_PX) or absf(at.x) > DESIGN_HALF_WIDTH:
 			errors.append("%s: x=%s 1 m adımına oturmuyor ya da koridor dışında" % [item.name, at.x])
-		# Duvardaki öğe koridora bakar: sol duvarda scale.x > 0, sağ duvarda < 0.
-		if is_equal_approx(absf(at.x), DESIGN_HALF_WIDTH) and signf(item.scale.x) == signf(at.x):
+		if item is WallGap:
+			errors.append_array(_gap_errors(item as WallGap, at, top))
+		# Duvardaki tehlike koridora bakar: sol duvarda scale.x > 0, sağ duvarda < 0.
+		elif is_equal_approx(absf(at.x), DESIGN_HALF_WIDTH) and signf(item.scale.x) == signf(at.x):
 			errors.append("%s: duvardaki öğe koridora bakmıyor (scale.x=%s)" % [
 				item.name, item.scale.x,
 			])
+	return errors
+
+
+## Boşluk duvardadır, boyu yarım vuruş katıdır ve parçanın içinde kalır.
+func _gap_errors(gap: WallGap, at: Vector2, top: float) -> PackedStringArray:
+	var errors: PackedStringArray = PackedStringArray()
+	if not is_equal_approx(absf(at.x), DESIGN_HALF_WIDTH):
+		errors.append("%s: boşluk duvarda değil (x=%s)" % [gap.name, at.x])
+	if not _on_step(gap.length, Y_STEP_PX) or gap.length <= 0.0:
+		errors.append("%s: boşluk boyu %s yarım vuruşun katı değil" % [gap.name, gap.length])
+	if at.y - gap.length < top:
+		errors.append("%s: boşluk parçanın üstünden taşıyor" % gap.name)
 	return errors
 
 
