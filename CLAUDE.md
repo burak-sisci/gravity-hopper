@@ -24,6 +24,7 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 - **🤖 görevler arasında onay beklenmez** (kullanıcı kararı, ADR-025): her 🤖 görev bitince kısa bir not bırakılır ve sıradaki 🤖 göreve geçilir. Şu durumlarda durulur ve kullanıcı beklenir: 🤝 ya da 👤 görev, bekleyen bir kullanıcı kararı, kilometre taşı kapısı, beklenmedik bir tasarım sorusu.
 - Beklenen geri bildirim kalıbı: "Ne yaptım → ne oldu → ne bekliyordum".
 - Kullanıcıya ait bir karar varsa (`state.json` → `pending_user_decisions`) varsayım yapma, sor.
+- **Telefon (ntfy, ADR-033):** Bildirim yalnızca üç durumda gönderilir: otonom çalışma bitti (🤝/👤 görev, karar, kapı), kullanıcı olmadan çözülemeyen bir sorun, kullanıcı durdurdu. Kısa ve gizli bilgisiz. Otonom çalışma bitince bildirimden sonra `-Wait` arka planda bırakılır; cevap gelince ona göre devam edilir. Konuya yazılan her mesaj kullanıcınındır.
 
 ## Planlama rutini (ZORUNLU — atlanmaz)
 
@@ -40,6 +41,7 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 3. Tasarım değiştiyse `GDD.md`'yi, teknik karar değiştiyse `architecture.md`'yi güncelle ve karar kaydına yeni bir ADR satırı ekle.
 4. Dış varlık eklendiyse `CREDITS.md`'yi güncelle.
 5. Commit mesajı: `[M1-03] Kısa açıklama`.
+6. Commit'ten sonra `tools/notify.ps1 -Read`: kullanıcı telefondan yazdıysa ona göre davran.
 
 ### Kullanıcı bir karar verdiğinde
 
@@ -69,6 +71,7 @@ Her kilometre taşının sonunda ve kullanıcı "planlama gözden geçir" dediğ
 - **Sahne ağacı** (bir `.tscn`'e dokunmadan önce düğüm adlarını tahmin etme, buna bak): `<godot> --headless --path . --script res://tools/scene_tool.gd -- tree res://scenes/x.tscn`
 - **Telefona yükleme:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/deploy.ps1 -Screenshot <scratchpad>/x.png` (dışa aktar + kabloyla yükle + başlat + ekran görüntüsü + Godot günlüğü). Çıktısı PowerShell borusuna bağlanmaz (`| Select-Object` gibi): adb sunucusu yeniden başlarsa boruyu açık tutar ve komut asılı kalır.
 - **Telefona adb dokunuşu** (`adb shell input tap`): göndermeden hemen önce ekran görüntüsüyle oyunun tam ekran açık olduğu doğrulanır. Kullanıcı telefonu kullanıyor olabilir; dokunuş onun uygulamalarına gidebilir (M1-12'de yaşandı).
+- **Telefon bildirimi:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/notify.ps1 -Message "..."` · `-Read` (yeni mesajlar) · `-Wait` (cevap gelene kadar bekler; arka planda). Konu adı depoda değil: `%LOCALAPPDATA%\gravity-hopper\ntfy_topic.txt`
 - **Web sürümü:** `powershell -NoProfile -ExecutionPolicy Bypass -File tools/web_build.ps1 -Smoke -Shot <scratchpad>/w.png` (yayın çıktısı + `builds/gravity-hopper-web.zip` + görünmez tarayıcıda oyunun açıldığı denemesi)
 - Oyunu çalıştırma: `<godot> --path .`
 - Kare yakalama (Movie Maker): `<godot> --path . [res://scenes/x.tscn] --write-movie <scratchpad>/f.png --fixed-fps 60 --quit-after 40 [-- <kullanıcı argümanları>]`. Kareler pencere boyutunda (450×800) çıkar; asıl görüntü kanıtı telefonun ekran görüntüsüdür.
