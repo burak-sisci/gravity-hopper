@@ -6,6 +6,8 @@ extends CharacterBody2D
 ## Girdi olayları yalnızca not edilir; karar bir sonraki fizik adımında verilir (.clauderules §5).
 ## Çevirince Events.player_flipped yayar. Hurtbox bir tehlikeye değince yalnızca
 ## Events.player_died yayar ve donar; tehlikenin koduna dokunmaz (architecture.md §7.3).
+## Kalkan (M2-16): darbeyi Shield emer, 1 sn dokunulmazlık gelir; yukarı shield_broken yayılır
+## (Run çöküş duvarını çeker) ve Events.shield_changed duyurulur. Düşme ve duvara karşı korumaz.
 ## Kıl payı (M2-14): GrazeDetector bir tehlikenin çarpmadan geçtiğini bildirince yukarı near_missed
 ## yayar; Run komboyu yönetir.
 ## Duvar boşluğu (M2-11): duvar bitince oyuncu dışarı kayar. Coyote süresince çevirme hâlâ olur;
@@ -14,6 +16,8 @@ extends CharacterBody2D
 
 ## Bir tehlike çarpışma kutusuna değmeden kıl payı alanından geçti (Run bağlar).
 signal near_missed
+## Kalkan bir darbeyi emdi (Run çöküş duvarını çeker).
+signal shield_broken
 
 ## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
 const INVINCIBLE_ALPHA: float = 0.45
@@ -37,12 +41,15 @@ var _coyote_left: float = 0.0
 @onready var _hurtbox: Hurtbox = $Hurtbox
 @onready var _collector: Collector = $Collector
 @onready var _graze: GrazeDetector = $GrazeDetector
+@onready var _shield: Shield = $Shield
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	_hurtbox.hit.connect(_on_hurtbox_hit)
 	_graze.grazed.connect(_on_grazed)
+	_shield.changed.connect(Events.shield_changed.emit)
+	Events.debug_shield_requested.connect(give_shield)
 	Events.debug_invincibility_changed.connect(_on_debug_invincibility_changed)
 
 
@@ -55,6 +62,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if not _alive:
 		return
+	_shield.tick(delta)
 	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
 	var hurt_size: Vector2 = (_body.shape as RectangleShape2D).size * tuning.hurtbox_scale
 	_hurtbox.set_size(hurt_size)
@@ -106,6 +114,16 @@ func is_alive() -> bool:
 	return _alive
 
 
+## Kalkan takar (yükseltme M4'te; şimdilik debug, Events.debug_shield_requested).
+func give_shield() -> void:
+	if _alive:
+		_shield.give()
+
+
+func has_shield() -> bool:
+	return _shield.active
+
+
 ## Bir girdi olayı çevirme dokunuşu mu? Her parmağın basışı sayılır; dokunuştan türetilen
 ## sahte fare olayı yok sayılır, yoksa her dokunuş iki kez sayılır (S-07). PC'de sol tık ve boşluk.
 static func is_tap(event: InputEvent) -> bool:
@@ -136,7 +154,11 @@ func die(cause: GameTypes.DeathCause) -> void:
 func _on_hurtbox_hit(area: Area2D) -> void:
 	# Değen tehlike, kalkan ya da ölümsüzlükle geçilse de kıl payı sayılmaz.
 	_graze.mark_hit(area)
-	if not _alive or _invincible:
+	if not _alive or _invincible or _shield.is_in_grace():
+		return
+	if _shield.active:
+		_shield.consume(tuning.shield_grace)
+		shield_broken.emit()
 		return
 	_alive = false
 	_flip_requested = false

@@ -26,6 +26,8 @@ const PX_PER_M: float = 50.0
 ## Duvar biter bitmez (boşluk) çevirme bu süre daha yapılabilir; süre dolunca koridorun dışındaki
 ## oyuncu düşmüş sayılır (coyote süresi, GDD §4).
 @export_range(0.0, 0.25, 0.01, "suffix:sn") var coyote_time: float = 0.1
+## Kalkan bir darbeyi emdikten sonraki dokunulmazlık (GDD §7).
+@export_range(0.2, 3.0, 0.1, "suffix:sn") var shield_grace: float = 1.0
 
 @export_group("Baskı")
 ## Tur başında çöküş duvarının oyuncunun altındaki mesafesi ve en fazla mesafe (GDD §14).

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/components/hurtbox.gd" id="2_hurtbox"]
 [ext_resource type="Script" path="res://scripts/components/collector.gd" id="3_collector"]
 [ext_resource type="Script" path="res://scripts/components/graze_detector.gd" id="4_graze"]
+[ext_resource type="Script" path="res://scripts/components/shield.gd" id="5_shield"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(60, 80)
@@ -55,3 +56,6 @@ shape = SubResource("RectangleShape2D_graze")
 [node name="Visual" type="Polygon2D" parent="."]
 color = Color(0.92, 0.94, 1, 1)
 polygon = PackedVector2Array(0, -40, 30, 0, 0, 40, -30, 0)
+
+[node name="Shield" type="Node2D" parent="."]
+script = ExtResource("5_shield")

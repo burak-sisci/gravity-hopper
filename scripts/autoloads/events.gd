@@ -45,5 +45,6 @@ signal settings_changed
 
 # --- Debug (yalnızca debug katmanı yayar; yayın sürümünde hiç yayılmaz) ---
 signal debug_invincibility_changed(enabled: bool)
+signal debug_shield_requested
 
 @warning_ignore_restore("unused_signal")

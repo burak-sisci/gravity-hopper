@@ -273,12 +273,14 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `upgrade_purchased` | `id: StringName, level: int` | Progression | UI, AudioManager |
 | `settings_changed` | — | Settings | AudioManager ve ilgililer |
 | `debug_invincibility_changed` | `enabled: bool` | Debug katmanı (yalnızca debug build) | Player |
+| `debug_shield_requested` | — | Debug katmanı (M2-16) | Player (kalkan takar) |
 
 ### 7.3 Örnek akış: Ölüm
 
 1. Diken (`Area2D`, pasif) oyuncunun `Hurtbox`'ıyla örtüşür.
 2. `Hurtbox` bileşeni yukarıya `hit` sinyali yayar → `Player`.
 3. `Player`: kalkan varsa tüketir ve `shield_changed(false)` + yerel `shield_broken` yayar. Kalkan yoksa `Events.player_died.emit(DeathCause.HAZARD)`. **Dikenin koduna dokunmaz.**
+   - **Uygulama (M2-16):** `Shield` bileşeni (`scripts/components/shield.gd`, oyuncunun çocuğu): `give()`, `consume(dokunulmazlık)`, `tick(delta)`, `is_in_grace()`; durum değişince yukarı `changed` → `Player` bunu `Events.shield_changed`'e bağlar. Darbe: dokunulmazlıktaysa yok sayılır; kalkan varsa tüketilir, `TuningConfig.shield_grace` (1 sn) dokunulmazlık başlar, `shield_broken` → `Run` → `PressureSystem.pull(shield_pull)` (8 m). Kalkan düşmeye ve çöküş duvarına karşı korumaz (`Player.die` ve düşme kalkana bakmaz). Görsel: oyuncunun çevresinde açık mavi halka (`Line2D`, yarıçap 56 px), dokunulmazlıkta yanıp söner. Şimdilik debug ile verilir: `8` tuşu ya da paneldeki "Kalkan" düğmesi → `Events.debug_shield_requested`; yükseltme M4'te. Redmi'de halka göründü, kalkan bir darbeyi emdi ve tur sürdü.
 4. `GameManager` dinler: `Run.stop()` (aşağı çağrı), `RunResult` oluşturur, `Progression.add_glimmers()`, `SaveManager.save_game()`, ardından `Events.run_ended.emit(result)`.
 5. Sonuç ekranı `run_ended`'i, `AudioManager` ise `player_died`'ı dinleyerek kendi işini yapar.
 6. Oyuncu "Tekrar"a dokunur → UI `Events.retry_requested` yayar → `GameManager` yeni turu **yarım saniyenin altında** başlatır.
@@ -496,7 +498,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `bpm`, `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px()`, `climb_px()`. Müzik ve kesin palet M3'te |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px()`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
@@ -609,6 +611,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `2` | Ölümsüzlük | M1-12 |
   | `3` | Çarpışma kutularını göster | M1-12 |
   | `4` | Yavaş çekim | M1-12 |
+  | `8` | Kalkan ver (paneldeki "Kalkan" düğmesi de; `Events.debug_shield_requested`) | M2-16 |
   | `5` | Sonraki sektörün başından yeni tur (son sektörde aynı sektör); paneldeki "Sektör ›" düğmesi | M2-08 |
   | `5` | Sonraki sektöre atla | M2-08 |
   | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
@@ -740,6 +743,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
+  | `tests/entities/shield_test.gd` (M2-16) | Kalkanla ilk diken emilir (ölüm yok, `shield_changed` [true, false], duvar 8 m yaklaşır), 1 sn içindeki ikinci diken dokunulmazlıkla geçilir, sonraki öldürür; kalkansız ilk diken öldürür |
   | `tests/systems/pressure_system_test.gd` (M2-15) | Sürünme, itmede üst sınır, çekme, tek seferlik `wall_reached`; hızlı sürünmeli turda 2 sn'de `WALL` ölümü, görsel oyuncunun mesafe × 50 px altında, yakınlık artarak 1'e varıyor; ölümsüzken ölüm yok; Glimmer +1 m, kıl payı +3 m |
   | `tests/entities/near_miss_test.gd` (M2-14) | 60 px yanından geçen tehlike kıl payı, 130 px'ten geçen değil, değen (ölümsüzken) değil; 0,5 sn arayla üç kıl payında kombo 1-2-3, çarpan ×2, 2,5 sn sonra `combo_ended` ve ×1; `RunResult.near_misses` |
   | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan |

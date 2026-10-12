@@ -178,6 +178,15 @@ auto_translate_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "FPS"
 
+[node name="ShieldButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Kalkan"
+
 [node name="CloseButton" type="Button" parent="TuningPanel/Margin/VBox/Buttons"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
@@ -198,4 +207,5 @@ text = "Kapat"
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/ResetButton" to="TuningPanel" method="_on_reset_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/PauseButton" to="TuningPanel" method="_on_pause_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/FpsButton" to="TuningPanel" method="_on_fps_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/ShieldButton" to="." method="_on_shield_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/CloseButton" to="TuningPanel" method="_on_close_pressed"]

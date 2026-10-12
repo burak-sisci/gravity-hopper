@@ -75,6 +75,7 @@ func _ready() -> void:
 	_player.near_missed.connect(_on_near_missed)
 	_pressure.setup(tuning.wall_start_distance, tuning.wall_max_distance, def.wall_creep)
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
+	_player.shield_broken.connect(_on_shield_broken)
 	_update_view()
 	_camera.reset_physics_interpolation()
 
@@ -140,6 +141,11 @@ func _update_wall() -> void:
 	if absf(proximity - _proximity) >= PROXIMITY_STEP or (proximity == 0.0 and _proximity != 0.0):
 		_proximity = proximity
 		Events.wall_proximity_changed.emit(proximity)
+
+
+## Kalkanla darbe almak çöküş duvarını yaklaştırır (GDD §7, §14).
+func _on_shield_broken() -> void:
+	_pressure.pull(tuning.shield_pull)
 
 
 func _on_glimmer_collected(value: int) -> void:

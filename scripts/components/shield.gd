@@ -1,0 +1,65 @@
+class_name Shield
+extends Node2D
+## Kalkan (M2-16, GDD §7): tek bir tehlike darbesini emer, ardından kısa bir dokunulmazlık gelir.
+## Düşmeye ve çöküş duvarına karşı korumaz. Sahibi (Player) give() ve consume() çağırır; durum
+## değişince yukarı changed yayar. Görseli oyuncunun çevresinde bir halkadır; dokunulmazlıkta
+## yanıp söner (yalnızca görsel, _process).
+
+signal changed(active: bool)
+
+const RING_RADIUS: float = 56.0
+const RING_POINTS: int = 24
+const RING_WIDTH: float = 6.0
+## Dokunulmazlıktaki yanıp sönmenin hızı (sn'de kaç kez).
+const BLINK_RATE: float = 8.0
+
+## Kalkan şu an takılı mı.
+var active: bool = false
+
+var _grace_left: float = 0.0
+var _ring: Line2D
+
+
+func _ready() -> void:
+	_ring = Line2D.new()
+	_ring.width = RING_WIDTH
+	_ring.default_color = Color(0.55, 0.9, 1.0, 0.9)
+	_ring.closed = true
+	for i: int in RING_POINTS:
+		_ring.add_point(Vector2.from_angle(TAU * i / RING_POINTS) * RING_RADIUS)
+	add_child(_ring)
+	_ring.visible = false
+
+
+func _process(_delta: float) -> void:
+	if _grace_left > 0.0:
+		_ring.visible = fmod(_grace_left * BLINK_RATE, 1.0) < 0.5
+
+
+## Kalkan takar (yükseltme M4'te; şimdilik debug).
+func give() -> void:
+	if active:
+		return
+	active = true
+	_ring.visible = true
+	changed.emit(true)
+
+
+## Kalkanı tüketir ve grace saniyelik dokunulmazlık başlatır.
+func consume(grace: float) -> void:
+	active = false
+	_grace_left = grace
+	changed.emit(false)
+
+
+## Sahibi her fizik adımında çağırır: dokunulmazlık süresi azalır.
+func tick(delta: float) -> void:
+	if _grace_left <= 0.0:
+		return
+	_grace_left = maxf(_grace_left - delta, 0.0)
+	if _grace_left == 0.0:
+		_ring.visible = active
+
+
+func is_in_grace() -> bool:
+	return _grace_left > 0.0

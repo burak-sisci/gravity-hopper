@@ -43,6 +43,7 @@ func _ready() -> void:
 	_bind_key(KEY_4, KEY_KP_4, func() -> void:
 		_slow_button.button_pressed = is_equal_approx(Engine.time_scale, 1.0))
 	_bind_key(KEY_5, KEY_KP_5, _on_next_sector_pressed)
+	_bind_key(KEY_8, KEY_KP_8, _on_shield_pressed)
 	_bind_key(KEY_6, KEY_KP_6, _cycle_aspect)
 	_bind_key(KEY_7, KEY_KP_7, _cycle_fps)
 	_key_actions[KEY_R] = _on_restart_pressed
@@ -104,6 +105,11 @@ func _on_restart_pressed() -> void:
 	Events.retry_requested.emit()
 
 
+## Oyuncuya kalkan verir (M2-16; yükseltme M4'te).
+func _on_shield_pressed() -> void:
+	Events.debug_shield_requested.emit()
+
+
 ## Sonraki sektörün başından yeni tur (kontrol noktası yolu; son sektörde aynı sektör).
 func _on_next_sector_pressed() -> void:
 	Events.start_requested.emit(_sector + 1)
@@ -144,6 +150,8 @@ func _connect_event_log() -> void:
 	Events.sector_entered.connect(func(index: int) -> void:
 		_log_event("sector_entered index=%d" % index))
 	Events.near_miss.connect(func(combo: int) -> void: _log_event("near_miss combo=%d" % combo))
+	Events.shield_changed.connect(func(active: bool) -> void:
+		_log_event("shield_changed active=%s" % active))
 	Events.combo_ended.connect(_log_event.bind("combo_ended"))
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))

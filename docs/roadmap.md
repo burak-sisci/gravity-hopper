@@ -151,7 +151,7 @@
   *Kabul:* Kıl payı güvenilir algılanıyor, yanlış pozitif yok (test).
 - [x] **M2-15** 🤖 `PressureSystem` + geçici çöküş duvarı görseli, `player_died(WALL)`, `wall_proximity_changed`; Glimmer ve kıl payı duvarı iter.
   *Kabul:* Sürünme, itme/çekme ve duvar ölümü çalışıyor (test + Redmi).
-- [ ] **M2-16** 🤖 Kalkan (test için debug ile verilir): tek darbeyi emer, 1 sn dokunulmazlık, duvarı çeker, `shield_changed`.
+- [x] **M2-16** 🤖 Kalkan (test için debug ile verilir): tek darbeyi emer, 1 sn dokunulmazlık, duvarı çeker, `shield_changed`.
   *Kabul:* Tek darbeyi emiyor, duvarı çekiyor (test).
 - [ ] **M2-17** 🤖 Belirlenimcilik testi: aynı tohum + başlangıç sektörü → aynı parça dizisi ve konumları (gdUnit4).
 
