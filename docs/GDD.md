@@ -266,7 +266,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 ## 19. Ses ve his
 
-- **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları.
+- **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları. Kaynak müzikteki gibi insan yapımı, ücretsiz kütüphaneler: Kenney (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY) (kullanıcı kararı, D-05, ADR-042).
 - **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Seçilen **beş parçanın hepsi** oyunda ve her tur birini rastgele çalar (kullanıcı kararı, 2026-10-13, ADR-040): Epic Journey, Mountain Peak, Treasure Hunter, Epic Departure, Determined Pursuit. Menü müziği M5'te. Ayrıntı: `docs/music_research.md` §12.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.

@@ -35,7 +35,7 @@
 - [x] **P-02** 🤖 Kurulum rehberi (`KURULUM.md`)
 - [x] **P-03** 🤖 Planlama belgeleri (`CLAUDE.md`, `.clauderules`, `architecture.md`, `state.json`, `GDD.md`, `roadmap.md`, `CREDITS.md`) ve klasör yapısı
 - [x] **P-05** 🤖 Açık kaynak araştırması: araçlar, kütüphaneler, ajan kuralları (`architecture.md` §19, ADR-013)
-- [ ] **P-04** 👤 Planlama belgelerini oku; itiraz ve düzeltmelerini ilet → 🚪
+- [x] **P-04** 👤 Planlama belgelerini oku; itiraz ve düzeltmelerini ilet → 🚪 *(M2-19 kapısında kapandı, 2026-10-13: itiraz yok.)*
 
 ## M0 — Temel ve kurulum
 
@@ -159,7 +159,7 @@
 
 - [x] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi. M2-07'den: metronom kulak testi (dikenler tıkla aynı anda mı geçiyor, tık geç mi kalıyor? S-03). *(2026-10-13: kullanıcı "her şey güzel görünüyor" dedi. Testte bulunan hızlı çift dokunuş sorunu düzeltildi, ADR-036.)*
 - [x] **M2-20** 🤖 Müzik (kullanıcı isteği, 2026-10-13; M2-19'dan önce yapıldı): beş parça her turda rastgele, turun temposu parçanın (ADR-040). `MusicTrack` / `MusicCatalog`, `tools/music_prep.py` (ilk vuruşa kırpma, tam ölçü döngü), metronomun yerine parça, sektör geçişinde ızgara kesintisiz, doğrulayıcı her tempoda. *(Kulak testi geçti, 2026-10-13: "her şey güzel".)*
-- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır. *(Gözden geçirme yapıldı 2026-10-13: belgeler düzeltildi, M3 20 atomik göreve bölündü, ADR-041. Kapı senin onayını bekliyor.)*
+- [x] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır. *(Gözden geçirme yapıldı 2026-10-13: belgeler düzeltildi, M3 20 atomik göreve bölündü, ADR-041. ✅ M1 + M2 senin tarafından onaylandı, 2026-10-13; P-04 kapandı; D-05 kararı ADR-042.)*
 
 ## M3 — Görsel ve işitsel kimlik
 
@@ -212,7 +212,7 @@
 
 **Ses**
 
-- [ ] **M3-15** 🤖 Ses efektleri (kaynak D-05'e göre): `AudioManager` efekt havuzu (sabit sayıda çalar, tur sırasında düğüm oluşturulmaz), olay → ses eşlemesi bir veri kaynağında. İlk set: çevirme, tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma. `CREDITS.md`.
+- [ ] **M3-15** 🤖 Ses efektleri (insan yapımı, ücretsiz kütüphanelerden: Kenney CC0, gerekirse Freesound yalnızca CC0 / CC-BY; ADR-042): `AudioManager` efekt havuzu (sabit sayıda çalar, tur sırasında düğüm oluşturulmaz), olay → ses eşlemesi bir veri kaynağında. İlk set: çevirme, tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma. `CREDITS.md`.
   *Kabul:* Her olay doğru sesi çalıyor (test); ses düzeyleri müzikle dengeli (ölçüm); Redmi günlüğünde hata yok.
 - [ ] **M3-16** 🤖 Gerilim: çöküş duvarı yaklaştıkça müziğe alçak geçiren süzgeç (boğuklaşma) ve gerilim sesi (GDD §14).
   *Kabul:* Süzgeç duvarın yakınlığıyla değişiyor (test); Redmi'de sesli deneme.
