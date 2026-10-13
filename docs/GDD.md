@@ -265,7 +265,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 ## 19. Ses ve his
 
 - **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları.
-- **Müzik:** Ücretsiz kütüphanelerden (CC0 / CC-BY) seçilen parçalar (kullanıcı kararı, 2026-10-13; ADR-038). Oyunla özdeşleşecek bir **ana tema** parçası menüde ve S1'de çalar. Sonraki sektörler aynı tarzda, tercihen aynı besteciden kendi parçalarını çalar; yoğunluk sektörle artar. Sektör BPM'leri seçilen parçalara göre ayarlanır. Ayrıntı: `docs/music_research.md` §10.
+- **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). Kaynak D-02'de açık: yapay zekâ ile üretim araştırıldı (`docs/music_research.md` §11). Önceki karar: ücretsiz kütüphanelerden (CC0 / CC-BY) seçilen parçalar (ADR-038, bekletiliyor). Oyunla özdeşleşecek bir **ana tema** parçası menüde ve S1'de çalar. Sonraki sektörler aynı tarzda, tercihen aynı besteciden kendi parçalarını çalar; yoğunluk sektörle artar. Sektör BPM'leri seçilen parçalara göre ayarlanır. Ayrıntı: `docs/music_research.md` §10.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
 
@@ -297,6 +297,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
+| D-02 | Müzik kaynağı: orkestral his isteniyor, yapay zekâ ile üretim düşünülüyor. Öneri: Stable Audio 3.0 Medium (ücretsiz, bilgisayarda, ticari serbest) denensin; lisans kuralına yapay zekâ ile üretilmiş ses eklensin. `docs/music_research.md` §11 | M3 |
 | D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
 | D-04 | Günlük meydan okumada deneme hakkı | M7 |
 | — | Sektör renklerinin kesin tonları | M3 |

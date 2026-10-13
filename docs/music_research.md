@@ -2,6 +2,8 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
+> **Yeniden açıldı (2026-10-13):** Kullanıcı orkestral ve yapay zekâ ile üretilmiş bir müzik istiyor; araştırma §11'de, D-02 bekliyor. Önceki karar aşağıda kayıt olarak duruyor.
+>
 > **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan hâlâ geçerli.
 
 ## 1. Kısa sonuç
@@ -206,6 +208,66 @@
 - **Adaptif his:**
   - Parçanın katmanları varsa §6'daki plan uygulanır.
   - Yoksa tek parça çalar, müzik veriyolundaki filtre çöküş duvarı yaklaştıkça tizleri kısar. Kıl payı yavaş çekimi zaten `pitch_scale` ile müziğe bağlı.
+
+## 11. Yapay zekâ ile orkestral müzik (2026-10-13, ikinci araştırma)
+
+> Kullanıcı: "Subway Surfers örneğini vermemin nedeni akıcı bir orkestra olması. Kod ile yazılmış tekdüze bir müzik istemiyorum. Gerçek orkestral bir iş istiyorum. Yapay zekâ kullanarak müziği üretmek mantıklı geldi." Bu bölüm §10'daki kütüphane kararını (ADR-038) bekletir; D-02 yeniden açıktır.
+
+**Ölçütlerimiz:**
+1. Ticari kullanım izni: oyun Google Play'de yayınlanacak, reklam da olabilir.
+2. İndirme izni.
+3. Eğitim verisinin lisanslı olması: dava riskini azaltır.
+4. Ücretsiz olması.
+5. Orkestral kalite.
+6. Tempo (BPM) denetimi.
+
+| Araç | Ücretsiz planda | Ticari kullanım | Eğitim verisi ve hukuk | Bizim için |
+| --- | --- | --- | --- | --- |
+| **Stable Audio 3.0 Medium** (Stability AI, açık ağırlık, Mayıs 2026) | Tamamen ücretsiz, bilgisayarda çalışır. Gereken ekran kartı belleği ≈ 5–6,5 GB; RTX 3050 6 GB'a parçalı çözümlemeyle sığması bekleniyor | Yıllık geliri 1 milyon $'ın altındaysa serbest; çıktılar bizim | Şirkete göre tamamen lisanslı veriyle eğitildi. Tempo istem metninde yazılır ("100 BPM"). Parça 6 dk 20 sn'ye kadar | **En uygun ücretsiz aday**; orkestral kalitesi denenmeli |
+| **ACE-Step 1.5** (açık kaynak, MIT) | Ücretsiz, bilgisayarda çalışır. 6 GB'ta yalnızca küçük ayar (2B turbo, dil modeli kapalı) | MIT lisansı, ticari serbest | Lisanslı, telifsiz ve sentetik veri iddiası; tazminat yok. Benzerlik kaynaklı ihlal uyarısı var | İkinci ücretsiz aday; daha çok vokalli şarkıya odaklı |
+| **ElevenLabs Eleven Music** | Ücretsiz planda indirme yok | Ücretli planlarda (≈ 5–6 $/ay'dan) ticari kullanım; geliri 500 bin $'ın altındaki bağımsız oyunlar dahil. Abonelik bitse de o dönemde üretilenler kullanılmaya devam eder | Lisanslı veri (Merlin, Kobalt anlaşmaları) | Ücretsiz değil; ama en ucuz ve hukuken en temiz ücretli yol (1 ay yeter) |
+| **Suno** | Ticari kullanım yasak; indirme çok sınırlı ya da yok (3 Eylül 2026 değişikliği) | Pro ≈ 10 $/ay; Warner anlaşmasından sonra "sahiplik" ifadesi kaldırıldı | Sony davası sürüyor; Eylül 2026'da yeni dava haberi var (tek kaynak) | Önerilmez |
+| **Udio** | İndirme Ekim 2025'ten beri kapalı | Yeni lisanslı platform kademeli açılıyor | Universal ve Warner anlaşmaları | Şu an kullanılamaz |
+| **AIVA** (orkestral uzmanı) | Ayda 3 indirme; ticari kullanım yasak, telif AIVA'da | Telif yalnızca Pro planda (≈ 33 €/ay) | — | Ücretsiz planı oyun için uygun değil |
+| **Google Flow Music** (Lyria 3.5) | Ücretsiz katmanın ticari hakkı belirsiz | Ücretli Google AI planlarıyla | Ortak verisi ve izinli YouTube verisi; SynthID filigranı | Belirsiz, önerilmez |
+| **MusicGen** (Meta) | Ağırlıkların lisansı CC-BY-NC | Ticari kullanım yasak | — | Kurallarımıza aykırı |
+
+**Sektör ne kullanıyor:**
+- **Profesyonel oyun müziği yapay zekâyla yapılmıyor.**
+  - Besteci bir müzik yazılımında (DAW: Cubase, Logic, Reaper) orkestral örnek kütüphaneleriyle (Spitfire, Orchestral Tools, EastWest) çalışır.
+  - Büyük bütçede gerçek orkestra kaydedilir.
+  - Uyarlanabilir müzik için FMOD ya da Wwise kullanılır; biz Godot'nun kendi sınıflarını kullanıyoruz.
+- **Yapay zekâ kullanımı:**
+  - GDC 2026 raporuna göre sektör çalışanlarının %36'sı işinde üretken yapay zekâ kullanıyor (oyun stüdyolarında %30). Kullanım ağırlıkla sohbet modelleri ve yaratıcı olmayan işler.
+  - Çalışanların %52'si yapay zekânın sektöre zarar verdiğini düşünüyor (bir önceki yıl %30).
+  - Müzik için ayrı veri yok. Yapay zekâ müziği çoğunlukla geçici müzik ve prototip için kullanılıyor; besteciler AIVA'yı MIDI taslağı için kullanıyor.
+- **Platformlar:**
+  - Steam, Ocak 2026 güncellemesiyle oyuncunun gördüğü ya da duyduğu yapay zekâ içeriğinin beyan edilmesini istiyor; müzik buna dahil.
+  - Google Play'de oyun varlıkları için beyan zorunluluğu bulunamadı.
+  - itch.io'da beyan varlık sayfaları için zorunlu, oyunlar için isteğe bağlı (2024 bilgisi).
+  - Dürüstlük için mağaza sayfasında ve Hakkında ekranında belirtmek önerilir.
+- **Telif:** İnsan katkısı olmayan yapay zekâ çıktısı telif koruması almaz. Müziği kullanabiliriz, ama başkasının kopyalamasını engelleyemeyiz.
+- **Tepki riski:** Sanatçı ve oyuncu topluluklarında yapay zekâ müziğine karşı tepki büyüyor ("Say No to Suno" kampanyası). Yorumlarda olumsuz tepki gelebilir.
+
+**Önerim:**
+1. **Stable Audio 3.0 Medium'u denemek.** Bilgisayarda, proje klasörünün dışına kurulur.
+   - Claude ana tema için 4–6 orkestral aday üretir (100 BPM; yaylılar, nefesliler, akıcı); kullanıcı dinler.
+   - İndirilecekler: PyTorch (≈ 2–3 GB) ve model (birkaç GB).
+   - Model sayfası Hugging Face hesabıyla lisans onayı isteyebilir; o zaman kullanıcının girişi gerekir.
+2. **Sektör sürümleri:** Aynı tema farklı tempo ve yoğunlukta yeniden üretilir. Tutarlılığın ne kadar korunduğu denemede görülür. Tutmazsa sektörlere aynı tarzda ayrı parçalar üretilir.
+3. **Kalite yetmezse:** ACE-Step 1.5 (ücretsiz) ya da ElevenLabs'in bir aylık ücretli planı (≈ 5–6 $).
+4. **Lisans kuralı:** `.clauderules` §7'ye "yapay zekâ ile üretilmiş ses" eklenmeli. Şartlar: modelin lisansı ticari kullanıma izin veriyor, eğitim verisi lisanslı ve üretim kaydı (araç, sürüm, tarih, istem metni, tohum) `CREDITS.md`'de tutuluyor. Kullanıcı onayı ve ADR gerekir.
+
+**Kaynaklar (§11; çoğu ikincil kaynak, kullanmadan önce resmî şartlar okunur):**
+- Stable Audio 3: [The Decoder](https://the-decoder.com/stability-ai-launches-stable-audio-3-0-with-up-to-six-minute-tracks-and-open-weights/), [GitHub – Stability-AI/stable-audio-3](https://github.com/Stability-AI/stable-audio-3), [Hugging Face model kartı](https://huggingface.co/stabilityai/stable-audio-3-medium), [GGUF sürümü](https://huggingface.co/thepatch/stable-audio-3-medium-GGUF), [Stability AI lisansı](https://stability.ai/license)
+- ACE-Step 1.5: [GitHub](https://github.com/ACE-Step/ACE-Step-1.5), [Hugging Face model kartı](https://huggingface.co/ACE-Step/acestep-v15-base/blob/main/README.md), [ComfyUI blog](https://blog.comfy.org/p/ace-step-15-xl-commercial-grade-music)
+- ElevenLabs: [Eleven Music model şartları (resmî)](https://elevenlabs.io/eleven-music-model-specific-terms), [Music Terms](https://elevenlabs.io/music-terms)
+- Suno: [Rinzara – fiyatlar](https://rinzara.com/suno-pricing), [MuseGen – indirme sınırları](https://www.musegen.ai/blog/suno-download-limits-what-changed-alternatives), [Music In Africa – sahiplik şartları](https://musicinafrica.net/magazine/suno-adjusts-ai-music-ownership-terms-after-warner-music-partnership/), [Replayed Studio](https://replayedstudio.com/blog/suno-warner-udio-universal-deals/)
+- Udio: [babl.ai](https://babl.ai/universal-music-settles-with-ai-startup-udio-paving-way-for-licensed-fan-made-music-platform/), [Sonilo](https://sonilo.com/blog/comparisons/udio-v4-warner-music-licensing-explained)
+- AIVA: [Scored.tools – fiyatlar](https://scored.tools/blog/aiva-pricing-plans-worth-it-2026/), [VidMuse](https://vidmuse.ai/blog/aiva-ai-review)
+- Google Flow Music: [The Rundown](https://www.therundown.ai/tools/lyria-3-5), [RightsDocket](https://www.rightsdocket.com/insights/google-lyria-3-commercial-use-copyright)
+- Sektör: [GDC 2026 State of the Game Industry](https://gdconf.com/article/gdc-2026-state-of-the-game-industry-reveals-impact-of-layoffs-generative-ai-and-more/), [Forbes – Suno ve tepki](https://www.forbes.com.au/news/innovation/ai-music-platform-suno-reaches-2-million-subscribers-as-industry-backlash-grows/)
+- Platform ve telif: [Promise Legal – AI oyun varlıkları 2026](https://blog.promise.legal/ai-game-assets-copyright-steam-disclosure-2026/), [Google Play – AI içerik politikası](https://support.google.com/googleplay/android-developer/answer/14094294), [GamingOnLinux – itch.io beyanı](https://gamingonlinux.com/2024/11/itchio-store-now-requires-ai-generated-content-disclosures-for-assets)
 
 ## Kaynaklar
 
