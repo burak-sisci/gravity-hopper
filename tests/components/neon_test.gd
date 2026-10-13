@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Neon bileşenleri (M3-01, architecture.md §9): parlama katman sayısı efekt kalitesine göre
 ## değişir (yüksek 2, orta 1, düşük 0), düğüm sayısı değişmez, doku ve malzeme paylaşılır.
-## Vuruş nabzı (M3-03) vuruşta tepe yapar ve söner.
+## Vuruş nabzı (M3-03) vuruşta tepe yapar ve söner. Sabit renkli şekil rengini tone'dan alır,
+## sharp köşeleri sivriltir (M3-05).
 
 const SPIKE: PackedVector2Array = [Vector2(0, -35), Vector2(60, 0), Vector2(0, 35)]
 const BLOCK: PackedVector2Array = [
@@ -95,6 +96,24 @@ func test_beat_pulse_peaks_on_beat_and_fades() -> void:
 	assert_float(style.beat_pulse(0.99)).is_equal(0.0)
 
 
+func test_tone_takes_fixed_color_and_sharp_sets_joints() -> void:
+	var shape: NeonShape = _add_shape(SPIKE, NeonShape.Glow.LINE)
+	shape.color = Color.BLUE
+	assert_object(shape.shown_color()).is_equal(Color.BLUE)
+	shape.tone = GameTypes.NeonTone.HAZARD
+	var red: Color = Neon.STYLE.hazard_color
+	assert_object(shape.shown_color()).is_equal(red)
+	var outline: Line2D = _outline(shape)
+	assert_object(outline.default_color).is_equal(red)
+	assert_object(Color((_visible_glows(shape)[0] as Line2D).default_color, 1.0)).is_equal(red)
+	shape.tone = GameTypes.NeonTone.GLIMMER
+	assert_object(outline.default_color).is_equal(Neon.STYLE.glimmer_color)
+	assert_int(outline.joint_mode).is_equal(Line2D.LINE_JOINT_ROUND)
+	shape.sharp = true
+	assert_int(outline.joint_mode).is_equal(Line2D.LINE_JOINT_SHARP)
+	assert_float(outline.sharp_limit).is_equal(Neon.STYLE.sharp_limit)
+
+
 func _add_line() -> NeonLine:
 	var line: NeonLine = auto_free(NeonLine.new()) as NeonLine
 	line.points = PackedVector2Array([Vector2(0, 0), Vector2(0, 400)])
@@ -118,6 +137,15 @@ func _visible_glows(node: Node2D) -> Array[CanvasItem]:
 		if item != null and item.visible and item.material == Neon.additive_material():
 			glows.append(item)
 	return glows
+
+
+## Kenar çizgisi: parlama olmayan kapalı çizgi.
+func _outline(shape: NeonShape) -> Line2D:
+	for child: Node in shape.get_children():
+		var line: Line2D = child as Line2D
+		if line != null and line.closed and line.material == null:
+			return line
+	return null
 
 
 func _glow_count(node: Node2D) -> int:

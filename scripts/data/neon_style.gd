@@ -40,6 +40,25 @@ extends Resource
 ## İzin baştaki kalınlığı; kuyruğa doğru sıfıra iner.
 @export_range(1.0, 60.0, 0.5, "suffix:px") var trail_width: float = 18.0
 
+@export_group("Tehlikeler")
+## Sivri köşeli kenar çizgisinde köşe sivriliğinin sınırı (Line2D.sharp_limit).
+@export_range(1.0, 20.0, 0.5) var sharp_limit: float = 8.0
+## Veri bloğunun vuruşla süzülme genliği (yalnızca görsel; çarpışma kutusu yerinde kalır).
+@export_range(0.0, 20.0, 0.5, "suffix:px") var block_hover_px: float = 4.0
+## Süzülmenin bir turu kaç vuruş sürer.
+@export_range(0.5, 8.0, 0.5) var block_hover_beats: float = 2.0
+## Bloğun içindeki veri satırları: x = dikey konum (bloğun boyuna oranla, merkezden),
+## y = boy (iç genişliğe oranla). Satırlar sola yaslıdır.
+@export var block_rows: Array[Vector2] = [
+	Vector2(-0.25, 0.7), Vector2(0.0, 0.45), Vector2(0.25, 0.6),
+]
+## Veri satırlarının kenardan içeri payı (bloğun genişliğine oranla).
+@export_range(0.0, 0.4, 0.01) var block_row_inset: float = 0.12
+## Veri satırlarının kalınlığı.
+@export_range(1.0, 20.0, 0.5, "suffix:px") var block_row_width: float = 4.0
+## Veri satırlarının saydamlığı.
+@export_range(0.0, 1.0, 0.05) var block_row_alpha: float = 0.55
+
 @export_group("Duvarlar")
 ## Duvar dolgusunun saydamlığı; parçalar sırayla açık ve koyu, böylece kayma gözle görülür.
 @export_range(0.0, 1.0, 0.01) var wall_fill_light: float = 0.16
@@ -71,6 +90,18 @@ func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
 ## Herhangi bir kalitedeki en çok katman sayısı: bileşenler bu kadar kopyayı baştan kurar.
 func max_layer_count() -> int:
 	return maxi(high_layers.size(), maxi(medium_layers.size(), low_layers.size()))
+
+
+## Renk kaynağının rengi: CUSTOM ise bileşenin kendi rengi, değilse sabit renk.
+func tone_color(tone: GameTypes.NeonTone, custom: Color) -> Color:
+	match tone:
+		GameTypes.NeonTone.HAZARD:
+			return hazard_color
+		GameTypes.NeonTone.GLIMMER:
+			return glimmer_color
+		GameTypes.NeonTone.PLAYER:
+			return player_color
+	return custom
 
 
 ## Verilen kalitede ışık lekesi görünür mü.

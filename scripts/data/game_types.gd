@@ -18,3 +18,11 @@ enum Quality {
 	MEDIUM, ## Ara seviye
 	HIGH, ## Tüm efektler açık
 }
+
+## Neon bileşenin renk kaynağı (M3-05): sektörden bağımsız sabit renkler NeonStyle'da durur.
+enum NeonTone {
+	CUSTOM, ## Bileşenin kendi rengi (color)
+	HAZARD, ## Tehlike kırmızısı
+	GLIMMER, ## Glimmer yeşili
+	PLAYER, ## Oyuncu beyazı
+}

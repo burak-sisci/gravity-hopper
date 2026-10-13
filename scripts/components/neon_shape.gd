@@ -5,6 +5,7 @@ extends Node2D
 ## çizgi kopyası sivri köşelerde ve kapanma noktasında yay izi bırakıyor (M0-09). Geniş açılı
 ## şekiller (blok) kenar çizgisinin parlama kopyalarını kullanır. Parlama efekt kalitesine göre
 ## değişir (Neon.quality); düğümler oluşturulurken bir kez kurulur.
+## Sabit renkli şekiller (tehlike, Glimmer, oyuncu) rengi tone ile NeonStyle'dan alır (M3-05).
 
 ## Parlama türü.
 enum Glow {
@@ -17,10 +18,15 @@ enum Glow {
 	set(value):
 		polygon = value
 		_update_polygon()
-## Şeklin rengi.
+## Şeklin rengi (tone CUSTOM iken).
 @export var color: Color = Color.WHITE:
 	set(value):
 		color = value
+		_update_look()
+## Renk kaynağı: CUSTOM değilse renk NeonStyle'daki sabit renktir (tehlike, Glimmer, oyuncu).
+@export var tone: GameTypes.NeonTone = GameTypes.NeonTone.CUSTOM:
+	set(value):
+		tone = value
 		_update_look()
 ## Dolgunun saydamlığı.
 @export_range(0.0, 1.0, 0.01) var fill_alpha: float = Neon.STYLE.fill_alpha:
@@ -37,6 +43,11 @@ enum Glow {
 	set(value):
 		glow = value
 		apply_quality()
+## Kenar çizgisinin köşeleri sivri mi (diken, blok); kapalıysa yuvarlak.
+@export var sharp: bool = false:
+	set(value):
+		sharp = value
+		_update_look()
 
 var _blob: Sprite2D
 var _halos: Array[Line2D] = []
@@ -72,7 +83,12 @@ func apply_quality() -> void:
 	if _outline == null:
 		return
 	_blob.visible = glow == Glow.BLOB and Neon.STYLE.shows_blob(Neon.quality)
-	Neon.apply_halos(_halos, color, glow == Glow.LINE)
+	Neon.apply_halos(_halos, shown_color(), glow == Glow.LINE)
+
+
+## Şeklin görünen rengi: tone'a göre sabit renk ya da color.
+func shown_color() -> Color:
+	return Neon.STYLE.tone_color(tone, color)
 
 
 func _update_polygon() -> void:
@@ -95,8 +111,11 @@ func _update_polygon() -> void:
 func _update_look() -> void:
 	if _outline == null:
 		return
-	_blob.modulate = Color(color, Neon.STYLE.blob_intensity)
-	_fill.color = Color(color, fill_alpha)
+	var shown: Color = shown_color()
+	_blob.modulate = Color(shown, Neon.STYLE.blob_intensity)
+	_fill.color = Color(shown, fill_alpha)
 	_outline.width = line_width
-	_outline.default_color = color
+	_outline.default_color = shown
+	_outline.joint_mode = Line2D.LINE_JOINT_SHARP if sharp else Line2D.LINE_JOINT_ROUND
+	_outline.sharp_limit = Neon.STYLE.sharp_limit
 	apply_quality()

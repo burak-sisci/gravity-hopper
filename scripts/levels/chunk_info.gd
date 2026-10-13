@@ -44,6 +44,8 @@ var _design_positions: Dictionary[Node2D, Vector2] = {}
 var _lasers: Array[Laser] = []
 ## Toplanabilirler (M2-13).
 var _glimmers: Array[Glimmer] = []
+## Vuruşla süzülen veri blokları (M3-05).
+var _blocks: Array[Block] = []
 
 
 func _ready() -> void:
@@ -51,6 +53,8 @@ func _ready() -> void:
 		_design_positions[item] = item.position
 		if item is Laser:
 			_lasers.append(item as Laser)
+		elif item is Block:
+			_blocks.append(item as Block)
 		elif item is Glimmer:
 			var glimmer: Glimmer = item as Glimmer
 			_glimmers.append(glimmer)
@@ -73,11 +77,13 @@ func reset() -> void:
 		glimmer.reset()
 
 
-## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere iletir. Parça tam
-## vuruşta başladığı için lazerlerin evresi parçanın yerinden bağımsızdır.
+## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere ve bloklara iletir.
+## Parça tam vuruşta başladığı için evreleri parçanın yerinden bağımsızdır.
 func set_beat(beat: float) -> void:
 	for laser: Laser in _lasers:
 		laser.set_beat(beat)
+	for block: Block in _blocks:
+		block.set_beat(beat)
 
 
 ## Parçanın duvar boşlukları (M2-11).

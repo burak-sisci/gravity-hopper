@@ -44,13 +44,11 @@ var _coyote_left: float = 0.0
 @onready var _collector: Collector = $Collector
 @onready var _graze: GrazeDetector = $GrazeDetector
 @onready var _shield: Shield = $Shield
-@onready var _visual: NeonShape = $Visual
 @onready var _trail: Trail = $Trail
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
-	_visual.color = Neon.STYLE.player_color
 	_trail.reset(position)
 	_hurtbox.hit.connect(_on_hurtbox_hit)
 	_graze.grazed.connect(_on_grazed)

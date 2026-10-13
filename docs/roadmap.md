@@ -184,7 +184,7 @@
 
 - [x] **M3-04** 🤖 Çekirdek: beyaz neon elmas + ışık lekesi; iz (`Line2D`: geçmiş konumlar, genişlik eğrisi, renk geçişi); neon kalkan halkası.
   *Kabul:* İzin uzunluğu ekran yenileme hızından bağımsız (60 ve 120 Hz'de aynı, test); Redmi ekran görüntüsü.
-- [ ] **M3-05** 🤖 Diken ve veri bloğu: sivri kırmızı neon diken; köşeli blok ve süzülme hissi (yalnızca görsel, ADR-035).
+- [x] **M3-05** 🤖 Diken ve veri bloğu: sivri kırmızı neon diken; köşeli blok ve süzülme hissi (yalnızca görsel, ADR-035).
   *Kabul:* Çarpışma kutuları değişmedi (doğrulama aynı); Redmi ekran görüntüsü.
 - [ ] **M3-06** 🤖 Lazer ve Glimmer: lazerin yanık ve sönük hâli, yanmadan hemen önce bir uyarı ışıması (oyuncu ne zaman yanacağını görebilmeli); yuvarlak, yeşil, parıldayan Glimmer. Şekil dili denetimi (GDD §6).
   *Kabul:* Lazer görüntüsü çarpışmayla aynı karelerde yanıyor (test); gri tonlu kare yakalamada tehlike, Glimmer ve oyuncu yalnızca şekilden ayırt ediliyor.

@@ -61,6 +61,7 @@ script = ExtResource("7_trail")
 [node name="Visual" type="Node2D" parent="."]
 script = ExtResource("6_neon_shape")
 polygon = PackedVector2Array(0, -40, 30, 0, 0, 40, -30, 0)
+tone = 3
 fill_alpha = 0.85
 
 [node name="Shield" type="Node2D" parent="."]
