@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Neon bileşenleri (M3-01, architecture.md §9): parlama katman sayısı efekt kalitesine göre
 ## değişir (yüksek 2, orta 1, düşük 0), düğüm sayısı değişmez, doku ve malzeme paylaşılır.
+## Vuruş nabzı (M3-03) vuruşta tepe yapar ve söner.
 
 const SPIKE: PackedVector2Array = [Vector2(0, -35), Vector2(60, 0), Vector2(0, 35)]
 const BLOCK: PackedVector2Array = [
@@ -81,6 +82,17 @@ func test_glow_resources_are_shared() -> void:
 	var second_halo: Line2D = _visible_glows(second)[0] as Line2D
 	assert_object(first_halo.texture).is_same(second_halo.texture)
 	assert_object(first_halo.material).is_same(second_halo.material)
+
+
+func test_beat_pulse_peaks_on_beat_and_fades() -> void:
+	var style: NeonStyle = Neon.STYLE
+	assert_float(style.beat_pulse(0.0)).is_equal_approx(1.0, 0.0001)
+	assert_float(style.beat_pulse(3.0)).is_equal_approx(1.0, 0.0001)
+	var early: float = style.beat_pulse(style.beat_pulse_length * 0.25)
+	var late: float = style.beat_pulse(style.beat_pulse_length * 0.75)
+	assert_bool(early < 1.0 and late < early and late > 0.0).is_true()
+	assert_float(style.beat_pulse(style.beat_pulse_length)).is_equal(0.0)
+	assert_float(style.beat_pulse(0.99)).is_equal(0.0)
 
 
 func _add_line() -> NeonLine:

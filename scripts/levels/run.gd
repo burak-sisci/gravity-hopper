@@ -56,6 +56,7 @@ var _combo: int = 0
 var _last_graze_time: float = 0.0
 ## Gösterilen çevre ve arka plan rengi (geçiş sırasında iki paletin arası).
 var _ambient: Color = Color.WHITE
+var _accent: Color = Color.WHITE
 var _background: Color = Color.BLACK
 var _palette_tween: Tween
 
@@ -106,7 +107,10 @@ func _physics_process(delta: float) -> void:
 		_enter_sector(sector + 1)
 	_update_view()
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
-	_chunks.set_beat(_conductor.beat_time() / _conductor.beat_length())
+	# Duvarlar vuruşta nabız atar (M3-03, yalnızca görsel).
+	var beat: float = _conductor.beat_time() / _conductor.beat_length()
+	_chunks.set_beat(beat)
+	_corridor.set_beat(beat)
 	_update_wall()
 	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:
 		_combo = 0
@@ -193,21 +197,23 @@ func _show_palette(palette: SectorPalette, instant: bool) -> void:
 	if _palette_tween != null:
 		_palette_tween.kill()
 	if instant:
-		_apply_colors(palette.ambient, palette.background)
+		_apply_colors(palette.ambient, palette.accent, palette.background)
 		return
 	_palette_tween = create_tween()
-	_palette_tween.tween_method(_fade_palette.bind(_ambient, _background, palette), 0.0, 1.0,
-			PALETTE_FADE_TIME)
+	_palette_tween.tween_method(_fade_palette.bind(_ambient, _accent, _background, palette), 0.0,
+			1.0, PALETTE_FADE_TIME)
 
 
-func _fade_palette(weight: float, from_ambient: Color, from_background: Color,
+func _fade_palette(weight: float, from_ambient: Color, from_accent: Color, from_background: Color,
 		palette: SectorPalette) -> void:
 	_apply_colors(from_ambient.lerp(palette.ambient, weight),
+			from_accent.lerp(palette.accent, weight),
 			from_background.lerp(palette.background, weight))
 
 
-func _apply_colors(ambient: Color, background: Color) -> void:
+func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:
 	_ambient = ambient
+	_accent = accent
 	_background = background
-	_corridor.set_ambient(ambient)
+	_corridor.set_colors(ambient, accent)
 	RenderingServer.set_default_clear_color(background)

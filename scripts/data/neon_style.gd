@@ -31,6 +31,23 @@ extends Resource
 ## Oyuncu çekirdeğinin beyazı.
 @export var player_color: Color = Color(1.0, 1.0, 1.0)
 
+@export_group("Duvarlar")
+## Duvar dolgusunun saydamlığı; parçalar sırayla açık ve koyu, böylece kayma gözle görülür.
+@export_range(0.0, 1.0, 0.01) var wall_fill_light: float = 0.16
+## Koyu duvar parçasının dolgu saydamlığı.
+@export_range(0.0, 1.0, 0.01) var wall_fill_dark: float = 0.09
+## Duvar kenar çizgisinin çekirdeği çevre renginden beyaza bu oranda çekilir; parlaması çevre
+## renginde kalır.
+@export_range(0.0, 1.0, 0.05) var wall_core_whiten: float = 0.55
+
+@export_group("Vuruş nabzı")
+## Nabzın vuruştan sonra sönme süresi (vuruşun kesri). Sesi kapalı oynayan ritmi bundan görür.
+@export_range(0.05, 1.0, 0.05) var beat_pulse_length: float = 0.35
+## Nabzın tepesinde renklerin vurgu rengine ne kadar çekildiği (0 = nabız yok).
+@export_range(0.0, 1.0, 0.05) var beat_pulse_gain: float = 0.7
+## Nabzın tepesindeki ek parlaklık çarpanı.
+@export_range(1.0, 3.0, 0.05) var beat_pulse_boost: float = 1.4
+
 
 ## Verilen kalitedeki çizgi parlama katmanları.
 func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
@@ -50,3 +67,10 @@ func max_layer_count() -> int:
 ## Verilen kalitede ışık lekesi görünür mü.
 func shows_blob(quality: GameTypes.Quality) -> bool:
 	return quality >= blob_min_quality
+
+
+## Vuruş nabzının gücü (0–1): vuruş anında 1, beat_pulse_length içinde karesel söner.
+## beat: tempo ızgarasının başından beri geçen vuruş sayısı (kesirli).
+func beat_pulse(beat: float) -> float:
+	var fade: float = clampf(1.0 - fposmod(beat, 1.0) / beat_pulse_length, 0.0, 1.0)
+	return fade * fade

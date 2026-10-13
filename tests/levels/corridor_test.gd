@@ -1,8 +1,13 @@
 extends GdUnitTestSuite
 ## Koridor ve duvar boşlukları (M2-11, architecture.md §5.2): boşluk aralığında duvar yok, sınırlar
-## tam boşluk kenarında, düğüm sayısı değişmez.
+## tam boşluk kenarında, düğüm sayısı değişmez. Neon kenarlar (M3-03) çarpışmayla aynı yerde,
+## kesik yalnızca boşluk kenarında; vuruşta nabız.
 
 const HALF_WIDTH: float = 450.0
+## İki duvarda boşluklar; ikisi parça sınırına (-1000, -1400) tam denk gelir.
+const GAPS: Array[Vector3] = [
+	Vector3(-1.0, -900.0, -500.0), Vector3(1.0, -1400.0, -1000.0), Vector3(1.0, -2350.0, -2150.0),
+]
 
 var _corridor: Corridor
 
@@ -52,6 +57,79 @@ func test_gap_removed_restores_wall() -> void:
 	_corridor.set_gaps(none)
 	_corridor.update_view(0.0, HALF_WIDTH)
 	assert_array(_corridor.solid_ranges(-1.0)).is_equal(full_left)
+
+
+func test_edges_match_collision() -> void:
+	_corridor.set_gaps(GAPS)
+	_corridor.update_view(0.0, HALF_WIDTH)
+	for side: float in [-1.0, 1.0]:
+		var visual: Array[Vector3] = []
+		for line: PackedVector2Array in _corridor.edge_lines(side):
+			visual.append(_inner_run(line))
+		visual.sort()
+		var physical: Array[Vector3] = _collision_edges(side)
+		assert_int(visual.size()).is_equal(physical.size())
+		for i: int in physical.size():
+			# Kenar çizgisi, oyuncunun dokunduğu iç kenarın tam üstünde ve aynı boyda.
+			assert_bool(visual[i].is_equal_approx(physical[i])).is_true()
+			assert_float(visual[i].x).is_equal_approx(side * HALF_WIDTH, 0.01)
+
+
+func test_cut_only_at_gap_edges() -> void:
+	_corridor.set_gaps(GAPS)
+	_corridor.update_view(0.0, HALF_WIDTH)
+	for side: float in [-1.0, 1.0]:
+		var caps: Array[float] = []
+		for line: PackedVector2Array in _corridor.edge_lines(side):
+			for end: int in [0, line.size() - 1]:
+				var next: Vector2 = line[1 if end == 0 else end - 1]
+				if not is_equal_approx(line[end].x, next.x):
+					# Kesik duvar kalınlığı boyunca, boşluk kenarında yatay.
+					assert_float(absf(line[end].x - next.x)).is_equal_approx(
+							Corridor.WALL_THICKNESS, 0.01)
+					assert_float(line[end].y).is_equal_approx(next.y, 0.01)
+					caps.append(line[end].y)
+		var expected: Array[float] = []
+		for gap: Vector3 in GAPS:
+			if gap.x == side:
+				expected.append_array([gap.y, gap.z])
+		caps.sort()
+		expected.sort()
+		assert_array(caps).is_equal(expected)
+
+
+func test_beat_pulse_brightens_walls_toward_accent() -> void:
+	_corridor.set_colors(Color(0.3, 0.85, 0.95), Color(0.8, 0.97, 1.0))
+	_corridor.set_beat(0.5)
+	assert_bool(_corridor.modulate.is_equal_approx(Color.WHITE)).is_true()
+	_corridor.set_beat(4.0)
+	var peak: Color = _corridor.modulate
+	# Çevre renginin en zayıf kanalı (kırmızı) vurguya doğru en çok artar.
+	assert_bool(peak.r > peak.g and peak.g > 1.0 and peak.b > 1.0).is_true()
+	_corridor.set_beat(4.1)
+	assert_bool(_corridor.modulate.r < peak.r and _corridor.modulate.r > 1.0).is_true()
+
+
+## Çizginin dikey kısmı: (x, üst y, alt y).
+func _inner_run(line: PackedVector2Array) -> Vector3:
+	for i: int in line.size() - 1:
+		if is_equal_approx(line[i].x, line[i + 1].x):
+			return Vector3(line[i].x, minf(line[i].y, line[i + 1].y), maxf(line[i].y, line[i + 1].y))
+	return Vector3.INF
+
+
+## Etkin çarpışma kutularının iç kenarları: (x, üst y, alt y), sıralı.
+func _collision_edges(side: float) -> Array[Vector3]:
+	var result: Array[Vector3] = []
+	for node: Node in _corridor.find_children("*", "CollisionShape2D", true, false):
+		var shape: CollisionShape2D = node as CollisionShape2D
+		if shape.disabled or signf(shape.global_position.x) != side:
+			continue
+		var half: Vector2 = (shape.shape as RectangleShape2D).size * 0.5
+		var center: Vector2 = shape.global_position
+		result.append(Vector3(center.x - side * half.x, center.y - half.y, center.y + half.y))
+	result.sort()
+	return result
 
 
 func _count_nodes() -> int:
