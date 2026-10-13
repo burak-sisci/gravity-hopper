@@ -1,8 +1,9 @@
 class_name ChunkValidator
 extends RefCounted
 ## Desen parçası doğrulayıcısı (M2-05, architecture.md §8.2). Bir parçanın izinli her sektör
-## hızında adil biçimde geçilebildiğini kare kare (60 Hz) dener. Yalnızca geliştirici aracıdır:
-## tools/validate_chunks.gd ve testler kullanır, yayın sürümüne girmez.
+## hızında ve müzik kataloğundaki her tempoda (M2-20: tempo turun parçasından gelir) adil biçimde
+## geçilebildiğini kare kare (60 Hz) dener. Yalnızca geliştirici aracıdır: tools/validate_chunks.gd
+## ve testler kullanır, yayın sürümüne girmez.
 ##
 ## Oyuncu modeli: duvardan duvara geçiş Player ile aynı fizikle hesaplanır. Oyuncu kusursuz
 ## zamanlar ama insandır: yere indikten sonra en az REACTION_MARGIN bekler. Böylece iki çevirme
@@ -35,14 +36,23 @@ const PLAYER_SCENE_PATH: String = "res://scenes/entities/player.tscn"
 
 var _tuning: TuningConfig
 var _body_size: Vector2
-## Sektörlerin hızı ve temposu buradan okunur; katalogda olmayan sektörler denenmez.
+## Sektörlerin hızı buradan okunur; katalogda olmayan sektörler denenmez.
 var _sectors: SectorCatalog
+## Turlarda çalabilecek tempolar (müzik kataloğundan).
+var _tempos: Array[float] = []
 
 
-func _init(tuning: TuningConfig, body_size: Vector2, sectors: SectorCatalog) -> void:
+func _init(tuning: TuningConfig, body_size: Vector2, sectors: SectorCatalog,
+		music: MusicCatalog) -> void:
 	_tuning = tuning
 	_body_size = body_size
 	_sectors = sectors
+	_tempos = music.tempos()
+
+
+## Denenen tempolar (araç özeti).
+func tempos() -> Array[float]:
+	return _tempos.duplicate()
 
 
 ## Oyuncu gövdesinin boyu, sahnesinden (örnek oluşturmadan) okunur.
@@ -84,7 +94,8 @@ func coverage_errors(chunks: Array[ChunkInfo]) -> PackedStringArray:
 	return errors
 
 
-## Parçanın izinli tüm sektörlerdeki (katalogda olanlar) sorunları; boşsa parça geçerlidir.
+## Parçanın izinli tüm sektörlerdeki (katalogda olanlar) ve tüm tempolardaki sorunları; boşsa
+## parça geçerlidir.
 func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 	var errors: PackedStringArray = chunk.design_errors()
 	if not errors.is_empty():
@@ -94,15 +105,16 @@ func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 		for type: StringName in chunk.hazard_types():
 			if not allowed.has(type):
 				errors.append("S%d: '%s' bu sektörde izinli değil" % [sector, type])
-		for message: String in sector_errors(chunk, sector):
-			errors.append("S%d: %s" % [sector, message])
+		for bpm: float in _tempos:
+			for message: String in sector_errors(chunk, sector, bpm):
+				errors.append("S%d %s BPM: %s" % [sector, String.num(bpm), message])
 	return errors
 
 
-## Parçanın tek bir sektör hızındaki sorunları.
-func sector_errors(chunk: ChunkInfo, sector: int) -> PackedStringArray:
+## Parçanın tek bir sektör hızında ve tempodaki sorunları.
+func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArray:
 	var def: SectorDef = _sectors.def_at(sector)
-	var beat: float = def.beat_px()
+	var beat: float = def.beat_px(bpm)
 	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
 	var hazards: Array[Rect2] = []
 	var hazard_names: Array[String] = []

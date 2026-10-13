@@ -7,8 +7,11 @@ extends Node2D
 ## Ritim saati (Conductor) de burada, oyuncuyla aynı adımda ilerletilir (§8.3).
 ##
 ## Sektörler (M2-08): tur start_sector'ün başladığı yükseklikten başlar. Oyuncu sektör sınırını
-## geçtiği adımda hız ve tempo yeni sektörünkine geçer (hız basamağı) ve Events.sector_entered
-## yayılır. Yeni vuruş ızgarası tam sınırdan başlar; oyuncunun sınırı aştığı pay hesaba katılır.
+## geçtiği adımda hız yeni sektörünkine geçer (hız basamağı) ve Events.sector_entered yayılır.
+##
+## Müzik (M2-20, ADR-040): tur, tohumundan seçilen parçayı çalar; tempo o parçanınkidir ve tur
+## boyunca değişmez. Vuruş ızgarası turun başından kesintisiz sürer; ChunkSpawner yeni sektörün
+## ilk parçasını müziğin vuruşuna hizalar.
 ##
 ## Çöküş duvarı (M2-15): PressureSystem mesafeyi tutar; Glimmer ve kıl payı iter. Duvar oyuncuya
 ## varınca Run oyuncuyu öldürür (player_died(WALL)). Görsel CollapseWall oyuncunun mesafe × 50 px
@@ -20,6 +23,7 @@ const PROXIMITY_STEP: float = 0.01
 
 @export var tuning: TuningConfig
 @export var sectors: SectorCatalog
+@export var music: MusicCatalog
 ## Turun tohumu; Main, GameManager'dan alıp verir. 0 ise (sahne tek başına çalıştırılınca)
 ## yeni bir tohum üretilir.
 @export var run_seed: int = 0
@@ -27,6 +31,8 @@ const PROXIMITY_STEP: float = 0.01
 @export var start_sector: int = 1
 
 var rng: RunRng
+## Turun müzik parçası (katalog boşsa null; tempo o zaman Conductor.bpm'in varsayılanı).
+var track: MusicTrack = null
 ## Oyuncunun bulunduğu sektör.
 var sector: int = 1
 ## Turun istatistikleri (Glimmer, kombo; §8.6).
@@ -54,10 +60,11 @@ var _last_graze_time: float = 0.0
 
 
 func _ready() -> void:
-	if tuning == null or sectors == null or sectors.count() == 0:
-		push_error("Run: tuning ya da sectors atanmamış")
+	if tuning == null or sectors == null or sectors.count() == 0 or music == null:
+		push_error("Run: tuning, sectors ya da music atanmamış")
 		return
 	rng = RunRng.new(run_seed if run_seed != 0 else RunRng.make_seed())
+	track = music.pick(rng.run_seed)
 	start_sector = clampi(start_sector, 1, sectors.count())
 	sector = start_sector
 	_start_y = _player.position.y
@@ -65,12 +72,14 @@ func _ready() -> void:
 	var def: SectorDef = sectors.def_at(sector)
 	_player.tuning = tuning
 	_player.climb_speed = def.climb_speed
-	_conductor.set_tempo(def.bpm, 0.0)
+	_conductor.track = track
+	if track != null:
+		_conductor.set_tempo(track.bpm, 0.0)
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_corridor.set_tint(def.ambient_color, true)
-	_chunks.setup(rng, tuning, sectors, start_sector, _start_y)
+	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
 	_player.near_missed.connect(_on_near_missed)
 	_pressure.setup(tuning.wall_start_distance, tuning.wall_max_distance, def.wall_creep)
@@ -100,16 +109,16 @@ func _physics_process(delta: float) -> void:
 		Events.height_changed.emit(meters)
 
 
-## Hız basamağı: yeni sektörün hızı ve temposu. Oyuncu bu adımda sınırı biraz aşmıştır; yeni
-## ızgaranın başlangıç anı, bu payın yeni hızla alınacağı süre kadar geriye çekilir. Böylece yeni
-## sektördeki engeller de tam vuruş anlarında geçer.
+## Hız basamağı. Oyuncu bu adımda sınırı eski hızla biraz aşmıştır; konumu, sınırı geçtiği andan
+## beri yeni hızla tırmanmış gibi düzeltilir (en çok 1–2 px). Böylece oyuncu her an
+## ChunkSpawner'ın hesapladığı yerdedir ve yeni sektörün engelleri de tam vuruş anlarında geçer.
 func _enter_sector(next: int) -> void:
 	var def: SectorDef = sectors.def_at(next)
-	var overshoot: float = _next_boundary_y - _player.position.y
+	var past: float = (_next_boundary_y - _player.position.y) / sectors.def_at(sector).climb_px()
+	_player.position.y = _next_boundary_y - past * def.climb_px()
 	sector = next
 	_player.climb_speed = def.climb_speed
 	_pressure.creep = def.wall_creep
-	_conductor.set_tempo(def.bpm, _conductor.run_time - overshoot / def.climb_px())
 	_next_boundary_y = _boundary_y(next)
 	_corridor.set_tint(def.ambient_color)
 	Events.sector_entered.emit(next)

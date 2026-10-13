@@ -158,6 +158,7 @@
 **Kapanış**
 
 - [x] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi. M2-07'den: metronom kulak testi (dikenler tıkla aynı anda mı geçiyor, tık geç mi kalıyor? S-03). *(2026-10-13: kullanıcı "her şey güzel görünüyor" dedi. Testte bulunan hızlı çift dokunuş sorunu düzeltildi, ADR-036.)*
+- [x] **M2-20** 🤖 Müzik (kullanıcı isteği, 2026-10-13; M2-19'dan önce yapıldı): beş parça her turda rastgele, turun temposu parçanın (ADR-040). `MusicTrack` / `MusicCatalog`, `tools/music_prep.py` (ilk vuruşa kırpma, tam ölçü döngü), metronomun yerine parça, sektör geçişinde ızgara kesintisiz, doğrulayıcı her tempoda.
 - [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır.
 
 ## M3 — Görsel ve işitsel kimlik
@@ -173,7 +174,7 @@
 - [ ] **M3-07** 🤖 Kıl payı yavaş çekimi (müzikle birlikte) + "KIL PAYI!" + kombo göstergesi
 - [ ] **M3-08** 🤖 Hız hissi efektleri: paralaks, hız çizgileri
 - [ ] **M3-09** 🤝 Ses efektleri (D-05'e göre üretim)
-- [ ] **M3-10** 🤝 Sektör müzikleri: insan yapımı, ücretsiz (CC0 / CC-BY) hibrit orkestral parçalar (ADR-039; ana tema adayları `docs/music_research.md` §12, yapay zekâ yedek). Claude sektör başına adayları ölçerek hazırlar, kullanıcı dinleyip seçer; sektör BPM'leri seçilen parçalara göre ayarlanır + gerçek müzikle ritim senkronu: sektör geçişi ölçü sınırında, katman varsa kombo/duvar olaylarıyla katman değişimi, yoksa duvar yaklaşınca filtre
+- [ ] **M3-10** 🤝 Müzik inceltmesi (parçalar M2-20'de geldi, ADR-040): kulak testi (engel–müzik senkronu, döngü dikişleri, ses düzeyleri), gerekirse parça başına küçük kayma ayarı, yeni parça eklemek (`tools/music_prep.py`); sektör BPM'leri seçilen parçalara göre ayarlanır + gerçek müzikle ritim senkronu: sektör geçişi ölçü sınırında, katman varsa kombo/duvar olaylarıyla katman değişimi, yoksa duvar yaklaşınca filtre
 - [ ] **M3-11** 🤝 Font seçimi (S-06) + HUD stili; sektör renklerinin kesinleşmesi
 - [ ] **M3-12** 🤖 Redmi'de performans kontrolü (kare süresi ≤ 10 ms)
 - [ ] **M3-13** 🤝 Oyun testi (sesi açık) + Planlama Gözden Geçirmesi → 🚪

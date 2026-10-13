@@ -6,16 +6,20 @@ extends Node
 ## Run her fizik adımında advance() çağırır (aşağı çağrı); böylece run_time oyuncunun konumuyla
 ## aynı adımda ilerler. Oyuncu turun başındaki yüksekliğinden vuruş ızgarasıyla tırmandığı için
 ## yarım vuruşa oturan engeller tam vuruş anlarında geçer (§8.2).
-## Sektör değişince Run set_tempo() ile yeni tempoyu ve vuruş ızgarasının başlangıç anını verir;
-## vuruşlar o andan sayılır (M2-08).
-## Ses AudioManager'dadır (servis çağrısı); Conductor sahneye ses düğümü eklemez.
+## Tempo turun müzik parçasından gelir ve tur boyunca değişmez (ADR-040): Run turun başında
+## track ve set_tempo() verir; ızgara turun başından kesintisiz sürer, sektör geçişi onu bozmaz.
+## Ses AudioManager'dadır (servis çağrısı); Conductor sahneye ses düğümü eklemez. Her adımda
+## çalınacak parçayı ve vuruş saatini bildirir (track yoksa sessiz).
 
 const SECONDS_PER_MINUTE: float = 60.0
 ## Kayan nokta payı: vuruş anına tam denk gelen adım o vuruşu sayar.
 const BEAT_EPSILON: float = 0.000001
 
-## Sektörün temposu (vuruş/dk). Run, sektörden set_tempo() ile verir.
+## Turun temposu (vuruş/dk). Run, parçadan set_tempo() ile verir.
 @export var bpm: float = 100.0
+
+## Turun müzik parçası (Run verir; testlerde boş kalabilir).
+var track: MusicTrack = null
 
 ## Turun başından beri geçen oyun zamanı (sn, Engine.time_scale ile ölçeklenmiş).
 var run_time: float = 0.0
@@ -52,4 +56,4 @@ func advance(delta: float) -> void:
 		_tempo_beats += 1
 		beat_index += 1
 		Events.beat.emit(beat_index)
-	AudioManager.sync_beat_clock(beat_time(), bpm)
+	AudioManager.sync_beat_clock(beat_time(), track)

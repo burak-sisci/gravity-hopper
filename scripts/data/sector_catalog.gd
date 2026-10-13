@@ -38,9 +38,10 @@ func sector_at(height_m: float) -> int:
 	return sectors.size()
 
 
-## Bütün sektörler içinde en kısa vuruş boyu (px); havuzlar en kötü duruma göre kurulur.
-func min_beat_px() -> float:
+## Verilen tempoda bütün sektörler içinde en kısa vuruş boyu (px); havuzlar en kötü duruma göre
+## kurulur.
+func min_beat_px(bpm: float) -> float:
 	var result: float = INF
 	for def: SectorDef in sectors:
-		result = minf(result, def.beat_px())
+		result = minf(result, def.beat_px(bpm))
 	return result

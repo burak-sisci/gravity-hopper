@@ -1,10 +1,11 @@
 extends GdUnitTestSuite
-## Sektör ilerleyişi (M2-08, architecture.md §8.2–8.3): hız basamağı, Events.sector_entered,
-## tempo değişimi ve her sektörde dikenlerin yarım vuruş anında geçmesi. Gerçek S1–S3'ün hız ve
-## temposu, kısa boylarla (150 m) denenir.
+## Sektör ilerleyişi (M2-08, architecture.md §8.2–8.3): hız basamağı, Events.sector_entered ve
+## her sektörde dikenlerin müziğin yarım vuruş anında geçmesi. Tempo turun parçasından gelir ve
+## sektör geçişinde değişmez (M2-20). Gerçek S1–S3'ün hızı, kısa boylarla (150 m) denenir.
 
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
+const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SHORT_LENGTH: float = 150.0
 const DT: float = 1.0 / 60.0
@@ -22,27 +23,39 @@ func after_test() -> void:
 	Events.debug_invincibility_changed.emit(false)
 
 
-func test_speed_steps_and_spikes_stay_on_beat() -> void:
-	var run: Run = _start(1)
+func test_spikes_stay_on_music_beat_at_fastest_tempo() -> void:
+	await _check_sectors_on_beat(&"epic_departure")
+
+
+func test_spikes_stay_on_music_beat_at_slowest_tempo() -> void:
+	await _check_sectors_on_beat(&"determined_pursuit")
+
+
+## Tur tek parçayla (verilen id) S1'den S3'e tırmanır: her sektörde adım sabit, tempo tur boyunca
+## parçanınki ve her diken, turun başından sayılan müzik ızgarasında yarım vuruş anında geçer.
+func _check_sectors_on_beat(track_id: StringName) -> void:
+	var run: Run = _start(1, track_id)
 	var player: Node2D = run.get_node("%Player") as Node2D
 	var conductor: Conductor = run.get_node("%Conductor") as Conductor
 	var spawner: ChunkSpawner = run.get_node("%ChunkSpawner") as ChunkSpawner
 	var speeds: Dictionary[int, float] = {}
 	var passes: Dictionary[int, int] = {1: 0, 2: 0, 3: 0}
+	var entered_at: Dictionary[int, float] = {1: 0.0}
 	# await physics_frame adım işlenmeden döner; ölçüm ilk tam adımdan sonra başlar.
 	await _frames(2)
 	var previous_y: float = player.position.y
 	var previous_sector: int = run.sector
 	for frame: int in 2100:
 		await get_tree().physics_frame
-		# Run oyuncudan sonra çalışır: bu karedeki adımı, önceki karenin sonundaki sektörün hızı
-		# belirler (sınır karesinde oyuncu hâlâ eski hızla ilerlemiştir).
 		var step: float = previous_y - player.position.y
-		if not speeds.has(previous_sector):
-			speeds[previous_sector] = step
+		if run.sector != previous_sector:
+			# Sınır karesi: Run, oyuncunun sınırı eski hızla aştığı payı yeni hıza göre düzeltir.
+			entered_at[run.sector] = conductor.run_time
+		elif not speeds.has(run.sector):
+			speeds[run.sector] = step
 		else:
 			# Adım tam sabit (Player, kaymanın dikey payını geri alır; M2-10).
-			assert_float(step).is_equal_approx(speeds[previous_sector], 0.002)
+			assert_float(step).is_equal_approx(speeds[run.sector], 0.002)
 		previous_sector = run.sector
 		var half_beat: float = conductor.beat_length() * 0.5
 		for chunk: ChunkInfo in spawner.active_chunks():
@@ -53,8 +66,9 @@ func test_speed_steps_and_spikes_stay_on_beat() -> void:
 					var t: float = conductor.beat_time()
 					# Nefes alma (M2-09): yeni sektörün ilk 2,5 sn'sinde diken geçmez.
 					if run.sector > 1:
-						assert_float(t).override_failure_message(
-								"S%d'ye girdikten %.2f sn sonra diken" % [run.sector, t]
+						var since: float = conductor.run_time - entered_at[run.sector]
+						assert_float(since).override_failure_message(
+								"S%d'ye girdikten %.2f sn sonra diken" % [run.sector, since]
 						).is_greater_equal(2.5)
 					var off: float = absf(t - roundf(t / half_beat) * half_beat)
 					assert_float(off).override_failure_message(
@@ -68,7 +82,10 @@ func test_speed_steps_and_spikes_stay_on_beat() -> void:
 				SECTORS.def_at(sector).climb_px() * DT, 0.001)
 		assert_int(passes[sector]).override_failure_message(
 				"S%d'de diken geçişi yok" % sector).is_greater(0)
-	assert_float(conductor.bpm).is_equal(SECTORS.def_at(3).bpm)
+	# Tempo tur boyunca parçanın temposu; ızgara sektör geçişinde yeniden başlamaz.
+	assert_str(String(run.track.id)).is_equal(String(track_id))
+	assert_float(conductor.bpm).is_equal(run.track.bpm)
+	assert_float(conductor.beat_time()).is_equal_approx(conductor.run_time, 0.000001)
 	# Geçici palet tonu S3'ün rengine geçti (geçiş 0,6 sn, S3'e çok önce girildi).
 	var corridor: Corridor = run.get_node("%Corridor") as Corridor
 	assert_bool(corridor.tint().is_equal_approx(SECTORS.def_at(3).ambient_color)).is_true()
@@ -91,8 +108,15 @@ func test_start_sector_sets_height_and_speed() -> void:
 	assert_int(heights[heights.size() - 1]).is_equal(int(SHORT_LENGTH) + 14)
 
 
-func _start(sector: int) -> Run:
+## Turu kısa sektörlerle kurar; track_id verilirse tur yalnızca o parçayı çalabilir.
+func _start(sector: int, track_id: StringName = &"") -> Run:
 	var run: Run = auto_free(RUN_SCENE.instantiate()) as Run
+	if track_id != &"":
+		var only: MusicCatalog = MusicCatalog.new()
+		for track: MusicTrack in MUSIC.tracks:
+			if track.id == track_id:
+				only.tracks.append(track)
+		run.music = only
 	run.tuning = ResourceLoader.load(
 			TUNING_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as TuningConfig
 	var sectors: SectorCatalog = SectorCatalog.new()

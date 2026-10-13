@@ -1,29 +1,39 @@
 extends GdUnitTestSuite
-## Metronom döngüsü (M2-07, architecture.md §8.3): bir ölçü, ilk vuruşta tık, döngü sonundan
-## sonra sessiz pay (Android'deki çökmenin önlemi).
+## Müzik çalma (M2-20, architecture.md §8.3): tur başlayınca vuruş saatinin bildirdiği parça
+## çalara konur ve döngüsü loop_start'tan kurulur; oyuncu ölünce durur, yeni turda yeniden kurulur.
 
-## Statik fonksiyon autoload örneğinden değil, betiğin kendisinden çağrılır.
-const AudioManagerScript := preload("res://scripts/autoloads/audio_manager.gd")
-
-
-func test_metronome_is_one_bar_with_tail() -> void:
-	var stream: AudioStreamWAV = AudioManagerScript.make_metronome(100.0)
-	# 100 BPM: vuruş 0,6 sn = 26460 örnek; ölçü 4 vuruş.
-	assert_int(stream.loop_end).is_equal(4 * 26460)
-	assert_int(stream.loop_mode).is_equal(AudioStreamWAV.LOOP_FORWARD)
-	var tail: int = AudioManagerScript.LOOP_TAIL_SAMPLES
-	assert_int(stream.data.size()).is_equal((stream.loop_end + tail) * 2)
-	assert_float(stream.get_length()).is_greater(2.4)
+const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 
 
-func test_metronome_clicks_on_beats_and_tail_is_silent() -> void:
-	var stream: AudioStreamWAV = AudioManagerScript.make_metronome(120.0)
-	# 120 BPM: vuruş 22050 örnek; yarısında tık çoktan sönmüş olmalı.
-	var beat: int = 22050
-	var half_beat: int = 11025
-	for i: int in 4:
-		# Tık sinüsü 0'dan başlar; ilk birkaç örnekte ses yükselir.
-		assert_int(absi(stream.data.decode_s16((i * beat + 5) * 2))).is_greater(1000)
-		assert_int(stream.data.decode_s16((i * beat + half_beat) * 2)).is_equal(0)
-	for i: int in AudioManagerScript.LOOP_TAIL_SAMPLES:
-		assert_int(stream.data.decode_s16((stream.loop_end + i) * 2)).is_equal(0)
+func after_test() -> void:
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+
+
+func test_run_plays_the_reported_track_with_its_loop() -> void:
+	var track: MusicTrack = _track(&"epic_departure")
+	Events.run_started.emit(1, 1)
+	AudioManager.sync_beat_clock(0.0, track)
+	assert_object(AudioManager.current_track()).is_same(track)
+	var ogg: AudioStreamOggVorbis = track.stream as AudioStreamOggVorbis
+	assert_bool(ogg.loop).is_true()
+	assert_float(ogg.loop_offset).is_equal(track.loop_start)
+
+
+func test_new_run_sets_the_track_again_and_death_silences() -> void:
+	Events.run_started.emit(1, 1)
+	AudioManager.sync_beat_clock(0.0, _track(&"treasure_hunter"))
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	# Ölümden sonra bildirilen saat yok sayılır.
+	AudioManager.sync_beat_clock(1.0, _track(&"mountain_peak"))
+	assert_str(String(AudioManager.current_track().id)).is_equal("treasure_hunter")
+	Events.run_started.emit(2, 1)
+	assert_object(AudioManager.current_track()).is_null()
+	AudioManager.sync_beat_clock(0.0, _track(&"mountain_peak"))
+	assert_str(String(AudioManager.current_track().id)).is_equal("mountain_peak")
+
+
+func _track(id: StringName) -> MusicTrack:
+	for track: MusicTrack in MUSIC.tracks:
+		if track.id == id:
+			return track
+	return null

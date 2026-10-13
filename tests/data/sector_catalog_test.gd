@@ -6,14 +6,12 @@ const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 
 func test_values_match_design() -> void:
 	assert_int(SECTORS.count()).is_equal(3)
-	var expected: Array[Vector3] = [
-		Vector3(100, 12, 750), Vector3(110, 14, 1000), Vector3(120, 16, 1500),
-	]
+	# Hız (m/sn) ve boy (m). Tempo sektörde değil, turun müzik parçasında (M2-20).
+	var expected: Array[Vector2] = [Vector2(12, 750), Vector2(14, 1000), Vector2(16, 1500)]
 	for i: int in expected.size():
 		var def: SectorDef = SECTORS.def_at(i + 1)
-		assert_float(def.bpm).is_equal(expected[i].x)
-		assert_float(def.climb_speed).is_equal(expected[i].y)
-		assert_float(def.length).is_equal(expected[i].z)
+		assert_float(def.climb_speed).is_equal(expected[i].x)
+		assert_float(def.length).is_equal(expected[i].y)
 		assert_str(String(def.name_key)).is_equal("SECTOR_%d_NAME" % (i + 1))
 		assert_int(def.min_difficulty).is_less_equal(def.max_difficulty)
 
@@ -41,7 +39,8 @@ func test_names_are_translated() -> void:
 
 
 func test_beat_sizes() -> void:
-	# S1: 600 px/sn × 0,6 sn = 360 px; S3: 800 px/sn × 0,5 sn = 400 px.
-	assert_float(SECTORS.def_at(1).beat_px()).is_equal_approx(360.0, 0.001)
-	assert_float(SECTORS.def_at(3).beat_px()).is_equal_approx(400.0, 0.001)
-	assert_float(SECTORS.min_beat_px()).is_equal_approx(360.0, 0.001)
+	# S1 100 BPM: 600 px/sn × 0,6 sn = 360 px; S3 120 BPM: 800 px/sn × 0,5 sn = 400 px.
+	assert_float(SECTORS.def_at(1).beat_px(100.0)).is_equal_approx(360.0, 0.001)
+	assert_float(SECTORS.def_at(3).beat_px(120.0)).is_equal_approx(400.0, 0.001)
+	# En kısa vuruş en yavaş sektörde: 120 BPM'de S1 600 px/sn × 0,5 sn.
+	assert_float(SECTORS.min_beat_px(120.0)).is_equal_approx(300.0, 0.001)

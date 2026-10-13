@@ -5,7 +5,6 @@
 [resource]
 script = ExtResource("1_sector")
 name_key = &"SECTOR_2_NAME"
-bpm = 110.0
 climb_speed = 14.0
 wall_creep = 0.425
 length = 1000.0

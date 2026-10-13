@@ -8,6 +8,8 @@ const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigzag_01.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
+## Denemelerin turu 100 BPM'lik bir parçayla çalar (M2-20: tempo turun parçasından).
+const TEMPO: float = 100.0
 ## S1 vuruşu: 12 m/sn, 100 BPM → 360 px.
 const S1_BEAT_PX: float = 360.0
 const HALF_WIDTH: float = 450.0
@@ -85,28 +87,30 @@ func test_chunks_outside_sector_are_not_chosen() -> void:
 	_scroll(spawner, 0.0, SCROLL_PX, VIEW_HEIGHT)
 	# S1'de yalnızca örnek parça (8 vuruş) seçilebilir.
 	assert_array(_chunk_heights(spawner)).not_contains([4.0 * S1_BEAT_PX])
-	# S2'den başlayan turda 4 vuruşluk parça da gelir (S2 vuruşu 381,82 px).
+	# S2'den başlayan turda 4 vuruşluk parça da gelir (S2 hızında 100 BPM'de vuruş 420 px).
 	var in_s2: ChunkSpawner = _make(library, 9, 2)
 	_scroll(in_s2, 0.0, SCROLL_PX, VIEW_HEIGHT)
-	var s2_four_beats: float = snappedf(4.0 * SECTORS.def_at(2).beat_px(), 0.01)
+	var s2_four_beats: float = snappedf(4.0 * SECTORS.def_at(2).beat_px(TEMPO), 0.01)
 	assert_array(_chunk_heights(in_s2)).contains([s2_four_beats])
 
 
 func test_chunks_stop_at_sector_boundary() -> void:
-	# Kısa sektörler: S1 ve S2 100'er m. Parça sınırı aşmaz; S2 tam sınırdan, kendi vuruşuyla başlar.
+	# Kısa sektörler: S1 ve S2 100'er m. Parça sınırı aşmaz. Tempo tur boyunca aynı (100 BPM);
+	# S2'nin parçaları, oyuncunun oraya turun başından sayılan tam vuruşlarda varacağı yerdedir.
 	var sectors: SectorCatalog = _short_sectors(100.0)
 	var spawner: ChunkSpawner = auto_free(ChunkSpawner.new()) as ChunkSpawner
 	spawner.library = LIBRARY
 	add_child(spawner)
-	spawner.setup(RunRng.new(5), _tuning(), sectors, 1, 0.0)
+	spawner.setup(RunRng.new(5), _tuning(), sectors, 1, 0.0, TEMPO)
 	_scroll(spawner, 0.0, SCROLL_PX, VIEW_HEIGHT)
 	assert_int(spawner.placement_sector()).is_equal(3)
 	var s1_end: float = -TuningConfig.to_px(100.0)
 	var s2_end: float = -TuningConfig.to_px(200.0)
-	var s2_beat: float = sectors.def_at(2).beat_px()
-	# Nefes alma: 2,5 sn × 700 px/sn = 1750 px → 4,58 vuruş → 5 vuruş boş (M2-09).
-	var breath_beats: float = ceilf(sectors.def_at(2).climb_px() * 2.5 / s2_beat)
-	assert_float(breath_beats).is_equal(5.0)
+	var s2_px: float = sectors.def_at(2).climb_px()
+	var beat_length: float = 60.0 / TEMPO
+	# S1'in sonuna 100 m / 12 m/sn = 8,33 sn'de varılır; nefes alma 2,5 sn → 10,83 sn → ilk tam
+	# vuruş 19. vuruş (11,4 sn). S2'nin ilk parçası sınırın (11,4 − 8,33) sn × 700 px/sn üstünde.
+	var boundary_time: float = 100.0 / 12.0
 	var started_s2: bool = false
 	for i: int in spawner.placed_bottoms.size():
 		var bottom: float = spawner.placed_bottoms[i]
@@ -114,18 +118,20 @@ func test_chunks_stop_at_sector_boundary() -> void:
 			continue
 		if not started_s2:
 			started_s2 = true
-			assert_float(bottom).is_equal_approx(s1_end - breath_beats * s2_beat, 0.01)
+			assert_float(bottom).is_equal_approx(
+					s1_end - (19.0 * beat_length - boundary_time) * s2_px, 0.01)
 		if bottom > s2_end + 0.01:
-			# S2'deki her parça S2 ızgarasında ve S2'nin sonunu aşmıyor.
-			var beats: float = (s1_end - bottom) / s2_beat
-			assert_float(beats).is_equal_approx(roundf(beats), 0.001)
+			# Oyuncu S2'deki her parçaya tam vuruşta varır.
+			var beats: float = (boundary_time + (s1_end - bottom) / s2_px) / beat_length
+			assert_float(beats).is_equal_approx(roundf(beats), 0.0001)
 	assert_bool(started_s2).is_true()
 	# Hiçbir parça bir sınırın iki yanına taşmaz (üst kenar, parçanın kendi boyundan).
 	var lengths: Dictionary[StringName, int] = _library_lengths()
 	for i: int in spawner.placed_bottoms.size():
 		var bottom: float = spawner.placed_bottoms[i]
 		var sector: int = 1 if bottom > s1_end + 0.01 else (2 if bottom > s2_end + 0.01 else 3)
-		var top: float = bottom - lengths[spawner.placed_names[i]] * sectors.def_at(sector).beat_px()
+		var beat: float = sectors.def_at(sector).beat_px(TEMPO)
+		var top: float = bottom - lengths[spawner.placed_names[i]] * beat
 		for edge: float in [s1_end, s2_end]:
 			assert_bool(bottom > edge + 0.01 and top < edge - 0.01).is_false()
 
@@ -202,7 +208,7 @@ func _make(library: ChunkLibrary, run_seed: int, sector: int = 1) -> ChunkSpawne
 	var spawner: ChunkSpawner = auto_free(ChunkSpawner.new()) as ChunkSpawner
 	spawner.library = library
 	add_child(spawner)
-	spawner.setup(RunRng.new(run_seed), _tuning(), SECTORS, sector, 0.0)
+	spawner.setup(RunRng.new(run_seed), _tuning(), SECTORS, sector, 0.0, TEMPO)
 	return spawner
 
 

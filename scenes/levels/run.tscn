@@ -11,12 +11,14 @@
 [ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="9_sectors"]
 [ext_resource type="Script" path="res://scripts/systems/pressure_system.gd" id="10_pressure"]
 [ext_resource type="PackedScene" path="res://scenes/entities/collapse_wall.tscn" id="11_wall"]
+[ext_resource type="Resource" path="res://data/music/music_catalog.tres" id="12_music"]
 
 [node name="Run" type="Node2D"]
 process_physics_priority = 1
 script = ExtResource("1_run")
 tuning = ExtResource("2_tuning")
 sectors = ExtResource("9_sectors")
+music = ExtResource("12_music")
 
 [node name="Conductor" type="Node" parent="."]
 unique_name_in_owner = true

@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Parça doğrulayıcısı (M2-05, architecture.md §8.2): adil parçayı geçirir, çözülemeyeni,
-## fazla sıkışığı ve kenara taşanı yakalar; kamera kuralı ve sektör kapsamı.
+## fazla sıkışığı ve kenara taşanı yakalar; kamera kuralı ve sektör kapsamı. Tek sektör denemeleri
+## M2-20 öncesindeki sektör tempolarıyla (S1 100, S2 110, S3 120 BPM) yapılır.
 
 const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigzag_01.tscn")
 const UNSOLVABLE_SCENE: PackedScene = preload("res://tools/fixtures/chunk_unsolvable.tscn")
@@ -9,6 +10,7 @@ const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
 const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
+const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 const LEFT: float = -450.0
 const RIGHT: float = 450.0
 
@@ -16,7 +18,7 @@ var _validator: ChunkValidator
 
 
 func before_test() -> void:
-	_validator = ChunkValidator.new(_tuning(), ChunkValidator.player_body_size(), SECTORS)
+	_validator = ChunkValidator.new(_tuning(), ChunkValidator.player_body_size(), SECTORS, MUSIC)
 
 
 func test_reads_player_body_from_scene() -> void:
@@ -32,15 +34,15 @@ func test_both_walls_blocked_is_caught() -> void:
 	# İki duvar bir vuruş boyunca dikenli: tek geçiş bu kadar uzun havada kalamaz.
 	var chunk: ChunkInfo = auto_free(UNSOLVABLE_SCENE.instantiate()) as ChunkInfo
 	var errors: PackedStringArray = _validator.chunk_errors(chunk)
-	# Katalogdaki her sektörde (S1–S3) geçilemez.
-	assert_int(errors.size()).is_equal(3)
+	# Katalogdaki her sektörde (S1–S3) ve her müzik temposunda geçilemez.
+	assert_int(errors.size()).is_equal(3 * MUSIC.tempos().size())
 	assert_str(errors[0]).starts_with("S1").contains("geçilemiyor").contains("Spike")
 
 
 func test_spike_pair_can_be_passed_mid_flip() -> void:
 	# Aynı yükseklikte iki duvarda diken: geçişin ortasında aralarından süzülmek mümkün.
 	var chunk: ChunkInfo = _chunk(6, [Vector3(LEFT, -300, 1), Vector3(RIGHT, -300, -1)])
-	assert_array(_validator.sector_errors(chunk, 3)).is_empty()
+	assert_array(_validator.sector_errors(chunk, 3, 120.0)).is_empty()
 
 
 func test_flips_too_close_fail_at_high_speed() -> void:
@@ -51,7 +53,7 @@ func test_flips_too_close_fail_at_high_speed() -> void:
 		Vector3(LEFT, -200, 1), Vector3(RIGHT, -250, -1), Vector3(LEFT, -300, 1),
 		Vector3(RIGHT, -350, -1), Vector3(LEFT, -400, 1),
 	])
-	assert_array(_validator.sector_errors(chunk, 3)).is_not_empty()
+	assert_array(_validator.sector_errors(chunk, 3, 120.0)).is_not_empty()
 	# Aynı dikenler iki vuruş arayla her sektörde adil.
 	var relaxed: ChunkInfo = _chunk(8, [
 		Vector3(LEFT, -200, 1), Vector3(RIGHT, -400, -1), Vector3(LEFT, -600, 1),
@@ -62,14 +64,14 @@ func test_flips_too_close_fail_at_high_speed() -> void:
 func test_hazard_right_after_chunk_start_is_unfair() -> void:
 	# Önceki parçadan yarım geçişle gelen oyuncu bu dikenden kaçamaz (birleşim yeri kuralı).
 	var chunk: ChunkInfo = _chunk(4, [Vector3(LEFT, -50, 1)])
-	var errors: PackedStringArray = _validator.sector_errors(chunk, 1)
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 1, 100.0)
 	assert_array(errors).is_not_empty()
 	assert_str(errors[0]).contains("Spike0")
 
 
 func test_hazard_crossing_chunk_edge_is_caught() -> void:
 	var chunk: ChunkInfo = _chunk(4, [Vector3(LEFT, 0, 1)])
-	assert_str(_validator.sector_errors(chunk, 1)[0]).contains("taşıyor")
+	assert_str(_validator.sector_errors(chunk, 1, 100.0)[0]).contains("taşıyor")
 
 
 func test_gaps_on_both_walls_are_caught() -> void:
@@ -78,7 +80,7 @@ func test_gaps_on_both_walls_are_caught() -> void:
 	chunk.min_sector = 2
 	_add_gap(chunk, LEFT, -200, 300.0)
 	_add_gap(chunk, RIGHT, -200, 300.0)
-	var errors: PackedStringArray = _validator.sector_errors(chunk, 2)
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 2, 110.0)
 	assert_array(errors).is_not_empty()
 	assert_str(errors[0]).contains("Gap")
 
@@ -100,13 +102,13 @@ func test_closed_laser_gate_depends_on_phase() -> void:
 	_add_laser(lit, LEFT, -300, 450.0, 0.0)
 	_add_laser(lit, RIGHT, -300, 450.0, 0.0)
 	# Vuruşta yanıyor: oyuncu geçerken açık, geçilemez.
-	assert_array(_validator.sector_errors(lit, 3)).is_not_empty()
+	assert_array(_validator.sector_errors(lit, 3, 120.0)).is_not_empty()
 	var dark: ChunkInfo = _chunk(6, [])
 	dark.min_sector = 3
 	_add_laser(dark, LEFT, -300, 450.0, 0.5)
 	_add_laser(dark, RIGHT, -300, 450.0, 0.5)
 	# Yarım vuruşta yanıyor: oyuncu tam vuruşta geçerken kapalı, zararsız (aldatıcı lazer).
-	assert_array(_validator.sector_errors(dark, 3)).is_empty()
+	assert_array(_validator.sector_errors(dark, 3, 120.0)).is_empty()
 
 
 func test_laser_needs_its_sector() -> void:
@@ -127,7 +129,7 @@ func test_glimmer_rules() -> void:
 	_add_glimmer(chunk, -450, -300)
 	_add_glimmer(chunk, 400, -750)
 	_add_glimmer(chunk, 400, -300)
-	var errors: PackedStringArray = _validator.sector_errors(chunk, 1)
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 1, 100.0)
 	assert_int(errors.size()).is_equal(2)
 	if errors.size() < 2:
 		return
@@ -140,7 +142,7 @@ func test_view_rule_uses_lookahead() -> void:
 	var short_view: TuningConfig = _tuning()
 	short_view.lookahead = 15.0
 	var errors: PackedStringArray = ChunkValidator.new(
-			short_view, ChunkValidator.player_body_size(), SECTORS).view_errors()
+			short_view, ChunkValidator.player_body_size(), SECTORS, MUSIC).view_errors()
 	# 15 m ileri görüş: S1'de 1,20 sn yeter, S2'de 1,03 sn ve S3'te 0,90 sn yetmez.
 	assert_int(errors.size()).is_equal(2)
 	assert_str(errors[0]).starts_with("S2")

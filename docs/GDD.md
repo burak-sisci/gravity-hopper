@@ -158,15 +158,17 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 ## 12. Sektörler ve ilerleme hissi
 
-| # | Ad (TR / EN) | Çevre rengi | BPM | Tırmanış hızı | Uzunluk | Bitiş yüksekliği | Yeni öğe |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| S1 | ÖNYÜKLEME / BOOT SEQUENCE | Camgöbeği | 100 | 12 m/sn | 750 m | 750 m | Diken |
-| S2 | VERİ AKIŞI / DATA STREAM | Mor | 110 | 14 m/sn | 1000 m | 1750 m | Boşluk, veri bloğu |
-| S3 | GÜVENLİK DUVARI / FIREWALL | Kehribar | 120 | 16 m/sn | 1500 m | 3250 m | Lazer kapısı |
-| S4 | ÇEKİRDEK / KERNEL | Eflatun | 128 | 18 m/sn | 1750 m | 5000 m | Dönen şekil, hareketli blok |
-| S5 | BOZULMA / CORRUPTION | Beyaz + glitch | 140 | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
-| ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | — | 7500 m | Final anı + başarım izi |
-| ∞ | TAŞMA / OVERFLOW | Döngüsel | 140+ | 22 m/sn (tavan) | Sonsuz | — | Remiks desenler |
+| # | Ad (TR / EN) | Çevre rengi | Tırmanış hızı | Uzunluk | Bitiş yüksekliği | Yeni öğe |
+| --- | --- | --- | --- | --- | --- | --- |
+| S1 | ÖNYÜKLEME / BOOT SEQUENCE | Camgöbeği | 12 m/sn | 750 m | 750 m | Diken |
+| S2 | VERİ AKIŞI / DATA STREAM | Mor | 14 m/sn | 1000 m | 1750 m | Boşluk, veri bloğu |
+| S3 | GÜVENLİK DUVARI / FIREWALL | Kehribar | 16 m/sn | 1500 m | 3250 m | Lazer kapısı |
+| S4 | ÇEKİRDEK / KERNEL | Eflatun | 18 m/sn | 1750 m | 5000 m | Dönen şekil, hareketli blok |
+| S5 | BOZULMA / CORRUPTION | Beyaz + glitch | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
+| ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | 7500 m | Final anı + başarım izi |
+| ∞ | TAŞMA / OVERFLOW | Döngüsel | 22 m/sn (tavan) | Sonsuz | — | Remiks desenler |
+
+**Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, beş müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (80–120 BPM). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
 
 **Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Kesin renkler M3'te birlikte seçilecek.
 
@@ -174,7 +176,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 1. Engeller durur; kısa bir boş koridor gelir.
 2. Ekranda sektör afişi belirir ("SEKTÖR 2 · VERİ AKIŞI").
-3. Renk dalgası aşağıdan yukarıya yayılır; müzik ölçü sınırında yeni parçaya geçer.
+3. Renk dalgası aşağıdan yukarıya yayılır; müzik kesilmeden sürer, yeni sektörün engelleri müziğin vuruşuyla başlar.
 4. Hız bir basamak artar; küçük bir Glimmer bonusu verilir.
 
 **Kontrol noktaları:**
@@ -186,7 +188,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 ## 13. Hız ve zorluk
 
-- **Hız, sektörle ve müzikle birlikte artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar.
+- **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (80 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
 - **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
@@ -244,7 +246,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 ## 16. Ritim
 
-- Her sektörün BPM'i bellidir. Engeller vuruşlara ve yarım vuruşlara yerleşir; dünya "müziğe göre akar".
+- Her turun temposu, çalan parçanınkidir (ADR-040). Engeller vuruşlara ve yarım vuruşlara yerleşir; dünya "müziğe göre akar".
 - **Dokunuşlar müziğe göre yargılanmaz.** Çarpışma konuma göre belirlenir; Android ses gecikmesi oyuncuyu cezalandırmaz.
 - **Sessiz oynayanlar için:** Oyuncuların büyük kısmı mobilde sesi kapalı oynar. Ritim görsel olarak da hissedilmeli: arka plan ağı ve duvar kenarları vuruşta nabız atar.
 
@@ -265,7 +267,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 ## 19. Ses ve his
 
 - **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları.
-- **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Oyunla özdeşleşecek bir **ana tema** parçası menüde ve S1'de çalar. Sonraki sektörler aynı tarzda, tercihen aynı besteciden kendi parçalarını çalar; yoğunluk sektörle artar. Sektör BPM'leri seçilen parçalara göre ayarlanır. Ayrıntı: `docs/music_research.md` §10.
+- **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Seçilen **beş parçanın hepsi** oyunda ve her tur birini rastgele çalar (kullanıcı kararı, 2026-10-13, ADR-040): Epic Journey, Mountain Peak, Treasure Hunter, Epic Departure, Determined Pursuit. Menü müziği M5'te. Ayrıntı: `docs/music_research.md` §12.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
 

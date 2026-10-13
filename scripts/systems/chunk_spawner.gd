@@ -4,9 +4,12 @@ extends Node2D
 ## alanı parçalarla dolu tutar; tamamen ekranın altına inen parça havuzuna döner. Parçalar art
 ## arda, boşluksuz dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır (vuruş ızgarası).
 ##
-## Sektörler (M2-08): her sektör kendi vuruş boyuyla dizilir ve ızgarası sektörün başladığı
-## yükseklikten başlar. Sektörün sonuna sığmayan kalan boş bırakılır; parça sınırı aşmaz.
-## Yeni sektör, tam vuruşa yuvarlanmış bir "nefes alma" boşluğuyla başlar (M2-09).
+## Sektörler (M2-08): her sektör kendi vuruş boyuyla dizilir (tempo turun, hız sektörün).
+## Sektörün sonuna sığmayan kalan boş bırakılır; parça sınırı aşmaz. Yeni sektör bir "nefes alma"
+## boşluğuyla başlar (M2-09); ilk parçası, oyuncunun oraya müziğin bir vuruşunda varacağı yere
+## konur (M2-20): vuruş ızgarası turun başından kesintisiz sürer, müzik sektör geçişinde kesilmez.
+## Oyuncu sınıra, önceki sektörlerin boy / hız toplamı kadar sürede varır (Run sınırda konumu
+## buna göre düzeltir).
 ##
 ## Zorluk eğrisi (M2-10): hedef zorluk, sektör içindeki ilerlemeyle SectorDef.min_difficulty'den
 ## max_difficulty'ye çıkar. Her parçanın ağırlığı zorluğunun hedefe yakınlığıyla çan eğrisi gibi
@@ -26,6 +29,8 @@ const AHEAD_SCREENS: float = 2.0
 const RELEASE_MARGIN: float = 100.0
 ## Sınır karşılaştırmalarında kayan nokta payı (px).
 const EDGE_EPSILON: float = 0.01
+## Vuruş sayısı yuvarlamasında kayan nokta payı.
+const BEAT_EPSILON: float = 0.000001
 
 ## Seçilebilecek parçalar.
 @export var library: ChunkLibrary
@@ -40,7 +45,11 @@ var placed_targets: Array[float] = []
 var _rng: RunRng
 var _tuning: TuningConfig
 var _sectors: SectorCatalog
-## Sıradaki parçanın yerleşeceği sektör (oyuncunun sektöründen önde gider).
+## Turun temposu (müzik parçasından).
+var _bpm: float = 100.0
+## Turun başladığı sektör ve sıradaki parçanın yerleşeceği sektör (oyuncunun sektöründen önde
+## gider).
+var _first_sector: int = 1
 var _sector: int = 1
 ## Başlangıç sektörünün başladığı yükseklik (m) ve dünyadaki y'si.
 var _base_height: float = 0.0
@@ -56,15 +65,17 @@ var _half_width: float = 0.0
 ## Havuzları kurar ve ilk parçanın yerini belirler. İlk parça, start_y'nin üstünde
 ## run_start_gap'e en yakın tam vuruş katında başlar (ızgara turun başından hizalı).
 func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sector: int,
-		start_y: float) -> void:
+		start_y: float, bpm: float) -> void:
 	_rng = rng
 	_tuning = tuning
 	_sectors = sectors
+	_bpm = bpm
+	_first_sector = start_sector
 	_sector = start_sector
 	_base_height = sectors.start_height(start_sector)
 	_start_y = start_y
 	# Kopya sayısı en kısa vuruşa (en sık parçaya) göre: alan / parça boyu + 1.
-	var min_beat: float = sectors.min_beat_px()
+	var min_beat: float = sectors.min_beat_px(bpm)
 	var span: float = Corridor.MAX_VIEW_HEIGHT * (1.0 + AHEAD_SCREENS) + RELEASE_MARGIN
 	for scene: PackedScene in library.chunks:
 		var pool: ObjectPool = ObjectPool.new(scene, self)
@@ -72,7 +83,7 @@ func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sect
 		pool.reserve(ceili(span / info.height_px(min_beat)) + 1)
 		_pools.append(pool)
 		_ids.append(StringName(scene.resource_path.get_file().get_basename()))
-	var beat: float = sectors.def_at(start_sector).beat_px()
+	var beat: float = sectors.def_at(start_sector).beat_px(bpm)
 	_next_bottom = start_y - ceilf(TuningConfig.to_px(tuning.run_start_gap) / beat) * beat
 
 
@@ -149,6 +160,16 @@ func _without_recent(fitting: Array[int]) -> Array[int]:
 	return result if not result.is_empty() else fitting
 
 
+## Oyuncunun sektörün sonuna vardığı oyun zamanı (sn): tur başlangıç sektörünün başında başlar,
+## her sektörde sabit hızla tırmanır.
+func _end_time(sector: int) -> float:
+	var result: float = 0.0
+	for index: int in range(_first_sector, sector + 1):
+		var def: SectorDef = _sectors.def_at(index)
+		result += def.length / def.climb_speed
+	return result
+
+
 ## Sektörün bittiği dünya y'si; son sektör bitmez (-INF).
 func _end_y(sector: int) -> float:
 	return _start_y - TuningConfig.to_px(_sectors.end_height(sector) - _base_height)
@@ -157,15 +178,17 @@ func _end_y(sector: int) -> float:
 func _place_next() -> bool:
 	var end_y: float = _end_y(_sector)
 	if _next_bottom <= end_y + EDGE_EPSILON:
-		# Sınıra varıldı: sonraki sektörün ızgarası tam sınırdan başlar; ilk parça nefes alma
-		# boşluğundan sonra, tam vuruşta.
+		# Sınıra varıldı: sonraki sektörün ilk parçası nefes alma boşluğundan sonraki ilk müzik
+		# vuruşunda (turun başından sayılan ızgarada) oyuncunun bulunacağı yere konur.
+		var boundary_time: float = _end_time(_sector)
 		_sector += 1
 		var next: SectorDef = _sectors.def_at(_sector)
-		var next_beat: float = next.beat_px()
-		var breath: float = next.climb_px() * _tuning.sector_breath
-		_next_bottom = end_y - ceilf(breath / next_beat - EDGE_EPSILON) * next_beat
+		var beat_length: float = Conductor.SECONDS_PER_MINUTE / _bpm
+		var first_beat: float = ceilf(
+				(boundary_time + _tuning.sector_breath) / beat_length - BEAT_EPSILON)
+		_next_bottom = end_y - (first_beat * beat_length - boundary_time) * next.climb_px()
 		return true
-	var beat: float = _sectors.def_at(_sector).beat_px()
+	var beat: float = _sectors.def_at(_sector).beat_px(_bpm)
 	var room: float = _next_bottom - end_y
 	var allowed: bool = false
 	var fitting: Array[int] = []

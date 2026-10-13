@@ -301,6 +301,7 @@
   - Sektör BPM'leri seçilen parçalara göre ayarlanır.
   - Döngüsü olmayan parçalarda döngü noktası ölçü sınırında seçilir (bitiş bölümü döngü için tasarlanmamış olabilir; kulakla denenir).
 - **Kredi biçimi (CC-BY):** "Epic Journey" – Thor Arisland (tcarisland), CC-BY 4.0, opengameart.org/content/epic-journey. CC0 parçalara da teşekkür olarak kredi yazılır.
+- **Uygulandı (M2-20, ADR-040):** Kullanıcı beş parçanın hepsini istedi: her tur birini rastgele çalar ve turun temposu o parçanınkidir (sektör tempoları kaldırıldı). Hazırlama `tools/music_prep.py`, atıflar `CREDITS.md`'de. Treasure Hunter 90 BPM, Determined Pursuit 80 BPM sayıldı (ölçümdeki 180 / 160 sekizlik nabız); kulak testinde doğrulanacak.
 
 ## Kaynaklar
 
