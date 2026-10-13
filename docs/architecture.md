@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-13 (M3-01 neon bileşenleri) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -100,6 +100,7 @@ gravity-hopper/
 │   ├── chunks/               # ChunkLibrary: oyundaki desen parçalarının listesi (M2-04)
 │   ├── music/                # MusicTrack (parça başına) + MusicCatalog (M2-20)
 │   ├── sectors/              # SectorDef + paletler
+│   ├── visual/               # NeonStyle: neon parlama değerleri, kaliteye göre katmanlar (M3-01)
 │   ├── upgrades/             # UpgradeDef
 │   └── trails/               # TrailDef (kozmetik izler)
 │
@@ -115,7 +116,7 @@ gravity-hopper/
 ├── scripts/                  # GDScript dosyaları (.gd)
 │   ├── main.gd               # Kök sahne betiği: debug build'de debug katmanını yükler
 │   ├── autoloads/            # Global servisler (bkz. §6)
-│   ├── components/           # Bağımsız parçalar: Hurtbox, GrazeDetector, Magnet…
+│   ├── components/           # Bağımsız parçalar: Hurtbox, GrazeDetector, Neon, NeonLine, NeonShape, Magnet…
 │   ├── entities/             # Varlık betikleri (sahnelerle aynı ad)
 │   ├── levels/               # run.gd, corridor.gd, chunk_info.gd (M2-03)
 │   ├── systems/              # ChunkSpawner, Conductor, PressureSystem, ObjectPool, RunRng
@@ -496,7 +497,11 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Parlama (glow): nesne başına sahte parlama (ADR-020).** Her neon nesne kendi parlamasını taşır. Parlama toplamsal karışımla (`CanvasItemMaterial.blend_mode = ADD`) çizilir ve yalnızca nesnenin çevresini boyar. Tam ekran efekt yoktur.
   - **Çizgiler** (duvar, iz) ve geniş açılı şekiller (blok): çizginin geniş kopyaları, enine yumuşak sönen bir dokuyla çizilir. İki katman var: 64 px / %35 ve 26 px / %70.
   - **Küçük, sivri köşeli şekiller** (diken, Glimmer, oyuncu): arkalarında dairesel bir ışık lekesi durur (`Sprite2D` + radyal `GradientTexture2D`). Çizgi kopyası bu şekillerde sivri köşelerde ve kapanma noktasında yay izi bırakıyor.
-  - Teknik ve başlangıç değerleri `scripts/debug/glow_bench.gd` içinde. M3-01'de yeniden kullanılabilir bileşenlere dönüşür.
+  - **Bileşenler (M3-01, ADR-043):** `NeonLine` (`scripts/components/neon_line.gd`; parlama kopyaları + çekirdek çizgi; `points`, `color`, `glow_color`, `width`, `closed`, `width_curve`, `gradient`, `glow_enabled`) ve `NeonShape` (`neon_shape.gd`; parlama + dolgu + kenar çizgisi; `polygon`, `color`, `fill_alpha`, `line_width`, `glow` = `BLOB` ışık lekesi ya da `LINE` çizgi kopyaları). Ortak durum `Neon`'da (`neon.gd`): `quality`, paylaşılan dokular ve toplamsal malzeme, `GROUP` (`&"neon"`).
+    - Değerler veride: `data/visual/neon_style.tres` (`NeonStyle`): kaliteye göre katmanlar, ışık lekesi büyüklüğü ve yoğunluğu, çizgi kalınlığı, dolgu saydamlığı.
+    - Düğümler oluşturulurken bir kez kurulur (en çok katman sayısı kadar kopya). Kalite değişince yalnızca görünürlük ve kalınlık değişir; tur sırasında düğüm oluşmaz (.clauderules §6).
+    - `Neon` autoload kullanmaz: ekransız araç betikleri (parça doğrulayıcı) bileşenleri adıyla derler (§15, M1-04 dersi). Kaliteyi `Main` aktarır: açılışta ve `Events.settings_changed`'de `Neon.set_quality(Settings.effect_quality)` → `call_group(Neon.GROUP, "apply_quality")`. Ağaca yeni giren bileşen geçerli kaliteyi kendisi alır.
+    - Ölçüm sahnesi `glow_bench.tscn` bu bileşenlerle kurulu; görüntüsü eskisiyle piksel piksel aynı (M3-01).
   - **Ölçüm** (M0-09, Redmi, 1080×2400, 120 Hz): parlama yok 8,4 ms · sahte parlama 8,4 ms (≈ +0,9 ms GPU) · WorldEnvironment glow 17,5 ms (57 FPS). Ayrıntı §16.1'de.
 - **WorldEnvironment glow kullanılmıyor (S-01 ✅).** Compatibility'de çalışıyor: Canvas arka plan modu yeterli, 3B kamera gerekmiyor, görüntüsü güzel. Ama Redmi'de kare süresini iki katına çıkarıyor. İleride güçlü cihazlar için denenirse şu bulgular geçerli:
   - Compatibility, parlama seviyelerini, gücü ve karışım modunu yok sayar.
@@ -507,7 +512,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 - **Parçacıklar:** `CPUParticles2D`, düşük adetli.
 - **Ekran sarsıntısı:** `Camera2D` ofseti, "travma" modeliyle (travma² × gürültü).
 - **Shader'lar:** Arka plan veri ağı (vuruşta nabız), çöküş duvarı glitch'i, S5 için renk kayması. Hepsi kalite ayarına bağlıdır.
-- **Efekt kalitesi:** Yüksek / Orta / Düşük. Düşük modda sahte parlama tek katmana iner ya da kapanır, parçacıklar azalır.
+- **Efekt kalitesi:** Yüksek / Orta / Düşük (`Settings.effect_quality`). Sahte parlama: yüksekte iki katman (64 px / %35 + 26 px / %70) ve ışık lekesi, ortada tek katman (40 px / %55) ve ışık lekesi, düşükte parlama yok (M3-01). Düşükte parçacıklar da azalır.
 
 ## 10. Veri modeli (Resource sınıfları)
 
@@ -519,6 +524,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px(bpm)`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
+| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)` |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
@@ -772,6 +778,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/autoloads/audio_manager_test.gd` (M2-07; M2-20'de yeniden yazıldı) | Tur başlayınca bildirilen parça çalara konur, döngüsü `loop_start`'tan kurulur; ölümden sonra bildirilen saat yok sayılır, yeni turda parça yeniden kurulur |
   | `tests/data/music_catalog_test.gd` (M2-20) | Beş parça ve dört tempo; her parçanın süresi tam vuruş, döngüsü tam ölçü, ses düzeltmesi sınırda; atıf ve lisans (CC0 / CC-BY) tam; seçim tohuma bağlı ve 300 tohumda her parça seçiliyor; döngü içinde konum sarılıyor |
   | `tests/tools/chunk_validator_test.gd` (M2-05; M2-13 eki: çevrili Glimmer toplanamaz, tehlikeden uzak Glimmer riskli değil; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
+  | `tests/components/neon_test.gd` (M3-01) | Çizgi ve blok parlaması yüksekte 2, ortada 1, düşükte 0 katman; diken ışık lekesi yüksek ve ortada var, düşükte yok; kalite değişince düğüm sayısı sabit; ağaca yeni giren bileşen geçerli kaliteyi alıyor; kapalı parlama gizli kalıyor; renk çizgiye ve parlamaya ulaşıyor; doku ve malzeme paylaşılıyor. `main_test.gd` eki: `settings_changed` kaliteyi `Neon`'a aktarıyor |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -811,8 +818,10 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | Sahte parlama | 8,4 ms | 9,3–9,4 ms | 119 | %88 |
 | WorldEnvironment glow | 17,4–17,7 ms | 18,5–19,9 ms | 57 | %99,9 (tıkanmış) |
 
+**Yeniden ölçüm (M3-01, neon bileşenleriyle, aynı sahne):** parlama yok (düşük kalite) 8,35 ms · yüksek kalite 8,35 ms (p95 9,1–9,2) · orta kalite 8,35–8,37 ms (p95 9,1) · WorldEnvironment glow 16,9–17,9 ms (56–59 FPS). Bileşenler maliyet eklemedi.
+
 - Uygulama 120 Hz'de çalışıyor. Bu durumda bütçe 8,3 ms ve **en büyük yük GPU'da**: basit sahne bile 120 Hz'de GPU'nun %77'sini kullanıyor (≈ 6,4 ms).
-  - M3-12 ve M6-03'te asıl ölçüt 60 FPS'te ≤ 10 ms'dir.
+  - M3-19 ve M6-03'te asıl ölçüt 60 FPS'te ≤ 10 ms'dir.
   - 120 Hz bir ek hedeftir; tutmazsa kalite seviyesi ya da 60 FPS sınırı devreye girer.
 - **Ölçüm yöntemi:**
   - Android'de dikey eşitleme kapatılamıyor; FPS yenileme hızında takılı kalıyor.
@@ -866,6 +875,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-040 | 2026-10-13 | **Müzik her turda rastgele, tempo parçanın** (kullanıcı kararı): beş parçanın (ADR-039) hepsi oyunda; tur, tohumundan seçilen parçayı çalar (`MusicCatalog.pick`). Turun temposu parçanın temposudur ve tur boyunca değişmez; `SectorDef.bpm` kaldırıldı, hız sektörde kaldı. Vuruş ızgarası turun başından kesintisiz sürer, müzik sektör geçişinde kesilmez; yeni sektörün ilk parçası müziğin vuruşuna hizalanır, `Run` sınırda oyuncunun konumunu düzeltir. Parçalar `tools/music_prep.py` ile ilk vuruşa kırpılır, döngü tam ölçüye kesilir. Doğrulayıcı her parçayı her tempoda dener. Metronom kaldırıldı | Kullanıcı "her oyunda rastgele çalsın" dedi ve üç seçenekten (tempo parçadan / müzik serbest / sektöre uyanlar) "dünya müzikle akar"ı koruyanı seçti. Bedeli bilerek kabul edildi: tur zorluğu parçaya göre değişir (80 BPM'de engeller seyrek, 120'de sık) ve sektörlerde tempo artmaz. Seçim tohumdan geldiği için günlük meydan okumada herkes aynı parçayı çalar |
 | ADR-041 | 2026-10-13 | M2 Planlama Gözden Geçirmesi: M3 20 atomik göreve bölündü (neon altyapısı → varlık görselleri → dünya ve geçişler → oyun hissi → ses → font ve renk → performans → kapı). Görünüş veriyle kurulur (palet, bileşen, shader değerleri). Kullanıcı kararı isteyen işler sona toplandı (M3-17 font ve kesin renkler, M3-20 oyun testi); 🤖 görevler arada durmadan ilerler. Eski "müzik inceltmesi" görevi kalktı: kulak testi geçti (S-03 ✅), geriye duvar yaklaşınca müziğin boğuklaşması kaldı (M3-16) | Kullanıcı görünüş ve hikâye yeniden yapılandırmasını plan sonuna bıraktı; veriyle kurulan görünüş o işte kodun yeniden yazılmasını önler. Renkler veri olduğu için sonradan seçilmeleri yeniden iş çıkarmaz, kullanıcı da seçimi bitmiş görsellerin üstünde yapar |
 | ADR-042 | 2026-10-13 | D-05 kararı (kullanıcı): ses efektleri insan yapımı, ücretsiz kütüphanelerden gelir: Kenney ses paketleri (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY filtresiyle). Claude adayları seçip ölçer (süre, ses düzeyi), kullanıcı oyunda dinler. gdfxr ve kodla sentez kullanılmaz. Aynı kapıda M1 + M2 onaylandı, P-04 kapandı (M2-19) | Müzikle aynı yol (ADR-039): orkestral müzikle uyumlu, profesyonel ses. Kenney'in CC0 lisansı en temiz seçenek. sfxr'ın 8-bit sesleri orkestral müzikle çatışabilir; kodla sentez müzik denemesinde yapay duyulmuştu |
+| ADR-043 | 2026-10-13 | Neon görseller ortak bileşenlerle çizilir: `NeonLine` ve `NeonShape` (`scripts/components/`), ortak durum `Neon` (autoload değil, statik `quality`), değerler `data/visual/neon_style.tres` (`NeonStyle`, yeni klasör `data/visual/`). Efekt kalitesi katman sayısını belirler: yüksek 2, orta 1, düşük 0 (ışık lekesi yalnızca düşükte yok). Kaliteyi `Main` ayardan aktarır | Her varlık (duvar, oyuncu, tehlike, Glimmer) aynı tekniği kullanacak (M3-03…M3-06); tek yerde durması görünüşü veriyle değiştirilebilir kılar (ADR-041). Autoload'a bağlı olmaması parça doğrulayıcının ekransız derlemesini korur. Redmi'de kare süresi değişmedi (§16.1) |
 
 ## 18. Açık teknik sorular
 

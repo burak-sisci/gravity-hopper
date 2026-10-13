@@ -4,13 +4,24 @@ extends Node2D
 ## Açılışta her modu sırayla ölçer; sonucu ekrana ve günlüğe ("BENCH" satırları) yazar.
 ## Ölçüm bitince her dokunuş (PC'de sol tık ya da boşluk) bir sonraki moda geçer.
 ## PC'de tek modu görmek için: <godot> --path . res://scenes/debug/glow_bench.tscn -- --mode=env
+## Şekiller oyunun neon bileşenleridir (NeonLine, NeonShape; M3-01); sahte parlama modları
+## efekt kalitesini (Neon.quality) değiştirir.
 
-enum Mode { OFF, ENV_GLOW, FAKE_GLOW }
+enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM }
 
-const MODE_NAMES: Array[String] = ["Parlama yok", "WorldEnvironment glow", "Sahte parlama"]
-const MODE_ARGS: Array[String] = ["off", "env", "fake"]
+const MODE_NAMES: Array[String] = [
+	"Parlama yok (düşük kalite)", "WorldEnvironment glow", "Sahte parlama (yüksek kalite)",
+	"Sahte parlama (orta kalite)",
+]
+const MODE_ARGS: Array[String] = ["off", "env", "fake", "medium"]
+## Her modda neon bileşenlerinin efekt kalitesi; düşük kalitede sahte parlama yok.
+const MODE_QUALITY: Array[GameTypes.Quality] = [
+	GameTypes.Quality.LOW, GameTypes.Quality.LOW, GameTypes.Quality.HIGH,
+	GameTypes.Quality.MEDIUM,
+]
 const BENCH_ORDER: Array[Mode] = [
-	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM,
 ]
 const WARMUP_SEC: float = 1.5
 const MEASURE_SEC: float = 4.0
@@ -30,15 +41,6 @@ const BAND_MARGIN: float = 200.0
 const WALL_INSET: float = 60.0
 const GRID_CELL: float = 120.0
 const GRID_WIDTH: float = 2.0
-const LINE_WIDTH: float = 6.0
-## Çizgiler (duvar, iz) için sahte parlama katmanları: x = genişlik (px), y = yoğunluk.
-const HALO_LAYERS: Array[Vector2] = [Vector2(64.0, 0.35), Vector2(26.0, 0.7)]
-## Kapalı şekiller için ışık lekesi: şeklin sınır kutusuna göre büyüklük ve yoğunluk.
-const BLOB_SCALE: float = 2.6
-const BLOB_PADDING: float = 40.0
-const BLOB_INTENSITY: float = 0.65
-const BLOB_TEXTURE_SIZE: int = 128
-const FILL_ALPHA: float = 0.18
 const PLAYER_FILL_ALPHA: float = 0.85
 const SPIKE_COUNT: int = 14
 const BLOCK_COUNT: int = 8
@@ -58,10 +60,6 @@ const COLOR_GRID: Color = Color(0.1, 0.16, 0.36)
 
 var _mode: Mode = Mode.OFF
 var _glow_environment: Environment
-var _halo_texture: GradientTexture2D
-var _blob_texture: GradientTexture2D
-var _halo_material: CanvasItemMaterial
-var _halos: Array[CanvasItem] = []
 var _scrolling: Array[Node2D] = []
 var _band_height: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -88,10 +86,6 @@ var _results: Array[String] = []
 func _ready() -> void:
 	_rng.seed = RNG_SEED
 	_glow_environment = _world_environment.environment
-	_halo_texture = _make_halo_texture()
-	_blob_texture = _make_blob_texture()
-	_halo_material = CanvasItemMaterial.new()
-	_halo_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_build_world()
 	_grid.draw.connect(_draw_grid)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
@@ -165,8 +159,7 @@ func _apply_mode(mode: Mode) -> void:
 	# Parlama dışındaki modlarda ortam tamamen kaldırılır; böylece taban ölçüm,
 	# WorldEnvironment'ı hiç olmayan bir oyunu temsil eder.
 	_world_environment.environment = _glow_environment if mode == Mode.ENV_GLOW else null
-	for halo: CanvasItem in _halos:
-		halo.visible = mode == Mode.FAKE_GLOW
+	Neon.set_quality(MODE_QUALITY[mode], get_tree())
 	var prefix: String = "Dokun: sonraki mod"
 	if not _bench_done:
 		prefix = "Ölçülüyor %d/%d" % [_bench_index + 1, BENCH_ORDER.size()]
@@ -231,7 +224,7 @@ func _end_bench() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	print("BENCH done")
 	_add_debug_menu()
-	_apply_mode(Mode.ENV_GLOW)
+	_apply_mode(Mode.FAKE_GLOW)
 
 
 func _sample_gpubusy() -> void:
@@ -275,44 +268,44 @@ func _build_world() -> void:
 	var top: float = -BAND_MARGIN
 	var bottom: float = view.y + BAND_MARGIN
 	for wall_x: float in [left_x, right_x]:
-		var wall: PackedVector2Array = PackedVector2Array([Vector2(wall_x, top), Vector2(wall_x, bottom)])
-		_add_neon(_shapes, wall, COLOR_WALL, false, FILL_ALPHA)
+		var wall: NeonLine = NeonLine.new()
+		wall.points = PackedVector2Array([Vector2(wall_x, top), Vector2(wall_x, bottom)])
+		wall.color = COLOR_WALL
+		_shapes.add_child(wall)
 
 	# Duvar dikenleri (kırmızı)
 	for i: int in SPIKE_COUNT:
 		var on_left: bool = i % 2 == 0
 		var wall_x: float = left_x if on_left else right_x
 		var dir: float = 1.0 if on_left else -1.0
-		var spike: PackedVector2Array = PackedVector2Array([
+		_add_shape(_add_scroller(), PackedVector2Array([
 			Vector2(wall_x, -35.0), Vector2(wall_x + dir * 60.0, 0.0), Vector2(wall_x, 35.0),
-		])
-		_add_neon(_add_scroller(), spike, COLOR_HAZARD, true, FILL_ALPHA)
+		]), COLOR_HAZARD)
 
 	# Veri blokları (kırmızı)
 	for i: int in BLOCK_COUNT:
 		var block_x: float = _rng.randf_range(left_x + 120.0, right_x - 270.0)
-		var block: PackedVector2Array = PackedVector2Array([
+		var block: NeonShape = _add_shape(_add_scroller(), PackedVector2Array([
 			Vector2(block_x, -30.0), Vector2(block_x + 150.0, -30.0),
 			Vector2(block_x + 150.0, 30.0), Vector2(block_x, 30.0),
-		])
-		_add_neon(_add_scroller(), block, COLOR_HAZARD, true, FILL_ALPHA, true)
+		]), COLOR_HAZARD)
+		block.glow = NeonShape.Glow.LINE
 
 	# Glimmer'lar (yeşil)
 	for i: int in GLIMMER_COUNT:
 		var gx: float = _rng.randf_range(left_x + 80.0, right_x - 80.0)
-		var glimmer: PackedVector2Array = PackedVector2Array([
+		_add_shape(_add_scroller(), PackedVector2Array([
 			Vector2(gx, -22.0), Vector2(gx + 16.0, 0.0), Vector2(gx, 22.0), Vector2(gx - 16.0, 0.0),
-		])
-		_add_neon(_add_scroller(), glimmer, COLOR_GLIMMER, true, FILL_ALPHA)
+		]), COLOR_GLIMMER)
 
 	# Oyuncu: sol duvara tutunmuş beyaz çekirdek ve sağ duvardan gelen iz
 	var player_pos: Vector2 = Vector2(left_x + 40.0, view.y * PLAYER_HEIGHT_RATIO)
 	_add_trail(player_pos, right_x - 40.0)
-	var player: PackedVector2Array = PackedVector2Array([
+	var player: NeonShape = _add_shape(_shapes, PackedVector2Array([
 		player_pos + Vector2(0.0, -48.0), player_pos + Vector2(30.0, 0.0),
 		player_pos + Vector2(0.0, 48.0), player_pos + Vector2(-30.0, 0.0),
-	])
-	_add_neon(_shapes, player, COLOR_PLAYER, true, PLAYER_FILL_ALPHA)
+	]), COLOR_PLAYER)
+	player.fill_alpha = PLAYER_FILL_ALPHA
 
 
 ## Kaydırılan (aşağı akan) bir kap ekler ve bandın içinde rastgele bir yüksekliğe koyar.
@@ -324,41 +317,12 @@ func _add_scroller() -> Node2D:
 	return item
 
 
-## Neon şekil: sahte parlama (yalnızca sahte modda görünür) + dolgu + parlak çizgi.
-## Çizgilerde ve geniş açılı şekillerde (blok) parlama, çizginin enine yumuşak bir kopyasıdır.
-## Küçük, sivri köşeli şekillerde ise arkadaki bir ışık lekesidir; çizgi kopyası sivri
-## köşelerde ve kapanma noktasında yay izi bırakıyor.
-func _add_neon(parent: Node2D, points: PackedVector2Array, color: Color, closed: bool,
-		fill_alpha: float, line_halo: bool = false) -> void:
-	if closed and not line_halo:
-		var bounds: Rect2 = Rect2(points[0], Vector2.ZERO)
-		for point: Vector2 in points:
-			bounds = bounds.expand(point)
-		var blob: Sprite2D = Sprite2D.new()
-		blob.texture = _blob_texture
-		blob.position = bounds.get_center()
-		blob.scale = (bounds.size * BLOB_SCALE + Vector2(BLOB_PADDING, BLOB_PADDING)) / BLOB_TEXTURE_SIZE
-		blob.modulate = Color(color, BLOB_INTENSITY)
-		blob.material = _halo_material
-		blob.visible = false
-		parent.add_child(blob)
-		_halos.append(blob)
-	else:
-		for halo_layer: Vector2 in HALO_LAYERS:
-			var halo: Line2D = _make_line(points, color, halo_layer.x, closed)
-			halo.default_color = Color(color, halo_layer.y)
-			halo.texture = _halo_texture
-			halo.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-			halo.material = _halo_material
-			halo.visible = false
-			parent.add_child(halo)
-			_halos.append(halo)
-	if closed:
-		var fill: Polygon2D = Polygon2D.new()
-		fill.polygon = points
-		fill.color = Color(color, fill_alpha)
-		parent.add_child(fill)
-	parent.add_child(_make_line(points, color, LINE_WIDTH, closed))
+func _add_shape(parent: Node2D, polygon: PackedVector2Array, color: Color) -> NeonShape:
+	var shape: NeonShape = NeonShape.new()
+	shape.polygon = polygon
+	shape.color = color
+	parent.add_child(shape)
+	return shape
 
 
 func _add_trail(player_pos: Vector2, from_x: float) -> void:
@@ -370,68 +334,17 @@ func _add_trail(player_pos: Vector2, from_x: float) -> void:
 	var taper: Curve = Curve.new()
 	taper.add_point(Vector2(0.0, 1.0))
 	taper.add_point(Vector2(1.0, 0.0))
-	for halo_layer: Vector2 in HALO_LAYERS:
-		var halo: Line2D = _make_line(points, COLOR_WALL, halo_layer.x, false)
-		halo.default_color = Color(COLOR_WALL, halo_layer.y)
-		halo.width_curve = taper
-		halo.texture = _halo_texture
-		halo.texture_mode = Line2D.LINE_TEXTURE_STRETCH
-		halo.material = _halo_material
-		halo.visible = false
-		_shapes.add_child(halo)
-		_halos.append(halo)
-	var trail: Line2D = _make_line(points, COLOR_PLAYER, TRAIL_WIDTH, false)
-	trail.width_curve = taper
 	var fade: Gradient = Gradient.new()
 	fade.set_color(0, COLOR_PLAYER)
 	fade.set_color(1, Color(COLOR_WALL, 0.0))
+	var trail: NeonLine = NeonLine.new()
+	trail.points = points
+	trail.color = COLOR_PLAYER
+	trail.glow_color = COLOR_WALL
+	trail.width = TRAIL_WIDTH
+	trail.width_curve = taper
 	trail.gradient = fade
 	_shapes.add_child(trail)
-
-
-func _make_line(points: PackedVector2Array, color: Color, line_width: float,
-		closed: bool) -> Line2D:
-	var line: Line2D = Line2D.new()
-	line.points = points
-	line.closed = closed
-	line.width = line_width
-	line.default_color = color
-	line.joint_mode = Line2D.LINE_JOINT_ROUND
-	return line
-
-
-## Çizginin enine yumuşak sönümlü doku: ortada tam, kenarlarda sıfır.
-func _make_halo_texture() -> GradientTexture2D:
-	var gradient: Gradient = Gradient.new()
-	gradient.offsets = PackedFloat32Array([0.0, 0.2, 0.38, 0.5, 0.62, 0.8, 1.0])
-	gradient.colors = PackedColorArray([
-		Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.35), Color(1, 1, 1, 1.0),
-		Color(1, 1, 1, 0.35), Color(1, 1, 1, 0.06), Color(1, 1, 1, 0.0),
-	])
-	var texture: GradientTexture2D = GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.width = 4
-	texture.height = 64
-	texture.fill_from = Vector2(0.0, 0.0)
-	texture.fill_to = Vector2(0.0, 1.0)
-	return texture
-
-
-## Merkezde tam, kenara doğru sönen dairesel ışık lekesi dokusu.
-func _make_blob_texture() -> GradientTexture2D:
-	var gradient: Gradient = Gradient.new()
-	gradient.offsets = PackedFloat32Array([0.0, 0.25, 0.55, 1.0])
-	gradient.colors = PackedColorArray([
-		Color(1, 1, 1, 1.0), Color(1, 1, 1, 0.45), Color(1, 1, 1, 0.12), Color(1, 1, 1, 0.0),
-	])
-	var texture: GradientTexture2D = GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.width = BLOB_TEXTURE_SIZE
-	texture.height = BLOB_TEXTURE_SIZE
-	texture.fill = GradientTexture2D.FILL_RADIAL
-	texture.fill_from = Vector2(0.5, 0.5)
-	texture.fill_to = Vector2(1.0, 0.5)
-	return texture
 
 
 func _draw_grid() -> void:

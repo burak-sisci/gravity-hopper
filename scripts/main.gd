@@ -2,6 +2,7 @@ extends Node
 ## Kök sahne (architecture.md §5.1). Sahnedeki işi yapar: turu World kabına kurar ve kaldırır.
 ## Kararı GameManager verir (tohum, durum, sonuç); Main uygular ve GameManager'a haber verir.
 ## Debug build'de debug katmanını Debug kabına yükler; yayın sürümünde yüklenmez (ADR-023).
+## Efekt kalitesini ayardan neon bileşenlerine aktarır (Neon autoload kullanmaz, §9).
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -23,6 +24,8 @@ var _start_sector: int = START_SECTOR
 func _ready() -> void:
 	if OS.is_debug_build() and ResourceLoader.exists(DEBUG_LAYER_PATH):
 		_debug.add_child((load(DEBUG_LAYER_PATH) as PackedScene).instantiate())
+	_apply_quality()
+	Events.settings_changed.connect(_apply_quality)
 	Events.run_ended.connect(_on_run_ended)
 	Events.retry_requested.connect(_start_run)
 	Events.start_requested.connect(_on_start_requested)
@@ -43,6 +46,10 @@ func _start_run() -> void:
 	# Run, katalog dışı sektörü sınırlar; duyurulan sektör gerçek başlangıçtır.
 	_start_sector = _run.start_sector
 	GameManager.begin_run(run_seed, _start_sector)
+
+
+func _apply_quality() -> void:
+	Neon.set_quality(Settings.effect_quality, get_tree())
 
 
 func _on_start_requested(sector: int) -> void:

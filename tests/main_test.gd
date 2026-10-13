@@ -73,6 +73,17 @@ func test_retry_request_starts_new_run_at_once() -> void:
 	assert_int(_world().get_child_count()).is_equal(1)
 
 
+func test_settings_change_sets_neon_quality() -> void:
+	var stored: GameTypes.Quality = Settings.effect_quality
+	await _start_main()
+	assert_int(Neon.quality).is_equal(stored)
+	Settings.effect_quality = GameTypes.Quality.LOW
+	Events.settings_changed.emit()
+	assert_int(Neon.quality).is_equal(GameTypes.Quality.LOW)
+	Settings.effect_quality = stored
+	Neon.quality = GameTypes.Quality.HIGH
+
+
 func _start_main() -> void:
 	_main = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(_main)

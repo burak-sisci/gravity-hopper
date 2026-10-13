@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NeonStyle" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/neon_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+high_layers = Array[Vector2]([Vector2(64, 0.35), Vector2(26, 0.7)])
+medium_layers = Array[Vector2]([Vector2(40, 0.55)])
+low_layers = Array[Vector2]([])
+blob_min_quality = 1
+blob_scale = 2.6
+blob_padding = 40.0
+blob_intensity = 0.65
+line_width = 6.0
+fill_alpha = 0.18

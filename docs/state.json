@@ -7,11 +7,11 @@
 
   "current": {
     "milestone": "M3",
-    "task": "M3-01",
-    "task_title": "Neon bileşenleri: NeonLine ve NeonShape, kaliteye göre parlama katmanı",
+    "task": "M3-02",
+    "task_title": "SectorPalette: çevre, vurgu, arka plan; S1–S3 geçici paletleri",
     "owner": "claude",
     "status": "in_progress",
-    "note": "M1 + M2 kapısı geçti (kullanıcı onayı, 2026-10-13); P-04 kapandı; D-05 kararı: ses efektleri ücretsiz kütüphaneden (ADR-042). M3 planı roadmap.md'de (ADR-041); 🤖 görevler M3-17'ye kadar durmadan sürer.",
+    "note": "M3-01 bitti: NeonLine / NeonShape, değerler data/visual/neon_style.tres (ADR-043). M3 planı roadmap.md'de (ADR-041); 🤖 görevler M3-17'ye kadar durmadan sürer.",
     "deferred": [
       { "task": "M1-13", "reason": "Kullanıcı kararı (2026-10-08): itch.io yüklemesi şimdilik atlandı.", "resume": "Kullanıcı itch.io sayfasını açıp builds/gravity-hopper-web.zip'i yükler (yeni sürüm için tools/web_build.ps1 -Smoke). Kapı beklemez." }
     ]
@@ -30,7 +30,7 @@
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12", "M0-13", "M1-01", "M1-02", "M1-03", "M1-04", "M1-05", "M1-06", "M1-07", "M1-08", "M1-09", "M1-10", "M1-11", "M1-12", "M1-14", "M1-15", "M1-16", "M2-01", "M2-02", "M2-03", "M2-04", "M2-05", "M2-06", "M2-07", "M2-08", "M2-09", "M2-10", "M2-11", "M2-12", "M2-13", "M2-14", "M2-15", "M2-16", "M2-17", "M2-18", "M2-20", "P-04", "M2-19"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12", "M0-13", "M1-01", "M1-02", "M1-03", "M1-04", "M1-05", "M1-06", "M1-07", "M1-08", "M1-09", "M1-10", "M1-11", "M1-12", "M1-14", "M1-15", "M1-16", "M2-01", "M2-02", "M2-03", "M2-04", "M2-05", "M2-06", "M2-07", "M2-08", "M2-09", "M2-10", "M2-11", "M2-12", "M2-13", "M2-14", "M2-15", "M2-16", "M2-17", "M2-18", "M2-20", "P-04", "M2-19", "M3-01"],
 
   "blockers": [],
 
@@ -143,9 +143,10 @@
 
   "last_session": {
     "date": "2026-10-13",
-    "summary": "2026-10-13: M2-18 oyun testi geçti (hızlı çift dokunuş düzeltildi, dokunma tamponu 0,45 sn, ADR-036). D-02 müzik kararı: insan yapımı, ücretsiz CC0 / CC-BY hibrit orkestral (ADR-037–039, docs/music_research.md). M2-20: beş parça her turda rastgele, tempo parçanın (ADR-040); tools/music_prep.py; kulak testi geçti ('her şey güzel'). M2-19 planlama gözden geçirmesi: belgelerde eskimiş değerler düzeltildi (tampon, coyote, vuruş boyları, nefes alma, fizik katmanları, debug tuşları, olay günlüğü), ADR tablosu sıraya kondu, S-03 ve S-07 kapandı, indirme boyutu riski (debug APK 68 MB) M6-03'e yazıldı, M3 20 atomik göreve bölündü (ADR-041). Kullanıcı kapıyı onayladı (M1 + M2 kapandı), P-04'ü kapattı, D-05: ses efektleri ücretsiz kütüphaneden (Kenney CC0, Freesound CC0 / CC-BY; ADR-042). Önceki oturumların ayrıntısı git geçmişinde ve architecture.md'de.",
+    "summary": "2026-10-13: M2-18 oyun testi geçti (hızlı çift dokunuş düzeltildi, dokunma tamponu 0,45 sn, ADR-036). D-02 müzik kararı: insan yapımı, ücretsiz CC0 / CC-BY hibrit orkestral (ADR-037–039, docs/music_research.md). M2-20: beş parça her turda rastgele, tempo parçanın (ADR-040); tools/music_prep.py; kulak testi geçti ('her şey güzel'). M2-19 planlama gözden geçirmesi: belgelerde eskimiş değerler düzeltildi (tampon, coyote, vuruş boyları, nefes alma, fizik katmanları, debug tuşları, olay günlüğü), ADR tablosu sıraya kondu, S-03 ve S-07 kapandı, indirme boyutu riski (debug APK 68 MB) M6-03'e yazıldı, M3 20 atomik göreve bölündü (ADR-041). Kullanıcı kapıyı onayladı (M1 + M2 kapandı), P-04'ü kapattı, D-05: ses efektleri ücretsiz kütüphaneden (Kenney CC0, Freesound CC0 / CC-BY; ADR-042). M3-01: neon bileşenleri NeonLine ve NeonShape (ortak durum Neon, değerler NeonStyle; ADR-043); kalite yüksek 2 / orta 1 / düşük 0 katman; glow_bench bunlarla kuruldu, görüntü piksel piksel aynı, Redmi'de 8,35 ms (M0-09 ile aynı). Önceki oturumların ayrıntısı git geçmişinde ve architecture.md'de.",
     "next_steps": [
-      "Kaldığımız yer: M3-01 (neon bileşenleri). 🤖 görevler M3-17'ye kadar durmadan sürer (ADR-025, ADR-041).",
+      "Kaldığımız yer: M3-02 (SectorPalette). 🤖 görevler M3-17'ye kadar durmadan sürer (ADR-025, ADR-041).",
+      "Varlık görselleri (M3-03…M3-06) NeonLine / NeonShape ile çizilir (architecture.md §9).",
       "M3-15 ses efektleri: Kenney (CC0) + gerekirse Freesound (yalnızca CC0 / CC-BY), ADR-042.",
       "M1-13 ertelendi (kullanıcı kararı); kaldığı yer state.json → current.deferred."
     ]
