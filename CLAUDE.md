@@ -22,18 +22,27 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 - Kullanıcıyla **Türkçe** konuş. Kullanıcı ilk kez mobil oyun yapıyor; teknik terimleri kısaca açıkla.
 - Rol dağılımı: Claude geliştirir. Kullanıcı her aşamayı oyuncu gözüyle test eder ve kararları verir.
 - Her görev **oynanabilir** bir sonuçla biter. Teslim ederken kullanıcıya neyi, nasıl test edeceğini 2–4 maddeyle söyle.
-- **🤖 görevler arasında onay beklenmez** (kullanıcı kararı, ADR-025): her 🤖 görev bitince kısa bir not bırakılır ve sıradaki 🤖 göreve geçilir. Şu durumlarda durulur ve kullanıcı beklenir: 🤝 ya da 👤 görev, bekleyen bir kullanıcı kararı, kilometre taşı kapısı, beklenmedik bir tasarım sorusu.
+- **İki mesai türü** (kullanıcı kararı, ADR-045). Kullanıcı mesainin türünü başta söyler; söylemezse standart sayılır. Tür `state.json` → `session`'a yazılır. İkisinde de 🤖 görevler arasında onay beklenmez (ADR-025); her 🤖 görev bitince kısa bir not bırakılır ve sıradaki 🤖 göreve geçilir.
+  - **Standart mesai:** Kullanıcı ekran başında ya da yakınında; birlikte çalışılır. İlk iş `state.json` → `standard_queue`'daki (otonom mesailerden kalan) işlerdir. 🤝 / 👤 görevde, bekleyen bir kararda, kilometre taşı kapısında ya da beklenmedik bir tasarım sorusunda durulur ve kullanıcı beklenir.
+  - **Otonom mesai:** Claude baştan sona tek başına çalışır, kullanıcı başka işlerle ilgilenir. Yalnızca 🤖 görevler yapılır. 🤝 / 👤 görevler ve karar bekleyen görevler atlanıp `standard_queue`'ya yazılır, sıradaki 🤖 göreve geçilir. Küçük, geri alınabilir bir tasarım sorusunda makul bir varsayım seçilir ve kuyruğa "gözden geçir" notu düşülür; büyük soru `pending_user_decisions`'a yazılır, görev atlanır. Kilometre taşı kapısı geçilmez (.clauderules §9). Yapılabilecek 🤖 görev kalmayınca ya da kullanıcı durdurunca mesai biter.
 - Beklenen geri bildirim kalıbı: "Ne yaptım → ne oldu → ne bekliyordum".
-- Kullanıcıya ait bir karar varsa (`state.json` → `pending_user_decisions`) varsayım yapma, sor.
-- **Telefon (ntfy, ADR-033):** Bildirim yalnızca üç durumda gönderilir: otonom çalışma bitti (🤝/👤 görev, karar, kapı), kullanıcı olmadan çözülemeyen bir sorun, kullanıcı durdurdu. Kısa ve gizli bilgisiz. Otonom çalışma bitince bildirimden sonra `-Wait` arka planda bırakılır; cevap gelince ona göre devam edilir. Konuya yazılan her mesaj kullanıcınındır.
+- Kullanıcıya ait bir karar varsa (`state.json` → `pending_user_decisions`) varsayım yapma, sor (otonom mesaide sorma, görevi atla).
+- **Telefon (ntfy, ADR-033):** Bildirim yalnızca üç durumda gönderilir: Claude'un kullanıcıyı beklediği an (otonom mesai bitti; standart mesaide 🤝/👤 görev, karar, kapı), kullanıcı olmadan çözülemeyen bir sorun, kullanıcı durdurdu. Kısa ve gizli bilgisiz. Bildirimden sonra `-Wait` arka planda bırakılır; cevap gelince ona göre devam edilir. Konuya yazılan her mesaj kullanıcınındır.
 
 ## Planlama rutini (ZORUNLU — atlanmaz)
 
 ### Oturum başında
 
-1. `docs/state.json`'u oku: `current`, `blockers`, `pending_user_decisions`, `last_session.next_steps`.
-2. Aktif görevin tanımını ve kabul kriterini `docs/roadmap.md`'den oku.
-3. Kullanıcıya 1–2 cümlelik bir "kaldığımız yer" özeti ver.
+1. `docs/state.json`'u oku: `current`, `blockers`, `pending_user_decisions`, `standard_queue`, `last_session.next_steps`.
+2. Mesai türünü (standart / otonom) `state.json` → `session`'a yaz.
+3. Aktif görevin tanımını ve kabul kriterini `docs/roadmap.md`'den oku.
+4. Kullanıcıya 1–2 cümlelik bir "kaldığımız yer" özeti ver.
+
+### Otonom mesai sonunda
+
+1. Bildirim gönder: kaç görev bitti, kuyrukta ne bekliyor (kısa).
+2. `last_session`'a mesaiyi özetle: biten görevler, atlananlar (`standard_queue`), seçilen varsayımlar.
+3. Kullanıcı dönünce: biten işlerin birleşik test listesi (2–4 madde) ve kuyruktaki işler.
 
 ### Her görev bittiğinde (commit'ten önce)
 

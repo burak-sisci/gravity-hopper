@@ -11,11 +11,18 @@
     "task_title": "Neon koridor duvarları: NeonLine kenarlar, boşlukta temiz kesik, vuruşta nabız",
     "owner": "claude",
     "status": "in_progress",
-    "note": "M3-02 bitti: SectorPalette (ambient, accent, background), sabit renkler NeonStyle'da (ADR-044). M3 planı roadmap.md'de (ADR-041); 🤖 görevler M3-17'ye kadar durmadan sürer.",
-    "deferred": [
-      { "task": "M1-13", "reason": "Kullanıcı kararı (2026-10-08): itch.io yüklemesi şimdilik atlandı.", "resume": "Kullanıcı itch.io sayfasını açıp builds/gravity-hopper-web.zip'i yükler (yeni sürüm için tools/web_build.ps1 -Smoke). Kapı beklemez." }
-    ]
+    "note": "M3-02 bitti: SectorPalette (ambient, accent, background), sabit renkler NeonStyle'da (ADR-044). M3 planı roadmap.md'de (ADR-041); 🤖 görevler M3-17'ye kadar durmadan sürer."
   },
+
+  "session": {
+    "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
+    "mode": "autonomous",
+    "started": "2026-10-13"
+  },
+
+  "standard_queue": [
+    { "task": "M1-13", "owner": "user", "added": "2026-10-08", "reason": "Kullanıcı kararı: itch.io yüklemesi şimdilik atlandı.", "resume": "Kullanıcı itch.io sayfasını açıp builds/gravity-hopper-web.zip'i yükler (yeni sürüm için tools/web_build.ps1 -Smoke). Kapı beklemez." }
+  ],
 
   "milestones": [
     { "id": "P",  "title": "Ön planlama",                  "status": "done",        "user_approved": true, "approved_on": "2026-10-13", "note": "P-04 M2-19 kapısında kapandı" },
@@ -148,7 +155,7 @@
       "Kaldığımız yer: M3-03 (neon koridor duvarları). 🤖 görevler M3-17'ye kadar durmadan sürer (ADR-025, ADR-041).",
       "Varlık görselleri (M3-03…M3-06) NeonLine / NeonShape ile çizilir; renkler palette ve NeonStyle sabitlerinden (architecture.md §9).",
       "M3-15 ses efektleri: Kenney (CC0) + gerekirse Freesound (yalnızca CC0 / CC-BY), ADR-042.",
-      "M1-13 ertelendi (kullanıcı kararı); kaldığı yer state.json → current.deferred."
+      "Otonom mesai (ADR-045): 🤝/👤 işler ve atlananlar state.json → standard_queue'da (M1-13 dahil)."
     ]
   }
 }

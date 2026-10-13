@@ -7,7 +7,8 @@
 
 - **Görev kimliği:** `M1-03` = 1. kilometre taşının 3. görevi. Commit mesajları bu kimlikle başlar.
 - **Atomik görev** = tek oturumda biten, tek commit'lik, test edilebilir iş.
-- **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte. 🤖 görevler arasında senin onayın beklenmez; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler (ADR-025).
+- **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte. 🤖 görevler arasında senin onayın beklenmez (ADR-025).
+- **Mesai türü (ADR-045):** *Standart mesaide* sen ekran başındasın; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler ve seni bekler. *Otonom mesaide* Claude tek başına çalışır: yalnızca 🤖 görevleri yapar, 🤝/👤 görevleri ve karar bekleyenleri atlayıp `state.json` → `standard_queue`'ya yazar; bunlar sonraki standart mesaide yapılır. Kapı otonom mesaide de geçilmez.
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
 - **Kademeli planlama:** M0–M3 atomik, M4–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
