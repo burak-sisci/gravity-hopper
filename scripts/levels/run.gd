@@ -17,9 +17,14 @@ extends Node2D
 ## varınca Run oyuncuyu öldürür (player_died(WALL)). Görsel CollapseWall oyuncunun mesafe × 50 px
 ## altına konur; yakınlık (0 ekranın altında – 1 oyuncuda) Events.wall_proximity_changed ile
 ## yayılır.
+##
+## Renkler (M3-02): sektörün paleti (SectorPalette) duvarlara ve arka plana (ekranın temizleme
+## rengi) uygulanır; tur başında anında, sektör geçişinde yumuşak geçişle (yalnızca görsel).
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
+## Sektör geçişinde paletin yumuşak geçiş süresi (yalnızca görsel; renk dalgası M3-08'de).
+const PALETTE_FADE_TIME: float = 0.6
 
 @export var tuning: TuningConfig
 @export var sectors: SectorCatalog
@@ -49,6 +54,10 @@ var _proximity: float = -1.0
 ## Kıl payı kombosu (M2-14): zincir uzunluğu ve son kıl payının oyun zamanı.
 var _combo: int = 0
 var _last_graze_time: float = 0.0
+## Gösterilen çevre ve arka plan rengi (geçiş sırasında iki paletin arası).
+var _ambient: Color = Color.WHITE
+var _background: Color = Color.BLACK
+var _palette_tween: Tween
 
 @onready var _conductor: Conductor = %Conductor
 @onready var _corridor: Corridor = %Corridor
@@ -78,7 +87,7 @@ func _ready() -> void:
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
-	_corridor.set_tint(def.ambient_color, true)
+	_show_palette(def.palette, true)
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
 	_player.near_missed.connect(_on_near_missed)
@@ -120,7 +129,7 @@ func _enter_sector(next: int) -> void:
 	_player.climb_speed = def.climb_speed
 	_pressure.creep = def.wall_creep
 	_next_boundary_y = _boundary_y(next)
-	_corridor.set_tint(def.ambient_color)
+	_show_palette(def.palette, false)
 	Events.sector_entered.emit(next)
 
 
@@ -175,3 +184,30 @@ func _update_view() -> void:
 	# Parçaların duvar boşlukları koridora bildirilir; koridor o aralıklarda duvarsız kalır.
 	_corridor.set_gaps(_chunks.active_gaps())
 	_corridor.update_view(_camera.view_bottom(), half_width)
+
+
+## Sektörün paletini gösterir: anında ya da PALETTE_FADE_TIME boyunca şu anki renklerden.
+func _show_palette(palette: SectorPalette, instant: bool) -> void:
+	if palette == null:
+		return
+	if _palette_tween != null:
+		_palette_tween.kill()
+	if instant:
+		_apply_colors(palette.ambient, palette.background)
+		return
+	_palette_tween = create_tween()
+	_palette_tween.tween_method(_fade_palette.bind(_ambient, _background, palette), 0.0, 1.0,
+			PALETTE_FADE_TIME)
+
+
+func _fade_palette(weight: float, from_ambient: Color, from_background: Color,
+		palette: SectorPalette) -> void:
+	_apply_colors(from_ambient.lerp(palette.ambient, weight),
+			from_background.lerp(palette.background, weight))
+
+
+func _apply_colors(ambient: Color, background: Color) -> void:
+	_ambient = ambient
+	_background = background
+	_corridor.set_ambient(ambient)
+	RenderingServer.set_default_clear_color(background)

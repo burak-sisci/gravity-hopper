@@ -1,7 +1,14 @@
 extends GdUnitTestSuite
 ## Sektör kataloğu (M2-08, GDD §12): S1–S3 değerleri, başlangıç ve bitiş yükseklikleri.
+## Paletler (M3-02): her sektörün paleti var, çevre ve vurgu rengi kırmızı ya da yeşil değil.
 
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
+## Bir rengin tehlike kırmızısına ya da Glimmer yeşiline en az bu kadar uzak tonda olması
+## gerekir (renk çemberinde, 0–1 = 0–360°). Doygunluğu düşük renkler (beyaz, gri) serbesttir.
+const MIN_HUE_DISTANCE: float = 30.0 / 360.0
+const MIN_SATURATION: float = 0.2
+## Arka plan koyu olmalı; yoksa neon parlamaz.
+const MAX_BACKGROUND_VALUE: float = 0.2
 
 
 func test_values_match_design() -> void:
@@ -29,6 +36,30 @@ func test_heights_chain() -> void:
 	assert_int(SECTORS.sector_at(99999.0)).is_equal(3)
 
 
+func test_palettes_avoid_hazard_and_glimmer_colors() -> void:
+	var forbidden: Array[Color] = [Neon.STYLE.hazard_color, Neon.STYLE.glimmer_color]
+	var ambients: Array[Color] = []
+	for i: int in SECTORS.count():
+		var palette: SectorPalette = SECTORS.def_at(i + 1).palette
+		assert_object(palette).override_failure_message("S%d paleti yok" % (i + 1)).is_not_null()
+		if palette == null:
+			continue
+		for color: Color in [palette.ambient, palette.accent]:
+			for fixed: Color in forbidden:
+				assert_bool(_hues_apart(color, fixed)).override_failure_message(
+						"S%d: %s, %s tonuna çok yakın" % [i + 1, color, fixed]).is_true()
+		assert_float(palette.background.v).is_less_equal(MAX_BACKGROUND_VALUE)
+		assert_bool(ambients.has(palette.ambient)).is_false()
+		ambients.append(palette.ambient)
+
+
+func test_hue_rule_catches_red_and_green() -> void:
+	assert_bool(_hues_apart(Color(0.95, 0.3, 0.25), Neon.STYLE.hazard_color)).is_false()
+	assert_bool(_hues_apart(Color(0.4, 0.9, 0.35), Neon.STYLE.glimmer_color)).is_false()
+	assert_bool(_hues_apart(Color(0.3, 0.85, 0.95), Neon.STYLE.hazard_color)).is_true()
+	assert_bool(_hues_apart(Color(0.95, 0.95, 0.95), Neon.STYLE.hazard_color)).is_true()
+
+
 func test_names_are_translated() -> void:
 	var locale: String = TranslationServer.get_locale()
 	TranslationServer.set_locale("tr")
@@ -44,3 +75,11 @@ func test_beat_sizes() -> void:
 	assert_float(SECTORS.def_at(3).beat_px(120.0)).is_equal_approx(400.0, 0.001)
 	# En kısa vuruş en yavaş sektörde: 120 BPM'de S1 600 px/sn × 0,5 sn.
 	assert_float(SECTORS.min_beat_px(120.0)).is_equal_approx(300.0, 0.001)
+
+
+## Renk, sabit renkten tonca yeterince uzak mı (ya da tonu sayılmayacak kadar soluk mu).
+func _hues_apart(color: Color, fixed: Color) -> bool:
+	if color.s < MIN_SATURATION:
+		return true
+	var distance: float = absf(color.h - fixed.h)
+	return minf(distance, 1.0 - distance) >= MIN_HUE_DISTANCE

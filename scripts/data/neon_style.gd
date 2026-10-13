@@ -23,6 +23,14 @@ extends Resource
 ## Kapalı şekillerin dolgu saydamlığı.
 @export_range(0.0, 1.0, 0.01) var fill_alpha: float = 0.18
 
+@export_group("Sabit renkler")
+## Tehlike kırmızısı: her sektörde aynı; hiçbir çevre rengi kırmızı olamaz (GDD §12).
+@export var hazard_color: Color = Color(1.0, 0.22, 0.32)
+## Glimmer yeşili: her sektörde aynı; hiçbir çevre rengi yeşil olamaz.
+@export var glimmer_color: Color = Color(0.35, 1.0, 0.5)
+## Oyuncu çekirdeğinin beyazı.
+@export var player_color: Color = Color(1.0, 1.0, 1.0)
+
 
 ## Verilen kalitedeki çizgi parlama katmanları.
 func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:

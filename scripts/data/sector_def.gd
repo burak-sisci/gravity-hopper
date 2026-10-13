@@ -17,8 +17,8 @@ extends Resource
 ## Sektör içi zorluk eğrisinin başı ve sonu (desen parçası zorluğu 1–10, M2-10).
 @export_range(1, 10) var min_difficulty: int = 1
 @export_range(1, 10) var max_difficulty: int = 3
-## Geçici çevre rengi; kesin palet M3-11'de. Kırmızı ve yeşil kullanılmaz (GDD §12).
-@export var ambient_color: Color = Color(0.3, 0.85, 0.95)
+## Sektörün renkleri (çevre, vurgu, arka plan; M3-02). Kesin tonlar M3-17'de.
+@export var palette: SectorPalette
 
 
 ## Bu sektörde, verilen tempoda bir vuruşun dünyadaki boyu (px).

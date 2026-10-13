@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-13 (M3-01 neon bileşenleri) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-13 (M3-02 sektör paletleri) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -197,7 +197,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 - **Corridor:**
   - **Duvar boşlukları (M2-11):** `Run` her adımda `ChunkSpawner.active_gaps()` (duvar, üst y, alt y) listesini `set_gaps()` ile bildirir. Liste değişince ya da bir parça taşınınca her duvar parçası, boşlukların dışında kalan katı aralıklara bölünür: parça başına en fazla 3 parçacık (`CollisionShape2D` + `Polygon2D`, tur başında oluşturulur; yalnızca boy ve yer değişir, kullanılmayan kapatılır). Sınırlar tam boşluk kenarındadır. Test: `tests/levels/corridor_test.gd`.
-  - **Geçici palet tonu (M2-09):** `set_tint(renk)` duvarları sektörün `ambient_color`'una %35 oranında çeker; geçiş 0,6 sn'lik tween (yalnızca görsel). `Run` tur başında anında, sektöre girişte yumuşak çağırır. Kesin palet ve renk dalgası M3'te.
+  - **Palet rengi (M3-02):** `set_ambient(renk)` gri duvarları paletin çevre rengine %35 oranında çeker (neon duvarlar M3-03). Geçişi `Run` yapar (§9).
   - Sol ve sağ duvarlar 400 px'lik `StaticBody2D` parçalarından oluşur; her parça 60 px kalınlığında, gri ve sırayla açık/koyu.
   - Parça sayısı en uzun ekrana (21:9) göre tur başında sabittir (10 + 10).
   - Görünür alanın altında kalan parça bir halka boyu yukarı taşınır ve `reset_physics_interpolation()` çağrılır.
@@ -494,6 +494,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 ## 9. Görsel mimari
 
 - **Şekiller:** Tüm oyun şekilleri beyaz `Polygon2D` / `Line2D` olarak çizilir. Renkler koddan, aktif sektörün `SectorPalette` kaynağından atanır. Sektör geçişinde palet yumuşak bir geçişle (tween) değişir.
+- **Paletler (M3-02, ADR-044):** Her `SectorDef`'in `palette`'i var (`data/sectors/palette_NN.tres`): `ambient` (duvarlar, ağ, iz parlaması), `accent` (sektör afişi, vuruş nabzı, rekor çizgisi), `background` (koyu).
+  - Sektörden bağımsız sabit renkler `NeonStyle`'da: `hazard_color` (kırmızı), `glimmer_color` (yeşil), `player_color` (beyaz). Çevre ve vurgu rengi bunların tonuna 30°'den yakın olamaz; doygunluğu 0,2'nin altındaki renkler (beyaz, gri) serbest. Arka planın parlaklığı ≤ 0,2. Hepsi testle denetlenir (`sector_catalog_test.gd`).
+  - `Run` paleti uygular: duvarlar `Corridor.set_ambient`, arka plan ekranın temizleme rengi (`RenderingServer.set_default_clear_color`; tam ekran çizim yok, Adreno'da bedava). Tur başında anında, sektöre girişte 0,6 sn'lik geçişle (`PALETTE_FADE_TIME`, yalnızca görsel). Aşağıdan yukarı renk dalgası M3-08'de. HUD sektör afişini `palette.accent` ile boyar.
+  - Tonlar geçici (GDD §12: camgöbeği, mor, kehribar); kesin renkler M3-17'de.
 - **Parlama (glow): nesne başına sahte parlama (ADR-020).** Her neon nesne kendi parlamasını taşır. Parlama toplamsal karışımla (`CanvasItemMaterial.blend_mode = ADD`) çizilir ve yalnızca nesnenin çevresini boyar. Tam ekran efekt yoktur.
   - **Çizgiler** (duvar, iz) ve geniş açılı şekiller (blok): çizginin geniş kopyaları, enine yumuşak sönen bir dokuyla çizilir. İki katman var: 64 px / %35 ve 26 px / %70.
   - **Küçük, sivri köşeli şekiller** (diken, Glimmer, oyuncu): arkalarında dairesel bir ışık lekesi durur (`Sprite2D` + radyal `GradientTexture2D`). Çizgi kopyası bu şekillerde sivri köşelerde ve kapanma noktasında yay izi bırakıyor.
@@ -519,12 +523,12 @@ Run (Node2D)                          scenes/levels/run.tscn
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
 | `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Ayrıntı aşağıda |
-| `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px(bpm)`, `climb_px()`. Tempo M2-20'de sektörden turun parçasına taşındı. Kesin palet M3'te |
+| `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, `palette` (M3-02); `beat_px(bpm)`, `climb_px()`. Tempo M2-20'de sektörden turun parçasına taşındı |
 | `MusicTrack` | `data/music/<id>.tres` (M2-20) | `id`, `stream` (OGG), `bpm`, `loop_start`, `volume_db`, `title`, `author`, `license`, `source_url`; `beat_length()`, `length()`, `position_at(vuruş_saati)`. `tools/music_prep.py` üretir |
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px(bpm)`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
-| `SectorPalette` | `data/sectors/` | Çevre, vurgu ve arka plan renkleri |
-| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)` |
+| `SectorPalette` | `data/sectors/palette_01.tres` … `palette_03.tres` (M3-02) | `ambient`, `accent`, `background` (§9). `SectorDef.palette` ile bağlı |
+| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)` |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
@@ -772,8 +776,8 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/entities/player_fall_test.gd` (M2-11) | Boşluktan `FELL` ile düşülür; duvar bittikten 2 kare sonraki dokunuş çevirir ve oyuncu öbür duvara varır; coyote dolduktan sonraki dokunuş kurtarmaz |
   | `tests/systems/chunk_spawner_test.gd` (M2-10 eki) | Beş tohumda S1'in son üçte birindeki ortalama zorluk ilk üçte birinkinden ≥ 1 yüksek, hedef zorluk hiç düşmüyor; sektör sonu dışında son 3 parça tekrar etmiyor |
   | `tests/ui/hud_test.gd` (M2-09 eki) | Sektör afişi: `sector_entered`'da ad (EN/TR), 2,4 sn'de sönme; sonraki sektörden başlayan turda görünür, S1'den başlayan turda gizli |
-  | `tests/data/sector_catalog_test.gd` (M2-08) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları |
-  | `tests/levels/run_sector_test.gd` (M2-08, M2-09) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, koridor tonu S3 rengi, tempo; S2'den başlayan turda yükseklik ve hız |
+  | `tests/data/sector_catalog_test.gd` (M2-08; M3-02 eki) | S1–S3 değerleri GDD ile aynı, başlangıç/bitiş yükseklikleri, ad çevirileri, vuruş boyları; her sektörün paleti var, çevre ve vurgu rengi tehlike kırmızısına ve Glimmer yeşiline tonca ≥ 30° uzak, arka plan koyu, çevre renkleri farklı; ton kuralı kırmızıyı ve yeşili yakalıyor |
+  | `tests/levels/run_sector_test.gd` (M2-08, M2-09, M3-02) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, renkler paletten (tur başında anında; S2'ye girişte geçiş yeni başlıyor, S3'te duvarlar ve arka plan S3 paletinde; M3-02), tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07; M2-20'de yeniden yazıldı) | Tur başlayınca bildirilen parça çalara konur, döngüsü `loop_start`'tan kurulur; ölümden sonra bildirilen saat yok sayılır, yeni turda parça yeniden kurulur |
   | `tests/data/music_catalog_test.gd` (M2-20) | Beş parça ve dört tempo; her parçanın süresi tam vuruş, döngüsü tam ölçü, ses düzeltmesi sınırda; atıf ve lisans (CC0 / CC-BY) tam; seçim tohuma bağlı ve 300 tohumda her parça seçiliyor; döngü içinde konum sarılıyor |
@@ -876,6 +880,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-041 | 2026-10-13 | M2 Planlama Gözden Geçirmesi: M3 20 atomik göreve bölündü (neon altyapısı → varlık görselleri → dünya ve geçişler → oyun hissi → ses → font ve renk → performans → kapı). Görünüş veriyle kurulur (palet, bileşen, shader değerleri). Kullanıcı kararı isteyen işler sona toplandı (M3-17 font ve kesin renkler, M3-20 oyun testi); 🤖 görevler arada durmadan ilerler. Eski "müzik inceltmesi" görevi kalktı: kulak testi geçti (S-03 ✅), geriye duvar yaklaşınca müziğin boğuklaşması kaldı (M3-16) | Kullanıcı görünüş ve hikâye yeniden yapılandırmasını plan sonuna bıraktı; veriyle kurulan görünüş o işte kodun yeniden yazılmasını önler. Renkler veri olduğu için sonradan seçilmeleri yeniden iş çıkarmaz, kullanıcı da seçimi bitmiş görsellerin üstünde yapar |
 | ADR-042 | 2026-10-13 | D-05 kararı (kullanıcı): ses efektleri insan yapımı, ücretsiz kütüphanelerden gelir: Kenney ses paketleri (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY filtresiyle). Claude adayları seçip ölçer (süre, ses düzeyi), kullanıcı oyunda dinler. gdfxr ve kodla sentez kullanılmaz. Aynı kapıda M1 + M2 onaylandı, P-04 kapandı (M2-19) | Müzikle aynı yol (ADR-039): orkestral müzikle uyumlu, profesyonel ses. Kenney'in CC0 lisansı en temiz seçenek. sfxr'ın 8-bit sesleri orkestral müzikle çatışabilir; kodla sentez müzik denemesinde yapay duyulmuştu |
 | ADR-043 | 2026-10-13 | Neon görseller ortak bileşenlerle çizilir: `NeonLine` ve `NeonShape` (`scripts/components/`), ortak durum `Neon` (autoload değil, statik `quality`), değerler `data/visual/neon_style.tres` (`NeonStyle`, yeni klasör `data/visual/`). Efekt kalitesi katman sayısını belirler: yüksek 2, orta 1, düşük 0 (ışık lekesi yalnızca düşükte yok). Kaliteyi `Main` ayardan aktarır | Her varlık (duvar, oyuncu, tehlike, Glimmer) aynı tekniği kullanacak (M3-03…M3-06); tek yerde durması görünüşü veriyle değiştirilebilir kılar (ADR-041). Autoload'a bağlı olmaması parça doğrulayıcının ekransız derlemesini korur. Redmi'de kare süresi değişmedi (§16.1) |
+| ADR-044 | 2026-10-13 | Sektör renkleri `SectorPalette` kaynağında (`ambient`, `accent`, `background`; `data/sectors/palette_NN.tres`), `SectorDef.ambient_color` ve `Corridor.set_tint` kalktı. Tehlike, Glimmer ve oyuncu renkleri sektörden bağımsız, `NeonStyle`'da. Arka plan ekranın temizleme rengiyle boyanır; geçişi `Run` yapar (0,6 sn) | Renkler veri olunca M3-17'deki kesin seçim kod değiştirmez (ADR-041). Renk kuralı (kırmızı ve yeşil çevre rengi olamaz, GDD §12) testle korunur. Temizleme rengi tam ekran bir çizimden ucuzdur; arka plan ağı (M3-07) bunun üstüne çizilir |
 
 ## 18. Açık teknik sorular
 

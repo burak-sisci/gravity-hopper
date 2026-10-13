@@ -41,6 +41,10 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	var speeds: Dictionary[int, float] = {}
 	var passes: Dictionary[int, int] = {1: 0, 2: 0, 3: 0}
 	var entered_at: Dictionary[int, float] = {1: 0.0}
+	var corridor: Corridor = run.get_node("%Corridor") as Corridor
+	# Tur başında palet anında gelir (M3-02).
+	assert_bool(corridor.ambient().is_equal_approx(_palette(1).ambient)).is_true()
+	var ambient_on_entry: Color = Color.BLACK
 	# await physics_frame adım işlenmeden döner; ölçüm ilk tam adımdan sonra başlar.
 	await _frames(2)
 	var previous_y: float = player.position.y
@@ -51,6 +55,8 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 		if run.sector != previous_sector:
 			# Sınır karesi: Run, oyuncunun sınırı eski hızla aştığı payı yeni hıza göre düzeltir.
 			entered_at[run.sector] = conductor.run_time
+			if run.sector == 2:
+				ambient_on_entry = corridor.ambient()
 		elif not speeds.has(run.sector):
 			speeds[run.sector] = step
 		else:
@@ -86,9 +92,13 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	assert_str(String(run.track.id)).is_equal(String(track_id))
 	assert_float(conductor.bpm).is_equal(run.track.bpm)
 	assert_float(conductor.beat_time()).is_equal_approx(conductor.run_time, 0.000001)
-	# Geçici palet tonu S3'ün rengine geçti (geçiş 0,6 sn, S3'e çok önce girildi).
-	var corridor: Corridor = run.get_node("%Corridor") as Corridor
-	assert_bool(corridor.tint().is_equal_approx(SECTORS.def_at(3).ambient_color)).is_true()
+	# Renkler paletten (M3-02): S2'ye girişte geçiş yeni başlıyor (renk sıçramıyor); S3'e çok
+	# önce girildi, 0,6 sn'lik geçiş bitti: duvarlar ve arka plan S3 paletinde.
+	assert_float(_channel_gap(ambient_on_entry, _palette(1).ambient)).is_less(0.05)
+	assert_float(_channel_gap(ambient_on_entry, _palette(2).ambient)).is_greater(0.1)
+	assert_bool(corridor.ambient().is_equal_approx(_palette(3).ambient)).is_true()
+	var background: Color = RenderingServer.get_default_clear_color()
+	assert_bool(background.is_equal_approx(_palette(3).background)).is_true()
 
 
 func test_start_sector_sets_height_and_speed() -> void:
@@ -130,6 +140,15 @@ func _start(sector: int, track_id: StringName = &"") -> Run:
 	add_child(run)
 	Events.debug_invincibility_changed.emit(true)
 	return run
+
+
+## İki renk arasındaki en büyük kanal farkı.
+func _channel_gap(a: Color, b: Color) -> float:
+	return maxf(absf(a.r - b.r), maxf(absf(a.g - b.g), absf(a.b - b.b)))
+
+
+func _palette(sector: int) -> SectorPalette:
+	return SECTORS.def_at(sector).palette
 
 
 func _frames(count: int) -> void:

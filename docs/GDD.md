@@ -170,7 +170,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 **Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, beş müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (80–120 BPM). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
 
-**Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Kesin renkler M3'te birlikte seçilecek.
+**Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Her sektörün bir paleti var: çevre (duvarlar, ağ), vurgu (afiş, nabız) ve koyu arka plan. Şimdilik yukarıdaki tonlarla geçici paletler kullanılıyor (M3-02); kural otomatik testle denetleniyor. Kesin renkler M3-17'de birlikte seçilecek.
 
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 

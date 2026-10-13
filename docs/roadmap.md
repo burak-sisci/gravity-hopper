@@ -174,7 +174,7 @@
 
 - [x] **M3-01** 🤖 Neon bileşenleri: `glow_bench.gd` tekniğinden yeniden kullanılabilir `NeonLine` (çizgi + parlama kopyaları) ve `NeonShape` (şekil + ışık lekesi). Parlama katman sayısı efekt kalitesine göre değişir (`Settings.effect_quality`). Ölçüm sahnesi `glow_bench.tscn` bu bileşenlerle yeniden kurulur.
   *Kabul:* Ölçüm sahnesi aynı görünüyor; Redmi'de kare süresi M0-09 ölçümüyle aynı; kalite seviyesi katman sayısını değiştiriyor (test).
-- [ ] **M3-02** 🤖 `SectorPalette` kaynağı: çevre, vurgu, arka plan. Tehlike kırmızısı, Glimmer yeşili ve oyuncu beyazı sabittir. S1–S3 için geçici paletler (GDD §12 tonları). `SectorDef.ambient_color` ve `Corridor.set_tint` bunun yerine geçer; sektöre girişte yumuşak geçiş.
+- [x] **M3-02** 🤖 `SectorPalette` kaynağı: çevre, vurgu, arka plan. Tehlike kırmızısı, Glimmer yeşili ve oyuncu beyazı sabittir. S1–S3 için geçici paletler (GDD §12 tonları). `SectorDef.ambient_color` ve `Corridor.set_tint` bunun yerine geçer; sektöre girişte yumuşak geçiş.
   *Kabul:* S1→S2→S3'te renkler paletten geliyor; hiçbir çevre rengi kırmızı ya da yeşil değil (test).
 - [ ] **M3-03** 🤖 Neon koridor duvarları: kenar çizgileri `NeonLine`, boşluk kenarlarında temiz kesik, vuruşta hafif nabız. Sesi kapalı oynayan da ritmi görsün (GDD §16).
   *Kabul:* Boşluk kenarı görselde ve çarpışmada aynı yerde (test); S1 ve boşluklu S2'nin Redmi ekran görüntüsü.

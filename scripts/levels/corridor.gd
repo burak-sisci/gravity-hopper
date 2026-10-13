@@ -20,10 +20,8 @@ const MIN_PIECE: float = 1.0
 ## M1 gri kutuları: parçalar sırayla açık ve koyu boyanır, böylece kayma gözle görülür.
 const COLOR_LIGHT: Color = Color(0.42, 0.45, 0.52)
 const COLOR_DARK: Color = Color(0.3, 0.33, 0.4)
-## Geçici palet tonu (M2-09): duvarlar sektörün rengine bu oranda çekilir. Kesin palet M3'te.
-const TINT_WEIGHT: float = 0.35
-## Ton geçişinin süresi (yalnızca görsel).
-const TINT_TIME: float = 0.6
+## Gri duvarlar sektör paletinin çevre rengine bu oranda çekilir (M2-09; neon duvarlar M3-03).
+const AMBIENT_WEIGHT: float = 0.35
 
 var _left: Array[StaticBody2D] = []
 var _right: Array[StaticBody2D] = []
@@ -33,8 +31,7 @@ var _shapes: Dictionary[StaticBody2D, Array] = {}
 var _pieces: Dictionary[StaticBody2D, Array] = {}
 var _visuals: Array[Polygon2D] = []
 var _base_colors: Array[Color] = []
-var _tint: Color = Color.WHITE
-var _tint_tween: Tween
+var _ambient: Color = Color.WHITE
 ## Etkin boşluklar: (duvar -1/+1, üst y, alt y).
 var _gaps: Array[Vector3] = []
 var _gaps_dirty: bool = true
@@ -61,20 +58,16 @@ func set_gaps(gaps: Array[Vector3]) -> void:
 		_gaps_dirty = true
 
 
-## Duvarları sektörün geçici rengine doğru tonlar; instant değilse yumuşak geçişle.
-func set_tint(color: Color, instant: bool = false) -> void:
-	if _tint_tween != null:
-		_tint_tween.kill()
-	if instant:
-		_apply_tint(color)
-		return
-	_tint_tween = create_tween()
-	_tint_tween.tween_method(_apply_tint, _tint, color, TINT_TIME)
+## Duvarları paletin çevre rengine göre boyar. Sektör geçişindeki yumuşak geçişi Run yapar.
+func set_ambient(color: Color) -> void:
+	_ambient = color
+	for i: int in _visuals.size():
+		_visuals[i].color = _base_colors[i].lerp(color, AMBIENT_WEIGHT)
 
 
-## Şu anki ton rengi (testler).
-func tint() -> Color:
-	return _tint
+## Duvarların şu anki çevre rengi.
+func ambient() -> Color:
+	return _ambient
 
 
 ## Bir duvarın katı aralıkları (üst y, alt y), dünyada; testler için.
@@ -149,12 +142,6 @@ func _cut(segment: StaticBody2D, side: float) -> void:
 	for i: int in range(used, MAX_PIECES):
 		(shapes[i] as CollisionShape2D).disabled = true
 		(pieces[i] as Polygon2D).visible = false
-
-
-func _apply_tint(color: Color) -> void:
-	_tint = color
-	for i: int in _visuals.size():
-		_visuals[i].color = _base_colors[i].lerp(color, TINT_WEIGHT)
 
 
 func _make_segment(color: Color, y: float) -> StaticBody2D:

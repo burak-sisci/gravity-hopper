@@ -105,4 +105,4 @@ func _refresh() -> void:
 	if _banner_sector > 0 and sectors != null:
 		var def: SectorDef = sectors.def_at(_banner_sector)
 		_sector_banner.text = tr("HUD_SECTOR") % [_banner_sector, tr(def.name_key)]
-		_sector_banner.add_theme_color_override("font_color", def.ambient_color)
+		_sector_banner.add_theme_color_override("font_color", def.palette.accent)
