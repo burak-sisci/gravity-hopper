@@ -2,6 +2,8 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
+> **Güncelleme (2026-10-13):** Kullanıcı soruları cevapladı. Bütçe yok; her sektöre ayrı tema yerine **tek bir ana tema** ve onun sektör düzenlemeleri. Kararlar ve bütçesiz plan §9'da; aşağıdaki "her sektörün kendi teması" önerisinin yerini §9 alır.
+
 ## 1. Kısa sonuç
 
 - **Popüler (ticari) şarkılar uygun değil.**
@@ -144,12 +146,36 @@
 | 3 | İsteğe bağlı: yapay zekâyla geçici müzik, yalnızca deneme ve besteciye örnek; yayına girmez | Aşama 2 sürerken |
 | 4 | Entegrasyon ve kulak testi (S-03) | M3-10 |
 
-## 8. Kullanıcıya sorular (D-02'yi kapatmak için)
+## 8. Kullanıcıya sorular ve cevaplar (2026-10-13)
 
-1. **Bütçe:** Müzik için para ayırabilir misin? Seçenekler: hiç / ≈ 1–3 bin $ / daha fazla.
-2. **Referanslar:** Sevdiğin 3–5 oyun müziği ya da şarkı. Tür ve his için; kopyalamak için değil.
-3. **Yapay zekâ:** Yalnızca deneme amacıyla kullanılmasına onay veriyor musun?
-4. **Lisans kuralı:** Seçenek D seçilirse `.clauderules` §7'ye "sözleşmeli ısmarlama eser" eklenmesine onay veriyor musun?
+1. **Bütçe:** Müzik için para ayırabilir misin? → **Hayır.**
+2. **Referanslar:** Sevdiğin 3–5 oyun müziği ya da şarkı. → **Subway Surfers gibi, oyunla özdeşleşen bir tema müziği.**
+3. **Yapay zekâ:** Yalnızca deneme amacıyla kullanılmasına onay veriyor musun? → **Evet.**
+4. **Lisans kuralı:** Besteci seçilirse `.clauderules` §7'ye "sözleşmeli ısmarlama eser" eklenmesine onay veriyor musun? → **Evet**, eklendi (ADR-037).
+
+## 9. Bütçesiz imza tema planı (2026-10-13)
+
+- **Model: Subway Surfers.** Oyunda 2012'den beri aynı ana tema çalar; her şehir güncellemesinin müziği bu temanın o şehrin tarzında bir remiksidir ([Subway Surfers hayran wikisi](https://subwaysurf.fandom.com/wiki/File:BoomboxChangeMusic1.jpg), ikincil kaynak).
+- **Bizde:** Her sektör, ana temanın o sektörün BPM'inde ve tarzında yeniden düzenlenmiş hâlini çalar. Oyuncu melodiyi tanır; sektör değişince tanıdık melodi yeni bir kılıkta gelir. Teknik plan (§6) aynen geçerli: katmanlar, ölçü sınırında geçiş.
+- **Tema taslağı:**
+  - **İmza motifi:** 3+3+2 ritimde oktav sıçraması (A4 A4 E5 → A5). Duvardan duvara geçişin müzikteki karşılığıdır. Kısa, ıslıkla çalınabilir ve ilk iki saniyede tanınır.
+  - **Akorlar:** Am – F – C – G, her ölçüde bir akor. Tema 8 ölçüdür; ikinci yarıda melodi yukarı tırmanır.
+  - **Sektör düzenlemeleri:**
+    - S1: yumuşak "pluck" melodi ve pad; davul ikinci yarıda girer.
+    - S2: kare dalga melodi, arpej, dört vuruşlu davul.
+    - S3: kalın synth melodi, 16'lık bas, açık zil.
+    - S4–S5 ve menü sürümü ileride.
+  - **Geçiş:** Son ölçüde süpürme sesi ve trampet dolgusu; yeni sektör ölçü başında zil vuruşuyla başlar.
+- **Temayı kim üretir?** Açık soru (D-02):
+
+  | Seçenek | Artı | Eksi |
+  | --- | --- | --- |
+  | **A. Claude kodla besteler** (`tools/theme_demo.py`) | Ücretsiz. BPM tam tutar, katmanlar istendiği gibi ayrılır, değişiklik dakikalar sürer. Örnek ses ya da başkasının kaydı kullanılmaz | Ses kalitesi synthwave / chiptune düzeyinde kalır. Yapay zekâ üretimi olduğu için telif koruması zayıf olabilir: başkası kopyalarsa engellemek zorlaşır. Yayına girmesi için kullanıcının yapay zekâ onayının yayını da kapsaması gerekir |
+  | **B. Gönüllü ya da gelir ortaklığıyla çalışan besteci** | İnsan eli ve gerçek kalite; telif tam korunur | Besteciyi bulmak ve süreci yürütmek kullanıcının işidir. Zamanlama belirsizdir. Yazılı sözleşme şarttır (ADR-037) |
+  | **C. CC-BY kütüphane** | Hızlı ve iyi kalite | Başka oyunlar da aynı parçayı kullanabilir; imza tema olamaz |
+
+- **Önerim: A ile başlamak.** Tema oyunla birlikte şimdiden gelişir. Oyun para kazanırsa ya da bir besteci bulunursa (B), aynı melodiyi yeniden düzenler; imza korunur, kalite artar.
+- **Deneme kaydı:** `python tools/theme_demo.py <çıktı.wav>` 56 saniyelik bir kayıt üretir: S1 100 → S2 110 → S3 120 BPM ve final akoru. Kullanıcının dinlemesi için masaüstüne kopyalandı. Yalnızca kodla üretildi; yayına girmez.
 
 ## Kaynaklar
 

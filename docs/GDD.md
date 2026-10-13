@@ -265,7 +265,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 ## 19. Ses ve his
 
 - **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları.
-- **Müzik:** Her sektöre bir döngü. Menüde sakin bir tema.
+- **Müzik:** Oyunla özdeşleşen tek bir **ana tema** var (kullanıcı kararı, 2026-10-13; Subway Surfers modeli). Her sektör aynı melodinin o sektörün BPM'inde ve kendi tarzında yeniden düzenlenmiş hâlini çalar; yoğunluk sektörle artar. Menüde temanın sakin sürümü çalar. Ayrıntı: `docs/music_research.md` §9.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
 
@@ -297,7 +297,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
-| D-02 | Müzik yaklaşımı: oyuna özel katmanlı müzik (besteci) mi, CC-BY kütüphaneler mi? Popüler şarkılar lisans ve BPM nedeniyle elendi; araştırma `docs/music_research.md` (2026-10-13) | M3 |
+| D-02 | Müzik: bütçe yok; tek ana tema + sektör düzenlemeleri kararlaştırıldı (2026-10-13). Açık soru: temayı kim üretir? (A) Claude kodla besteler, (B) gönüllü ya da gelir ortaklığıyla besteci, (C) CC-BY kütüphane. `docs/music_research.md` §9 | M3 |
 | D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
 | D-04 | Günlük meydan okumada deneme hakkı | M7 |
 | — | Sektör renklerinin kesin tonları | M3 |
