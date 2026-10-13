@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi: müzik ve tempo, tepki payı, M2 oyun testinin sonuçları) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-13 (M3-06 lazerin uyarı ışıması; önceki: M2 Planlama Gözden Geçirmesi) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -75,7 +75,7 @@ Karakter iki dikey duvar arasındaki bir koridorda **yukarı** tırmanır ve her
 | **Diken** | Duvara yapışık, sabit. Olduğun duvarda diken varsa diğer duvara geç. | S1 |
 | **Duvar boşluğu** | Duvarda açıklık; tutunduğun duvar biterse koridordan düşersin. | S2 |
 | **Veri bloğu** | Koridorun ortasında süzülen blok; geçiş yolunu keser. | S2 |
-| **Lazer kapısı** | Vuruşa göre açılıp kapanan yatay lazer: duvardan uzanan ışın her vuruşta yanar, yarım vuruşta söner. İki duvardan kısa ışınlar ortada bir açıklık bırakır; oradan ancak tam zamanlanmış bir çevirmeyle, havadayken geçilir. Yarım vuruşta yanan ışın aldatıcıdır: geçerken kapalıdır. | S3 |
+| **Lazer kapısı** | Vuruşa göre açılıp kapanan yatay lazer: duvardan uzanan ışın her vuruşta yanar, yarım vuruşta söner. İki duvardan kısa ışınlar ortada bir açıklık bırakır; oradan ancak tam zamanlanmış bir çevirmeyle, havadayken geçilir. Yarım vuruşta yanan ışın aldatıcıdır: geçerken kapalıdır. Sönükken ince bir ray kalır; yanmadan hemen önce ray kalınlaşıp parlar (uyarı ışıması). | S3 |
 | **Dönen şekil** | Vuruş temposunda dönen köşeli engel. | S4 |
 | **Hareketli blok** | Duvarlar arasında ritimle gidip gelen blok. | S4 |
 

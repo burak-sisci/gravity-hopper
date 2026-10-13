@@ -59,6 +59,33 @@ extends Resource
 ## Veri satırlarının saydamlığı.
 @export_range(0.0, 1.0, 0.05) var block_row_alpha: float = 0.55
 
+@export_group("Lazer")
+## Yanık ışının sivrilen ucunun çarpışma kutusunun ucundan taşan boyu (görüntü kutudan büyük
+## kalır, oyuncunun aleyhine olmaz).
+@export_range(0.0, 40.0, 1.0, "suffix:px") var laser_tip_px: float = 24.0
+## Yanık ışının beyaza yakın çekirdeğinin kalınlığı (ışın kalınlığına oranla).
+@export_range(0.0, 1.0, 0.05) var laser_core_ratio: float = 0.4
+## Çekirdeğin tehlike kırmızısından beyaza çekilme oranı (yanık ışın sönükten parlak görünsün).
+@export_range(0.0, 1.0, 0.05) var laser_core_whiten: float = 0.6
+## Sönük ışının (ray) kalınlığı: ışının nereden geçeceğini gösterir.
+@export_range(1.0, 20.0, 0.5, "suffix:px") var laser_off_width: float = 3.0
+## Sönük ışının saydamlığı.
+@export_range(0.0, 1.0, 0.05) var laser_off_alpha: float = 0.3
+## Uyarı ışıması yanmadan bu kadar vuruş önce başlar; ray kalınlaşıp parlar.
+@export_range(0.05, 0.5, 0.05) var laser_warn_beats: float = 0.25
+## Uyarının sonunda rayın kalınlığı.
+@export_range(1.0, 20.0, 0.5, "suffix:px") var laser_warn_width: float = 8.0
+## Uyarının sonunda rayın saydamlığı.
+@export_range(0.0, 1.0, 0.05) var laser_warn_alpha: float = 0.85
+
+@export_group("Glimmer")
+## Glimmer dairesinin köşe sayısı (yuvarlak görünsün diye).
+@export_range(8, 48, 1) var glimmer_segments: int = 20
+## Glimmer dolgusunun saydamlığı.
+@export_range(0.0, 1.0, 0.05) var glimmer_fill_alpha: float = 0.5
+## Glimmer'ın vuruşta büyüme oranı (parıltı); vuruş nabzıyla söner.
+@export_range(0.0, 1.0, 0.05) var glimmer_pulse_scale: float = 0.25
+
 @export_group("Duvarlar")
 ## Duvar dolgusunun saydamlığı; parçalar sırayla açık ve koyu, böylece kayma gözle görülür.
 @export_range(0.0, 1.0, 0.01) var wall_fill_light: float = 0.16

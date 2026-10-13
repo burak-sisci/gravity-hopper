@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Glimmer (M2-13, architecture.md §8.6): oyuncunun toplama alanı değince toplanır; değer
 ## RunStats'tan Events.glimmer_collected ile duyurulur, tur sonunda RunResult.glimmers'a yazılır.
-## Parça havuzdan gelince yeniden etkinleşir.
+## Parça havuzdan gelince yeniden etkinleşir. Görünüşü (M3-06) çarpışma yarıçapında yeşil neon
+## daire; vuruşta büyüyüp söner.
 
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
@@ -59,6 +60,28 @@ func test_reset_brings_glimmer_back() -> void:
 	chunk.reset()
 	assert_bool(glimmer.is_taken()).is_false()
 	assert_bool(glimmer.visible).is_true()
+
+
+func test_round_green_shape_follows_collision_radius() -> void:
+	var glimmer: Glimmer = auto_free(GLIMMER_SCENE.instantiate()) as Glimmer
+	add_child(glimmer)
+	var radius: float = ((glimmer.get_node("Shape") as CollisionShape2D).shape as CircleShape2D).radius
+	var visual: NeonShape = glimmer.get_node("Visual") as NeonShape
+	assert_object(visual.shown_color()).is_equal(Neon.STYLE.glimmer_color)
+	assert_bool(visual.sharp).is_false()
+	assert_int(visual.polygon.size()).is_equal(Neon.STYLE.glimmer_segments)
+	for point: Vector2 in visual.polygon:
+		assert_float(point.length()).is_equal_approx(radius, 0.001)
+
+
+func test_sparkles_on_the_beat() -> void:
+	var chunk: ChunkInfo = auto_free(_glimmer_chunk().instantiate()) as ChunkInfo
+	add_child(chunk)
+	var visual: Node2D = chunk.items()[0].get_node("Visual") as Node2D
+	chunk.set_beat(3.0)
+	assert_float(visual.scale.x).is_equal_approx(1.0 + Neon.STYLE.glimmer_pulse_scale, 0.001)
+	chunk.set_beat(3.9)
+	assert_float(visual.scale.x).is_equal_approx(1.0, 0.001)
 
 
 func test_stats_apply_multiplier() -> void:

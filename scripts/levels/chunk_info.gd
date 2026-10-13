@@ -77,13 +77,16 @@ func reset() -> void:
 		glimmer.reset()
 
 
-## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere ve bloklara iletir.
+## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere, bloklara ve
+## Glimmer'lara iletir.
 ## Parça tam vuruşta başladığı için evreleri parçanın yerinden bağımsızdır.
 func set_beat(beat: float) -> void:
 	for laser: Laser in _lasers:
 		laser.set_beat(beat)
 	for block: Block in _blocks:
 		block.set_beat(beat)
+	for glimmer: Glimmer in _glimmers:
+		glimmer.set_beat(beat)
 
 
 ## Parçanın duvar boşlukları (M2-11).

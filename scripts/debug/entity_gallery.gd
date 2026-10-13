@@ -1,7 +1,8 @@
 extends Node2D
 ## Varlık galerisi (M3-05): oyunun tehlike ve toplanabilir sahneleri (diken, blok, lazer,
-## Glimmer) S1 renkleriyle yan yana, vuruşla canlı. Yalnızca debug amaçlıdır, oyuncu görmez;
-## görsel işleri rastgele parça beklemeden incelemek ve ekran görüntüsü almak içindir.
+## Glimmer) ve oyuncu (M3-06) S1 renkleriyle yan yana, vuruşla canlı. Yalnızca debug amaçlıdır,
+## oyuncu görmez; görsel işleri rastgele parça beklemeden incelemek ve ekran görüntüsü almak
+## içindir.
 ## PC'de: <godot> --path . res://scenes/debug/entity_gallery.tscn
 ## Telefonda argüman verilemez: sahne geçici olarak ana sahne yapılıp yüklenir, sonra geri alınır.
 
@@ -10,6 +11,7 @@ const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const BLOCK_SCENE: PackedScene = preload("res://scenes/entities/block.tscn")
 const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
 const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
+const PLAYER_SCENE: PackedScene = preload("res://scenes/entities/player.tscn")
 
 ## Galeri tasarım alanı (proje görüntü alanı 1080 × 1920; uzun ekranda aşağı uzar).
 const VIEW_WIDTH: float = 1080.0
@@ -27,10 +29,13 @@ const LASER_STEP_Y: float = 200.0
 const GLIMMER_ROW_Y: float = 1560.0
 const GLIMMER_STEP_X: float = 150.0
 const GLIMMER_COUNT: int = 3
+## Oyuncu sol duvarda (çekirdeğin duvardan uzaklığı oyundaki gibi).
+const PLAYER_POSITION: Vector2 = Vector2(120.0, 1760.0)
 
 var _beat: float = 0.0
 var _lasers: Array[Laser] = []
 var _blocks: Array[Block] = []
+var _glimmers: Array[Glimmer] = []
 
 
 func _ready() -> void:
@@ -58,7 +63,12 @@ func _ready() -> void:
 	_lasers.append_array([left_laser, right_laser])
 	for i: int in GLIMMER_COUNT:
 		var x: float = VIEW_WIDTH * 0.5 + (i - (GLIMMER_COUNT - 1) * 0.5) * GLIMMER_STEP_X
-		_add_item(GLIMMER_SCENE, Vector2(x, GLIMMER_ROW_Y), false)
+		_glimmers.append(_add_item(GLIMMER_SCENE, Vector2(x, GLIMMER_ROW_Y), false) as Glimmer)
+	# Oyuncu yalnızca görüntü için: işlemesi kapalı, tırmanmaz.
+	var player: Node2D = PLAYER_SCENE.instantiate() as Node2D
+	player.process_mode = Node.PROCESS_MODE_DISABLED
+	player.position = PLAYER_POSITION
+	add_child(player)
 
 
 func _physics_process(delta: float) -> void:
@@ -67,6 +77,8 @@ func _physics_process(delta: float) -> void:
 		laser.set_beat(_beat)
 	for block: Block in _blocks:
 		block.set_beat(_beat)
+	for glimmer: Glimmer in _glimmers:
+		glimmer.set_beat(_beat)
 
 
 ## Sahneyi verilen yere koyar; sağ duvardakiler koridora bakacak şekilde aynalanır.

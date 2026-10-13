@@ -3,16 +3,22 @@ extends Node2D
 ## Parlayan neon çizgi (architecture.md §9): toplamsal parlama kopyaları + parlak çekirdek çizgi.
 ## Duvarlar ve iz için. Kopya sayısı efekt kalitesine göre değişir (Neon.quality); kopyalar
 ## oluşturulurken bir kez kurulur, kalite değişince yalnızca görünürlükleri değişir.
+## Sabit renkli çizgiler (lazer) rengi tone ile NeonStyle'dan alır (M3-06).
 
 ## Çizginin noktaları (yerel koordinat).
 @export var points: PackedVector2Array = PackedVector2Array():
 	set(value):
 		points = value
 		_update_points()
-## Çizginin rengi.
+## Çizginin rengi (tone CUSTOM iken).
 @export var color: Color = Color.WHITE:
 	set(value):
 		color = value
+		_update_look()
+## Renk kaynağı: CUSTOM değilse renk NeonStyle'daki sabit renktir (ör. tehlike kırmızısı).
+@export var tone: GameTypes.NeonTone = GameTypes.NeonTone.CUSTOM:
+	set(value):
+		tone = value
 		_update_look()
 ## Parlamanın rengi; tamamen saydamsa çizginin rengi kullanılır.
 @export var glow_color: Color = Color.TRANSPARENT:
@@ -69,8 +75,13 @@ func _enter_tree() -> void:
 func apply_quality() -> void:
 	if _core == null:
 		return
-	var glow: Color = color if glow_color.a <= 0.0 else glow_color
+	var glow: Color = shown_color() if glow_color.a <= 0.0 else glow_color
 	Neon.apply_halos(_halos, glow, glow_enabled)
+
+
+## Çizginin görünen rengi: tone'a göre sabit renk ya da color.
+func shown_color() -> Color:
+	return Neon.STYLE.tone_color(tone, color)
 
 
 func _update_points() -> void:
@@ -87,7 +98,7 @@ func _update_look() -> void:
 	if _core == null:
 		return
 	_core.width = width
-	_core.default_color = color
+	_core.default_color = shown_color()
 	_core.width_curve = width_curve
 	_core.gradient = gradient
 	for halo: Line2D in _halos:
