@@ -2,6 +2,8 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
+> **Durum (2026-10-13):** Uygulandı (M2-20, ADR-040) ve kulak testi geçti: beş parça her turda rastgele çalar, turun temposu parçanındır. Sektör tempolarından ve sektör parçalarından söz eden bölümler (§1, §5, §6, §10, §12 "Sektör düşüncesi") bu kararla eskidi, kayıt olarak duruyor.
+>
 > **Son karar (2026-10-13, ADR-039):** İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar; yapay zekâ yalnızca yedek. Ana tema adayları ve ölçümler §12'de. Yapay zekâ araştırması §11'de, aşağıdaki önceki kararlar kayıt olarak duruyor.
 >
 > **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan hâlâ geçerli.
@@ -301,7 +303,7 @@
   - Sektör BPM'leri seçilen parçalara göre ayarlanır.
   - Döngüsü olmayan parçalarda döngü noktası ölçü sınırında seçilir (bitiş bölümü döngü için tasarlanmamış olabilir; kulakla denenir).
 - **Kredi biçimi (CC-BY):** "Epic Journey" – Thor Arisland (tcarisland), CC-BY 4.0, opengameart.org/content/epic-journey. CC0 parçalara da teşekkür olarak kredi yazılır.
-- **Uygulandı (M2-20, ADR-040):** Kullanıcı beş parçanın hepsini istedi: her tur birini rastgele çalar ve turun temposu o parçanınkidir (sektör tempoları kaldırıldı). Hazırlama `tools/music_prep.py`, atıflar `CREDITS.md`'de. Treasure Hunter 90 BPM, Determined Pursuit 80 BPM sayıldı (ölçümdeki 180 / 160 sekizlik nabız); kulak testinde doğrulanacak.
+- **Uygulandı (M2-20, ADR-040):** Kullanıcı beş parçanın hepsini istedi: her tur birini rastgele çalar ve turun temposu o parçanınkidir (sektör tempoları kaldırıldı). Hazırlama `tools/music_prep.py`, atıflar `CREDITS.md`'de. Treasure Hunter 90 BPM, Determined Pursuit 80 BPM sayıldı (ölçümdeki 180 / 160 sekizlik nabız). Kulak testi geçti (kullanıcı, 2026-10-13: "her şey güzel"): senkron, döngü dikişleri ve ses düzeyleri sorunsuz.
 
 ## Kaynaklar
 

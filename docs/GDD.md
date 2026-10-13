@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-11 (M1-15: onaylanan his değerleri §13.1'e işlendi) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi: müzik ve tempo, tepki payı, M2 oyun testinin sonuçları) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -198,7 +198,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
   5. Güvenli boşluğun genişliği
 - **Hız tavanı:**
   - Engelin ekranda belirmesiyle oyuncuya ulaşması arasındaki süre ~1,2 sn'nin altına inmez.
-  - İki zorunlu çevirme arasındaki süre, çevirme süresi + tepki payının altına inmez. Tepki payı başlangıçta **0,2 sn** (iki çevirme arası en az ≈ 0,57 sn); M2-18 oyun testinde gözden geçirilir.
+  - İki zorunlu çevirme arasındaki süre, çevirme süresi + tepki payının altına inmez. Tepki payı **0,2 sn** (iki çevirme arası en az ≈ 0,57 sn); M2-18 oyun testinde zorluk adil bulundu, değer kaldı.
   - Tavandan sonra zorluk yalnızca desenlerle artar.
 - **Hız hissi, gerçek hızdan ucuzdur:** paralaks katmanları, hız çizgileri, uzayan iz ve yoğunlaşan müzik oyunu gerçekte hızlandırmadan daha hızlı hissettirir.
 - **Oyuncu hızı değil baskıyı etkiler** (bkz. §14).
@@ -217,7 +217,7 @@ Telefonda ayar paneliyle oynandı; başlangıç değerleri değiştirilmeden ona
 | İleri görüş (oyuncunun üstünde) | 28 m | S1'de engel 2,3 sn önce görünür; 22 m/sn tavanında 1,27 sn (≥ 1,2 sn kuralı tutuyor) |
 | Koridor genişliği | 18 m | |
 
-Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır (S1'de 28,8 m). M1'in geçici diken aralığı (10 m) M2-04'te desen parçalarıyla kalktı.
+Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır (S1'de 100 BPM'lik parçayla 28,8 m). M1'in geçici diken aralığı (10 m) M2-04'te desen parçalarıyla kalktı.
 
 ## 14. Çöküş duvarı (baskı)
 
@@ -301,5 +301,5 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | --- | --- | --- |
 | D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
 | D-04 | Günlük meydan okumada deneme hakkı | M7 |
-| — | Sektör renklerinin kesin tonları | M3 |
+| — | Sektör renklerinin kesin tonları ve font | M3-17 |
 | — | Tüm sayısal değerler (hız, uzunluk, maliyet, basınç) | M1–M4, ayar paneliyle |

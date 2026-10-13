@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-10-11 (M1 Planlama Gözden Geçirmesi: M2 atomik hale getirildi, 19 görev)
+> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi: M3 atomik hale getirildi, 20 görev; ADR-041)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -10,7 +10,7 @@
 - **Sahip:** 🤖 Claude · 👤 sen · 🤝 birlikte. 🤖 görevler arasında senin onayın beklenmez; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler (ADR-025).
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
-- **Kademeli planlama:** M0–M2 ayrıntılı (M2 atomik), M3–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
+- **Kademeli planlama:** M0–M3 atomik, M4–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
 
 ## Genel bakış
 
@@ -99,7 +99,7 @@
 - [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma: itch.io, şifreli sayfa (D-12, ADR-027). *(Claude'un kısmı tamam: Web ön ayarı, `tools/web_build.ps1`, zip, tarayıcı denemesi. Kalan: senin itch.io sayfasını açıp zip'i yüklemen. ⏸ Ertelendi, kullanıcı kararı 2026-10-08; istediğin zaman kaldığı yerden sürer, M1 kapısını beklemez.)*
   *Kabul:* Tarayıcıda oynanabilir bir link var.
 - [x] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
-  *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak sonucu M1-16 kapısında sorulacak.)*
+  *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak denemesi M2-18 oyun testinde geçti.)*
 - [x] **M1-15** 🤖 Onaylanan değerleri kalıcı yap (`default_tuning.tres`, `state.json` → `approved_tuning`, GDD). *(Değerler zaten `.tres`'teydi; GDD §13.1 ve `approved_tuning` yazıldı, telefondaki kayıt dosyası silindi.)*
 - [x] **M1-16** 🤝 Planlama Gözden Geçirmesi → 🚪 **Sen onaylamadan M2'ye geçilmez.** *(Gözden geçirme yapıldı 2026-10-11: M2 19 atomik göreve bölündü. Kapı, senin kararınla M2-19'daki birleşik kapıya taşındı (ADR-028); M1 orada M2 ile birlikte kontrol edilir. Ertelenen M1-13 kapıyı engellemez.)*
 
@@ -158,26 +158,74 @@
 **Kapanış**
 
 - [x] **M2-18** 👤 Oyun testi: ilk 3 sektör. Zorluk adil mi, "bir tur daha" isteği doğuyor mu? Ayrıca M1'den kalanlar (ADR-028): iki başparmak denemesi (S-07) ve ilk his izlenimi. M2-07'den: metronom kulak testi (dikenler tıkla aynı anda mı geçiyor, tık geç mi kalıyor? S-03). *(2026-10-13: kullanıcı "her şey güzel görünüyor" dedi. Testte bulunan hızlı çift dokunuş sorunu düzeltildi, ADR-036.)*
-- [x] **M2-20** 🤖 Müzik (kullanıcı isteği, 2026-10-13; M2-19'dan önce yapıldı): beş parça her turda rastgele, turun temposu parçanın (ADR-040). `MusicTrack` / `MusicCatalog`, `tools/music_prep.py` (ilk vuruşa kırpma, tam ölçü döngü), metronomun yerine parça, sektör geçişinde ızgara kesintisiz, doğrulayıcı her tempoda.
-- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır.
+- [x] **M2-20** 🤖 Müzik (kullanıcı isteği, 2026-10-13; M2-19'dan önce yapıldı): beş parça her turda rastgele, turun temposu parçanın (ADR-040). `MusicTrack` / `MusicCatalog`, `tools/music_prep.py` (ilk vuruşa kırpma, tam ölçü döngü), metronomun yerine parça, sektör geçişinde ızgara kesintisiz, doğrulayıcı her tempoda. *(Kulak testi geçti, 2026-10-13: "her şey güzel".)*
+- [ ] **M2-19** 🤝 Planlama Gözden Geçirmesi → 🚪 **Birleşik kapı: M1 + M2** (ADR-028). P-04 (planlama belgeleri) de burada kapanır. *(Gözden geçirme yapıldı 2026-10-13: belgeler düzeltildi, M3 20 atomik göreve bölündü, ADR-041. Kapı senin onayını bekliyor.)*
 
 ## M3 — Görsel ve işitsel kimlik
 
-**Hedef:** Oyunun profesyonel göründüğü ve duyulduğu an. *(Gözden geçirmede atomik hale getirilecek.)*
+**Hedef:** Oyunun profesyonel göründüğü ve duyulduğu an.
+*(M2 gözden geçirmesinde atomik hale getirildi, 2026-10-13; ADR-041.)*
 
-- [ ] **M3-01** 🤖 Neon altyapısı (sahte parlama, ADR-020): `SectorPalette`, yeniden kullanılabilir neon çizgi/şekil bileşenleri (`glow_bench.gd` tekniğinden), kalite seviyesine göre parlama katmanı sayısı
-- [ ] **M3-02** 🤖 Çekirdek görseli + iz (`Line2D`)
-- [ ] **M3-03** 🤖 Tehlike görselleri (şekil dili: sivri = tehlike)
-- [ ] **M3-04** 🤖 Arka plan veri ağı shader'ı, vuruşta nabız
-- [ ] **M3-05** 🤖 Çöküş duvarı glitch görseli + yaklaşma vinyeti
-- [ ] **M3-06** 🤖 Oyun hissi: sarsıntı, ölümde donma, sıkışma-uzama, parçacıklar
-- [ ] **M3-07** 🤖 Kıl payı yavaş çekimi (müzikle birlikte) + "KIL PAYI!" + kombo göstergesi
-- [ ] **M3-08** 🤖 Hız hissi efektleri: paralaks, hız çizgileri
-- [ ] **M3-09** 🤝 Ses efektleri (D-05'e göre üretim)
-- [ ] **M3-10** 🤝 Müzik inceltmesi (parçalar M2-20'de geldi, ADR-040): kulak testi (engel–müzik senkronu, döngü dikişleri, ses düzeyleri), gerekirse parça başına küçük kayma ayarı, yeni parça eklemek (`tools/music_prep.py`); sektör BPM'leri seçilen parçalara göre ayarlanır + gerçek müzikle ritim senkronu: sektör geçişi ölçü sınırında, katman varsa kombo/duvar olaylarıyla katman değişimi, yoksa duvar yaklaşınca filtre
-- [ ] **M3-11** 🤝 Font seçimi (S-06) + HUD stili; sektör renklerinin kesinleşmesi
-- [ ] **M3-12** 🤖 Redmi'de performans kontrolü (kare süresi ≤ 10 ms)
-- [ ] **M3-13** 🤝 Oyun testi (sesi açık) + Planlama Gözden Geçirmesi → 🚪
+- Görünüş veriyle kurulur: palet, bileşen ve shader değerleri. Sonradan istenen görünüş yeniden yapılandırması (bkz. "Sonra") kodu değil veriyi değiştirsin.
+- Yeni her efekt Redmi'de denenmeden bitmiş sayılmaz (.clauderules §6). Ölçüt: 60 FPS'te kare süresi ≤ 10 ms.
+- Görsel değişiklikler çarpışma kutularına dokunmaz; parça doğrulaması aynı sonucu verir.
+
+**Neon altyapısı**
+
+- [ ] **M3-01** 🤖 Neon bileşenleri: `glow_bench.gd` tekniğinden yeniden kullanılabilir `NeonLine` (çizgi + parlama kopyaları) ve `NeonShape` (şekil + ışık lekesi). Parlama katman sayısı efekt kalitesine göre değişir (`Settings.effect_quality`). Ölçüm sahnesi `glow_bench.tscn` bu bileşenlerle yeniden kurulur.
+  *Kabul:* Ölçüm sahnesi aynı görünüyor; Redmi'de kare süresi M0-09 ölçümüyle aynı; kalite seviyesi katman sayısını değiştiriyor (test).
+- [ ] **M3-02** 🤖 `SectorPalette` kaynağı: çevre, vurgu, arka plan. Tehlike kırmızısı, Glimmer yeşili ve oyuncu beyazı sabittir. S1–S3 için geçici paletler (GDD §12 tonları). `SectorDef.ambient_color` ve `Corridor.set_tint` bunun yerine geçer; sektöre girişte yumuşak geçiş.
+  *Kabul:* S1→S2→S3'te renkler paletten geliyor; hiçbir çevre rengi kırmızı ya da yeşil değil (test).
+- [ ] **M3-03** 🤖 Neon koridor duvarları: kenar çizgileri `NeonLine`, boşluk kenarlarında temiz kesik, vuruşta hafif nabız. Sesi kapalı oynayan da ritmi görsün (GDD §16).
+  *Kabul:* Boşluk kenarı görselde ve çarpışmada aynı yerde (test); S1 ve boşluklu S2'nin Redmi ekran görüntüsü.
+
+**Varlık görselleri**
+
+- [ ] **M3-04** 🤖 Çekirdek: beyaz neon elmas + ışık lekesi; iz (`Line2D`: geçmiş konumlar, genişlik eğrisi, renk geçişi); neon kalkan halkası.
+  *Kabul:* İzin uzunluğu ekran yenileme hızından bağımsız (60 ve 120 Hz'de aynı, test); Redmi ekran görüntüsü.
+- [ ] **M3-05** 🤖 Diken ve veri bloğu: sivri kırmızı neon diken; köşeli blok ve süzülme hissi (yalnızca görsel, ADR-035).
+  *Kabul:* Çarpışma kutuları değişmedi (doğrulama aynı); Redmi ekran görüntüsü.
+- [ ] **M3-06** 🤖 Lazer ve Glimmer: lazerin yanık ve sönük hâli, yanmadan hemen önce bir uyarı ışıması (oyuncu ne zaman yanacağını görebilmeli); yuvarlak, yeşil, parıldayan Glimmer. Şekil dili denetimi (GDD §6).
+  *Kabul:* Lazer görüntüsü çarpışmayla aynı karelerde yanıyor (test); gri tonlu kare yakalamada tehlike, Glimmer ve oyuncu yalnızca şekilden ayırt ediliyor.
+
+**Dünya ve geçişler**
+
+- [ ] **M3-07** 🤖 Arka plan: veri ağı shader'ı (ızgara + yavaş paralaks), vuruşta nabız; düşük kalitede düz renk.
+  *Kabul:* Redmi'de kare süresi ve GPU doluluğu ölçüldü (≤ 10 ms); üç kalite seviyesinin ekran görüntüsü.
+- [ ] **M3-08** 🤖 Sektör geçişinde renk dalgası: yeni palet aşağıdan yukarıya yayılır, afiş dalgayla gelir (GDD §12).
+  *Kabul:* Kare dizisinde dalga aşağıdan yukarıya ilerliyor; geçişte engel yok (mevcut test).
+- [ ] **M3-09** 🤖 Çöküş duvarı: glitch görseli (shader, kaliteye bağlı) + yaklaşma vinyetinin inceltilmesi.
+  *Kabul:* Duvar yakınken engeller okunuyor (Redmi ekran görüntüsü); kare süresi ölçüldü.
+
+**Oyun hissi**
+
+- [ ] **M3-10** 🤖 Kamera sarsıntısı (travma² × gürültü, yalnızca görsel) + ölümde kısa donma.
+  *Kabul:* Ölümden yeni tura hâlâ < 0,5 sn; sarsıntı oyuncunun üstündeki görüş mesafesini değiştirmiyor (testler).
+- [ ] **M3-11** 🤖 Sıkışma-uzama (çevirme ve iniş, yalnızca görsel) + havuzlu parçacıklar (`CPUParticles2D`): iniş kıvılcımı, Glimmer patlaması, ölüm patlaması.
+  *Kabul:* Tur sırasında düğüm sayısı sabit (test); Redmi'de kare süresi ölçüldü.
+- [ ] **M3-12** 🤖 Kıl payı geri bildirimi: yavaş çekim (0,5×, 0,25 sn), zincirin ilk halkasında ve kombo eşiklerinde; müzik de aynı oranda yavaşlar. "KIL PAYI!" yazısı (TR/EN) ve kombo göstergesi (×2 / ×3).
+  *Kabul:* Yavaş çekimde müzik kaymıyor (günlük); harita değişmiyor (belirlenimcilik testi); yazı iki dilde.
+- [ ] **M3-13** 🤖 Hız hissi: hız çizgileri ve uzayan iz, sektör hızıyla yoğunlaşır (GDD §13).
+  *Kabul:* S1 ile S3'ün kare yakalamasında fark görünüyor; Redmi'de kare süresi ölçüldü.
+- [ ] **M3-14** 🤖 Rekor çizgisi: dünyada, rekor yüksekliğinde parlayan yatay çizgi (GDD §8). Şimdilik oturum rekoru; kalıcı rekor M4'te.
+  *Kabul:* Çizgi rekor yüksekliğinde (test); dünya HUD'a erişmiyor (sahne denetimi).
+
+**Ses**
+
+- [ ] **M3-15** 🤖 Ses efektleri (kaynak D-05'e göre): `AudioManager` efekt havuzu (sabit sayıda çalar, tur sırasında düğüm oluşturulmaz), olay → ses eşlemesi bir veri kaynağında. İlk set: çevirme, tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma. `CREDITS.md`.
+  *Kabul:* Her olay doğru sesi çalıyor (test); ses düzeyleri müzikle dengeli (ölçüm); Redmi günlüğünde hata yok.
+- [ ] **M3-16** 🤖 Gerilim: çöküş duvarı yaklaştıkça müziğe alçak geçiren süzgeç (boğuklaşma) ve gerilim sesi (GDD §14).
+  *Kabul:* Süzgeç duvarın yakınlığıyla değişiyor (test); Redmi'de sesli deneme.
+
+**Kimlik ve kapanış**
+
+- [ ] **M3-17** 🤝 Font (S-06) ve kesin sektör renkleri: Claude 2–3 font adayı (SIL OFL, Türkçe karakterli) ve palet seçeneklerini telefon ekran görüntüleriyle sunar, sen seçersin.
+  *Kabul:* Seçilen font `assets/fonts/`'ta ve `CREDITS.md`'de; paletler kesin, GDD §12 güncel.
+- [ ] **M3-18** 🤖 HUD stili: seçilen font, neon yazılar (yükseklik, rekor, Glimmer, sektör afişi, kombo).
+  *Kabul:* Üç ekran oranında ekran görüntüsü (`6` tuşu); HUD dokunuşu yutmuyor (test).
+- [ ] **M3-19** 🤖 Redmi'de performans kontrolü: en yoğun sahne (S3, bütün efektler), üç kalite seviyesi.
+  *Kabul:* Yüksek kalitede 60 FPS'te kare süresi ≤ 10 ms; ölçüm tablosu `architecture.md` §16'da.
+- [ ] **M3-20** 🤝 Oyun testi (sesi açık ve kapalı: ritim görüntüden de hissediliyor mu?) + Planlama Gözden Geçirmesi → 🚪
 
 ## M4 — Meta döngü
 
@@ -201,7 +249,7 @@
 - [ ] **M5-02** 🤖 Ana menü (sektör seçimi dahil)
 - [ ] **M5-03** 🤖 Sonuç ekranı (rekor, "rekora X m", tek dokunuşla tekrar)
 - [ ] **M5-04** 🤖 Yükseltmeler ve izler ekranları
-- [ ] **M5-05** 🤖 Ayarlar: ses, müzik, titreşim, dil, kalite, 60 FPS sınırı
+- [ ] **M5-05** 🤖 Ayarlar: ses, müzik, titreşim, dil, kalite, 60 FPS sınırı; başka cihazlarda gerekirse ses kaydırma (S-03)
 - [ ] **M5-06** 🤖 Duraklatma + arka plana geçince otomatik duraklatma ve kayıt
 - [ ] **M5-07** 🤖 İlk açılış deneyimi (FTUE)
 - [ ] **M5-08** 🤖 Titreşim
@@ -215,7 +263,7 @@
 
 - [ ] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe)
 - [ ] **M6-02** 🤖 Ekran oranı matrisi: 16:9, 18:9, 20:9, 21:9, 4:3, katlanabilir
-- [ ] **M6-03** 🤖 Performans ölçümü + efekt kalitesi seviyeleri
+- [ ] **M6-03** 🤖 Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu (hedef < 40 MB; debug APK şu an 68 MB, `architecture.md` §16)
 - [ ] **M6-04** 🤖 Android emülatöründe düşük seviyeli cihaz profili testi
 - [ ] **M6-05** 🤖 Pil ve ısınma kontrolü
 - [ ] **M6-06** 🤖 Uygulama ikonu ve açılış ekranı

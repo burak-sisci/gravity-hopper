@@ -14,6 +14,7 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 | `docs/roadmap.md` | Görev tanımları, sırası ve kabul kriterleri |
 | `docs/GDD.md` | Oyun tasarımı: *ne* yapıyoruz |
 | `docs/architecture.md` | Teknik mimari ve karar kaydı (ADR): *nasıl* yapıyoruz |
+| `docs/music_research.md` | Müzik araştırması ve parça ölçümleri (gerektiğinde okunur) |
 | `CREDITS.md` | Dış varlıklar ve lisansları |
 
 ## Kullanıcıyla çalışma

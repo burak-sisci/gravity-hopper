@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-11 (M1 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı ve M1 çekirdek oynanışı doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -84,7 +84,8 @@ gravity-hopper/
 │   ├── architecture.md
 │   ├── state.json
 │   ├── GDD.md
-│   └── roadmap.md
+│   ├── roadmap.md
+│   └── music_research.md     # Müzik araştırması ve parça ölçümleri (D-02, ADR-039)
 │
 ├── assets/                   # Görsel ve işitsel materyaller
 │   ├── sprites/              # UI ikonları, parçacık dokuları, uygulama ikonu
@@ -191,7 +192,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M2-07):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox/Shape`, `Visual`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; düğümler görevleriyle eklenir.
+**Şu anki hâli (M2 sonu):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%PressureSystem` (§8.4) + `%CollapseWall` (`scenes/entities/collapse_wall.tscn`, geçici görsel) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox`, `Collector`, `GrazeDetector`, `Visual`, `Shield`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; `Background`, `Trail` ve `Magnet` görevleriyle eklenir (M3, M4).
 
 - **Corridor:**
   - **Duvar boşlukları (M2-11):** `Run` her adımda `ChunkSpawner.active_gaps()` (duvar, üst y, alt y) listesini `set_gaps()` ile bildirir. Liste değişince ya da bir parça taşınınca her duvar parçası, boşlukların dışında kalan katı aralıklara bölünür: parça başına en fazla 3 parçacık (`CollisionShape2D` + `Polygon2D`, tur başında oluşturulur; yalnızca boy ve yer değişir, kullanılmayan kapatılır). Sınırlar tam boşluk kenarındadır. Test: `tests/levels/corridor_test.gd`.
@@ -205,14 +206,12 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Katman | Değer | Kimde | Neyi algılar (mask) |
 | --- | --- | --- | --- |
-| `collector` (M2-13) | 8 | Oyuncunun `Collector` alanı | — (yalnızca algılanır) |
-| `collectible` (M2-13) | 16 | `Glimmer` | `collector` |
 | 1 `world` | 1 | Duvar parçaları (`StaticBody2D`) | — |
 | 2 `player` | 2 | Oyuncu gövdesi (`CharacterBody2D`) | `world` |
 | 3 `hazard` | 4 | Tehlikeler (`Area2D`, `monitoring = false`, pasif) | — |
-| — | 0 | Oyuncunun `Hurtbox`'ı (`Area2D`, `monitorable = false`) | `hazard` |
-
-Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi görevlerinde alır (M2-13, M2-14).
+| 4 `collector` (M2-13) | 8 | Oyuncunun `Collector` alanı | — (yalnızca algılanır) |
+| 5 `collectible` (M2-13) | 16 | `Glimmer` | `collector` |
+| — | 0 | Oyuncunun `Hurtbox`'ı ve `GrazeDetector`'ı (`Area2D`, `monitorable = false`, M2-14) | `hazard` |
 
 ### 5.3 UI sahneleri (`scenes/ui/`)
 
@@ -225,6 +224,9 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - Kök `Control` `mouse_filter = IGNORE`'dur; HUD'un üstüne dokunuş çevirme yapar (denendi).
   - Üst pay sabit 110 px; güvenli alan M6-01'de gelir.
   - Oturum rekoru bellektedir; kalıcı rekor M4'te `Progression`'a taşınır.
+  - **Glimmer sayacı (M2-13):** sağ üstte `HUD_GLIMMERS` ("%d GLIMMER"), yeşil; `run_started`'da sıfırlanır, `glimmer_collected` değerlerini toplar.
+  - **Sektör afişi (M2-09):** `HUD_SECTOR` ("SECTOR %d · %s" / "SEKTÖR %d · %s") + sektör adı anahtarı; yazı rengi sektörün geçici rengi. Ekranın %30 yüksekliğinde, 2 sn görünür, 0,4 sn'de söner. HUD adları `SectorCatalog` kaynağından okur (veri; dünyaya erişmez).
+  - **Çöküş duvarı vinyeti (M2-15):** §8.4.
 
 ## 6. Autoload'lar
 
@@ -261,7 +263,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 | `player_flipped` | — | Player | AudioManager (ses, titreşim) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
 | `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
-| `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı; AudioManager (müzik, M3) |
+| `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı. Müzik sektörde değişmez (ADR-040) |
 | `chunk_placed` | `chunk_id: StringName, difficulty: int, sector: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int` | Run | HUD, AudioManager |
@@ -307,8 +309,8 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - `move_and_slide()` duvar parçalarının birleşim yerinde dikeyde ≈ 0,02 px itebiliyordu (M2-10'da testte görüldü). `Player` bu payı hemen geri alır; böylece her adım tam `hız × delta`'dır.
 - **Yatay:** Yerçekimi aktif duvara doğru çeker (`gravity_accel`, `max_side_speed`). Duvar segmentleri `StaticBody2D`'dir; tutunma `is_on_wall()` ile algılanır.
 - **Çevirme** yalnızca duvara tutunurken yapılabilir, ek olarak:
-  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (başlangıç 0,08 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-11'de gelir.
-  - **Dokunma tamponu:** Havadayken yapılan dokunuş kısa bir süre (başlangıç 0,12 sn) saklanır ve duvara değince uygulanır.
+  - **Coyote süresi:** Duvardan ayrıldıktan (boşluğa girdikten) sonra kısa bir süre (0,1 sn) çevirmeye izin verilir. Yalnızca duvar boşluklarında anlamlı olduğu için boşluklarla birlikte M2-11'de geldi (yukarıda).
+  - **Dokunma tamponu:** Havadayken yapılan dokunuş saklanır ve duvara değince uygulanır. Süre 0,45 sn (ADR-036; M1'de 0,12 sn): geçişten uzun olduğu için havadaki her dokunuş inişte uygulanır.
 - **Uygulama (M1-04, `scripts/entities/player.gd`, `Player`):**
   - **Eksenler ayrıdır.** Yatay hareket `move_and_slide()` ile yalnızca yatay hızla yapılır (duvar teması). Dikey tırmanış doğrudan konumla yapılır: `position.y -= climb × delta`.
   - Neden: Yüzen kipte ilk kaymada çarpan hareketin hız büyüklüğü korunuyor; yan hareket tırmanışa ekleniyor (%8 fazla ölçüldü). Tırmanış vuruş ızgarası için tam sabit olmalı (§8.2).
@@ -334,7 +336,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - M0-10'da doğrulandı:
     - Ekransız denemede 8 durumun hepsi beklendiği gibi: tık, bırakma, sahte fare, iki parmak, parmak kaldırma, boşluk, tuş tekrarı.
     - Redmi'de adb ile 3 dokunuş = 3 sayım.
-    - Gerçek iki başparmak denemesi M2-18'de kullanıcı yapacak (S-07; adb ile taklit edilemiyor).
+    - Gerçek iki başparmak denemesi M2-18 oyun testinde geçti (S-07 ✅); testte bulunan hızlı çift dokunuş sorunu ADR-036 ile giderildi.
   - Kural tek yerde: `Player.is_tap(event)`; testi `tests/entities/player_test.gd` (M2-02).
 
 ### 8.2 Bölüm üretimi (desen parçaları)
@@ -343,7 +345,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - `difficulty` (1–10), `min_sector`, `max_sector` (1–5), `length_beats` (1–64), `tags` (`Array[StringName]`).
   - Öğeler kökün doğrudan çocuklarıdır (tehlike sahneleri, ileride Glimmer). `items()` bunları verir.
 - Parçalar **vuruş biriminde** tasarlanır: editörde 1 vuruş = 100 px dikey ızgara. Parça yerleştirilirken y konumları sektörün vuruş uzunluğuna göre ölçeklenir: `y_dünya = y_yerel / 100 × vuruş_px(sektör)`. Şekiller esnemez, yalnızca konumlar ölçeklenir.
-- `vuruş_px(sektör) = tırmanış_hızı × 60 / BPM` → `ChunkInfo.beat_px(hız_m_sn, bpm)`. S1: 360 px (0,6 sn), S3: 400 px, S5: ≈ 429 px.
+- `vuruş_px(sektör) = tırmanış_hızı × 60 / BPM` → `ChunkInfo.beat_px(hız_m_sn, bpm)`. BPM turun müzik parçasından gelir (M2-20): S1'de 100 BPM'de 360 px (0,6 sn), 80 BPM'de 450 px, 120 BPM'de 300 px; S3'te 100 BPM'de 480 px.
 - **Parça tasarım kuralları** (`ChunkInfo.design_errors()` denetler; test `tests/levels/chunk_info_test.gd` klasördeki her parçaya uygular):
   1. Kök parçanın **alt kenarıdır** (oyuncunun ilk vardığı yer); parça yukarı uzanır: öğelerin y'si `0` ile `-length_beats × 100` arasında.
   2. Öğeler **yarım vuruşa** oturur (y, 50'nin katı) ve yatayda 1 m adımına (x, 50'nin katı). Editörde ızgara yaklaştırması 50 × 50 px yapılır.
@@ -353,12 +355,12 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   6. Dosya adı: `<ana tehlike>_<desen>_<nn>.tscn` (örnek: `spike_zigzag_01.tscn`: 8 vuruş, 2. vuruşta sol, 4.'de sağ, 6.'da sol diken).
   7. Öğe adı taraf + vuruş: `SpikeLeft2`, `SpikeRight4_5` (doğrulayıcı iletilerinde bu adlar görünür).
   8. **Duvar boşluğu (M2-11):** `WallGap` öğesi (`scripts/levels/wall_gap.gd`, betikli `Node2D`): konumu boşluğun alt ucu, x = ±450 (hangi duvar), `length` yarım vuruş katı (100 = 1 vuruş); boy vuruşla ölçeklenir, parçanın içinde kalır. Ad: `GapLeft2`. `ChunkInfo.gaps()`, `gap_range()`.
-  10. **Veri bloğu ve lazer (M2-12):**
+  9. **Veri bloğu ve lazer (M2-12):**
       - `scenes/entities/block.tscn`: betiksiz pasif `Area2D`, 240 × 120 px, koridorda (x 1 m adımında). Geçiş yolunu keser: oyuncu bloğun hizasından geçerken duvarda olmalı.
       - `scenes/entities/laser.tscn` + `scripts/entities/laser.gd` (`Laser`): duvara bağlı yatay ışın, kökü duvarda, `length` (px) koridora uzanır, kalınlık 16 px; sağ duvarda `scale.x = −1`. **Açık penceresi vuruşa ortalı:** her vuruşun çeyrek öncesinden çeyrek sonrasına kadar açık (`on_phase` 0,5 → yarım vuruşa ortalı). Engeller yarım vuruş ızgarasında durduğu için oyuncu ışını ya tamamen açıkken ya tamamen kapalıyken geçer; `on_phase` 0,5'lik bir ışın tam vuruşta geçilirken kapalıdır (aldatıcı). Açıkken çarpışır; kapalıyken şekli kapalı, görüntüsü sönük.
       - **Neden vuruşa ortalı:** Tırmanış hızı sabit olduğu için bir yükseklikten geçiş anı oyuncunun elinde değildir. Açılıp kapanma tam vuruş/yarım vuruş anında olsaydı ızgaradaki her ışın, geçiş penceresi bir değişme anına denk geldiği için her evrede tehlikeli olurdu (M2-12'de testle görüldü). Koridoru baştan sona kesen ışın da ya hep ölümcül ya hep zararsız olurdu; bu yüzden ışınlar duvara bağlıdır. İki duvardan kısa ışınlar ortada bir açıklık bırakır (**lazer kapısı**): oyuncu oradan ancak geçişin ortasındayken, yani zamanlanmış bir çevirmeyle geçer.
       - **Vuruş zinciri:** `Run` her adımda `ChunkSpawner.set_beat(beat_time / vuruş)` → `ChunkInfo.set_beat` → `Laser.set_beat` (aşağı çağrı). Parçalar tam vuruşta başladığı için evre parçanın yerinden bağımsızdır. Test: gerçek turda her `Events.beat` adımında açık, yarım vuruşta kapalı.
-  9. **İzinli tehlikeler:** `ChunkInfo.hazard_types()` (tehlike sahnesinin dosya adı, boşluk için `gap`) parçanın her sektöründe `SectorDef.allowed_hazards` içinde olmalı; doğrulayıcı denetler (boşluk S2'den itibaren).
+  10. **İzinli tehlikeler:** `ChunkInfo.hazard_types()` (tehlike sahnesinin dosya adı, boşluk için `gap`) parçanın her sektöründe `SectorDef.allowed_hazards` içinde olmalı; doğrulayıcı denetler (boşluk S2'den itibaren).
 - **İlk parça seti** (M2-06, yalnızca diken, 15 parça):
 
   | Zorluk | Parçalar | Sektör | Desen |
@@ -375,12 +377,12 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - `ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, M2-04):
   - **Kütüphane:** seçilebilecek parçalar `ChunkLibrary` kaynağında (`data/chunks/chunk_library.tres`) elle listelenir. Yayın sürümünde `res://` klasörü güvenle taranamaz; test, klasördeki her parçanın listede olduğunu denetler.
   - Görünür alanın üstünde **2 ekranlık** alanı dolu tutar. Önce üst kenarı ekranın 100 px altına inen parçaları havuza döndürür, sonra ekler.
-  - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
+  - Parçalar **boşluksuz** dizilir: her parçanın alt kenarı bir öncekinin üst kenarıdır. İlk parça oyuncunun başlangıcından `run_start_gap` (25 m) kadar yukarıda, **tam vuruşa yuvarlanarak** başlar (S1'de 100 BPM'lik parçayla 4 vuruş = 28,8 m). Böylece vuruş ızgarası turun başından hizalıdır.
   - Sıradaki parçayı `RunRng.weighted_index` ile, sektöre izinli ve sığan parçalar arasından seçer.
   - **Zorluk eğrisi (M2-10):** Hedef zorluk sektör içindeki ilerlemeyle `SectorDef.min_difficulty`'den `max_difficulty`'ye doğrusal çıkar (son sektör boyunu aşınca en zorda kalır; `target_difficulty()`). Ağırlık `exp(−½ · ((zorluk − hedef) / difficulty_spread)²)` (çan eğrisi; `TuningConfig.difficulty_spread` = 0,5). Son `no_repeat_count` (3) parça yeniden seçilmez; sığan başka parça yoksa kural esner. Günlük: `placed_difficulties`, `placed_targets`; olay günlüğünde `chunk_placed … difficulty=… sector=…`.
     - **Ölçüm** (gerçek oyun, ekransız, ölümsüz, 5 tur, S1'in 13 parçası): ilk üçte bir ortalama zorluk 1,45, son üçte bir 2,40. Genişlik 1,0 iken fark 0,58 idi (hedef 1'de bile 2 zorluklu parçalar %60 ağırlık alıyordu), 0,7'de 0,65. Sektör başının 1'e inmemesinin nedeni içerik: S1'de yalnızca 5 kolay parça var ve tekrar yasağı 3'ünü dışlıyor; parça sayısı arttıkça (M2-12) eğri keskinleşir.
-  - **Nefes alma (M2-09):** Yeni sektör, `TuningConfig.sector_breath` (2,5 sn, GDD §12) kadar engelsiz başlar. Süre yeni sektörün hızıyla px'e çevrilip tam vuruşa yukarı yuvarlanır (S2: 5 vuruş = 2,73 sn; S3: 5 vuruş = 2,5 sn); ızgara bozulmaz. Eski sektörün sonuna sığmayan kalan da bu boşluğa eklenir.
-  - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px()`) dizilir; ızgarası sektörün başladığı yükseklikten başlar. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır ve sıradaki sektör tam sınırdan başlar. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar katalogdaki en kısa vuruşa göre kurulur.
+  - **Nefes alma (M2-09, M2-20'de değişti):** Yeni sektör en az `TuningConfig.sector_breath` (2,5 sn, GDD §12) engelsiz başlar. İlk parçası bu süreden sonraki ilk müzik vuruşunda (turun başından sayılan ızgarada) oyuncunun bulunacağı yere konur (§8.3); boşluk 2,5 sn ile 2,5 sn + bir vuruş arasındadır. Eski sektörün sonuna sığmayan kalan da bu boşluğa eklenir.
+  - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px(bpm)`) dizilir. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar turun temposunda katalogdaki en kısa vuruşa göre kurulur (`SectorCatalog.min_beat_px(bpm)`).
   - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
   - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
   - **Yerleştirme günlüğü:** `placed_names`, `placed_bottoms` (testler, M2-17).
@@ -396,7 +398,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Lazer (M2-12):** Işın kutusu yalnızca açık olduğu karelerde tehlikedir. Açık olup olmadığı `Laser.is_on_at()` ile oyuncunun parça içindeki vuruş konumundan (`−y / vuruş_px`) hesaplanır; parça tam vuruşta başladığı için oyundaki vuruş saatiyle aynıdır. Işının kutusu `beam_rect()`'ten alınır (şekli `_ready`'de kurulduğu için ağaçta olmayan parçada sahnedeki şekle güvenilmez).
   - **Duvar boşluğu (M2-11):** Gövde tamamen boşluğun içindeyken (boşluk her iki uçtan gövdenin yarısı kadar daraltılır) o duvarda bulunmak ya da oraya inmek düşmektir. Coyote süresi tanınmaz: doğrulama oyundan biraz daha sıkıdır, parçalar coyote'a dayanmaz. İzinli tehlike türleri de sektör sektör denetlenir.
   - **Hata iletisi:** Hangi sektörde, hangi girişten, kaçıncı saniyede ve hangi tehlikelere çarpılarak geçilemediği: `S1: sol duvardan girişte 2,05 sn sonra geçilemiyor: SpikeRight35 (3,5. vuruş); SpikeLeft35 (3,5. vuruş)`.
-  - Sektör hızları ve BPM `SectorCatalog`'dan okunur (M2-08); katalogda olmayan sektörler (S4–S5, M4-07) denenmez.
+  - Sektör hızları `SectorCatalog`'dan (M2-08), tempolar `MusicCatalog`'dan (M2-20) okunur; her parça izinli her sektörde her tempoda denenir. Katalogda olmayan sektörler (S4–S5, M4-07) denenmez.
 - **Belirlenimcilik:** Harita yalnızca `tohum + başlangıç sektörü`ne bağlıdır; oyuncunun hareketlerine ve ekran boyuna bağlı değildir.
   - `Run.rng`'yi yalnızca `ChunkSpawner` çeker. Rastgelelik isteyen başka bir sistem gelirse kendi `RunRng` akışını alır (tohumdan türetilmiş). Yoksa çekilişlerin sırası kare zamanlamasına ve ekran boyuna göre değişir, harita da değişir.
   - Seçim havuzun doluluğuna bakmaz. Havuz tükenirse (olmaması gerekir) `ObjectPool` uyarı yazıp yeni örnek oluşturur; harita bozulmaz, sorun testte görünür.
@@ -410,13 +412,13 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 ### 8.3 Ritim (Conductor)
 
 - **Tek doğru zaman kaynağı, oyun zamanıdır** (`run_time`, ölçeklenmiş `delta` ile ilerler). Müzik ona hizalanır.
-- Müzik konumu `get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()` ile okunur. Kayma eşiği aşılırsa (başlangıç 40 ms) müzik yeniden hizalanır. ⚠️ eşik M2–M3'te ayarlanacak.
-- Müzik geçişleri ölçü (bar) sınırına denk getirilir.
+- Müzik konumu `get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()` ile okunur. Kayma eşiği aşılırsa (40 ms) müzik yeniden hizalanır. Eşik Redmi ölçümü ve kulak testleriyle (M2-18, M2-20) kesinleşti (S-03 ✅).
+- Tur içinde müzik geçişi yoktur: parça turun başından sonuna çalar (ADR-040). Menü ile tur arasındaki geçişler (M5) ölçü sınırına denk getirilir.
 - **Dokunuşlar müziğe göre yargılanmaz** (Android ses gecikmesi cihazdan cihaza değişir). Müzik yalnızca bölüm yerleşimini belirler.
 - **Zaman ölçeği kuralı:** `Engine.time_scale` değiştiğinde (kıl payı yavaş çekimi, duraklatma) `AudioManager` müziğin `pitch_scale` değerini aynı orana çeker. Bu, bant yavaşlaması gibi bir efekt verir ve senkronu korur.
 - Diriliş ve duraklatma sonrasında müzik `run_time`'a göre konumlanır.
 - **Uygulama (M2-07):**
-  - `Conductor` (`scripts/systems/conductor.gd`, Run'ın çocuğu): `run_time` ve `bpm` (`@export`, şimdilik 100; M2-08'de `SectorDef`). `Run._physics_process` her adımda önce `advance(delta)` çağırır; böylece `run_time` oyuncunun konumuyla aynı adımda ilerler. Geçilen her vuruşta `Events.beat(index)` (1'den başlar).
+  - `Conductor` (`scripts/systems/conductor.gd`, Run'ın çocuğu): `run_time`, `bpm` ve `track` (turun müzik parçası; M2-20'den beri tempo parçadan gelir). `Run._physics_process` her adımda önce `advance(delta)` çağırır; böylece `run_time` oyuncunun konumuyla aynı adımda ilerler. Geçilen her vuruşta `Events.beat(index)` (1'den başlar).
   - Tempo **turun müzik parçasından** gelir ve tur boyunca değişmez (M2-20, ADR-040; M2-08'de sektördendi): `Run` turun başında `Conductor.track` ve `set_tempo(parça.bpm, 0)` verir. Vuruş ızgarası turun başından kesintisiz sürer; `beat_time()` = `run_time`.
   - **Hız basamağı (M2-08, M2-20'de değişti):** Oyuncu sektör sınırını geçtiği adımda `Run` hızı değiştirir ve `Events.sector_entered` yayar. Oyuncu o adımda sınırı eski hızla biraz aşmıştır; `Run` konumunu, sınırı geçtiği andan beri yeni hızla tırmanmış gibi düzeltir (en çok 1–2 px). Böylece oyuncu her an `ChunkSpawner`'ın hesapladığı yerdedir. (M2-08'de bunun yerine yeni ızgara aşma payı kadar geriden başlatılıyordu.)
   - **Yeni sektörün ilk parçası müziğin vuruşunda (M2-20):** Oyuncu sektörün sonuna `t_sınır = Σ boy / hız` (başlangıç sektöründen o sektöre kadar) sürede varır. İlk parça, nefes alma boşluğundan sonraki ilk tam vuruşta (`n = tavan((t_sınır + sector_breath) / vuruş)`) oyuncunun bulunacağı yere, sınırın `(n × vuruş − t_sınır) × yeni_hız` üstüne konur. Sonraki parçalar tam vuruş boyunda olduğu için hepsi müziğin vuruşundadır. Test: 120 ve 80 BPM'lik parçalarla kısa sektörlerde S1→S2→S3, her diken turun başından sayılan ızgarada yarım vuruştan ≤ 1 kare uzak.
@@ -425,7 +427,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Hizalama:** Parça, duyulan konumu `MusicTrack.position_at(beat_time)`'a denk gelecek yerden çalar (önce baştan sona, sonra `loop_start` ile son arasında). Döngü dikişinin iki yanındaki ölçüm bir döngü boyu farklı göründüğü için kayma döngü boyuna göre sarılır. Kayma 15 karelik ortalamayla ölçülür (konum karıştırma tamponu kadar titrer). 40 ms'yi aşarsa yeniden konumlanır. Çalmadan ya da konumlamadan sonra 0,5 sn ölçülmez. Turun ilk düzeltmesi hemen, sonrakiler ölçüde en fazla bir kez yapılır.
   - Tur başlayınca çalar, oyuncu ölünce durur. `pitch_scale` = `Engine.time_scale`.
   - **Ölçüm (S-03, Redmi):**
-    - `AudioServer.get_output_latency()` Android'de **0 ms** dönüyor (PC'de 10 ms). Gerçek donanım gecikmesi koddan bilinemez; duyulan tık o kadar geç kalır. Telafi için ileride oyuncunun ayarlayacağı bir "ses kaydırma" ayarı gerekir (M5 ayarlar). Kulak testi M2-18'de.
+    - `AudioServer.get_output_latency()` Android'de **0 ms** dönüyor (PC'de 10 ms). Gerçek donanım gecikmesi koddan bilinemez; duyulan tık o kadar geç kalır. Kulak testlerinde (M2-18 metronom, M2-20 müzik; Redmi) kullanıcı geç kalan ses duymadı. Başka cihazlarda gerekirse oyuncunun ayarlayacağı bir "ses kaydırma" ayarı M5-05'te eklenir.
     - 77 sn ölümsüz turda kayma ±20 ms içinde kaldı, yeniden konumlama gerekmedi. 40 ms sınırı uygun.
     - Tur başında, havuz kurulumu bir kare takılmasına yol açıyor; fizik kaçırdığı adımları art arda çalıştırınca oyun saati ileri atlıyor ve ses −50…−119 ms geride kalıyor (PC'de de). İlk düzeltme 0,6 sn içinde yapılıyor.
   - **Müzik (M2-20, ADR-040):**
@@ -511,7 +513,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Basınç ve kıl payı alanları ilgili görevde eklenir (M2). Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, geçici `ambient_color`; `beat_px(bpm)`, `climb_px()`. Tempo M2-20'de sektörden turun parçasına taşındı. Kesin palet M3'te |
 | `MusicTrack` | `data/music/<id>.tres` (M2-20) | `id`, `stream` (OGG), `bpm`, `loop_start`, `volume_db`, `title`, `author`, `license`, `source_url`; `beat_length()`, `length()`, `position_at(vuruş_saati)`. `tools/music_prep.py` üretir |
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
@@ -576,9 +578,6 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 
 ## 12. Yerelleştirme
 
-- **HUD Glimmer sayacı (M2-13):** sağ üstte `HUD_GLIMMERS` ("%d GLIMMER"), yeşil; `run_started`'da sıfırlanır, `glimmer_collected` değerlerini toplar.
-- **HUD sektör afişi (M2-09):** `HUD_SECTOR` ("SECTOR %d · %s" / "SEKTÖR %d · %s") + sektör adı anahtarı; yazı rengi sektörün geçici rengi. Ekranın %30 yüksekliğinde, 2 sn görünür, 0,4 sn'de söner. HUD adları `SectorCatalog` kaynağından okur (veri; dünyaya erişmez).
-
 - `localization/translations.csv`: `keys,en,tr` sütunları. Godot bunu içe aktarıp çeviri kaynağına dönüştürür.
   - Koddan atanan metinler `tr("KEY")` ile gösterilir.
   - Sahnede `Label` ya da `Button` metnine doğrudan anahtar yazılır (`text = "UI_TAP"`). Godot bunu otomatik çevirir (`auto_translate_mode` varsayılanı) ve dil değişince kendisi günceller.
@@ -601,7 +600,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   - **Tuşlar:** `_key_actions` sözlüğü tuş kodunu bir işleve bağlar; yeni debug tuşu eklemek bu sözlüğe bir satırdır. `_unhandled_key_input` içinde işlenir.
   - **Debug düğmesi** ("DBG"): sol üstte, viewport'ta (16, 12)–(156, 84). `focus_mode = NONE`, böylece boşluk tuşu düğmeye gitmez, çevirmeye gider. Ayar panelini açıp kapatır (M1-11); FPS görünümü panelin içindeki düğmede ve `7` tuşunda.
   - M1-02'de sınandı: ekransız denemede `7` tuşu üç görünümü sırayla değiştirdi, düğmeye dokunuş çevirme sayılmadı, ekranın ortasına dokunuş ve boşluk sayıldı. Redmi'de de düğme FPS'yi açtı ve günlükte çevirme kaydı çıkmadı.
-  - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Şimdilik `player_flipped` ve `player_died cause=<NEDEN>`; yeni olaylar ilgili görevde eklenir.
+  - **Olay günlüğü:** Önemli `Events` sinyalleri `EVENT <ad> t=<ms>` satırı olarak yazılır (`_connect_event_log`). Telefondaki denemeler `adb logcat -s godot:*` ile bu satırlardan doğrulanır. Kayıtlı olaylar: `run_started`, `run_ended`, `player_flipped`, `player_died cause=<NEDEN>`, `sector_entered`, `chunk_placed`, `near_miss`, `combo_ended`, `shield_changed`; yeni olaylar ilgili görevde eklenir. `AudioManager` ayrıca `AUDIO …` satırları yazar (çalan parça, kayma, yeniden konumlama; M2-20).
   - Ders: `Viewport.push_input()` ile dokunuş taklit edilirken koordinat viewport biriminde verilecekse ikinci parametre `true` olmalı. Aksi hâlde pencere ölçeği (PC'de 450/1080) uygulanır ve nokta hedefini ıskalar.
 - **Canlı ayar paneli** (M1-11, `scripts/debug/tuning_panel.gd`, debug katmanında `%TuningPanel`): `TuningConfig`'in `@export` alanlarından **otomatik** üretilen kaydırıcılar. Yeni bir ayar eklendiğinde panele kendiliğinden gelir; aralık, adım ve birim `@export_range`'den okunur.
   - **Açma:** PC'de `1`, telefonda DBG düğmesi. Panel ekranın üstünden 270–1240 px arasındadır; oyuncu her zaman 1400 px'te olduğu için açıkken de oynanabilir.
@@ -618,7 +617,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
     - PC: `%APPDATA%\Godot\app_userdata\Gravity Hopper\tuning_override.tres`.
     - Telefon: `adb shell run-as com.gravityhopper.dev cat files/tuning_override.tres` (debug paketi `run-as`'a izin veriyor; M1-11'de denendi).
   - Ekransız deneme (13 durum): satırların kurulması, canlı etki (15 m/sn = 750 px/sn), kaydetme, yeni turda korunma, sıfırlama, açılışta kayıtlı dosyanın uygulanması. Redmi'de kaydırıcı → Kaydet → dosya okundu → Sıfırla → dosya silindi.
-- **PC tuşları** (M1'de kesinleşti; `5` M2-08'de gelir):
+- **PC tuşları:**
 
   | Tuş | İşlev | Görev |
   | --- | --- | --- |
@@ -626,11 +625,10 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
   | `2` | Ölümsüzlük | M1-12 |
   | `3` | Çarpışma kutularını göster | M1-12 |
   | `4` | Yavaş çekim | M1-12 |
-  | `8` | Kalkan ver (paneldeki "Kalkan" düğmesi de; `Events.debug_shield_requested`) | M2-16 |
   | `5` | Sonraki sektörün başından yeni tur (son sektörde aynı sektör); paneldeki "Sektör ›" düğmesi | M2-08 |
-  | `5` | Sonraki sektöre atla | M2-08 |
   | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
   | `7` | FPS / kare süresi | M1-02 |
+  | `8` | Kalkan ver (paneldeki "Kalkan" düğmesi de; `Events.debug_shield_requested`) | M2-16 |
   | `R` | Anında yeniden başla | M1-12 |
 
   F5–F8 kullanılmaz; Godot editör kısayollarıyla karışır.
@@ -800,7 +798,7 @@ Toplanabilirler (Glimmer) ve kıl payı algılayıcısı katmanlarını kendi g�
 - **Referans cihaz:** Redmi Note 12 4G: Snapdragon 685 / **Adreno 610** (orta-alt segment GPU), 8 GB RAM, 1080×2400, 60/90/120 Hz, Android 15. GPU zayıf ve ekran yüksek çözünürlüklü olduğu için tam ekran efektler burada en çok zorlanıyor. M0-09 ölçümü bunu doğruladı (§16.1).
 - Redmi Note 12'de 60 FPS'te **kare süresi ≤ 10 ms** (bütçenin yaklaşık %60'ı). Kalan pay daha zayıf cihazlar içindir.
 - Tur sırasında bellek ayırma yok (havuzlama).
-- İndirme boyutu hedefi < 40 MB (M6'da ölçülecek).
+- İndirme boyutu hedefi < 40 MB (M6-03'te ölçülür). M2-20'den sonra debug APK 68 MB: iki işlemci mimarisinin motor kitaplıkları + 13,4 MB müzik. Play'e yüklenen AAB'den her cihaz yalnızca kendi mimarisini indirir; gerekirse müzik sıkıştırması artırılır.
 - Ayarlarda **60 FPS sınırı** seçeneği (pil için). Varsayılan: ekranın yenileme hızı.
 
 ### 16.1 Ölçüm (M0-09, Redmi Note 12)
@@ -853,19 +851,20 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-025 | 2026-10-07 | Çalışma modeli (kullanıcı kararı): 🤖 görevler arasında onay beklenmez. Claude 🤝/👤 göreve, bekleyen karara, kapıya ya da beklenmedik bir tasarım sorusuna kadar ilerler; her görev yine ayrı commit ve kanıtla kapanır. M1-04'teki gerçek iki başparmak denemesi M1-14'e taşındı | Hız. Kapılar ve görev başına kanıt korunduğu için kalite düşmez; geri alma görev düzeyinde kolay |
 | ADR-026 | 2026-10-07 | Sahne geçişlerinde `GameManager` karar verir (tohum, durum, sonuç, `Events` duyuruları), kök sahne `Main` uygular (turu `World`'e kurar/kaldırır, sonra `begin_run` ile haber verir) | Eski metin geçişleri `GameManager`'a veriyordu; bu, autoload'ların sahne düğümlerine erişmemesi kuralıyla çelişiyordu. `Main` kapların sahibi olduğu için "aşağı çağır" kuralına uyar |
 | ADR-027 | 2026-10-08 | Web sürümü itch.io'da, şifreli "Restricted" sayfada barındırılır (kullanıcı kararı, D-12). Çıktı tek iş parçacıklıdır | Ücretsiz, gizli, oyunlara özel ve tanıtımda da işe yarar. Özel depodan ücretsiz GitHub Pages olmuyor, diğer seçenekler ek kurulum istiyor |
-| ADR-040 | 2026-10-13 | **Müzik her turda rastgele, tempo parçanın** (kullanıcı kararı): beş parçanın (ADR-039) hepsi oyunda; tur, tohumundan seçilen parçayı çalar (`MusicCatalog.pick`). Turun temposu parçanın temposudur ve tur boyunca değişmez; `SectorDef.bpm` kaldırıldı, hız sektörde kaldı. Vuruş ızgarası turun başından kesintisiz sürer, müzik sektör geçişinde kesilmez; yeni sektörün ilk parçası müziğin vuruşuna hizalanır, `Run` sınırda oyuncunun konumunu düzeltir. Parçalar `tools/music_prep.py` ile ilk vuruşa kırpılır, döngü tam ölçüye kesilir. Doğrulayıcı her parçayı her tempoda dener. Metronom kaldırıldı | Kullanıcı "her oyunda rastgele çalsın" dedi ve üç seçenekten (tempo parçadan / müzik serbest / sektöre uyanlar) "dünya müzikle akar"ı koruyanı seçti. Bedeli bilerek kabul edildi: tur zorluğu parçaya göre değişir (80 BPM'de engeller seyrek, 120'de sık) ve sektörlerde tempo artmaz. Seçim tohumdan geldiği için günlük meydan okumada herkes aynı parçayı çalar |
-| ADR-039 | 2026-10-13 | D-02 kesinleşti (kullanıcı kararı): müzik **insan yapımı**, ücretsiz kütüphanelerden (yalnızca CC0 / CC-BY), **hibrit orkestral** (orkestra + net davul ritmi). Yapay zekâ (Stable Audio 3) yalnızca uygun parça bulunamazsa yedek; lisans kuralı değişmedi. Adaylar ölçülerek seçilir: tempo kesinliği ve 8 sn pencerelerin vuruş ızgarasından sapması (`docs/music_research.md` §12) | Kullanıcı akıcı, gerçek orkestral bir his istiyor. İnsan elinden çıkan orkestral parçanın kalitesi belli, hukuku oturmuş ve yapay zekâya karşı oyuncu tepkisi riski taşımıyor. Engeller vuruşa oturduğu için sabit tempolu, davullu parçalar şart; serbest tempolu klasik orkestral parçalar elenir |
-| ADR-038 | 2026-10-13 | Müzik kaynağı **ücretsiz kütüphaneler**: yalnızca CC0 ve CC-BY parçalar (kullanıcı kararı, D-02). Oyunla özdeşleşecek bir **ana tema** parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda, tercihen aynı besteciden parçalar çalar. Sektör BPM'leri (`SectorDef.bpm`) seçilen parçalara göre ayarlanır; parça doğrulayıcısı yeni BPM'lerle yeniden dener. Adaylar M3-10'da listelenir, kullanıcı dinleyip seçer | Bütçe yok. Ödün bilerek kabul edildi: kütüphane parçası başka oyunlarda da çalabilir (müzik bize özel olmaz). Bu yüzden çok yaygın parçalar yerine az bilinenler tercih edilir. Kodla üretilen ana tema denemesi (`tools/theme_demo.py`) kaldırıldı. **Aynı gün inceltildi:** ADR-039 (insan yapımı hibrit orkestral, yapay zekâ yedek) |
-| ADR-037 | 2026-10-13 | Lisans kuralına (`.clauderules` §7) **sözleşmeli ısmarlama eser** eklendi (kullanıcı onayı, D-02): bir besteciye ya da sanatçıya özel yaptırılan iş, hakları ya da süresiz, dünya çapında; oyunu, fragmanları ve müzik albümünü kapsayan kullanım iznini yazılı sözleşmeyle veriyorsa kullanılır. `CREDITS.md`'ye sözleşme tarihiyle yazılır | Bütçesiz yolda gönüllü ya da gelir ortaklığıyla çalışan besteci seçeneğini açık tutar (D-02, `docs/music_research.md` §9). Sözleşmesiz ya da lisansı belirsiz iş yine yasak |
-| ADR-036 | 2026-10-13 | Dokunma tamponu 0,12 sn'den 0,45 sn'ye çıktı: geçişten (≈ 0,37 sn) uzun olduğu için havadaki her dokunuş inişte uygulanır (kullanıcı geri bildirimi: hızlı çift dokunuş algılanmıyordu; karar kullanıcının inisiyatifiyle Claude'a bırakıldı) | İkinci dokunuş geçişin başında geldiğinde atılıyordu. Saklanan çevirme oyunu yalnızca daha affedici yapar; doğrulayıcının insan modeli (iniş + 0,2 sn tepki payı) değişmez, parçalar yine onunla denetlenir |
-| ADR-035 | 2026-10-12 | Lazer duvara bağlı bir ışındır (koridoru tamamen kesmez) ve açık penceresi vuruşa ortalıdır (çeyrek vuruş önce/sonra); iki duvardan kısa ışınlar "lazer kapısı" olur. Veri bloğu sabittir (süzülme görseli M3'te). Vuruş Run'dan aşağı çağrıyla gelir (M2-12) | Sabit tırmanış hızında geçiş anı oyuncunun elinde değil: tam koridorluk ışın ya hep ölümcül ya hep zararsız olurdu; tam vuruşta açılıp kapanan ışın da ızgarada her evrede tehlikeli çıkıyordu (test). Ortalı pencere geçişi ya tamamen açık ya tamamen kapalı yapar, aldatıcı ışın ve zamanlamalı kapı mümkün olur. GDD'deki "vuruşa göre açılıp kapanan yatay lazer" tanımının uygulanış biçimidir |
-| ADR-034 | 2026-10-12 | Duvar boşluğu parça öğesidir (`WallGap`); koridor parçaları boşluk kenarlarında tam bölünür (parça başına en fazla 3 parçacık, tur başında oluşturulur). Coyote süresi oyunda var, doğrulamada yok; düşme coyote dolunca koridor dışında olmaktır (M2-11) | Boşluk yerleri vuruş ızgarasına bağlı ve rastgele uzunlukta; sabit küçük duvar parçaları kenarları ±50 px kaydırırdı. Doğrulamanın daha sıkı olması parçaların affedici süreye dayanmamasını sağlar |
-| ADR-033 | 2026-10-12 | Kullanıcıyla telefon üzerinden iki yönlü iletişim ntfy.sh ile (kullanıcı kararı). Bildirim yalnızca üç durumda: otonom çalışma bitti, kullanıcı olmadan çözülemeyen sorun, kullanıcı durdurdu. Kullanıcının yazdıkları her görev bitiminde okunur; otonom çalışma bitince arka planda bir dinleyici (`-Wait`) cevabı bekler. Konuya yazılan her mesaj kullanıcınındır (kullanıcı kararı: konu adı tahmin edilemez) | Kullanıcı ekrandan uzakken de haberdar olur ve cevap verebilir; gürültü olmasın diye bildirim seyrek. Acil durumda kullanıcı ekrana geçer. Remote Control şimdilik gerekmiyor (kullanıcı kararı). Konu herkese açık olduğu için bildirimlerde gizli bilgi olmaz |
-| ADR-032 | 2026-10-11 | Sektörler veri kaynağı (`SectorDef` + `SectorCatalog`); tırmanış hızı `TuningConfig`'ten sektöre taşındı. Sektör sınırları kesin yükseklikte; parça sınırı aşmaz, sığmayan kalan boş kalır. Başlangıç sektörü `Events.start_requested` ile seçilir, sonraki turlar aynı sektörden başlar (M2-08) | GDD'deki sektör tablosu tek yerde; doğrulayıcı ve oyun aynı değerleri okur. Kesin sınır yükseklikleri HUD'u, kontrol noktalarını ve testleri basit tutar; sınırdaki boşluk M2-09'daki "nefes alma" anının temelidir |
-| ADR-031 | 2026-10-11 | Ritim saati `Conductor` Run'ın içinde, sesi `AudioManager` çalar; `Conductor` her adımda oyun zamanını servis çağrısıyla bildirir. Ses, ortalama kayma 40 ms'yi aşınca ve ölçüde en fazla bir kez yeniden konumlanır (M2-07) | Autoload sahne düğümüne erişmeden saate uyar; müzik (M3) aynı yolu kullanır. Her karede konumlamak Android'de ses iş parçacığını yordu; ölçüm titremesi ortalamayla süzülür |
-| ADR-030 | 2026-10-11 | Parça doğrulama kare kare durum aramasıyla yapılır (geçiş fiziği Player'la aynı, tepki payı 0,2 sn); parça her giriş durumundan (yarım geçişler dahil) geçilebilmeli; tehlikeler kutu olarak alınır (M2-05) | Analitik "iki zorunlu çevirme arası" formülü havada geçişleri ve tehlike boylarını hesaba katamıyordu. Her giriş durumu kuralı birleşim yerlerini parça çiftlerini tek tek denemeden adil kılar. Tepki payı başlangıç değeridir; M2-18 oyun testinde gözden geçirilir |
-| ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |
 | ADR-028 | 2026-10-11 | Kilometre taşı kapısı istisnası (kullanıcı kararı, .clauderules §9): M1 kapısı beklenmeden M2'ye geçilir; M1 ve M2 birlikte M2-19'da kontrol edilir. M1 kapı soruları (iki başparmak sonucu S-07, ilk izlenim, P-04) oraya taşındı. Yalnızca M1→M2 için geçerlidir; sonraki kapılar aynen sürer | Kullanıcı hızlanmak ve iki aşamayı tek seferde denetlemek istedi. Risk: M1 hissiyle ilgili bir itiraz M2 işini etkileyebilir. Önlem: değerler TuningConfig'te; his değişikliği M2'yi bozmaz |
+| ADR-029 | 2026-10-11 | Desen parçaları bütün olarak havuzlanır (parça başına kopya, en uzun ekrana göre); parçalar boşluksuz ve vuruş ızgarasında dizilir; kütüphane elle tutulan bir `ChunkLibrary` kaynağıdır; `Run.rng`'yi yalnızca `ChunkSpawner` çeker (M2-04) | Tehlike başına havuz, parçanın iç düzenini her seferinde yeniden kurmayı gerektirirdi. Elle liste, yayın sürümünde klasör taramanın güvenilmezliğinden kaçınır; testle klasörle eşit tutulur. Tek tüketicili RNG, haritayı ekran boyundan ve kare zamanlamasından bağımsız kılar |
+| ADR-030 | 2026-10-11 | Parça doğrulama kare kare durum aramasıyla yapılır (geçiş fiziği Player'la aynı, tepki payı 0,2 sn); parça her giriş durumundan (yarım geçişler dahil) geçilebilmeli; tehlikeler kutu olarak alınır (M2-05) | Analitik "iki zorunlu çevirme arası" formülü havada geçişleri ve tehlike boylarını hesaba katamıyordu. Her giriş durumu kuralı birleşim yerlerini parça çiftlerini tek tek denemeden adil kılar. Tepki payı başlangıç değeridir; M2-18 oyun testinde gözden geçirilir |
+| ADR-031 | 2026-10-11 | Ritim saati `Conductor` Run'ın içinde, sesi `AudioManager` çalar; `Conductor` her adımda oyun zamanını servis çağrısıyla bildirir. Ses, ortalama kayma 40 ms'yi aşınca ve ölçüde en fazla bir kez yeniden konumlanır (M2-07) | Autoload sahne düğümüne erişmeden saate uyar; müzik (M3) aynı yolu kullanır. Her karede konumlamak Android'de ses iş parçacığını yordu; ölçüm titremesi ortalamayla süzülür |
+| ADR-032 | 2026-10-11 | Sektörler veri kaynağı (`SectorDef` + `SectorCatalog`); tırmanış hızı `TuningConfig`'ten sektöre taşındı. Sektör sınırları kesin yükseklikte; parça sınırı aşmaz, sığmayan kalan boş kalır. Başlangıç sektörü `Events.start_requested` ile seçilir, sonraki turlar aynı sektörden başlar (M2-08) | GDD'deki sektör tablosu tek yerde; doğrulayıcı ve oyun aynı değerleri okur. Kesin sınır yükseklikleri HUD'u, kontrol noktalarını ve testleri basit tutar; sınırdaki boşluk M2-09'daki "nefes alma" anının temelidir |
+| ADR-033 | 2026-10-12 | Kullanıcıyla telefon üzerinden iki yönlü iletişim ntfy.sh ile (kullanıcı kararı). Bildirim yalnızca üç durumda: otonom çalışma bitti, kullanıcı olmadan çözülemeyen sorun, kullanıcı durdurdu. Kullanıcının yazdıkları her görev bitiminde okunur; otonom çalışma bitince arka planda bir dinleyici (`-Wait`) cevabı bekler. Konuya yazılan her mesaj kullanıcınındır (kullanıcı kararı: konu adı tahmin edilemez) | Kullanıcı ekrandan uzakken de haberdar olur ve cevap verebilir; gürültü olmasın diye bildirim seyrek. Acil durumda kullanıcı ekrana geçer. Remote Control şimdilik gerekmiyor (kullanıcı kararı). Konu herkese açık olduğu için bildirimlerde gizli bilgi olmaz |
+| ADR-034 | 2026-10-12 | Duvar boşluğu parça öğesidir (`WallGap`); koridor parçaları boşluk kenarlarında tam bölünür (parça başına en fazla 3 parçacık, tur başında oluşturulur). Coyote süresi oyunda var, doğrulamada yok; düşme coyote dolunca koridor dışında olmaktır (M2-11) | Boşluk yerleri vuruş ızgarasına bağlı ve rastgele uzunlukta; sabit küçük duvar parçaları kenarları ±50 px kaydırırdı. Doğrulamanın daha sıkı olması parçaların affedici süreye dayanmamasını sağlar |
+| ADR-035 | 2026-10-12 | Lazer duvara bağlı bir ışındır (koridoru tamamen kesmez) ve açık penceresi vuruşa ortalıdır (çeyrek vuruş önce/sonra); iki duvardan kısa ışınlar "lazer kapısı" olur. Veri bloğu sabittir (süzülme görseli M3'te). Vuruş Run'dan aşağı çağrıyla gelir (M2-12) | Sabit tırmanış hızında geçiş anı oyuncunun elinde değil: tam koridorluk ışın ya hep ölümcül ya hep zararsız olurdu; tam vuruşta açılıp kapanan ışın da ızgarada her evrede tehlikeli çıkıyordu (test). Ortalı pencere geçişi ya tamamen açık ya tamamen kapalı yapar, aldatıcı ışın ve zamanlamalı kapı mümkün olur. GDD'deki "vuruşa göre açılıp kapanan yatay lazer" tanımının uygulanış biçimidir |
+| ADR-036 | 2026-10-13 | Dokunma tamponu 0,12 sn'den 0,45 sn'ye çıktı: geçişten (≈ 0,37 sn) uzun olduğu için havadaki her dokunuş inişte uygulanır (kullanıcı geri bildirimi: hızlı çift dokunuş algılanmıyordu; karar kullanıcının inisiyatifiyle Claude'a bırakıldı) | İkinci dokunuş geçişin başında geldiğinde atılıyordu. Saklanan çevirme oyunu yalnızca daha affedici yapar; doğrulayıcının insan modeli (iniş + 0,2 sn tepki payı) değişmez, parçalar yine onunla denetlenir |
+| ADR-037 | 2026-10-13 | Lisans kuralına (`.clauderules` §7) **sözleşmeli ısmarlama eser** eklendi (kullanıcı onayı, D-02): bir besteciye ya da sanatçıya özel yaptırılan iş, hakları ya da süresiz, dünya çapında; oyunu, fragmanları ve müzik albümünü kapsayan kullanım iznini yazılı sözleşmeyle veriyorsa kullanılır. `CREDITS.md`'ye sözleşme tarihiyle yazılır | Bütçesiz yolda gönüllü ya da gelir ortaklığıyla çalışan besteci seçeneğini açık tutar (D-02, `docs/music_research.md` §9). Sözleşmesiz ya da lisansı belirsiz iş yine yasak |
+| ADR-038 | 2026-10-13 | Müzik kaynağı **ücretsiz kütüphaneler**: yalnızca CC0 ve CC-BY parçalar (kullanıcı kararı, D-02). Oyunla özdeşleşecek bir **ana tema** parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda, tercihen aynı besteciden parçalar çalar. Sektör BPM'leri (`SectorDef.bpm`) seçilen parçalara göre ayarlanır; parça doğrulayıcısı yeni BPM'lerle yeniden dener. Adaylar M3-10'da listelenir, kullanıcı dinleyip seçer | Bütçe yok. Ödün bilerek kabul edildi: kütüphane parçası başka oyunlarda da çalabilir (müzik bize özel olmaz). Bu yüzden çok yaygın parçalar yerine az bilinenler tercih edilir. Kodla üretilen ana tema denemesi (`tools/theme_demo.py`) kaldırıldı. **Aynı gün inceltildi:** ADR-039 (insan yapımı hibrit orkestral, yapay zekâ yedek) |
+| ADR-039 | 2026-10-13 | D-02 kesinleşti (kullanıcı kararı): müzik **insan yapımı**, ücretsiz kütüphanelerden (yalnızca CC0 / CC-BY), **hibrit orkestral** (orkestra + net davul ritmi). Yapay zekâ (Stable Audio 3) yalnızca uygun parça bulunamazsa yedek; lisans kuralı değişmedi. Adaylar ölçülerek seçilir: tempo kesinliği ve 8 sn pencerelerin vuruş ızgarasından sapması (`docs/music_research.md` §12) | Kullanıcı akıcı, gerçek orkestral bir his istiyor. İnsan elinden çıkan orkestral parçanın kalitesi belli, hukuku oturmuş ve yapay zekâya karşı oyuncu tepkisi riski taşımıyor. Engeller vuruşa oturduğu için sabit tempolu, davullu parçalar şart; serbest tempolu klasik orkestral parçalar elenir |
+| ADR-040 | 2026-10-13 | **Müzik her turda rastgele, tempo parçanın** (kullanıcı kararı): beş parçanın (ADR-039) hepsi oyunda; tur, tohumundan seçilen parçayı çalar (`MusicCatalog.pick`). Turun temposu parçanın temposudur ve tur boyunca değişmez; `SectorDef.bpm` kaldırıldı, hız sektörde kaldı. Vuruş ızgarası turun başından kesintisiz sürer, müzik sektör geçişinde kesilmez; yeni sektörün ilk parçası müziğin vuruşuna hizalanır, `Run` sınırda oyuncunun konumunu düzeltir. Parçalar `tools/music_prep.py` ile ilk vuruşa kırpılır, döngü tam ölçüye kesilir. Doğrulayıcı her parçayı her tempoda dener. Metronom kaldırıldı | Kullanıcı "her oyunda rastgele çalsın" dedi ve üç seçenekten (tempo parçadan / müzik serbest / sektöre uyanlar) "dünya müzikle akar"ı koruyanı seçti. Bedeli bilerek kabul edildi: tur zorluğu parçaya göre değişir (80 BPM'de engeller seyrek, 120'de sık) ve sektörlerde tempo artmaz. Seçim tohumdan geldiği için günlük meydan okumada herkes aynı parçayı çalar |
+| ADR-041 | 2026-10-13 | M2 Planlama Gözden Geçirmesi: M3 20 atomik göreve bölündü (neon altyapısı → varlık görselleri → dünya ve geçişler → oyun hissi → ses → font ve renk → performans → kapı). Görünüş veriyle kurulur (palet, bileşen, shader değerleri). Kullanıcı kararı isteyen işler sona toplandı (M3-17 font ve kesin renkler, M3-20 oyun testi); 🤖 görevler arada durmadan ilerler. Eski "müzik inceltmesi" görevi kalktı: kulak testi geçti (S-03 ✅), geriye duvar yaklaşınca müziğin boğuklaşması kaldı (M3-16) | Kullanıcı görünüş ve hikâye yeniden yapılandırmasını plan sonuna bıraktı; veriyle kurulan görünüş o işte kodun yeniden yazılmasını önler. Renkler veri olduğu için sonradan seçilmeleri yeniden iş çıkarmaz, kullanıcı da seçimi bitmiş görsellerin üstünde yapar |
 
 ## 18. Açık teknik sorular
 
@@ -873,11 +872,11 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | --- | --- | --- |
 | S-01 | ✅ Çözüldü (M0-09): Glow çalışıyor ve güzel ama Redmi'de kare süresi 8,4 → 17,5 ms (57 FPS). Sahte parlama seçildi (ADR-020) | — |
 | S-02 | ✅ Çözüldü (M0-09): Evet. `background_canvas_max_layer` = 0 iken katman 10'daki HUD parlamıyor (telefonda doğrulandı) | — |
-| S-03 | Android'de müzik kayma eşiği ve gecikme telafisi | M2-07 / M3 |
+| S-03 | ✅ Çözüldü (M2-07, M2-18, M2-20): Redmi'de kayma 17–25 ms, 40 ms eşiği uygun; çıkış gecikmesi API'si Android'de 0 ms dönüyor ama kulak testlerinde geç kalan ses duyulmadı. Başka cihazlar için gerekirse "ses kaydırma" ayarı (M5-05) | — |
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
-| S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3 |
-| S-07 | Emülasyon fare olaylarının `DEVICE_ID_EMULATION` ile ayırt edilmesi. 🟡 M0-10'da tek dokunuş için doğrulandı (§8.1); gerçek iki parmak denemesinin sonucunu kullanıcı M1-16 kapısında bildirir | M1-16 |
+| S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3-17 |
+| S-07 | ✅ Çözüldü (M0-10, M2-18): Emülasyon fare olayları `DEVICE_ID_EMULATION` ile ayrılıyor; gerçek iki başparmak denemesi M2-18 oyun testinde geçti (§8.1) | — |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 
 ## 19. Araç ve kütüphane adayları (açık kaynak araştırması, 2026-09-29)
