@@ -173,7 +173,7 @@
 - [ ] **M3-07** 🤖 Kıl payı yavaş çekimi (müzikle birlikte) + "KIL PAYI!" + kombo göstergesi
 - [ ] **M3-08** 🤖 Hız hissi efektleri: paralaks, hız çizgileri
 - [ ] **M3-09** 🤝 Ses efektleri (D-05'e göre üretim)
-- [ ] **M3-10** 🤝 Ana tema + sektör düzenlemeleri (D-02: tek imza tema, her sektörde aynı melodi o sektörün BPM'inde; plan `docs/music_research.md` §9) + gerçek müzikle ritim senkronu: katmanlar (`AudioStreamSynchronized`), sektör geçişi ölçü sınırında, kombo/duvar olaylarıyla katman değişimi
+- [ ] **M3-10** 🤝 Sektör müzikleri ücretsiz kütüphaneden (CC0 / CC-BY; ADR-038, plan `docs/music_research.md` §10): Claude ana tema ve sektör başına adayları listeler, kullanıcı dinleyip seçer; sektör BPM'leri seçilen parçalara göre ayarlanır + gerçek müzikle ritim senkronu: sektör geçişi ölçü sınırında, katman varsa kombo/duvar olaylarıyla katman değişimi, yoksa duvar yaklaşınca filtre
 - [ ] **M3-11** 🤝 Font seçimi (S-06) + HUD stili; sektör renklerinin kesinleşmesi
 - [ ] **M3-12** 🤖 Redmi'de performans kontrolü (kare süresi ≤ 10 ms)
 - [ ] **M3-13** 🤝 Oyun testi (sesi açık) + Planlama Gözden Geçirmesi → 🚪

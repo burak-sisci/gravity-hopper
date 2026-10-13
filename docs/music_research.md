@@ -2,7 +2,7 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
-> **Güncelleme (2026-10-13):** Kullanıcı soruları cevapladı. Bütçe yok; her sektöre ayrı tema yerine **tek bir ana tema** ve onun sektör düzenlemeleri. Kararlar ve bütçesiz plan §9'da; aşağıdaki "her sektörün kendi teması" önerisinin yerini §9 alır.
+> **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan hâlâ geçerli.
 
 ## 1. Kısa sonuç
 
@@ -174,8 +174,38 @@
   | **B. Gönüllü ya da gelir ortaklığıyla çalışan besteci** | İnsan eli ve gerçek kalite; telif tam korunur | Besteciyi bulmak ve süreci yürütmek kullanıcının işidir. Zamanlama belirsizdir. Yazılı sözleşme şarttır (ADR-037) |
   | **C. CC-BY kütüphane** | Hızlı ve iyi kalite | Başka oyunlar da aynı parçayı kullanabilir; imza tema olamaz |
 
-- **Önerim: A ile başlamak.** Tema oyunla birlikte şimdiden gelişir. Oyun para kazanırsa ya da bir besteci bulunursa (B), aynı melodiyi yeniden düzenler; imza korunur, kalite artar.
-- **Deneme kaydı:** `python tools/theme_demo.py <çıktı.wav>` 56 saniyelik bir kayıt üretir: S1 100 → S2 110 → S3 120 BPM ve final akoru. Kullanıcının dinlemesi için masaüstüne kopyalandı. Yalnızca kodla üretildi; yayına girmez.
+- Önerim A idi. Kodla üretilen 56 saniyelik deneme kaydının üreteci (`tools/theme_demo.py`) ilk commit'te (28a0c58) duruyor; karar C olunca depodan kaldırıldı.
+- **Kullanıcı kararı: C, ücretsiz müzik kütüphanesi** (ADR-038).
+
+## 10. Kütüphane planı (M3-10)
+
+- **Lisans:**
+  - Yalnızca CC0 ve CC-BY.
+  - CC-BY-NC ve CC-BY-SA yasak (`.clauderules` §7). CC-BY-ND de alınmaz: döngü için kesmek bir uyarlama sayılabilir.
+  - "YouTube'da ücretsiz" gibi CC olmayan özel lisanslar da alınmaz. Pixabay'in kendi lisansı bunlara bir örnek.
+  - Her parçanın lisans sayfası bağlantısıyla birlikte `CREDITS.md`'ye ve oyun içindeki Hakkında ekranına yazılır.
+- **Kaynaklar:**
+  - OpenGameArt: lisans her parçada ayrı, filtre gerekir.
+  - Free Music Archive: lisans parça başına değişir.
+  - FreePD: CC0.
+  - Incompetech: CC-BY 4.0, ama çok yaygın.
+- **Seçim ölçütleri:**
+  - Tür ve his: elektronik (synthwave, electro, drum & bass); §5'teki tablo geçerli.
+  - Tempo: 4/4, sabit, sektör sırasıyla yükselen BPM'ler (≈ 95–145).
+  - Döngü: temiz döngüye uygun ya da ölçü sınırında kesilebilir, en az 1,5 dakika.
+  - Ses: telefon hoparlöründe melodi net duyulmalı.
+  - Varsa katmanlar (stem).
+  - Ana tema parçası kısa, akılda kalan bir melodiyle başlamalı.
+  - Çok yaygın parçalar yerine az bilinenler tercih edilir.
+- **Süreç:**
+  1. Claude ana tema için ve sektör başına 3–4 aday listeler: bağlantı, lisans, BPM, süre.
+  2. Kullanıcı dinleyip seçer (🤝).
+  3. Seçime göre `SectorDef.bpm` ayarlanır. Parça doğrulayıcısı ve testler yeni tempolarla yeniden çalışır.
+  4. OGG içe aktarma ayarları yapılır: BPM, vuruş sayısı, döngü.
+  5. Kulak testi yapılır (S-03).
+- **Adaptif his:**
+  - Parçanın katmanları varsa §6'daki plan uygulanır.
+  - Yoksa tek parça çalar, müzik veriyolundaki filtre çöküş duvarı yaklaştıkça tizleri kısar. Kıl payı yavaş çekimi zaten `pitch_scale` ile müziğe bağlı.
 
 ## Kaynaklar
 
