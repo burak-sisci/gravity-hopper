@@ -2,7 +2,7 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
-> **Yeniden açıldı (2026-10-13):** Kullanıcı orkestral ve yapay zekâ ile üretilmiş bir müzik istiyor; araştırma §11'de, D-02 bekliyor. Önceki karar aşağıda kayıt olarak duruyor.
+> **Son karar (2026-10-13, ADR-039):** İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar; yapay zekâ yalnızca yedek. Ana tema adayları ve ölçümler §12'de. Yapay zekâ araştırması §11'de, aşağıdaki önceki kararlar kayıt olarak duruyor.
 >
 > **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan hâlâ geçerli.
 
@@ -189,7 +189,7 @@
 - **Kaynaklar:**
   - OpenGameArt: lisans her parçada ayrı, filtre gerekir.
   - Free Music Archive: lisans parça başına değişir.
-  - FreePD: CC0.
+  - FreePD: CC0, ama site kapandı (2026-10-13).
   - Incompetech: CC-BY 4.0, ama çok yaygın.
 - **Seçim ölçütleri:**
   - Tür ve his: elektronik (synthwave, electro, drum & bass); §5'teki tablo geçerli.
@@ -268,6 +268,39 @@
 - Google Flow Music: [The Rundown](https://www.therundown.ai/tools/lyria-3-5), [RightsDocket](https://www.rightsdocket.com/insights/google-lyria-3-commercial-use-copyright)
 - Sektör: [GDC 2026 State of the Game Industry](https://gdconf.com/article/gdc-2026-state-of-the-game-industry-reveals-impact-of-layoffs-generative-ai-and-more/), [Forbes – Suno ve tepki](https://www.forbes.com.au/news/innovation/ai-music-platform-suno-reaches-2-million-subscribers-as-industry-backlash-grows/)
 - Platform ve telif: [Promise Legal – AI oyun varlıkları 2026](https://blog.promise.legal/ai-game-assets-copyright-steam-disclosure-2026/), [Google Play – AI içerik politikası](https://support.google.com/googleplay/android-developer/answer/14094294), [GamingOnLinux – itch.io beyanı](https://gamingonlinux.com/2024/11/itchio-store-now-requires-ai-generated-content-disclosures-for-assets)
+
+## 12. Karar ve ana tema adayları (2026-10-13)
+
+- **Karar (kullanıcı, ADR-039):**
+  - Müzik insan yapımı ve ücretsiz kütüphanelerden gelir (CC0 / CC-BY).
+  - Tür hibrit orkestral: orkestra ve altında net bir davul ritmi. Akıcı orkestra hissi verir, vuruş da oyunun ızgarasıyla eşleşir.
+  - Yapay zekâ (§11, Stable Audio 3) yalnızca uygun parça bulunamazsa yedek olarak devreye girer.
+  - Lisans kuralı değişmedi.
+- **Platform notları:**
+  - FreePD kapandı (2026-10-13'te site kapalı).
+  - ZapSplat ve FreeSFX'in lisansları kendilerine özel; CC değil, bu yüzden kullanılmaz. Efektler (D-05) için Kenney (CC0) ve Freesound (CC0 / CC-BY filtresiyle) yeterli.
+  - NCS elektronik müzik ve oyun için ayrı ticari lisans istiyor; uygun değil.
+  - OpenGameArt'ta CC-BY-SA ve OGA-BY lisanslı çok parça var; kuralımız gereği elenirler.
+- **Ölçüm yöntemi:** Her aday indirildi. Tempo, vuruş başlangıçlarının özilintisiyle bulundu; kesin değer faz tutarlılığıyla inceltildi. 8 saniyelik pencerelerin ızgaradan sapması ölçüldü (`±40 ms` içinde kalan pencere oranı). Oyunun vuruş ızgarasıyla eşleşmesi için sapmanın küçük olması gerekir.
+
+| # | Parça | Besteci, lisans | Ölçülen tempo | Izgaraya uyum | Süre | Not |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | [Epic Journey](https://opengameart.org/content/epic-journey) | Thor Arisland (tcarisland), CC-BY 4.0 | **99,99 BPM** (sayfada 100) | %83 | 2:58 | **Önerim.** Yükselten, ilham veren orkestral ve elektronik marş: nefesliler, synth, flüt, trampet. Sayfada "main theme" etiketi var. S1 temposuyla birebir aynı |
+| 2 | [Mountain Peak](https://opengameart.org/content/mountain-peak) | Thor Arisland, CC-BY 4.0 | 100,04 BPM | %92 | 2:36 | Aynı besteci, aynı ton (Re majör) ve tempo; neşeli, "yukarı" hissi veren marş. Ana tema ya da menü için |
+| 3 | [Treasure Hunter](https://opengameart.org/content/treasure-hunter) | TAD, CC0 | 90 BPM (ölçüm 180,00: sekizlik nabız) | %100 | 1:05 | Kısa orkestral macera döngüsü; ızgaraya kusursuz oturuyor |
+| 4 | [Epic Departure](https://opengameart.org/content/epic-departure) | Of Far Different Nature, CC-BY 4.0 | 120,01 BPM | %75 | 2:18 | Hans Zimmer tarzı, yavaşça yükselen epik parça. S3 temposuyla aynı; döngülü sürümü Loop Box #3'te. Ana temadan çok sonraki sektörlere uygun |
+| 5 | [Determined Pursuit](https://opengameart.org/content/determined-pursuit-epic-orchestra-loop) | Emma_MA, CC0 | 80 BPM (ölçüm 160,01) | %100 | 1:48 | Telaşlı yaylılar ve davul, döngülü. Gergin; ileri sektörlere (S4–S5) aday |
+
+- **Elenenler:**
+  - [Emergence](https://opengameart.org/content/emergence) (CC-BY 4.0): sabit vuruşu yok; yalnızca menüde kullanılabilir.
+  - [Orchestral Adventure](https://opengameart.org/content/orchestral-adventure) ve [Tactical Pursuit](https://opengameart.org/content/tactical-pursuit) (CC-BY 3.0): vuruş zayıf ya da kayıyor, ızgaraya uyum %3–27.
+  - ArcLight (Matthew Pablo): lisans CC-BY ama açıklama "yalnızca izinle" diyor; çelişkili, alınmaz.
+  - Trevor Lentz, natestgeorge ve "Symphony of the Dawn" parçaları CC-BY-SA; ISAo'nun parçaları OGA-BY. Bunlar kuralımız gereği elenir.
+- **Sektör düşüncesi (M3-10'da kesinleşir):**
+  - Ana tema 1 ya da 2 numara olursa, Thor Arisland'ın aynı albümünden (The Nine Lives of Er The Cat) ya da aynı tarzdan sektör parçaları aranır.
+  - Sektör BPM'leri seçilen parçalara göre ayarlanır.
+  - Döngüsü olmayan parçalarda döngü noktası ölçü sınırında seçilir (bitiş bölümü döngü için tasarlanmamış olabilir; kulakla denenir).
+- **Kredi biçimi (CC-BY):** "Epic Journey" – Thor Arisland (tcarisland), CC-BY 4.0, opengameart.org/content/epic-journey. CC0 parçalara da teşekkür olarak kredi yazılır.
 
 ## Kaynaklar
 
