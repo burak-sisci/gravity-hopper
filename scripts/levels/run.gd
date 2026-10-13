@@ -216,4 +216,5 @@ func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:
 	_accent = accent
 	_background = background
 	_corridor.set_colors(ambient, accent)
+	_player.set_ambient(ambient)
 	RenderingServer.set_default_clear_color(background)

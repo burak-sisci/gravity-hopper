@@ -182,7 +182,7 @@
 
 **Varlık görselleri**
 
-- [ ] **M3-04** 🤖 Çekirdek: beyaz neon elmas + ışık lekesi; iz (`Line2D`: geçmiş konumlar, genişlik eğrisi, renk geçişi); neon kalkan halkası.
+- [x] **M3-04** 🤖 Çekirdek: beyaz neon elmas + ışık lekesi; iz (`Line2D`: geçmiş konumlar, genişlik eğrisi, renk geçişi); neon kalkan halkası.
   *Kabul:* İzin uzunluğu ekran yenileme hızından bağımsız (60 ve 120 Hz'de aynı, test); Redmi ekran görüntüsü.
 - [ ] **M3-05** 🤖 Diken ve veri bloğu: sivri kırmızı neon diken; köşeli blok ve süzülme hissi (yalnızca görsel, ADR-035).
   *Kabul:* Çarpışma kutuları değişmedi (doğrulama aynı); Redmi ekran görüntüsü.

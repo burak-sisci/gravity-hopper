@@ -13,6 +13,8 @@ extends CharacterBody2D
 ## Duvar boşluğu (M2-11): duvar bitince oyuncu dışarı kayar. Coyote süresince çevirme hâlâ olur;
 ## süre dolduğunda koridorun dışındaysa player_died(FELL). Debug ölümsüzlüğünde duvar çizgisine
 ## geri konur.
+## Görsel (M3-04): neon elmas (Visual, NeonShape) ve iz (Trail). İz her fizik adımında konumu
+## alır; ölünce kayıt sürer, böylece iz çekirdeğe doğru toplanır.
 
 ## Bir tehlike çarpışma kutusuna değmeden kıl payı alanından geçti (Run bağlar).
 signal near_missed
@@ -42,10 +44,14 @@ var _coyote_left: float = 0.0
 @onready var _collector: Collector = $Collector
 @onready var _graze: GrazeDetector = $GrazeDetector
 @onready var _shield: Shield = $Shield
+@onready var _visual: NeonShape = $Visual
+@onready var _trail: Trail = $Trail
 
 
 func _ready() -> void:
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	_visual.color = Neon.STYLE.player_color
+	_trail.reset(position)
 	_hurtbox.hit.connect(_on_hurtbox_hit)
 	_graze.grazed.connect(_on_grazed)
 	_shield.changed.connect(Events.shield_changed.emit)
@@ -61,6 +67,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not _alive:
+		_trail.record(position)
 		return
 	_shield.tick(delta)
 	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
@@ -103,6 +110,7 @@ func _physics_process(delta: float) -> void:
 	position.y -= TuningConfig.to_px(climb_speed) * delta
 	if _coyote_left <= 0.0:
 		_check_fall()
+	_trail.record(position)
 
 
 ## Aktif duvar sağda mı (Run ve testler için).
@@ -122,6 +130,11 @@ func give_shield() -> void:
 
 func has_shield() -> bool:
 	return _shield.active
+
+
+## İzin rengini paletin çevre rengine çeker (Run, palet geçişinde çağırır; yalnızca görsel).
+func set_ambient(color: Color) -> void:
+	_trail.set_ambient(color)
 
 
 ## Bir girdi olayı çevirme dokunuşu mu? Her parmağın basışı sayılır; dokunuştan türetilen

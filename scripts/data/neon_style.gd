@@ -31,6 +31,15 @@ extends Resource
 ## Oyuncu çekirdeğinin beyazı.
 @export var player_color: Color = Color(1.0, 1.0, 1.0)
 
+## Kalkan halkasının rengi (kırmızı ve yeşilden uzak).
+@export var shield_color: Color = Color(0.55, 0.9, 1.0)
+
+@export_group("Oyuncu izi")
+## İzin geriye uzandığı süre; boyu tırmanış hızıyla birlikte uzar (GDD §13).
+@export_range(0.05, 1.0, 0.01, "suffix:sn") var trail_duration: float = 0.4
+## İzin baştaki kalınlığı; kuyruğa doğru sıfıra iner.
+@export_range(1.0, 60.0, 0.5, "suffix:px") var trail_width: float = 18.0
+
 @export_group("Duvarlar")
 ## Duvar dolgusunun saydamlığı; parçalar sırayla açık ve koyu, böylece kayma gözle görülür.
 @export_range(0.0, 1.0, 0.01) var wall_fill_light: float = 0.16

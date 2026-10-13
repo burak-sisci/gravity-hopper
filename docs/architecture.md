@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-13 (M3-03 neon koridor duvarları) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-13 (M3-04 oyuncu çekirdeği ve iz) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -180,8 +180,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 ├── Conductor (Node)                  # ritim saati (§8.3)
 ├── ChunkSpawner (Node2D)             # desen parçası üretimi + havuzlar (§8.2)
 ├── Player (CharacterBody2D)          # scenes/entities/player.tscn
-│   ├── Visual (Polygon2D)
-│   ├── Trail (Line2D)
+│   ├── Trail (NeonLine)              # iz (M3-04), Visual'ın altında çizilir
+│   ├── Visual (NeonShape)
 │   ├── Hurtbox (Area2D)              # bileşen: çarpışma (görselden küçük)
 │   ├── GrazeDetector (Area2D)        # bileşen: kıl payı algılama
 │   ├── Magnet (Area2D)               # bileşen: Glimmer çekimi
@@ -193,7 +193,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M2 sonu):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%PressureSystem` (§8.4) + `%CollapseWall` (`scenes/entities/collapse_wall.tscn`, geçici görsel) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox`, `Collector`, `GrazeDetector`, `Visual`, `Shield`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; `Background`, `Trail` ve `Magnet` görevleriyle eklenir (M3, M4).
+**Şu anki hâli (M2 sonu):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%PressureSystem` (§8.4) + `%CollapseWall` (`scenes/entities/collapse_wall.tscn`, geçici görsel) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox`, `Collector`, `GrazeDetector`, `Trail`, `Visual`, `Shield`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; `Background` ve `Magnet` görevleriyle eklenir (M3, M4). `Trail` M3-04'te geldi.
 
 - **Corridor:**
   - **Duvar boşlukları (M2-11):** `Run` her adımda `ChunkSpawner.active_gaps()` (duvar, üst y, alt y) listesini `set_gaps()` ile bildirir. Liste değişince ya da bir parça taşınınca her duvar parçası, boşlukların dışında kalan katı aralıklara bölünür: parça başına en fazla 3 parçacık (`CollisionShape2D` + `Polygon2D` + `NeonLine`, tur başında oluşturulur; yalnızca boy ve yer değişir, kullanılmayan kapatılır). Sınırlar tam boşluk kenarındadır. Test: `tests/levels/corridor_test.gd`.
@@ -286,7 +286,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 1. Diken (`Area2D`, pasif) oyuncunun `Hurtbox`'ıyla örtüşür.
 2. `Hurtbox` bileşeni yukarıya `hit` sinyali yayar → `Player`.
 3. `Player`: kalkan varsa tüketir ve `shield_changed(false)` + yerel `shield_broken` yayar. Kalkan yoksa `Events.player_died.emit(DeathCause.HAZARD)`. **Dikenin koduna dokunmaz.**
-   - **Uygulama (M2-16):** `Shield` bileşeni (`scripts/components/shield.gd`, oyuncunun çocuğu): `give()`, `consume(dokunulmazlık)`, `tick(delta)`, `is_in_grace()`; durum değişince yukarı `changed` → `Player` bunu `Events.shield_changed`'e bağlar. Darbe: dokunulmazlıktaysa yok sayılır; kalkan varsa tüketilir, `TuningConfig.shield_grace` (1 sn) dokunulmazlık başlar, `shield_broken` → `Run` → `PressureSystem.pull(shield_pull)` (8 m). Kalkan düşmeye ve çöküş duvarına karşı korumaz (`Player.die` ve düşme kalkana bakmaz). Görsel: oyuncunun çevresinde açık mavi halka (`Line2D`, yarıçap 56 px), dokunulmazlıkta yanıp söner. Şimdilik debug ile verilir: `8` tuşu ya da paneldeki "Kalkan" düğmesi → `Events.debug_shield_requested`; yükseltme M4'te. Redmi'de halka göründü, kalkan bir darbeyi emdi ve tur sürdü.
+   - **Uygulama (M2-16):** `Shield` bileşeni (`scripts/components/shield.gd`, oyuncunun çocuğu): `give()`, `consume(dokunulmazlık)`, `tick(delta)`, `is_in_grace()`; durum değişince yukarı `changed` → `Player` bunu `Events.shield_changed`'e bağlar. Darbe: dokunulmazlıktaysa yok sayılır; kalkan varsa tüketilir, `TuningConfig.shield_grace` (1 sn) dokunulmazlık başlar, `shield_broken` → `Run` → `PressureSystem.pull(shield_pull)` (8 m). Kalkan düşmeye ve çöküş duvarına karşı korumaz (`Player.die` ve düşme kalkana bakmaz). Görsel: oyuncunun çevresinde açık mavi neon halka (`NeonLine`, yarıçap 56 px, renk `NeonStyle.shield_color`; M3-04), dokunulmazlıkta yanıp söner. Şimdilik debug ile verilir: `8` tuşu ya da paneldeki "Kalkan" düğmesi → `Events.debug_shield_requested`; yükseltme M4'te. Redmi'de halka göründü, kalkan bir darbeyi emdi ve tur sürdü.
 4. `GameManager` dinler: `Run.stop()` (aşağı çağrı), `RunResult` oluşturur, `Progression.add_glimmers()`, `SaveManager.save_game()`, ardından `Events.run_ended.emit(result)`.
 5. Sonuç ekranı `run_ended`'i, `AudioManager` ise `player_died`'ı dinleyerek kendi işini yapar.
 6. Oyuncu "Tekrar"a dokunur → UI `Events.retry_requested` yayar → `GameManager` yeni turu **yarım saniyenin altında** başlatır.
@@ -508,13 +508,19 @@ Run (Node2D)                          scenes/levels/run.tscn
     - Düğümler oluşturulurken bir kez kurulur (en çok katman sayısı kadar kopya). Kalite değişince yalnızca görünürlük ve kalınlık değişir; tur sırasında düğüm oluşmaz (.clauderules §6).
     - `Neon` autoload kullanmaz: ekransız araç betikleri (parça doğrulayıcı) bileşenleri adıyla derler (§15, M1-04 dersi). Kaliteyi `Main` aktarır: açılışta ve `Events.settings_changed`'de `Neon.set_quality(Settings.effect_quality)` → `call_group(Neon.GROUP, "apply_quality")`. Ağaca yeni giren bileşen geçerli kaliteyi kendisi alır.
     - Ölçüm sahnesi `glow_bench.tscn` bu bileşenlerle kurulu; görüntüsü eskisiyle piksel piksel aynı (M3-01).
+    - **Ders (M3-04):** GDScript, alt sınıf `_init` tanımlayınca üst sınıfın `_init`'ini kendiliğinden çağırmaz. `NeonLine` / `NeonShape`'ten türeyen sınıf `_init`'in başında `super()` çağırmalı; yoksa çizgiler hiç kurulmaz (`Trail`'de yaşandı, `trail_test.gd` yakalıyor).
   - **Ölçüm** (M0-09, Redmi, 1080×2400, 120 Hz): parlama yok 8,4 ms · sahte parlama 8,4 ms (≈ +0,9 ms GPU) · WorldEnvironment glow 17,5 ms (57 FPS). Ayrıntı §16.1'de.
 - **WorldEnvironment glow kullanılmıyor (S-01 ✅).** Compatibility'de çalışıyor: Canvas arka plan modu yeterli, 3B kamera gerekmiyor, görüntüsü güzel. Ama Redmi'de kare süresini iki katına çıkarıyor. İleride güçlü cihazlar için denenirse şu bulgular geçerli:
   - Compatibility, parlama seviyelerini, gücü ve karışım modunu yok sayar.
   - Eşik rengin parlaklığına bakar; bu yüzden kırmızı geç parlar.
   - `glow_hdr_scale` varsayılanı (2.0) 2B'de parlamayı neredeyse görünmez yapar. Eşik 0.3, ölçek 0.2, yoğunluk 2.0 ile çalıştı.
 - **HUD ayrımı (S-02 ✅):** `background_canvas_max_layer` (0) üstündeki `CanvasLayer`'lar ortam efektlerinden etkilenmiyor. Bu, telefonda doğrulandı. Sahte parlamada bu sorun hiç yok, çünkü parlama yalnızca dünya nesnelerine eklenir.
-- **İz:** Oyuncunun geçmiş konumlarından beslenen bir `Line2D` (genişlik eğrisi + renk geçişi). Kozmetik izler `TrailDef` ile tanımlanır.
+- **Oyuncu (M3-04, ADR-047):** Çekirdek `Visual` bir `NeonShape` (elmas 60 × 80 px, ışık lekesi, dolgu 0,85, renk `NeonStyle.player_color`). Kalkan halkası `NeonLine`.
+- **İz (M3-04, ADR-047):** `Trail` (`scripts/components/trail.gd`, `NeonLine`'dan türer), oyuncunun çocuğu, `Visual`'ın altında.
+  - `Player` konumunu her fizik adımında `record()` ile verir; ölünce de verir, böylece iz çekirdeğe doğru toplanır. Kayıt halkası `tick_count() + 2` konum (`trail_duration` 0,4 sn × fizik hızı).
+  - Çizim `_process`'te: baş önceki ve son adımın arasında, fizik ara değerleme kesrinde (`Engine.get_physics_interpolation_fraction()`), yani oyuncunun çizildiği yerde. Kuyruk da aynı kesirle kayar. Böylece iz hep aynı süreyi kaplar, boyu 120 Hz'de ara karede sıçramaz ve 60 / 120 Hz'de aynıdır (test). Noktalar oyuncunun yerel koordinatına çevrilir.
+  - Görünüş: kalınlık `trail_width` (18 px) kuyruğa doğru sıfıra iner (`width_curve`); çekirdek oyuncunun beyazından çevre renginde saydama söner (`gradient`), parlama çevre renginde. `Run` palet rengini `Player.set_ambient` ile aktarır.
+  - Kozmetik izler M4'te `TrailDef` ile tanımlanır; hızla uzayan iz M3-13'te.
 - **Parçacıklar:** `CPUParticles2D`, düşük adetli.
 - **Ekran sarsıntısı:** `Camera2D` ofseti, "travma" modeliyle (travma² × gürültü).
 - **Shader'lar:** Arka plan veri ağı (vuruşta nabız), çöküş duvarı glitch'i, S5 için renk kayması. Hepsi kalite ayarına bağlıdır.
@@ -530,7 +536,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px(bpm)`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/palette_01.tres` … `palette_03.tres` (M3-02) | `ambient`, `accent`, `background` (§9). `SectorDef.palette` ile bağlı |
-| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); duvar `wall_fill_light`, `wall_fill_dark`, `wall_core_whiten`, nabız `beat_pulse_length`, `beat_pulse_gain`, `beat_pulse_boost` (M3-03); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)`, `beat_pulse(vuruş)` |
+| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); `shield_color`, iz `trail_duration`, `trail_width` (M3-04); duvar `wall_fill_light`, `wall_fill_dark`, `wall_core_whiten`, nabız `beat_pulse_length`, `beat_pulse_gain`, `beat_pulse_boost` (M3-03); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)`, `beat_pulse(vuruş)` |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
@@ -784,6 +790,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/autoloads/audio_manager_test.gd` (M2-07; M2-20'de yeniden yazıldı) | Tur başlayınca bildirilen parça çalara konur, döngüsü `loop_start`'tan kurulur; ölümden sonra bildirilen saat yok sayılır, yeni turda parça yeniden kurulur |
   | `tests/data/music_catalog_test.gd` (M2-20) | Beş parça ve dört tempo; her parçanın süresi tam vuruş, döngüsü tam ölçü, ses düzeltmesi sınırda; atıf ve lisans (CC0 / CC-BY) tam; seçim tohuma bağlı ve 300 tohumda her parça seçiliyor; döngü içinde konum sarılıyor |
   | `tests/tools/chunk_validator_test.gd` (M2-05; M2-13 eki: çevrili Glimmer toplanamaz, tehlikeden uzak Glimmer riskli değil; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
+  | `tests/components/trail_test.gd` (M3-04) | İz 60 ve 120 Hz'de aynı (adım başına bir ve iki kare); düz tırmanışta süresi kadar yolu kaplıyor, ara kesirde boyu değişmiyor; baş oyuncunun üstünde; çizgileri kurulu; oyuncu durunca iz sıfıra iniyor; renk beyazdan çevre rengine sönüyor |
   | `tests/components/neon_test.gd` (M3-01) | Çizgi ve blok parlaması yüksekte 2, ortada 1, düşükte 0 katman; diken ışık lekesi yüksek ve ortada var, düşükte yok; kalite değişince düğüm sayısı sabit; ağaca yeni giren bileşen geçerli kaliteyi alıyor; kapalı parlama gizli kalıyor; renk çizgiye ve parlamaya ulaşıyor; doku ve malzeme paylaşılıyor; vuruş nabzı vuruşta 1, sönüm süresinde azalıyor, sonra 0 (M3-03). `main_test.gd` eki: `settings_changed` kaliteyi `Neon`'a aktarıyor |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
@@ -885,6 +892,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-044 | 2026-10-13 | Sektör renkleri `SectorPalette` kaynağında (`ambient`, `accent`, `background`; `data/sectors/palette_NN.tres`), `SectorDef.ambient_color` ve `Corridor.set_tint` kalktı. Tehlike, Glimmer ve oyuncu renkleri sektörden bağımsız, `NeonStyle`'da. Arka plan ekranın temizleme rengiyle boyanır; geçişi `Run` yapar (0,6 sn) | Renkler veri olunca M3-17'deki kesin seçim kod değiştirmez (ADR-041). Renk kuralı (kırmızı ve yeşil çevre rengi olamaz, GDD §12) testle korunur. Temizleme rengi tam ekran bir çizimden ucuzdur; arka plan ağı (M3-07) bunun üstüne çizilir |
 | ADR-045 | 2026-10-13 | Çalışma modeli (kullanıcı kararı): iki mesai türü. **Standart mesai:** kullanıcı ekran başında ya da yakınında, birlikte çalışılır; Claude 🤝/👤 görevde, bekleyen kararda, kapıda ve beklenmedik tasarım sorusunda durur (ADR-025 gibi). **Otonom mesai:** Claude baştan sona tek başına çalışır; yalnızca 🤖 görevleri yapar, 🤝/👤 görevleri ve karar bekleyenleri atlayıp `state.json` → `standard_queue`'ya yazar. Küçük, geri alınabilir tasarım sorularında varsayım seçilip kuyruğa "gözden geçir" notu düşülür; büyükler `pending_user_decisions`'a yazılır. Kilometre taşı kapısı geçilmez. Tür `state.json` → `session`'da; kullanıcı söylemezse standart. Telefon bildirimi (ADR-033) otonom mesainin sonunda gönderilir. `current.deferred` kuyruğa katıldı | Kullanıcı otonom mesailerde başka projelerle ilgileniyor; Claude'un bir 🤝 görevde saatlerce beklemesi yerine yapılabilecek işi sürdürmesi zaman kazandırır. Kapı ve görev başına kanıt korunduğu için kalite düşmez; ortak işler biriktirilip standart mesaide topluca yapılır |
 | ADR-046 | 2026-10-13 | Neon koridor (M3-03): duvar parçacığı başına bir `NeonLine` (iç kenar; boşluk kenarında duvar kalınlığı boyunca dönen kesik) + saydam dolgu. Vuruş nabzı koridorun tek `modulate`'i ile, vurgu rengine doğru; güç eğrisi `NeonStyle.beat_pulse` (arka plan ağı da kullanacak). `Corridor.set_ambient` yerine `set_colors(çevre, vurgu)` | Düğümler tur başında kurulu kalır (.clauderules §6); nabız her adımda yalnızca bir özellik yazar, yüzlerce çizgiye dokunmaz. Kesik ve çizgi çarpışma kutusuyla aynı veriden üretilir, testle aynı yerde olduğu denetlenir. Nabız gücü veride; oyun testinde (M3-20) ayarlanabilir |
+| ADR-047 | 2026-10-13 | Oyuncu görseli (M3-04): çekirdek `NeonShape`, kalkan halkası `NeonLine`, iz `Trail` (`NeonLine`'dan türer, oyuncunun çocuğu). İz konumları fizik adımında kaydedilir; baş ve kuyruk fizik ara değerleme kesriyle kaydırılarak `_process`'te çizilir. Süre ve kalınlık `NeonStyle`'da (kozmetik `TrailDef` M4'te) | Konum fizik adımında (60 Hz sabit) kaydedildiği için iz yenileme hızından bağımsız; kesirle kayan baş, iz başını ara değerlenen oyuncunun tam üstünde tutar, kayan kuyruk 120 Hz'de boy sıçramasını önler. Ayrı bir düğüm ya da `top_level` gerekmez; çizim sırası sahnede kalır |
 
 ## 18. Açık teknik sorular
 
