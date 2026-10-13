@@ -6,6 +6,8 @@ extends Node2D
 ## PC'de tek modu görmek için: <godot> --path . res://scenes/debug/glow_bench.tscn -- --mode=env
 ## Şekiller oyunun neon bileşenleridir (NeonLine, NeonShape; M3-01); sahte parlama modları
 ## efekt kalitesini (Neon.quality) değiştirir.
+## Arka plan, oyunun veri ağıdır (Background, M3-07): kaliteyle birlikte değişir (düşükte ve
+## WorldEnvironment modunda düz renk), kayar ve vuruşta nabız atar.
 
 enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM }
 
@@ -39,8 +41,6 @@ const SCROLL_SPEED: float = 600.0
 const RNG_SEED: int = 20261007
 const BAND_MARGIN: float = 200.0
 const WALL_INSET: float = 60.0
-const GRID_CELL: float = 120.0
-const GRID_WIDTH: float = 2.0
 const PLAYER_FILL_ALPHA: float = 0.85
 const SPIKE_COUNT: int = 14
 const BLOCK_COUNT: int = 8
@@ -50,19 +50,25 @@ const TRAIL_POINTS: int = 40
 const TRAIL_FLIP_LENGTH: float = 520.0
 const TRAIL_WIDTH: float = 16.0
 const PLAYER_HEIGHT_RATIO: float = 0.62
+## Arka plan ağının nabız temposu (müzik parçalarının aralığında).
+const BENCH_BPM: float = 120.0
+const SECONDS_PER_MINUTE: float = 60.0
 
 ## S1 paleti taslağı; kesin tonlar M3'te seçilecek.
 const COLOR_WALL: Color = Color(0.0, 0.9, 1.0)
 const COLOR_HAZARD: Color = Color(1.0, 0.22, 0.32)
 const COLOR_GLIMMER: Color = Color(0.35, 1.0, 0.5)
 const COLOR_PLAYER: Color = Color(1.0, 1.0, 1.0)
-const COLOR_GRID: Color = Color(0.1, 0.16, 0.36)
+const COLOR_ACCENT: Color = Color(0.8, 0.97, 1.0)
 
 var _mode: Mode = Mode.OFF
 var _glow_environment: Environment
 var _scrolling: Array[Node2D] = []
 var _band_height: float = 0.0
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+## Sahte kameranın y'si (dünya yukarı doğru akar) ve vuruş sayacı: arka plan ağı için.
+var _scroll_y: float = 0.0
+var _beat: float = 0.0
 
 var _bench_done: bool = false
 var _bench_index: int = 0
@@ -77,7 +83,7 @@ var _last_tick_usec: int = 0
 var _results: Array[String] = []
 
 @onready var _world_environment: WorldEnvironment = %WorldEnvironment
-@onready var _grid: Node2D = %Grid
+@onready var _background: Background = %Background
 @onready var _shapes: Node2D = %Shapes
 @onready var _mode_label: Label = %ModeLabel
 @onready var _results_label: Label = %ResultsLabel
@@ -87,7 +93,7 @@ func _ready() -> void:
 	_rng.seed = RNG_SEED
 	_glow_environment = _world_environment.environment
 	_build_world()
-	_grid.draw.connect(_draw_grid)
+	_background.set_colors(COLOR_WALL, COLOR_ACCENT)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	_last_tick_usec = Time.get_ticks_usec()
 
@@ -129,10 +135,10 @@ func _physics_process(delta: float) -> void:
 		if item.position.y > view_height + BAND_MARGIN:
 			item.position.y -= _band_height
 			item.reset_physics_interpolation()
-	_grid.position.y += step
-	if _grid.position.y >= GRID_CELL:
-		_grid.position.y -= GRID_CELL
-		_grid.reset_physics_interpolation()
+	_scroll_y -= step
+	_background.set_scroll(_scroll_y)
+	_beat += delta * BENCH_BPM / SECONDS_PER_MINUTE
+	_background.set_beat(_beat)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -345,18 +351,6 @@ func _add_trail(player_pos: Vector2, from_x: float) -> void:
 	trail.width_curve = taper
 	trail.gradient = fade
 	_shapes.add_child(trail)
-
-
-func _draw_grid() -> void:
-	var view: Vector2 = get_viewport_rect().size
-	var x: float = 0.0
-	while x <= view.x:
-		_grid.draw_line(Vector2(x, -GRID_CELL), Vector2(x, view.y + GRID_CELL), COLOR_GRID, GRID_WIDTH)
-		x += GRID_CELL
-	var y: float = -GRID_CELL
-	while y <= view.y + GRID_CELL:
-		_grid.draw_line(Vector2(0.0, y), Vector2(view.x, y), COLOR_GRID, GRID_WIDTH)
-		y += GRID_CELL
 
 
 func _sum(values: Array[float]) -> float:

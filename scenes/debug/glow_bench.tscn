@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/debug/glow_bench.gd" id="1_bench"]
+[ext_resource type="PackedScene" path="res://scenes/levels/background.tscn" id="2_background"]
 
 [sub_resource type="Environment" id="Environment_glow"]
 background_mode = 3
@@ -21,7 +22,7 @@ script = ExtResource("1_bench")
 unique_name_in_owner = true
 environment = SubResource("Environment_glow")
 
-[node name="Grid" type="Node2D" parent="."]
+[node name="Background" parent="." instance=ExtResource("2_background")]
 unique_name_in_owner = true
 
 [node name="Shapes" type="Node2D" parent="."]

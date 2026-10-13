@@ -95,6 +95,38 @@ extends Resource
 ## renginde kalır.
 @export_range(0.0, 1.0, 0.05) var wall_core_whiten: float = 0.55
 
+@export_group("Arka plan ağı")
+## Ağın göründüğü en düşük kalite; altında arka plan düz renktir.
+@export var grid_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
+## Uzak katmanın göründüğü en düşük kalite.
+@export var grid_far_min_quality: GameTypes.Quality = GameTypes.Quality.HIGH
+## Yakın katmanın hücre boyu (çizgi aralığı); koridorun ortasından hizalanır.
+@export_range(40.0, 800.0, 10.0, "suffix:px") var grid_near_cell: float = 300.0
+## Yakın katmanın kamerayla kayma oranı (paralaks; 1 = dünyayla aynı hızda).
+@export_range(0.0, 1.0, 0.01) var grid_near_parallax: float = 0.3
+## Yakın katman çizgilerinin kalınlığı.
+@export_range(0.5, 8.0, 0.5, "suffix:px") var grid_near_width: float = 2.5
+## Yakın katman çizgilerinin saydamlığı.
+@export_range(0.0, 1.0, 0.01) var grid_near_alpha: float = 0.1
+## Yakın katmanın kesişimlerindeki düğüm noktalarının yarıçapı.
+@export_range(0.0, 20.0, 0.5, "suffix:px") var grid_node_radius: float = 6.0
+## Düğüm noktalarının saydamlığı.
+@export_range(0.0, 1.0, 0.01) var grid_node_alpha: float = 0.3
+## Uzak katmanın hücre boyu.
+@export_range(20.0, 400.0, 10.0, "suffix:px") var grid_far_cell: float = 100.0
+## Uzak katmanın kamerayla kayma oranı (yakından yavaş: derinlik hissi).
+@export_range(0.0, 1.0, 0.01) var grid_far_parallax: float = 0.12
+## Uzak katman çizgilerinin kalınlığı.
+@export_range(0.5, 8.0, 0.5, "suffix:px") var grid_far_width: float = 1.5
+## Uzak katman çizgilerinin saydamlığı.
+@export_range(0.0, 1.0, 0.01) var grid_far_alpha: float = 0.06
+## Nabız tepesinde ağın saydamlık artışı (1 = iki katı).
+@export_range(0.0, 3.0, 0.05) var grid_pulse_alpha: float = 1.0
+## Her vuruşta yanıp sönen düğümlerin oranı.
+@export_range(0.0, 1.0, 0.01) var grid_flash_density: float = 0.12
+## Yanıp sönen düğümün tepedeki saydamlığı (vurgu renginde).
+@export_range(0.0, 1.0, 0.05) var grid_flash_alpha: float = 0.5
+
 @export_group("Vuruş nabzı")
 ## Nabzın vuruştan sonra sönme süresi (vuruşun kesri). Sesi kapalı oynayan ritmi bundan görür.
 @export_range(0.05, 1.0, 0.05) var beat_pulse_length: float = 0.35

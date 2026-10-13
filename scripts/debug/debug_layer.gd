@@ -12,6 +12,11 @@ const DEBUG_MENU_SCALE: float = 2.0
 const INVINCIBLE_ARG: String = "--invincible"
 ## Başlatma argümanı (`-- --start-sector=2`): ilk tur o sektörden başlar (kare yakalama, M2-11).
 const START_SECTOR_ARG: String = "--start-sector="
+## Başlatma argümanı (`-- --quality=low`): efekt kalitesi bu oturum için (kaydedilmez; M3-07).
+const QUALITY_ARG: String = "--quality="
+## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
+const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
+const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
 ## Ekran oranı denemesi (yalnızca PC, architecture.md §3): dikey pencere boyutları.
 const ASPECT_WINDOWS: Array[Vector2i] = [
 	Vector2i(450, 800), Vector2i(450, 1000), Vector2i(600, 800),
@@ -32,6 +37,7 @@ var _sector: int = 1
 @onready var _invincible_button: Button = %InvincibleButton
 @onready var _collisions_button: Button = %CollisionsButton
 @onready var _slow_button: Button = %SlowButton
+@onready var _quality_button: Button = %QualityButton
 
 
 func _ready() -> void:
@@ -46,6 +52,7 @@ func _ready() -> void:
 	_bind_key(KEY_8, KEY_KP_8, _on_shield_pressed)
 	_bind_key(KEY_6, KEY_KP_6, _cycle_aspect)
 	_bind_key(KEY_7, KEY_KP_7, _cycle_fps)
+	_bind_key(KEY_9, KEY_KP_9, _cycle_quality)
 	_key_actions[KEY_R] = _on_restart_pressed
 	_debug_menu = (load(DEBUG_MENU_PATH) as PackedScene).instantiate() as CanvasLayer
 	add_child(_debug_menu)
@@ -58,6 +65,12 @@ func _ready() -> void:
 		elif arg.begins_with(START_SECTOR_ARG):
 			# Main, start_requested'i bu karenin sonunda dinlemeye başlar; istek bir sonraki karede.
 			Events.start_requested.emit.call_deferred(int(arg.trim_prefix(START_SECTOR_ARG)))
+		elif arg.begins_with(QUALITY_ARG):
+			# Main kaliteyi debug katmanını yükledikten hemen sonra uygular; duyuru gerekmez.
+			var quality: int = QUALITY_ARGS.find(arg.trim_prefix(QUALITY_ARG))
+			if quality >= 0:
+				Settings.effect_quality = quality as GameTypes.Quality
+	_show_quality()
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
 	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:
 		_sector = start_sector
@@ -132,6 +145,20 @@ func _cycle_aspect() -> void:
 	_aspect_index = (_aspect_index + 1) % ASPECT_WINDOWS.size()
 	get_window().size = ASPECT_WINDOWS[_aspect_index]
 	print("ASPECT %s pencere=%s" % [ASPECT_NAMES[_aspect_index], ASPECT_WINDOWS[_aspect_index]])
+
+
+## Efekt kalitesi: yüksek → orta → düşük → yüksek. Yalnızca bu oturum için (kaydedilmez);
+## Main ayar değişikliğini duyunca neon bileşenlerine ve arka plana uygular.
+func _cycle_quality() -> void:
+	var quality: int = posmod(Settings.effect_quality - 1, GameTypes.Quality.size())
+	Settings.effect_quality = quality as GameTypes.Quality
+	Events.settings_changed.emit()
+	_show_quality()
+	print("DEBUG kalite %s" % QUALITY_ARGS[quality])
+
+
+func _show_quality() -> void:
+	_quality_button.text = QUALITY_LABELS[Settings.effect_quality]
 
 
 func _cycle_fps() -> void:

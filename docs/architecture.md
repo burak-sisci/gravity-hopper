@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-13 (M3-06 lazer ve Glimmer) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-14 (M3-07 arka plan veri ağı) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -93,7 +93,7 @@ gravity-hopper/
 │   │   ├── sfx/              # Efektler (çevirme, toplama, ölüm, kıl payı)
 │   │   └── music/            # Tur müzikleri (OGG; tools/music_prep.py hazırlar, M2-20)
 │   ├── fonts/                # Türkçe karakter destekli fontlar
-│   └── shaders/              # Arka plan ağı, glitch (sahte parlama shader'sız: §9)
+│   └── shaders/              # Glitch (M3-09). Arka plan ağı ve sahte parlama shader'sız (§9, ADR-050)
 │
 ├── data/                     # İçerik ve ayar kaynakları (.tres)
 │   ├── tuning/               # TuningConfig (hareket, kamera, adalet, basınç)
@@ -107,7 +107,7 @@ gravity-hopper/
 ├── localization/             # translations.csv (TR / EN)
 │
 ├── scenes/                   # Godot sahneleri (.tscn)
-│   ├── levels/               # run.tscn (oyun dünyası)
+│   ├── levels/               # run.tscn (oyun dünyası), background.tscn (arka plan veri ağı, M3-07)
 │   │   └── chunks/           # Elle tasarlanmış desen parçaları
 │   ├── entities/             # Player, Hazard türleri, Glimmer, CollapseWall
 │   ├── ui/                   # Ana menü, HUD, sonuç, mağaza, ayarlar
@@ -176,7 +176,7 @@ Main (Node)                           scenes/main.tscn
 
 ```
 Run (Node2D)                          scenes/levels/run.tscn
-├── Background                        # veri ağı shader'ı, paralaks
+├── Background (CanvasLayer)          # arka plan veri ağı: çizgi katmanları, paralaks (M3-07)
 ├── Conductor (Node)                  # ritim saati (§8.3)
 ├── ChunkSpawner (Node2D)             # desen parçası üretimi + havuzlar (§8.2)
 ├── Player (CharacterBody2D)          # scenes/entities/player.tscn
@@ -193,7 +193,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 `Run` kendi çocuklarının sinyallerini bağlar (ör. `Player.shield_broken → PressureSystem.on_shield_broken`). Dışarıya yalnızca `Events` üzerinden seslenir.
 
-**Şu anki hâli (M2 sonu):** `Run` → `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%PressureSystem` (§8.4) + `%CollapseWall` (`scenes/entities/collapse_wall.tscn`, geçici görsel) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox`, `Collector`, `GrazeDetector`, `Trail`, `Visual`, `Shield`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; `Background` ve `Magnet` görevleriyle eklenir (M3, M4). `Trail` M3-04'te geldi.
+**Şu anki hâli (M2 sonu):** `Run` → `%Background` (`scenes/levels/background.tscn`, `Background`, M3-07, §9) + `%Conductor` (`scripts/systems/conductor.gd`, §8.3) + `%Corridor` (`scripts/levels/corridor.gd`, `Corridor`) + `%ChunkSpawner` (`scripts/systems/chunk_spawner.gd`, §8.2) + `%PressureSystem` (§8.4) + `%CollapseWall` (`scenes/entities/collapse_wall.tscn`, geçici görsel) + `%Player` (`scenes/entities/player.tscn`, `Player`; çocukları `Body`, `Hurtbox`, `Collector`, `GrazeDetector`, `Trail`, `Visual`, `Shield`) + `%GameCamera` (`scripts/components/game_camera.gd`, `GameCamera`). Yukarıdaki ağaç hedeftir; `Magnet` M4'te eklenir. `Trail` M3-04'te, `Background` M3-07'de geldi.
 
 - **Corridor:**
   - **Duvar boşlukları (M2-11):** `Run` her adımda `ChunkSpawner.active_gaps()` (duvar, üst y, alt y) listesini `set_gaps()` ile bildirir. Liste değişince ya da bir parça taşınınca her duvar parçası, boşlukların dışında kalan katı aralıklara bölünür: parça başına en fazla 3 parçacık (`CollisionShape2D` + `Polygon2D` + `NeonLine`, tur başında oluşturulur; yalnızca boy ve yer değişir, kullanılmayan kapatılır). Sınırlar tam boşluk kenarındadır. Test: `tests/levels/corridor_test.gd`.
@@ -533,7 +533,14 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Kozmetik izler M4'te `TrailDef` ile tanımlanır; hızla uzayan iz M3-13'te.
 - **Parçacıklar:** `CPUParticles2D`, düşük adetli.
 - **Ekran sarsıntısı:** `Camera2D` ofseti, "travma" modeliyle (travma² × gürültü).
-- **Shader'lar:** Arka plan veri ağı (vuruşta nabız), çöküş duvarı glitch'i, S5 için renk kayması. Hepsi kalite ayarına bağlıdır.
+- **Arka plan veri ağı (M3-07, ADR-050):** `Background` (`scripts/levels/background.gd`, `scenes/levels/background.tscn`), `Run`'ın çocuğu bir `CanvasLayer` (`layer = -1`): ekran koordinatında, dünyanın ardında. Altında ekranın temizleme rengi (sektörün arka planı) durur.
+  - **Shader değil çizgi geometrisi.** İlk sürüm tam ekran bir shader'dı (her pikseli işleyen `ColorRect`); Redmi'de yüksek kalitede kareyi 8,4 ms'den 13,5–13,9 ms'ye (GPU %99,8) çıkardı (§16.1). Çizgiler ekranın yalnızca küçük bir kısmını boyar.
+  - **Katmanlar:** `%Grid` altında `%Far` (uzak: hücre `grid_far_cell` 100 px, çizgi 1,5 px, saydamlık 0,06, paralaks `grid_far_parallax` 0,12) ve `%Near` (yakın: 300 px, 2,5 px, 0,1, paralaks 0,3; kesişimlerde `grid_node_radius` 6 px, 0,3 saydamlıkta düğüm). Dikey çizgiler ekranın ortasından (koridorun ortası) hizalı. Her katman ekran boyu değişince bir kez çizilir (`draw_multiline` + `draw_circle`, kenar yumuşatmalı), beyaz ve saydamlıkla; rengi `self_modulate` (sektörün çevre rengi).
+  - **Paralaks:** `Run` her fizik adımında `set_scroll(kamera y)` verir; katmanın konumu `layer_offset` = kameranın paralaks yolunun bir hücre içindeki kalanı, `layer_row` satır sayacıdır (uzun turda sayılar büyümez, desen sarılmada sıçramaz; test). Kamera yukarı çıkınca ağ aşağı, dünyadan yavaş, uzak katman daha da yavaş kayar. Konum `_process`'te fizik ara değerleme kesriyle (kameranın çizildiği yer).
+  - **Nabız:** `set_beat(vuruş)`: `%Grid`'in `modulate`'i `beat_pulse` gücüyle vurgu / çevre oranına (× `beat_pulse_boost`) ve saydamlık × (1 + `grid_pulse_alpha`) değerine `beat_pulse_gain` kadar çekilir (duvarların nabzıyla aynı model). Her vuruşta yakın katmanın düğümlerinin `grid_flash_density` (%12) kadarı vurgu renginde parlayıp söner (`%Flash`: nokta + ışık lekesi, saydamlık nabızla). Seçim `flash_nodes(vuruş sırası, satır…)`: vuruşa ve düğümün desendeki yerine bağlı tamsayı özeti (kozmetik, turun RNG'sine dokunmaz); katman kayınca aynı düğüm parlamayı sürdürür. Yeniden çizim yalnızca vuruşta ve satır değişince.
+  - **Kalite** (`Neon.GROUP`, `apply_quality`): yüksekte iki katman, ortada yalnızca yakın katman (`grid_far_min_quality`), düşükte ağ yok (`grid_min_quality`): düz renk.
+  - **Dokunuş:** ağaçta `Control` yok, dokunuşları yutamaz (test; ayrıca debug testi oyun alanına dokunuşun çevirdiğini sınıyor).
+- **Shader'lar:** Çöküş duvarı glitch'i (M3-09), S5 için renk kayması. Hepsi kalite ayarına bağlıdır. **Tam ekran shader yok:** Adreno 610'da her pikseli işleyen tek bir katman ≈ 5 ms GPU (M3-07 ölçümü); shader yalnızca etkinin kapladığı alana çizilir.
 - **Efekt kalitesi:** Yüksek / Orta / Düşük (`Settings.effect_quality`). Sahte parlama: yüksekte iki katman (64 px / %35 + 26 px / %70) ve ışık lekesi, ortada tek katman (40 px / %55) ve ışık lekesi, düşükte parlama yok (M3-01). Düşükte parçacıklar da azalır.
 
 ## 10. Veri modeli (Resource sınıfları)
@@ -546,7 +553,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px(bpm)`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/palette_01.tres` … `palette_03.tres` (M3-02) | `ambient`, `accent`, `background` (§9). `SectorDef.palette` ile bağlı |
-| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); `shield_color`, iz `trail_duration`, `trail_width` (M3-04); duvar `wall_fill_light`, `wall_fill_dark`, `wall_core_whiten`, nabız `beat_pulse_length`, `beat_pulse_gain`, `beat_pulse_boost` (M3-03); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)`, `beat_pulse(vuruş)` |
+| `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); `shield_color`, iz `trail_duration`, `trail_width` (M3-04); duvar `wall_fill_light`, `wall_fill_dark`, `wall_core_whiten`, nabız `beat_pulse_length`, `beat_pulse_gain`, `beat_pulse_boost` (M3-03); arka plan ağı `grid_min_quality`, `grid_far_min_quality`, `grid_near_cell`, `grid_near_parallax`, `grid_near_width`, `grid_near_alpha`, `grid_node_radius`, `grid_node_alpha`, `grid_far_cell`, `grid_far_parallax`, `grid_far_width`, `grid_far_alpha`, `grid_pulse_alpha`, `grid_flash_density`, `grid_flash_alpha` (M3-07); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)`, `beat_pulse(vuruş)` |
 | `UpgradeDef` | `data/upgrades/*.tres` | `id`, isim anahtarı, seviye maliyetleri `Array[int]`, seviye değerleri `Array[float]` |
 | `TrailDef` | `data/trails/*.tres` | `id`, fiyat ya da açılma koşulu, renk geçişi, genişlik |
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
@@ -658,6 +665,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `6` | Ekran oranı döngüsü (16:9 → 20:9 → 4:3) | M1-06 |
   | `7` | FPS / kare süresi | M1-02 |
   | `8` | Kalkan ver (paneldeki "Kalkan" düğmesi de; `Events.debug_shield_requested`) | M2-16 |
+  | `9` | Efekt kalitesi: yüksek → orta → düşük (paneldeki "Kalite" düğmesi de; yalnızca bu oturum, kaydedilmez; `Events.settings_changed`) | M3-07 |
   | `R` | Anında yeniden başla | M1-12 |
 
   F5–F8 kullanılmaz; Godot editör kısayollarıyla karışır.
@@ -669,7 +677,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **`R`:** `Events.retry_requested` yayar; `Main` turu yeniden kurar.
   - Ekransız denemede 10 durum geçti: ölümsüzken 400 karede ölüm yok, R sonrası ölümsüzlük sürüyor, kapatınca diken öldürüyor, çarpışma kutuları açılıp kapanıyor, yavaş çekimde 60 karede tam 180 px.
   - Redmi'de ölümsüzlük düğmesiyle 8 sn'de ölümsüz 143 m tırmanıldı.
-  - **Başlatma argümanları (M2-07, M2-11):** `<godot> --path . -- --invincible` ölümsüzlüğü baştan açar (PC'de uzun denemeler); `--start-sector=2` ilk turu o sektörden başlatır (kare yakalama). Telefonda argüman verilemiyor (Godot'nun asıl etkinliği dışa açık değil); orada düğme kullanılır.
+  - **Başlatma argümanları (M2-07, M2-11):** `<godot> --path . -- --invincible` ölümsüzlüğü baştan açar (PC'de uzun denemeler); `--start-sector=2` ilk turu o sektörden başlatır (kare yakalama); `--quality=low|medium|high` efekt kalitesini bu oturum için seçer (M3-07). Telefonda argüman verilemiyor (Godot'nun asıl etkinliği dışa açık değil); orada düğme kullanılır. Telefonda kaliteyi dokunuşsuz seçmek için debug sürümünde ayar dosyası yazılabilir: `adb exec-in run-as com.gravityhopper.dev sh -c 'cat > files/settings.cfg' < dosya` (`[video]` / `effect_quality=0…2`; sonra dosya silinir, M3-07).
 - **Telefonda:** Küçük, yarı saydam bir debug düğmesi paneli açar. Düğme yalnızca debug build'de görünür; yeri, HUD ile çakışmayacak şekilde M1-02'de seçilir.
   - Düğme bir `Control` olduğu için dokunuş arayüzde kalır ve çevirme yapmaz (§8.1, `_unhandled_input`).
   - Eski plandaki "köşeye üçlü dokunuş" bırakıldı: o dokunuşların her biri aynı zamanda yerçekimini çevirirdi.
@@ -781,7 +789,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/entities/player_test.gd` | Sol duvara yerleşme, tırmanışın tam sabit olması (60 karede 600 px), yalnızca duvardayken çevirme, dokunma tamponu (ayardan okunur, pencere dışı dokunuş düşer), `Player.is_tap` kuralları (sahte fare, ikinci parmak, tuş tekrarı) |
   | `tests/entities/player_death_test.gd` | Kendi duvarındaki diken bir kez öldürür, öbür duvardaki öldürmez, ölü oyuncu donar, debug ölümsüzlüğü |
   | `tests/main_test.gd` | Tur kurulumu, ölümden yeni tura ≤ 30 kare (0,5 sn), sonuçta yükseklik/neden/tohum, sonuç ekranında ikinci ölümün yok sayılması, `retry_requested` |
-  | `tests/debug/debug_layer_test.gd` | DBG'ye dokunuş çevirmez (oyun alanına dokunuş çevirir), DBG paneli açar/kapatır, her aralıklı ayar için bir kaydırıcı, tuşlar 1/2/3/4, ölümsüzlüğün yeni tura taşınması |
+  | `tests/debug/debug_layer_test.gd` | DBG'ye dokunuş çevirmez (oyun alanına dokunuş çevirir), DBG paneli açar/kapatır, her aralıklı ayar için bir kaydırıcı, tuşlar 1/2/3/4, ölümsüzlüğün yeni tura taşınması; 9 tuşu kaliteyi yüksek → orta → düşük döndürüyor, arka plan ağı düşükte gizleniyor (M3-07) |
   | `tests/ui/hud_test.gd` | Yükseklik ve rekor metni, rekorun düşmemesi, dil değişince TR metni |
   | `tests/systems/object_pool_test.gd` (M2-04) | Örneklerin baştan oluşması, gizli/işlemsiz bekleme, aynı düğümlerin yeniden kullanımı, tükenince büyüme sayacı, boştaki tehlikenin fizikten çıkması |
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
@@ -792,6 +800,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan; görünüş çarpışma yarıçapında yeşil daire, vuruşta büyüyüp sönüyor (M3-06) |
   | `tests/entities/block_test.gd` (M3-05) | Diken ve blok tehlike kırmızısında ve sivri köşeli; süzülme yalnızca `Visual`'ı oynatıyor (genlik tam `block_hover_px`, çarpışma şekli ve boyu aynı); veri satırları kutunun içinde, sayısı `block_rows` kadar; gerçek parçada (`block_center_01`) vuruş bloğa ulaşıyor |
   | `tests/entities/laser_test.gd` (M2-12) | Açık pencere vuruşa ortalı (ve `on_phase` 0,5), `set_beat` şekli ve görüntüyü açıp kapatıyor, ışın boyu `length`'ten; gerçek turda her vuruş adımında açık, yarım vuruşta kapalı. M3-06: görüntü her 120 Hz adımında çarpışmayla aynı (iki evrede; gerçek turda her karede), uyarı ışıması yanmadan önce 0'dan artıyor, bıçak kırmızı, kutuyu kaplıyor, ucu kutudan taşıyor |
+  | `tests/levels/background_test.gd` (M3-07) | Ağ dünyanın ardında, `Control` yok (dokunuş yutmaz); kalite: yüksekte iki katman, ortada yakın, düşükte gizli; katmanlar dünyayla aynı yönde, ondan yavaş, uzak en yavaş; satır sarılması uzun turda deseni yerinde tutuyor; tur başında konum anında; vuruşta nabız ve parlama, yarım vuruşta sönük; parlayan düğümler her vuruş başka, oranı yaklaşık `grid_flash_density`; gerçek turda ağ sektörün çevre renginde |
   | `tests/levels/corridor_test.gd` (M2-11, M3-03) | Boşluksuz duvar tam katı; boşluk yalnızca kendi duvarını, tam kenarından keser; boşluk kalkınca duvar geri gelir; düğüm sayısı sabit; kenar çizgileri çarpışma kutularının iç kenarıyla aynı yerde; kesik yalnızca boşluk kenarlarında ve duvar kalınlığında; nabız vuruşta vurguya doğru parlatıp sönüyor |
   | `tests/entities/player_fall_test.gd` (M2-11) | Boşluktan `FELL` ile düşülür; duvar bittikten 2 kare sonraki dokunuş çevirir ve oyuncu öbür duvara varır; coyote dolduktan sonraki dokunuş kurtarmaz |
   | `tests/systems/chunk_spawner_test.gd` (M2-10 eki) | Beş tohumda S1'in son üçte birindeki ortalama zorluk ilk üçte birinkinden ≥ 1 yüksek, hedef zorluk hiç düşmüyor; sektör sonu dışında son 3 parça tekrar etmiyor |
@@ -844,6 +853,17 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | WorldEnvironment glow | 17,4–17,7 ms | 18,5–19,9 ms | 57 | %99,9 (tıkanmış) |
 
 **Yeniden ölçüm (M3-01, neon bileşenleriyle, aynı sahne):** parlama yok (düşük kalite) 8,35 ms · yüksek kalite 8,35 ms (p95 9,1–9,2) · orta kalite 8,35–8,37 ms (p95 9,1) · WorldEnvironment glow 16,9–17,9 ms (56–59 FPS). Bileşenler maliyet eklemedi.
+
+**Arka plan veri ağı (M3-07, aynı sahne; tezgâhın düz ızgarası yerine oyunun `Background`'ı, kaliteyle değişir; GPU doluluğu ölçüm sırasında adb kabuğundan 0,1 sn'de bir okundu, iki tur):**
+
+| Mod | Tam ekran shader (ilk sürüm) | Çizgi geometrisi (sonuç) |
+| --- | --- | --- |
+| Düşük (ağ yok) | 8,35 ms | 8,35 ms (p95 9,2–9,4) · GPU %67–72 |
+| Orta (yakın katman) | 12,3–12,7 ms · GPU %99,8 | 8,36–8,64 ms (p95 9,2–9,6) · GPU %99 |
+| Yüksek (iki katman) | 13,5–13,9 ms (72–74 FPS) · GPU %99,8 | 8,80–9,27 ms (p95 9,6–10,5; 108–114 FPS) · GPU %99,8 |
+
+- Asıl ölçüt (60 FPS'te ≤ 10 ms) tutuyor. 120 Hz'de yüksek kalite 120 FPS'in biraz altında: ağ GPU'ya ≈ 1–1,5 ms ekliyor. M3-19'da (en yoğun sahne) gerekirse uzak katman seyreltilir ya da çizgilerin kenar yumuşatması kapatılır.
+- Ders: Adreno 610'da 1080×2400'ü baştan sona işleyen tek bir shader katmanı ≈ 5 ms GPU. Tam ekran efekt yerine etkinin kapladığı alan çizilir.
 
 - Uygulama 120 Hz'de çalışıyor. Bu durumda bütçe 8,3 ms ve **en büyük yük GPU'da**: basit sahne bile 120 Hz'de GPU'nun %77'sini kullanıyor (≈ 6,4 ms).
   - M3-19 ve M6-03'te asıl ölçüt 60 FPS'te ≤ 10 ms'dir.
@@ -907,6 +927,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-047 | 2026-10-13 | Oyuncu görseli (M3-04): çekirdek `NeonShape`, kalkan halkası `NeonLine`, iz `Trail` (`NeonLine`'dan türer, oyuncunun çocuğu). İz konumları fizik adımında kaydedilir; baş ve kuyruk fizik ara değerleme kesriyle kaydırılarak `_process`'te çizilir. Süre ve kalınlık `NeonStyle`'da (kozmetik `TrailDef` M4'te) | Konum fizik adımında (60 Hz sabit) kaydedildiği için iz yenileme hızından bağımsız; kesirle kayan baş, iz başını ara değerlenen oyuncunun tam üstünde tutar, kayan kuyruk 120 Hz'de boy sıçramasını önler. Ayrı bir düğüm ya da `top_level` gerekmez; çizim sırası sahnede kalır |
 | ADR-048 | 2026-10-13 | Sabit renkli neon şekiller rengi `NeonShape.tone` ile `NeonStyle`'dan alır (`GameTypes.NeonTone`); tehlikeler sivri köşeli (`sharp`). Veri bloğu betikli (`Block`): veri satırları ve vuruşla süzülme yalnızca `Visual`'da, çarpışma kutusu sabit. Vuruş `ChunkInfo.set_beat` zincirinden. Görsel inceleme için debug varlık galerisi | Renk tek yerde (M3-17'de yalnızca `neon_style.tres` değişir) ve sahnede kod gerekmez. Süzülme görsel kaldığı için doğrulayıcı ve çarpışma aynı (ADR-035); 4 px'lik sapma okunuşu bozmaz. Galeri, nadir çıkan parçaları beklemeden telefonda kanıt almayı sağlar |
 | ADR-049 | 2026-10-13 | Lazerin üç görünüşü (yanık bıçak + beyaz çekirdek + sivri uç, sönük ray, yanmadan 0,25 vuruş önce rayın kalınlaşıp parladığı uyarı) `Laser.set_beat`'te çarpışmayla aynı adımda değişir; sivri uç parlamasız ayrı üçgen. Glimmer yeşil `NeonShape` daire, vuruşta büyür. `NeonLine` de `tone` alır. Değerler `NeonStyle`'da | Oyuncu ışının ne zaman yanacağını görmeli (GDD §6); uyarı sönük hâlde kaldığı için tehlikeli görünmez, görüntü çarpışmadan ayrılmaz (test). Kutudan taşan uç görüntüyü kutudan büyük tutar (adil yön). Gri ton denetimi şekil dilini doğruladı |
+| ADR-050 | 2026-10-14 | Arka plan veri ağı shader değil çizgi geometrisi: `Background` (`CanvasLayer -1`) iki katman (uzak 100 px / paralaks 0,12, yakın 300 px / 0,3 + düğümler) bir kez çizilir; renk `self_modulate`, nabız `modulate`, kayma konumla (bir hücrelik sarılma + satır sayacı); her vuruşta düğümlerin %12'si parlar. Yüksek iki katman, orta yakın katman, düşük düz renk. Debug: 9 tuşu / "Kalite" düğmesi ve `--quality=` | Tam ekran shader Redmi'de kareyi 8,4 → 13,5–13,9 ms çıkardı (GPU %99,8); çizgiler 8,8–9,3 ms (≤ 10 ms). Görünüş aynı, yalnızca yöntem değişti (görev "shader" diyordu). Ders: tam ekran shader yok (§9) |
 
 ## 18. Açık teknik sorular
 

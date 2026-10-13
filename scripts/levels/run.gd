@@ -20,6 +20,7 @@ extends Node2D
 ##
 ## Renkler (M3-02): sektörün paleti (SectorPalette) duvarlara ve arka plana (ekranın temizleme
 ## rengi) uygulanır; tur başında anında, sektör geçişinde yumuşak geçişle (yalnızca görsel).
+## Arka plan veri ağı (M3-07): Background kameranın y'siyle paralaks kayar, vuruşta nabız atar.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -57,9 +58,10 @@ var _last_graze_time: float = 0.0
 ## Gösterilen çevre ve arka plan rengi (geçiş sırasında iki paletin arası).
 var _ambient: Color = Color.WHITE
 var _accent: Color = Color.WHITE
-var _background: Color = Color.BLACK
+var _background_color: Color = Color.BLACK
 var _palette_tween: Tween
 
+@onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
 @onready var _corridor: Corridor = %Corridor
 @onready var _chunks: ChunkSpawner = %ChunkSpawner
@@ -87,6 +89,7 @@ func _ready() -> void:
 		_conductor.set_tempo(track.bpm, 0.0)
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
+	_background.reset_scroll(_camera.position.y)
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_show_palette(def.palette, true)
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
@@ -107,10 +110,12 @@ func _physics_process(delta: float) -> void:
 		_enter_sector(sector + 1)
 	_update_view()
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
-	# Duvarlar vuruşta nabız atar (M3-03, yalnızca görsel).
+	# Duvarlar ve arka plan ağı vuruşta nabız atar (M3-03, M3-07; yalnızca görsel).
 	var beat: float = _conductor.beat_time() / _conductor.beat_length()
 	_chunks.set_beat(beat)
 	_corridor.set_beat(beat)
+	_background.set_beat(beat)
+	_background.set_scroll(_camera.position.y)
 	_update_wall()
 	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:
 		_combo = 0
@@ -200,8 +205,8 @@ func _show_palette(palette: SectorPalette, instant: bool) -> void:
 		_apply_colors(palette.ambient, palette.accent, palette.background)
 		return
 	_palette_tween = create_tween()
-	_palette_tween.tween_method(_fade_palette.bind(_ambient, _accent, _background, palette), 0.0,
-			1.0, PALETTE_FADE_TIME)
+	var fade: Callable = _fade_palette.bind(_ambient, _accent, _background_color, palette)
+	_palette_tween.tween_method(fade, 0.0, 1.0, PALETTE_FADE_TIME)
 
 
 func _fade_palette(weight: float, from_ambient: Color, from_accent: Color, from_background: Color,
@@ -214,7 +219,8 @@ func _fade_palette(weight: float, from_ambient: Color, from_accent: Color, from_
 func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:
 	_ambient = ambient
 	_accent = accent
-	_background = background
+	_background_color = background
 	_corridor.set_colors(ambient, accent)
+	_background.set_colors(ambient, accent)
 	_player.set_ambient(ambient)
 	RenderingServer.set_default_clear_color(background)

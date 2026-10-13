@@ -108,6 +108,26 @@ func test_key_5_starts_next_sector() -> void:
 	assert_int((_main.get_node("%World").get_child(0) as Run).sector).is_equal(3)
 
 
+func test_key_9_cycles_quality_for_the_session() -> void:
+	var stored: GameTypes.Quality = Settings.effect_quality
+	Settings.effect_quality = GameTypes.Quality.HIGH
+	Events.settings_changed.emit()
+	var grid: Node2D = _run().get_node("%Background").get_node("%Grid") as Node2D
+	var button: Button = _main.get_node("%Debug").find_children("QualityButton", "", true,
+			false)[0] as Button
+	_push_key(KEY_9)
+	assert_int(Neon.quality).is_equal(GameTypes.Quality.MEDIUM)
+	assert_str(button.text).is_equal("Kalite O")
+	_push_key(KEY_KP_9)
+	assert_int(Neon.quality).is_equal(GameTypes.Quality.LOW)
+	assert_bool(grid.visible).is_false()
+	_push_key(KEY_9)
+	assert_int(Neon.quality).is_equal(GameTypes.Quality.HIGH)
+	assert_bool(grid.visible).is_true()
+	Settings.effect_quality = stored
+	Events.settings_changed.emit()
+
+
 func test_invincibility_survives_restart() -> void:
 	_push_key(KEY_2)
 	Events.retry_requested.emit()
@@ -117,8 +137,11 @@ func test_invincibility_survives_restart() -> void:
 
 
 func _player() -> Player:
-	var run: Node = _main.get_node("%World").get_child(0)
-	return run.get_node("Player") as Player
+	return _run().get_node("Player") as Player
+
+
+func _run() -> Node:
+	return _main.get_node("%World").get_child(0)
 
 
 func _panel() -> Control:

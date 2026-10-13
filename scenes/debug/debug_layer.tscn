@@ -137,6 +137,16 @@ auto_translate_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Sektör ›"
 
+[node name="QualityButton" type="Button" parent="TuningPanel/Margin/VBox/DebugToggles"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Kalite Y"
+
 [node name="Buttons" type="HBoxContainer" parent="TuningPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -203,6 +213,7 @@ text = "Kapat"
 [connection signal="toggled" from="TuningPanel/Margin/VBox/DebugToggles/SlowButton" to="." method="_on_slow_toggled"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/DebugToggles/RestartButton" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/DebugToggles/SectorButton" to="." method="_on_next_sector_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/DebugToggles/QualityButton" to="." method="_cycle_quality"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/SaveButton" to="TuningPanel" method="_on_save_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/ResetButton" to="TuningPanel" method="_on_reset_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/PauseButton" to="TuningPanel" method="_on_pause_pressed"]
