@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Tur döngüsü (M1-09, architecture.md §5.1): ölüm → GameManager sonucu duyurur → Main turu
 ## kısa bir beklemeden sonra yeniden kurar. Telefonda 348–360 ms ölçüldü (M1-12).
+## Oturum rekoru (M3-14): GameManager en iyi yüksekliği tutar, Main yeni tura verir.
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 ## Yeniden başlama sınırı: 0,35 sn bekleme (21 kare) + pay. Telefonda ölçülen 360 ms'e karşılık.
@@ -11,11 +12,14 @@ const TEARDOWN_FRAMES: int = 30
 var _main: Node
 var _started_seeds: Array[int] = []
 var _results: Array[RunResult] = []
+var _stored_best: int = 0
 
 
 func before_test() -> void:
 	_started_seeds.clear()
 	_results.clear()
+	_stored_best = GameManager.best_height_m
+	GameManager.best_height_m = 0
 	Events.run_started.connect(_on_run_started)
 	Events.run_ended.connect(_on_run_ended)
 
@@ -23,6 +27,7 @@ func before_test() -> void:
 func after_test() -> void:
 	Events.run_started.disconnect(_on_run_started)
 	Events.run_ended.disconnect(_on_run_ended)
+	GameManager.best_height_m = _stored_best
 
 
 func test_main_starts_a_run() -> void:
@@ -65,6 +70,22 @@ func test_result_carries_height_cause_and_seed() -> void:
 	await _frames(TEARDOWN_FRAMES)
 
 
+func test_session_record_reaches_the_next_run() -> void:
+	await _start_main()
+	assert_int(_current_run().record_height).is_equal(0)
+	Events.height_changed.emit(37)
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	assert_int(GameManager.best_height_m).is_equal(37)
+	await _wait_for_runs(2)
+	assert_int(_current_run().record_height).is_equal(37)
+	# Daha alçak bir tur rekoru düşürmez.
+	Events.height_changed.emit(12)
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	assert_int(GameManager.best_height_m).is_equal(37)
+	await _wait_for_runs(3)
+	assert_int(_current_run().record_height).is_equal(37)
+
+
 func test_retry_request_starts_new_run_at_once() -> void:
 	await _start_main()
 	Events.retry_requested.emit()
@@ -92,6 +113,19 @@ func _start_main() -> void:
 
 func _world() -> Node2D:
 	return _main.get_node("%World") as Node2D
+
+
+func _current_run() -> Run:
+	return _world().get_child(_world().get_child_count() - 1) as Run
+
+
+## Ölümden sonraki yeniden başlamayı bekler (en çok MAX_RESTART_FRAMES + pay).
+func _wait_for_runs(count: int) -> void:
+	var frames: int = 0
+	while _started_seeds.size() < count and frames < MAX_RESTART_FRAMES + 10:
+		await get_tree().process_frame
+		frames += 1
+	assert_int(_started_seeds.size()).is_equal(count)
 
 
 func _on_run_started(run_seed: int, _start_sector: int) -> void:

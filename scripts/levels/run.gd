@@ -34,6 +34,9 @@ extends Node2D
 ## Kıl payı yavaş çekimi (M3-12): zincirin ilk halkasında ve çarpanın büyüdüğü halkada
 ## SlowMotion Engine.time_scale'i kısa süre düşürür (müzik de yavaşlar). Ölümde ve tur yarıda
 ## bitince ölçek hemen geri verilir.
+## Rekor çizgisi (M3-14): RecordLine, record_height yüksekliğinde (Main oturum rekorunu verir)
+## parlar; oyuncu yaklaştıkça güçlenir, varınca söner. Rekor yoksa ya da tur rekorun üstünden
+## başladıysa çizgi yoktur.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -45,6 +48,8 @@ const PROXIMITY_STEP: float = 0.01
 @export var run_seed: int = 0
 ## Turun başladığı sektör (kontrol noktası; Main verir). Katalog dışındaysa sınırlanır.
 @export var start_sector: int = 1
+## Rekor yüksekliği (m; Main, GameManager'ın oturum rekorunu verir). 0 ise rekor çizgisi yok.
+@export var record_height: int = 0
 
 var rng: RunRng
 ## Turun müzik parçası (katalog boşsa null; tempo o zaman Conductor.bpm'in varsayılanı).
@@ -89,6 +94,7 @@ var _slow_motion: SlowMotion = SlowMotion.new()
 @onready var _pressure: PressureSystem = %PressureSystem
 @onready var _collapse_wall: CollapseWall = %CollapseWall
 @onready var _effects: Effects = %Effects
+@onready var _record_line: RecordLine = %RecordLine
 
 
 func _ready() -> void:
@@ -114,6 +120,7 @@ func _ready() -> void:
 	_show_speed(def.climb_speed, true)
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_show_palette(def.palette, true)
+	_place_record()
 	_chunks.shared_pools = chunk_pools
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
@@ -156,6 +163,7 @@ func _physics_process(delta: float) -> void:
 	_corridor.set_beat(beat)
 	_background.set_beat(beat)
 	_collapse_wall.set_beat(beat)
+	_record_line.track(_player.position.y, beat)
 	_background.set_scroll(_camera.position.y)
 	_update_wall()
 	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:
@@ -269,6 +277,15 @@ func _show_speed(climb_speed: float, instant: bool) -> void:
 	var style: NeonStyle = Neon.STYLE
 	_background.set_speed(climb_speed, instant)
 	_player.set_trail_stretch(style.trail_stretch(style.speed_feel(climb_speed)))
+
+
+## Rekor çizgisini rekorun dünya y'sine koyar (HUD yüksekliğiyle aynı hesap). Tur rekorun
+## üstünden başladıysa çizgi yoktur.
+func _place_record() -> void:
+	if float(record_height) <= _start_height:
+		return
+	var y: float = _start_y - TuningConfig.to_px(record_height - _start_height)
+	_record_line.place(y, TuningConfig.to_px(tuning.corridor_width) * 0.5)
 
 
 ## Sektörün bittiği dünya y'si (son sektörde -INF).

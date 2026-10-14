@@ -208,7 +208,7 @@
   *Kabul:* Yavaş çekimde müzik kaymıyor (günlük); harita değişmiyor (belirlenimcilik testi); yazı iki dilde.
 - [x] **M3-13** 🤖 Hız hissi: hız çizgileri ve uzayan iz, sektör hızıyla yoğunlaşır (GDD §13).
   *Kabul:* S1 ile S3'ün kare yakalamasında fark görünüyor; Redmi'de kare süresi ölçüldü.
-- [ ] **M3-14** 🤖 Rekor çizgisi: dünyada, rekor yüksekliğinde parlayan yatay çizgi (GDD §8). Şimdilik oturum rekoru; kalıcı rekor M4'te.
+- [x] **M3-14** 🤖 Rekor çizgisi: dünyada, rekor yüksekliğinde parlayan yatay çizgi (GDD §8). Şimdilik oturum rekoru; kalıcı rekor M4'te.
   *Kabul:* Çizgi rekor yüksekliğinde (test); dünya HUD'a erişmiyor (sahne denetimi).
 
 **Ses**

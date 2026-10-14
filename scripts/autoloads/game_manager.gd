@@ -9,6 +9,9 @@ enum AppState { BOOT, MENU, RUNNING, PAUSED, RESULTS, SHOP }
 
 ## Uygulamanın şu anki durumu.
 var state: AppState = AppState.BOOT
+## Bu uygulama oturumundaki en iyi yükseklik (m; M3-14 rekor çizgisi). Main yeni tura verir.
+## Kalıcı rekor M4'te Progression'a taşınır.
+var best_height_m: int = 0
 
 var _run_seed: int = 0
 var _height_m: int = 0
@@ -68,6 +71,7 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	if state != AppState.RUNNING:
 		return
 	change_state(AppState.RESULTS)
+	best_height_m = maxi(best_height_m, _height_m)
 	var result: RunResult = RunResult.new()
 	result.height_m = _height_m
 	result.cause = cause

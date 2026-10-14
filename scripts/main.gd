@@ -4,6 +4,7 @@ extends Node
 ## Debug build'de debug katmanını Debug kabına yükler; yayın sürümünde yüklenmez (ADR-023).
 ## Efekt kalitesini ayardan neon bileşenlerine aktarır (Neon autoload kullanmaz, §9).
 ## Desen parçası havuzları (ChunkPools) turlar arasında burada korunur; her tura verilir (M3-10).
+## Her tura GameManager'ın oturum rekoru verilir; Run rekor çizgisini oraya koyar (M3-14).
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -44,6 +45,7 @@ func _start_run() -> void:
 	_run = RUN_SCENE.instantiate() as Run
 	_run.run_seed = run_seed
 	_run.start_sector = _start_sector
+	_run.record_height = GameManager.best_height_m
 	_run.chunk_pools = _chunk_pools
 	_world.add_child(_run)
 	# Run, katalog dışı sektörü sınırlar; duyurulan sektör gerçek başlangıçtır.

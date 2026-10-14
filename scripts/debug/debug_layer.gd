@@ -14,6 +14,9 @@ const INVINCIBLE_ARG: String = "--invincible"
 const START_SECTOR_ARG: String = "--start-sector="
 ## Başlatma argümanı (`-- --quality=low`): efekt kalitesi bu oturum için (kaydedilmez; M3-07).
 const QUALITY_ARG: String = "--quality="
+## Başlatma argümanı (`-- --record=40`): oturum rekoru baştan bu yükseklikte, ilk turda rekor
+## çizgisi görünür (kare yakalama, M3-14).
+const RECORD_ARG: String = "--record="
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -70,6 +73,9 @@ func _ready() -> void:
 			var quality: int = QUALITY_ARGS.find(arg.trim_prefix(QUALITY_ARG))
 			if quality >= 0:
 				Settings.effect_quality = quality as GameTypes.Quality
+		elif arg.begins_with(RECORD_ARG):
+			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
+			GameManager.best_height_m = int(arg.trim_prefix(RECORD_ARG))
 	_show_quality()
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
 	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:

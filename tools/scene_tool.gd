@@ -7,7 +7,9 @@ extends SceneTree
 ## tree : düğüm ağacı (ad, tür, %benzersiz ad, betik, örneklenen sahne, gruplar, bağlantılar).
 ## check: betiklerdeki $Yol, %Ad ve get_node("...") başvurularını, sahnelerdeki sinyal
 ##        bağlantılarını ve @export düğüm yollarını sahnelere karşı denetler. get_parent() ve
-##        ".." içeren yollar kural ihlalidir (.clauderules §3). Hata varsa çıkış kodu 1.
+##        ".." içeren yollar kural ihlalidir (.clauderules §3). Katman kuralı (M3-14): oyun
+##        dünyasının betik ve sahneleri UI'ya, UI'nınkiler dünyaya başvurmaz (sınıf adı, dosya
+##        yolu, ağaç dışı /root/ yolu; yorumlar sayılmaz). Hata varsa çıkış kodu 1.
 ## Sahneler ağaca eklenmeden örneklenir: yalnızca _init çalışır, _ready çalışmaz. Başvurular
 ## Godot'nun kendi get_node_or_null() çözümlemesiyle denenir; %Ad sahiplik kuralı aynen geçerlidir.
 
@@ -21,6 +23,16 @@ const KEYWORDS: Array[String] = [
 	"return", "and", "or", "not", "in", "if", "elif", "else", "while", "await", "match", "when",
 ]
 const SUGGEST_MIN_SIMILARITY: float = 0.5
+## Katman kuralı (M3-14, .clauderules §3): dünya UI'yı, UI dünyayı tanımaz; Events ile konuşurlar.
+const WORLD_DIRS: Array[String] = [
+	"res://scripts/levels/", "res://scripts/entities/", "res://scripts/systems/",
+	"res://scenes/levels/", "res://scenes/entities/",
+]
+## Bileşenler iki katmanın da yapı taşıdır (ör. Neon): UI'ya başvuramaz, UI onları kullanabilir.
+const SHARED_DIRS: Array[String] = ["res://scripts/components/"]
+const UI_DIRS: Array[String] = ["res://scripts/ui/", "res://scenes/ui/"]
+## Ağacın dışına uzanan mutlak düğüm yolu.
+const ROOT_PATH_PREFIX: String = "/root/"
 const EXIT_USAGE: int = 2
 
 var _errors: int = 0
@@ -129,6 +141,7 @@ func _check(dir: String) -> int:
 	_collect(dir, scenes, scripts)
 	for scene_path: String in scenes:
 		_check_scene(scene_path)
+	var layer_files: int = _check_layers(scenes, scripts)
 
 	# Hiçbir sahneye bağlı olmayan betikler: kural ihlalleri yine hata, yollar ise denetlenemez.
 	var unchecked: int = 0
@@ -139,8 +152,8 @@ func _check(dir: String) -> int:
 			if not _is_rule_violation(script_path, ref):
 				unchecked += 1
 
-	print("SAHNE: %d sahne, %d başvuru, %d bağlantı, %d hata" % [
-		scenes.size(), _ref_count, _connection_count, _errors,
+	print("SAHNE: %d sahne, %d başvuru, %d bağlantı, katman kuralı %d dosyada, %d hata" % [
+		scenes.size(), _ref_count, _connection_count, layer_files, _errors,
 	])
 	if unchecked > 0:
 		print("NOT  %d düğüm başvurusu hiçbir sahneye bağlı olmayan betiklerde; denetlenmedi" % unchecked)
@@ -231,6 +244,58 @@ func _is_rule_violation(script_path: String, ref: Dictionary) -> bool:
 		_errors += 1
 		print("KURAL %s:%d %s (.clauderules §3)" % [script_path, ref["line"], message])
 	return true
+
+
+## Dünya ve UI katmanındaki her dosyayı öteki katmana başvuru için tarar; taranan dosya sayısı.
+func _check_layers(scenes: Array[String], scripts: Array[String]) -> int:
+	var world_dirs: Array[String] = WORLD_DIRS.duplicate()
+	world_dirs.append_array(SHARED_DIRS)
+	var ui_classes: Array[String] = _classes_in(UI_DIRS)
+	var world_classes: Array[String] = _classes_in(WORLD_DIRS)
+	var ui_paths: Array[String] = UI_DIRS.duplicate()
+	ui_paths.append(ROOT_PATH_PREFIX)
+	var world_paths: Array[String] = WORLD_DIRS.duplicate()
+	world_paths.append(ROOT_PATH_PREFIX)
+	var files: Array[String] = scenes.duplicate()
+	files.append_array(scripts)
+	var count: int = 0
+	for path: String in files:
+		var classes: Array[String] = ui_classes
+		var prefixes: Array[String] = ui_paths
+		var message: String = "dünya UI'ya başvurmaz"
+		if _has_prefix(path, UI_DIRS):
+			classes = world_classes
+			prefixes = world_paths
+			message = "UI dünyaya başvurmaz"
+		elif not _has_prefix(path, world_dirs):
+			continue
+		count += 1
+		var source: String = FileAccess.get_file_as_string(path)
+		var refs: Array[Dictionary] = find_scene_layer_refs(source, prefixes)
+		if path.get_extension() == "gd":
+			refs = find_layer_refs(source, classes, prefixes)
+		for ref: Dictionary in refs:
+			_errors += 1
+			print("KURAL %s:%d \"%s\": %s; katmanlar Events ile konuşur (.clauderules §3)" % [
+				path, ref["line"], ref["text"], message,
+			])
+	return count
+
+
+## Bu klasörlerdeki betiklerin sınıf adları (proje sınıf listesinden).
+static func _classes_in(dirs: Array[String]) -> Array[String]:
+	var classes: Array[String] = []
+	for info: Dictionary in ProjectSettings.get_global_class_list():
+		if _has_prefix(String(info["path"]), dirs):
+			classes.append(String(info["class"]))
+	return classes
+
+
+static func _has_prefix(text: String, prefixes: Array[String]) -> bool:
+	for prefix: String in prefixes:
+		if text.begins_with(prefix):
+			return true
+	return false
 
 
 func _check_connections(scene_path: String, state: SceneState, scene_root: Node) -> void:
@@ -423,6 +488,58 @@ static func find_node_refs(source: String) -> Array[Dictionary]:
 			prev_kind = "operand" if c in [")", "]", "}"] else "punct"
 			prev_text = c
 			i += 1
+	return refs
+
+
+## Betik kaynağında öteki katmana başvuruları bulur (katman kuralı, M3-14): verilen sınıf adları
+## (tam sözcük) ve bu öneklerle başlayan metin sabitleri (dosya yolları, /root/ düğüm yolları).
+## Yorumlar atlanır. Her öge: { "text": String, "line": int }.
+static func find_layer_refs(source: String, classes: Array[String],
+		prefixes: Array[String]) -> Array[Dictionary]:
+	var refs: Array[Dictionary] = []
+	var n: int = source.length()
+	var i: int = 0
+	var line: int = 1
+	while i < n:
+		var c: String = source[i]
+		if c == "\n":
+			line += 1
+			i += 1
+		elif c == "#":
+			while i < n and source[i] != "\n":
+				i += 1
+		elif c == "\"" or c == "'":
+			var literal: Dictionary = _read_string(source, i)
+			var value: String = literal["value"]
+			if _has_prefix(value, prefixes):
+				refs.append({ "text": value, "line": line })
+			line += int(literal["newlines"])
+			i = literal["end"]
+		elif _is_ident_start(c):
+			var end: int = _skip_ident(source, i)
+			var ident: String = source.substr(i, end - i)
+			if ident in classes:
+				refs.append({ "text": ident, "line": line })
+			i = end
+		elif _is_digit(c):
+			i = _skip_ident(source, i)
+		else:
+			i += 1
+	return refs
+
+
+## Sahne dosyasında bu öneklerle başlayan dış kaynak yollarını bulur (katman kuralı, M3-14).
+static func find_scene_layer_refs(source: String, prefixes: Array[String]) -> Array[Dictionary]:
+	var refs: Array[Dictionary] = []
+	var lines: PackedStringArray = source.split("\n")
+	for i: int in lines.size():
+		var start: int = lines[i].find("path=\"")
+		if start < 0:
+			continue
+		start += "path=\"".length()
+		var value: String = lines[i].substr(start, lines[i].find("\"", start) - start)
+		if _has_prefix(value, prefixes):
+			refs.append({ "text": value, "line": i + 1 })
 	return refs
 
 

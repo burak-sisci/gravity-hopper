@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-14 (M3-13 hız hissi: hız çizgileri ve uzayan iz; önceki: M3-12 kıl payı geri bildirimi) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-14 (M3-14 rekor çizgisi; önceki: M3-13 hız hissi) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -102,6 +102,7 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 
 - **Skor = tırmanılan yükseklik (metre).** Tek, anlaşılır, karşılaştırılabilir bir sayı. Arayüzdeki gösterim: `1045 m`.
 - **Rekor çizgisi:** Oyun dünyasında, kişisel rekorun yüksekliğinde parlayan yatay bir çizgi. Oyuncu yaklaştıkça heyecan artar.
+  - **M3-14:** Sarı neon çizgi koridoru duvardan duvara geçer. Uzaktayken ince ve soluk; son 40 m'de kalınlaşıp parlar ve müziğin vuruşunda beyaza çakar. Oyuncu çizgiye varınca beyaz parlayıp söner (rekor kırıldı). Şimdilik oturum rekoru (oyun kapanınca sıfırlanır); kalıcı rekor M4'te. İlk turda çizgi yoktur. Kontrol noktasından rekorun üstünde başlanırsa çizgi görünmez. Çizgi tehlikelerin altında çizilir, onları örtmez.
 - **Sonuç ekranı:** "YENİ REKOR!" ya da "Rekora 120 m kaldı!"
 - Kıl payı ve kombolar **skoru değil Glimmer'ı** artırır (skor sade kalsın).
 - Kontrol noktasından başlanan turlarda skor mutlak yükseklikten sayılır (Sektör 3'ten başlayan oyuncu 1750 m'den başlar).

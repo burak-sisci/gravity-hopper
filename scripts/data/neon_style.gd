@@ -235,6 +235,21 @@ extends Resource
 ## Nabzın tepesindeki ek parlaklık çarpanı.
 @export_range(1.0, 3.0, 0.05) var beat_pulse_boost: float = 1.4
 
+@export_group("Rekor çizgisi")
+## Rekor çizgisinin rengi (M3-14, GDD §8): tehlike, Glimmer, oyuncu ve sektör renklerinden ayrı.
+@export var record_color: Color = Color(1.0, 0.95, 0.3)
+## Oyuncu bu kadar yakına gelince çizgi en kalın ve en parlak hâlindedir; uzaktayken ince ve sönük.
+@export_range(5.0, 100.0, 1.0, "suffix:m") var record_heat_distance: float = 40.0
+## Çizginin kalınlığı, oyuncu uzaktayken (x) ve çizgideyken (y).
+@export var record_width: Vector2 = Vector2(3.0, 7.0)
+## Çizginin saydamlığı, oyuncu uzaktayken ve çizgideyken.
+@export var record_alpha: Vector2 = Vector2(0.45, 1.0)
+## Vuruşta çizginin beyaza çekilme oranı (0 = nabız yok).
+@export_range(0.0, 1.0, 0.05) var record_pulse_gain: float = 0.5
+## Oyuncu çizgiyi geçince çizgi bu kalınlıkta beyaz parlayıp record_fade içinde söner.
+@export_range(1.0, 40.0, 0.5, "suffix:px") var record_flash_width: float = 16.0
+@export_range(0.05, 2.0, 0.05, "suffix:sn") var record_fade: float = 0.6
+
 
 ## Verilen kalitedeki çizgi parlama katmanları.
 func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
