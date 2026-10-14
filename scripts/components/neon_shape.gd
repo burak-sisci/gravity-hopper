@@ -5,6 +5,8 @@ extends Node2D
 ## çizgi kopyası sivri köşelerde ve kapanma noktasında yay izi bırakıyor (M0-09). Geniş açılı
 ## şekiller (blok) kenar çizgisinin parlama kopyalarını kullanır. Parlama efekt kalitesine göre
 ## değişir (Neon.quality); düğümler oluşturulurken bir kez kurulur.
+## Parlama düğümleri yalnızca seçilen tür için, şekil ağaca ilk girerken kurulur (M3-10): havuzdaki
+## her tehlikede kullanılmayan parlama düğümü tur başını yavaşlatıyordu.
 ## Sabit renkli şekiller (tehlike, Glimmer, oyuncu) rengi tone ile NeonStyle'dan alır (M3-05).
 
 ## Parlama türü.
@@ -57,15 +59,7 @@ var _outline: Line2D
 
 func _init() -> void:
 	add_to_group(Neon.GROUP)
-	# Çizim sırası: parlama → dolgu → kenar çizgisi.
-	_blob = Sprite2D.new()
-	_blob.texture = Neon.blob_texture()
-	_blob.material = Neon.additive_material()
-	add_child(_blob)
-	for i: int in Neon.STYLE.max_layer_count():
-		var halo: Line2D = Neon.make_halo(true)
-		add_child(halo)
-		_halos.append(halo)
+	# Çizim sırası: parlama → dolgu → kenar çizgisi (parlama sonradan dolgunun altına girer).
 	_fill = Polygon2D.new()
 	add_child(_fill)
 	_outline = Neon.make_line(true)
@@ -80,9 +74,11 @@ func _enter_tree() -> void:
 
 ## Parlamayı geçerli kaliteye göre gösterir ya da gizler (Neon.set_quality çağırır).
 func apply_quality() -> void:
-	if _outline == null:
+	if _outline == null or not is_inside_tree():
 		return
-	_blob.visible = glow == Glow.BLOB and Neon.STYLE.shows_blob(Neon.quality)
+	_make_glow()
+	if _blob != null:
+		_blob.visible = glow == Glow.BLOB and Neon.STYLE.shows_blob(Neon.quality)
 	Neon.apply_halos(_halos, shown_color(), glow == Glow.LINE)
 
 
@@ -98,7 +94,7 @@ func _update_polygon() -> void:
 	_outline.points = polygon
 	for halo: Line2D in _halos:
 		halo.points = polygon
-	if polygon.is_empty():
+	if polygon.is_empty() or _blob == null:
 		return
 	var bounds: Rect2 = Rect2(polygon[0], Vector2.ZERO)
 	for point: Vector2 in polygon:
@@ -112,10 +108,34 @@ func _update_look() -> void:
 	if _outline == null:
 		return
 	var shown: Color = shown_color()
-	_blob.modulate = Color(shown, Neon.STYLE.blob_intensity)
+	if _blob != null:
+		_blob.modulate = Color(shown, Neon.STYLE.blob_intensity)
 	_fill.color = Color(shown, fill_alpha)
 	_outline.width = line_width
 	_outline.default_color = shown
 	_outline.joint_mode = Line2D.LINE_JOINT_SHARP if sharp else Line2D.LINE_JOINT_ROUND
 	_outline.sharp_limit = Neon.STYLE.sharp_limit
 	apply_quality()
+
+
+## Seçilen parlama türünün düğümlerini ilk gerektiğinde kurar: ışık lekesi ya da çizgi kopyaları.
+func _make_glow() -> void:
+	if glow == Glow.BLOB and _blob == null:
+		_blob = Sprite2D.new()
+		_blob.texture = Neon.blob_texture()
+		_blob.material = Neon.additive_material()
+		_blob.modulate = Color(shown_color(), Neon.STYLE.blob_intensity)
+		_add_below_fill(_blob)
+	elif glow == Glow.LINE and _halos.is_empty():
+		for i: int in Neon.STYLE.max_layer_count():
+			var halo: Line2D = Neon.make_halo(true)
+			_add_below_fill(halo)
+			_halos.append(halo)
+	else:
+		return
+	_update_polygon()
+
+
+func _add_below_fill(node: CanvasItem) -> void:
+	add_child(node)
+	move_child(node, _fill.get_index())

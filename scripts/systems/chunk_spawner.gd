@@ -19,6 +19,10 @@ extends Node2D
 ## parçanın ne zaman yerleştiğini değiştirir, hangisi olduğunu değil. Bu yüzden Run.rng'yi
 ## yalnızca bu düğüm çeker. Havuzlar en uzun ekrana göre kurulur; tükenmeleri seçimi değiştirmez.
 ## Her yerleştirmede Events.chunk_placed yayar (debug olay günlüğü, zorluk ölçümü).
+##
+## Havuzlar (M3-10, ADR-054): oyunda Main'in ChunkPools'u turlar arasında korunur; tur bitince
+## (ağaçtan çıkarken) etkin parçalar oraya döner. ChunkPools atanmamışsa (testler) havuzlar bu
+## düğümün altında kurulur ve turla birlikte silinir.
 
 ## Etkin bir parçadaki Glimmer toplandı (M2-13); Run, RunStats'a verir.
 signal glimmer_collected(value: int)
@@ -41,6 +45,8 @@ var placed_names: Array[StringName] = []
 var placed_bottoms: Array[float] = []
 var placed_difficulties: Array[int] = []
 var placed_targets: Array[float] = []
+## Turlar arasında korunan havuzlar (Run atar). Atanmamışsa havuzlar bu düğümün altında kurulur.
+var shared_pools: ChunkPools = null
 
 var _rng: RunRng
 var _tuning: TuningConfig
@@ -62,6 +68,12 @@ var _next_bottom: float = 0.0
 var _half_width: float = 0.0
 
 
+## Tur bitince etkin parçalar havuza döner; paylaşılan havuzlar sonraki tura boş geçer.
+func _exit_tree() -> void:
+	while not _active.is_empty():
+		_release_oldest()
+
+
 ## Havuzları kurar ve ilk parçanın yerini belirler. İlk parça, start_y'nin üstünde
 ## run_start_gap'e en yakın tam vuruş katında başlar (ızgara turun başından hizalı).
 func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sector: int,
@@ -78,7 +90,11 @@ func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sect
 	var min_beat: float = sectors.min_beat_px(bpm)
 	var span: float = Corridor.MAX_VIEW_HEIGHT * (1.0 + AHEAD_SCREENS) + RELEASE_MARGIN
 	for scene: PackedScene in library.chunks:
-		var pool: ObjectPool = ObjectPool.new(scene, self)
+		var pool: ObjectPool = null
+		if shared_pools == null:
+			pool = ObjectPool.new(scene, self)
+		else:
+			pool = shared_pools.pool_for(scene)
 		var info: ChunkInfo = pool.peek() as ChunkInfo
 		pool.reserve(ceili(span / info.height_px(min_beat)) + 1)
 		_pools.append(pool)
@@ -95,9 +111,7 @@ func update_view(view_top: float, view_bottom: float, half_width: float) -> void
 		for chunk: ChunkInfo in _active:
 			chunk.layout(chunk.laid_out_beat_px, half_width)
 	while not _active.is_empty() and _active[0].top_y() > view_bottom + RELEASE_MARGIN:
-		var pool: ObjectPool = _active_pools.pop_front()
-		var chunk: ChunkInfo = _active.pop_front()
-		pool.release(chunk)
+		_release_oldest()
 	var fill_top: float = view_top - (view_bottom - view_top) * AHEAD_SCREENS
 	while _next_bottom > fill_top:
 		if not _place_next():
@@ -147,6 +161,14 @@ func pools_grown() -> int:
 	for pool: ObjectPool in _pools:
 		total += pool.grown
 	return total
+
+
+## En alttaki etkin parçayı havuza döndürür; Glimmer bağlantısı da çözülür (havuz paylaşılabilir).
+func _release_oldest() -> void:
+	var pool: ObjectPool = _active_pools.pop_front()
+	var chunk: ChunkInfo = _active.pop_front()
+	chunk.glimmer_collected.disconnect(glimmer_collected.emit)
+	pool.release(chunk)
 
 
 ## Son no_repeat_count parçayı çıkarır; hiçbiri kalmıyorsa (sektör sonu) kural esner.
@@ -216,8 +238,7 @@ func _place_next() -> bool:
 	var index: int = candidates[_rng.weighted_index(weights)]
 	var chunk: ChunkInfo = _pools[index].acquire() as ChunkInfo
 	chunk.reset()
-	if not chunk.glimmer_collected.is_connected(glimmer_collected.emit):
-		chunk.glimmer_collected.connect(glimmer_collected.emit)
+	chunk.glimmer_collected.connect(glimmer_collected.emit)
 	chunk.position = Vector2(0.0, _next_bottom)
 	chunk.layout(beat, _half_width)
 	chunk.reset_physics_interpolation()

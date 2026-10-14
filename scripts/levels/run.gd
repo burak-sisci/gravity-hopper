@@ -24,6 +24,9 @@ extends Node2D
 ## yayılır; arka plan, duvarlar ve iz dalganın önüne göre boyanır. Afiş dalga ona varınca
 ## gelir (HUD aynı süreyi NeonStyle'dan okur).
 ## Arka plan veri ağı (M3-07): Background kameranın y'siyle paralaks kayar, vuruşta nabız atar.
+## Oyun hissi (M3-10): ölümde dünya death_freeze boyunca donar, ardından kamera sarsılır; kalkan
+## kırılınca da hafifçe sarsılır (yalnızca yatay, görüş kuralı bozulmaz). Parça havuzları
+## turlar arasında Main'in ChunkPools'unda korunur (ADR-054).
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -43,6 +46,9 @@ var track: MusicTrack = null
 var sector: int = 1
 ## Turun istatistikleri (Glimmer, kombo; §8.6).
 var stats: RunStats = RunStats.new()
+## Turlar arasında korunan parça havuzları (Main atar, M3-10). Atanmamışsa (testler) ChunkSpawner
+## havuzları kendi altında kurar.
+var chunk_pools: ChunkPools = null
 
 var _start_y: float = 0.0
 ## Başlangıç sektörünün başladığı yükseklik (m); HUD yüksekliği buradan sayar.
@@ -62,6 +68,9 @@ var _background_color: Color = Color.BLACK
 ## Renk dalgasının getirdiği palet (dalga yokken null) ve dalganın başından beri geçen süre.
 var _wave_palette: SectorPalette = null
 var _wave_elapsed: float = 0.0
+## Ölüm görüldü mü ve donmanın kalan süresi (M3-10).
+var _death_seen: bool = false
+var _freeze_left: float = 0.0
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -85,6 +94,7 @@ func _ready() -> void:
 	_start_height = sectors.start_height(start_sector)
 	var def: SectorDef = sectors.def_at(sector)
 	_player.tuning = tuning
+	_camera.tuning = tuning
 	_player.climb_speed = def.climb_speed
 	_conductor.track = track
 	if track != null:
@@ -94,6 +104,7 @@ func _ready() -> void:
 	_background.reset_scroll(_camera.position.y)
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_show_palette(def.palette, true)
+	_chunks.shared_pools = chunk_pools
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
 	_player.near_missed.connect(_on_near_missed)
@@ -101,10 +112,18 @@ func _ready() -> void:
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
 	_player.shield_broken.connect(_on_shield_broken)
 	_update_view()
-	_camera.reset_physics_interpolation()
+	_update_wall()
+	# Tur ilk karesinden yerinde (M3-10'da bulundu): ara değerleme bütün dünyada sıfırlanır
+	# (çocuklara yayılır); yoksa duvarlar ve çöküş duvarı ilk karelerde varsayılan konumlarından
+	# kayarak gelirdi. Ara değerlemeli kamera kendini ancak ilk fizik adımında uygular; yeni tur
+	# bir karede (yeniden başlama zamanlayıcısı) kurulunca o karede dünya kamerasız çiziliyordu.
+	reset_physics_interpolation()
+	_camera.force_update_scroll()
 
 
 func _physics_process(delta: float) -> void:
+	if _frozen(delta):
+		return
 	_conductor.advance(delta)
 	if _player.is_alive():
 		_pressure.advance(delta)
@@ -175,14 +194,40 @@ func _update_wall() -> void:
 		Events.wall_proximity_changed.emit(proximity)
 
 
-## Kalkanla darbe almak çöküş duvarını yaklaştırır (GDD §7, §14).
+## Kalkanla darbe almak çöküş duvarını yaklaştırır (GDD §7, §14) ve kamerayı sarsar.
 func _on_shield_broken() -> void:
 	_pressure.pull(tuning.shield_pull)
+	_camera.add_trauma(tuning.shield_trauma)
 
 
 func _on_glimmer_collected(value: int) -> void:
 	Events.glimmer_collected.emit(stats.add_glimmer(value))
 	_pressure.push(tuning.glimmer_push)
+
+
+## Ölümde kısa donma (M3-10, GDD §19): ölümün görüldüğü adımdan death_freeze boyunca dünya
+## ilerlemez (vuruş, lazer, dalga, duvar, iz); bitince kamera sarsılır. Ara değerlenen arka plan
+## titremesin diye son değerleri yeniden verilir. Ölü oyuncunun turunda oynanış yoktur; donma
+## yeniden başlama süresinin içindedir. Dünya bu adım donuksa true.
+func _frozen(delta: float) -> bool:
+	if not _death_seen:
+		if _player.is_alive():
+			return false
+		_death_seen = true
+		_freeze_left = tuning.death_freeze
+		if _freeze_left <= 0.0:
+			_camera.add_trauma(tuning.death_trauma)
+			return false
+		_player.set_held(true)
+	if _freeze_left <= 0.0:
+		return false
+	_freeze_left -= delta
+	_background.set_scroll(_camera.position.y)
+	_advance_wave(0.0)
+	if _freeze_left <= 0.0:
+		_player.set_held(false)
+		_camera.add_trauma(tuning.death_trauma)
+	return true
 
 
 ## Sektörün bittiği dünya y'si (son sektörde -INF).

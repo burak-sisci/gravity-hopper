@@ -15,6 +15,7 @@ extends CharacterBody2D
 ## geri konur.
 ## Görsel (M3-04): neon elmas (Visual, NeonShape) ve iz (Trail). İz her fizik adımında konumu
 ## alır; ölünce kayıt sürer, böylece iz çekirdeğe doğru toplanır.
+## Ölümde kısa donma (M3-10): Run set_held() ile oyuncuyu ve izini bir süre yerinde tutar.
 
 ## Bir tehlike çarpışma kutusuna değmeden kıl payı alanından geçti (Run bağlar).
 signal near_missed
@@ -38,6 +39,8 @@ var _alive: bool = true
 var _invincible: bool = false
 ## Duvardan ayrıldıktan sonra çevirmenin hâlâ kabul edildiği süre (coyote). Çevirince sıfırlanır.
 var _coyote_left: float = 0.0
+## Run'ın ölüm donması: oyuncu ve izi yerinde kalır (yalnızca görsel; ölü oyuncu).
+var _held: bool = false
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
@@ -64,6 +67,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _held:
+		return
 	if not _alive:
 		_trail.record(position)
 		return
@@ -148,6 +153,13 @@ static func is_tap(event: InputEvent) -> bool:
 		var key: InputEventKey = event as InputEventKey
 		return key.pressed and not key.echo and key.keycode == KEY_SPACE
 	return false
+
+
+## Ölüm donması (Run çağırır): oyuncu ve izi yerinde kalır. İz ara değerlemeyi de bırakır;
+## yoksa kayıt durunca kuyruğu iki adım arasında titrerdi.
+func set_held(held: bool) -> void:
+	_held = held
+	_trail.set_process(not held)
 
 
 ## Oyuncuyu öldürür (çöküş duvarı gibi dışarıdan gelen ölümler; Run çağırır).

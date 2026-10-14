@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-14 (M3-09 çöküş duvarının görünüşü ve ince vinyet; önceki: M3-06 lazerin uyarı ışıması) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-14 (M3-10 ölümde donma ve ekran sarsıntısı; önceki: M3-09 çöküş duvarının görünüşü) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -271,6 +271,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Seçilen **beş parçanın hepsi** oyunda ve her tur birini rastgele çalar (kullanıcı kararı, 2026-10-13, ADR-040): Epic Journey, Mountain Peak, Treasure Hunter, Epic Departure, Determined Pursuit. Menü müziği M5'te. Ayrıntı: `docs/music_research.md` §12.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
+  - **Ölüm (M3-10):** dünya 0,1 sn donar (engeller, ışınlar, duvar, iz yerinde; müzik sürer), ardından ekran güçlü biçimde **yalnızca yana** sarsılır ve hızla söner. Oyuncunun üstünde görünen mesafe sarsıntıda değişmez, yeni tur yine yarım saniyeden kısa sürede başlar. Kalkan kırılınca daha hafif bir sarsıntı (donma yok). Değerler ayar panelinde (Oyun hissi).
 
 ## 20. Arayüz ekranları
 

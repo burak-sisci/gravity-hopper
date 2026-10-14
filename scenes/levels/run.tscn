@@ -30,6 +30,7 @@ script = ExtResource("8_conductor")
 
 [node name="Corridor" type="Node2D" parent="."]
 unique_name_in_owner = true
+z_index = -2
 script = ExtResource("3_corridor")
 
 [node name="ChunkSpawner" type="Node2D" parent="."]

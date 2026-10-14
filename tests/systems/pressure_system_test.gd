@@ -49,6 +49,9 @@ func test_wall_catches_a_slow_player() -> void:
 	var player: Node2D = run.get_node("%Player") as Node2D
 	var wall: Node2D = run.get_node("%CollapseWall") as Node2D
 	var pressure: PressureSystem = run.get_node("%PressureSystem") as PressureSystem
+	# Görsel ilk karesinden yerinde (M3-10): tur kurulur kurulmaz, fizik adımı beklemeden.
+	assert_float(wall.position.y - player.position.y).is_equal_approx(
+			TuningConfig.to_px(pressure.distance_m), 0.5)
 	await _frames(30)
 	# Görsel, oyuncunun mesafe × 50 px altında.
 	assert_float(wall.position.y - player.position.y).is_equal_approx(

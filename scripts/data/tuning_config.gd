@@ -73,6 +73,20 @@ const PX_PER_M: float = 50.0
 ## Son kaç parça yeniden seçilmez. Sektör sonunda sığan başka parça yoksa kural esner.
 @export_range(0, 6, 1) var no_repeat_count: int = 3
 
+@export_group("Oyun hissi")
+## Ölümde dünyanın donduğu süre (vuruş, lazer, dalga, iz); ardından kamera sarsılır (GDD §19).
+## Yeniden başlama süresinin içindedir, turu uzatmaz.
+@export_range(0.0, 0.3, 0.01, "suffix:sn") var death_freeze: float = 0.1
+## Ölümün ve kalkan kırılmasının kameraya verdiği sarsıntı (travma, 0–1).
+@export_range(0.0, 1.0, 0.05) var death_trauma: float = 0.8
+@export_range(0.0, 1.0, 0.05) var shield_trauma: float = 0.5
+## Tam travmadaki en büyük yatay kayma. Sarsıntı travmanın karesiyle büyür.
+@export_range(0.0, 2.0, 0.1, "suffix:m") var shake_offset: float = 1.0
+## Travmanın saniyede sönen miktarı.
+@export_range(0.5, 5.0, 0.1, "suffix:/sn") var shake_decay: float = 1.5
+## Sarsıntının gürültü hızı: yüksek değer daha sık titrer.
+@export_range(5.0, 40.0, 1.0, "suffix:Hz") var shake_frequency: float = 20.0
+
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.
 static func to_px(meters: float) -> float:

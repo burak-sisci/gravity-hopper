@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Teknik Mimari
 
-> Son güncelleme: 2026-10-14 (M3-09 çöküş duvarının glitch görseli) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
+> Son güncelleme: 2026-10-14 (M3-10 ekran sarsıntısı, ölümde donma, turlar arasında korunan parça havuzları) · Durum: M0 altyapısı, M1 çekirdek oynanışı ve M2'nin sonsuz, adil tırmanışı (desen parçaları, sektörler, müzik) doğrulandı. ⚠️ işaretli maddeler, yanlarında yazan görevde doğrulanacak.
 > Bu belge *nasıl* inşa ettiğimizi anlatır. *Ne* inşa ettiğimiz → `GDD.md`. *Hangi sırayla* → `roadmap.md`.
 
 ---
@@ -60,6 +60,7 @@ rendering/textures/vram_compression/import_etc2_astc=true          ; Android dı
   - `GameCamera.follow(hedef_y, lookahead_px)` kamerayı her fizik adımında konumlar; görünür alanın üst kenarı = hedef − ileri görüş. Koridorun ortası dünyada x = 0'dır, kamera yatayda hep onu ortalar.
   - Değerler her adımda `TuningConfig`'ten okunur.
   - Redmi'de 60 Hz fizik + 120 Hz ekranda kamera her karede tam 5 px ilerledi; fizik ara değerlemesi Camera2D ile çalışıyor, titreme yok.
+  - **Sarsıntı (M3-10, §9):** yalnızca yatay `offset`; `view_top()` / `view_bottom()` ve oyuncunun üstündeki ileri görüş sarsıntıda değişmez (test). Kamera fizik adımında işler (`CAMERA2D_PROCESS_PHYSICS`; ara değerleme bunu zaten zorluyordu, açıkça seçilince motor uyarısı kalktı).
 - **Ekran oranı denemesi (M1-06):** PC'de `6` tuşu (debug katmanı) pencereyi 450×800 (16:9) → 450×1000 (20:9) → 600×800 (4:3) arasında döndürür; telefonda etkisizdir.
   - Ekranlı denemede üç oranda da oyuncunun üstü tam 1400 px (28 m) çıktı.
   - Ekran görüntülerinde elmas üçünde de y = 567–598 aralığındaydı.
@@ -119,7 +120,7 @@ gravity-hopper/
 │   ├── components/           # Bağımsız parçalar: Hurtbox, GrazeDetector, Neon, NeonLine, NeonShape, Magnet…
 │   ├── entities/             # Varlık betikleri (sahnelerle aynı ad)
 │   ├── levels/               # run.gd, corridor.gd, chunk_info.gd (M2-03)
-│   ├── systems/              # ChunkSpawner, Conductor, PressureSystem, ObjectPool, RunRng
+│   ├── systems/              # ChunkSpawner, ChunkPools (M3-10), Conductor, PressureSystem, ObjectPool, RunRng
 │   ├── data/                 # Resource sınıf tanımları (TuningConfig, SectorDef…)
 │   ├── ui/                   # UI betikleri
 │   └── debug/                # Debug araçları
@@ -148,6 +149,7 @@ Kurallar:
 ```
 Main (Node)                           scenes/main.tscn
 ├── World (Node2D)                    # aktif oyun dünyası buraya yüklenir (run.tscn)
+├── ChunkPools (Node2D, z_index -1)   # turlar arasında korunan desen parçası havuzları (§8.7, M3-10)
 ├── UI (CanvasLayer, layer 10)        # aktif ekran: menü / HUD / sonuç / mağaza
 └── Debug (CanvasLayer, layer 100)    # içeriği yalnızca debug build'de yüklenir: debug katmanı (§13)
 ```
@@ -164,13 +166,15 @@ Main (Node)                           scenes/main.tscn
 
 **Tur döngüsü (M1-09):**
 
-1. `Main._start_run()`: varsa eski `Run`'ı ağaçtan çıkarıp `queue_free()` eder. `GameManager.new_run_seed()` ile yeni bir `Run` kurar, `World`'e ekler ve `GameManager.begin_run(tohum, sektör)` çağırır.
+1. `Main._start_run()`: varsa eski `Run`'ı ağaçtan çıkarıp `queue_free()` eder. `GameManager.new_run_seed()` ile yeni bir `Run` kurar, ona parça havuzlarını (`ChunkPools`, M3-10) verir, `World`'e ekler ve `GameManager.begin_run(tohum, sektör)` çağırır.
 2. `begin_run` durumu `RUNNING` yapar ve `Events.run_started` yayar.
 3. `Player` ölünce `GameManager` `RunResult` oluşturur (yükseklik `Events.height_changed`'den), durumu `RESULTS` yapar ve `Events.run_ended` yayar.
 4. M1 geçici akışı: `Main`, `run_ended`'den 0,35 sn sonra yeni tur kurar. M5'te sonuç ekranı gelir; "Tekrar" düğmesi `Events.retry_requested` yayar, `Main` bunu zaten dinliyor.
 5. **Başlangıç sektörü (M2-08):** `Events.start_requested(sector)` gelince `Main` o sektörden yeni tur kurar (sektör seçimi M5, şimdilik debug `5`). `Run` katalog dışı numarayı sınırlar; `Main` sınırlanmış numarayı `begin_run`'a verir. Ölümden ve "Tekrar"dan sonraki turlar son seçilen sektörden başlar (kontrol noktası). `GameManager`, `sector_entered`'dan ulaşılan en yüksek sektörü `RunResult.sector_reached`'e yazar.
 
 Ölçüm: ekransız denemede ölümden yeni tura 22 kare (0,37 sn); Redmi'de 7 turda 348–360 ms.
+
+M3-10: tehlike görselleri zenginleşince (M3-05, M3-06) Redmi'de **516–526 ms**'ye çıkmıştı. Sebep, her tur başında yeniden kurulan parça havuzuydu: 130 kopya, 3552 düğüm, PC'de ≈ 22 ms kurulum + 7 ms kaldırma + 9 ms silme. Havuzlar turlar arasında korununca (ADR-054) Redmi'de **370–381 ms** (6 tur), PC'de eski turu kaldırmak 7 → 1 ms. Debug sürümünde olay günlüğü her olayı `print` eder; PC konsolunda bu, tur başına ≈ 30 ms ekliyor (yayın sürümünde debug katmanı yok).
 
 ### 5.2 Oyun dünyası
 
@@ -386,7 +390,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Nefes alma (M2-09, M2-20'de değişti):** Yeni sektör en az `TuningConfig.sector_breath` (2,5 sn, GDD §12) engelsiz başlar. İlk parçası bu süreden sonraki ilk müzik vuruşunda (turun başından sayılan ızgarada) oyuncunun bulunacağı yere konur (§8.3); boşluk 2,5 sn ile 2,5 sn + bir vuruş arasındadır. Eski sektörün sonuna sığmayan kalan da bu boşluğa eklenir.
   - **Sektörler (M2-08):** Her sektör kendi vuruş boyuyla (`SectorDef.beat_px(bpm)`) dizilir. Parça sektör sınırını aşmaz: sona sığan parçalar arasından seçilir, hiçbiri sığmazsa kalan boş bırakılır. Sınırlar dünyada `başlangıç_y − (sektör_sonu − başlangıç_sektörünün_başı)`. Havuzlar turun temposunda katalogdaki en kısa vuruşa göre kurulur (`SectorCatalog.min_beat_px(bpm)`).
   - Koridor genişliği ayarı değişirse etkin parçalar yeniden yerleşir (duvar öğeleri duvarda kalır).
-  - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter.
+  - **Havuzlar:** her parça sahnesi için bir `ObjectPool` (§8.7). Kopya sayısı en uzun ekrana göre (`Corridor.MAX_VIEW_HEIGHT` = 3200 px) hesaplanır, cihazdan bağımsızdır: `tavan((3200 × 3 + 100) / parça_boyu) + 1`. Aynı parça art arda seçilse de yeter. Oyunda havuzlar `Main`'in `ChunkPools`'unda turlar arasında korunur (M3-10, §8.7); tek başına kurulan `Run`'da (testler) yerleştiricinin altında kurulur.
   - **Yerleştirme günlüğü:** `placed_names`, `placed_bottoms` (testler, M2-17).
   - **Ölçüm** (Redmi, M2-04): ölümsüz modda 391 m kesintisiz akış, günlükte havuz uyarısı yok; ölümden yeni tura 346–360 ms (M1'deki 348–360 ms ile aynı, havuz kurulumu fark edilmiyor).
 - **Çözülebilirlik:** İki zorunlu çevirme arası süre ≥ çevirme geçiş süresi + tepki payı; engel ≥ 1,2 sn önceden görünür (onaylı ileri görüş 28 m ile 22 m/sn tavanında 1,27 sn, GDD §13.1).
@@ -489,8 +493,13 @@ Run (Node2D)                          scenes/levels/run.tscn
   - `reserve(n)` tur kurulurken örnekleri oluşturur; `acquire()` / `release()` tur sırasında. `peek()` sahnenin verisini okumak için ilk örneği verir.
   - Boştaki örnek gizli ve `PROCESS_MODE_DISABLED`'dır. İçindeki `Area2D`'ler de fizik dünyasından çıkar (`disable_mode` = REMOVE); testle doğrulandı.
   - Havuz tükenirse uyarı yazar, yeni örnek oluşturur ve `grown` sayacını artırır. Testler `grown == 0` bekler.
-- Desen parçaları **bütün olarak** havuzlanır: parçanın içindeki tehlikeler parçayla birlikte gelir (§8.2). Tur başında parça başına birkaç kopya oluşur; tur sırasında düğüm sayısı sabittir (test: 900 karelik turda düğüm sayısı değişmiyor).
+- Desen parçaları **bütün olarak** havuzlanır: parçanın içindeki tehlikeler parçayla birlikte gelir (§8.2). İlk tur başında parça başına birkaç kopya oluşur (M3-10'dan beri sonraki turlar aynı kopyaları kullanır); tur sırasında düğüm sayısı sabittir (test: 900 karelik turda düğüm sayısı değişmiyor).
 - Ekran altından çıkan desen parçaları havuza döner ve sıfırlanır: hareketli engeller baştan başlar, Glimmer'lar yeniden etkinleşir.
+- **Turlar arasında korunan havuzlar (M3-10, ADR-054):** `ChunkPools` (`scripts/systems/chunk_pools.gd`, `Node2D`) `Main`'in çocuğudur (`World`'ün yanında). `pool_for(sahne)` sahnenin havuzunu ilk istenişte kurar; kopyaları `ChunkSpawner.setup` ayırır (`reserve` yalnızca eksik varsa oluşturur; daha hızlı bir tempo daha çok kopya isterse turlar arasında büyür).
+  - `Main` her yeni `Run`'a `chunk_pools`'u verir, `Run` da yerleştiriciye (`ChunkSpawner.shared_pools`). Tur ağaçtan çıkarken yerleştirici etkin parçaları havuza döndürür (`_exit_tree`); Glimmer bağlantısı yerleştirmede kurulur, iadede çözülür. Böylece havuzdaki parça hiçbir tura bağlı kalmaz (test).
+  - Parçalar dünya koordinatındadır (`Run` ve `ChunkPools` orijinde). Çizim sırası `z_index` ile korunur: `Corridor` −2 < parçalar −1 < çöküş duvarı ve oyuncu 0 (eskiden ağaç sırası: koridor → yerleştirici → duvar → oyuncu). Telefonda dikenler duvar çizgisinin üstünde (ekran görüntüsü).
+  - Neden taşımak değil korumak: düğümü başka ebeveyne taşımak (ağaçtan çıkıp girmek) PC'de 125 kopyada ≈ 12 ms; yeniden kurmak (≈ 14 + 11 ms) kadar pahalı. Kopya sayısını tekrar yasağına göre kısmak da güvenli değil: kural sektör sonunda esniyor.
+  - Silme sırası: tur, havuzdan önce silinmeli (yerleştirici çıkarken parçaları geri verir). `Main`'de `World` `ChunkPools`'tan önce gelir; testte tur elle silinir.
 
 ## 9. Görsel mimari
 
@@ -506,6 +515,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   - **Bileşenler (M3-01, ADR-043):** `NeonLine` (`scripts/components/neon_line.gd`; parlama kopyaları + çekirdek çizgi; `points`, `color`, `glow_color`, `width`, `closed`, `width_curve`, `gradient`, `glow_enabled`; M3-06'da `tone`) ve `NeonShape` (`neon_shape.gd`; parlama + dolgu + kenar çizgisi; `polygon`, `color`, `fill_alpha`, `line_width`, `glow` = `BLOB` ışık lekesi ya da `LINE` çizgi kopyaları; M3-05'te `tone` ve `sharp`). Ortak durum `Neon`'da (`neon.gd`): `quality`, paylaşılan dokular ve toplamsal malzeme, `GROUP` (`&"neon"`).
     - Değerler veride: `data/visual/neon_style.tres` (`NeonStyle`): kaliteye göre katmanlar, ışık lekesi büyüklüğü ve yoğunluğu, çizgi kalınlığı, dolgu saydamlığı.
     - Düğümler oluşturulurken bir kez kurulur (en çok katman sayısı kadar kopya). Kalite değişince yalnızca görünürlük ve kalınlık değişir; tur sırasında düğüm oluşmaz (.clauderules §6).
+    - `NeonShape` parlama düğümlerini yalnızca seçilen tür için (`BLOB` → ışık lekesi, `LINE` → çizgi kopyaları) ve ağaca ilk girerken kurar, dolgunun altına (M3-10). Eskiden her şekil ikisini de kuruyordu; havuzdaki parçaların düğüm sayısı 3552 → 2833.
     - `Neon` autoload kullanmaz: ekransız araç betikleri (parça doğrulayıcı) bileşenleri adıyla derler (§15, M1-04 dersi). Kaliteyi `Main` aktarır: açılışta ve `Events.settings_changed`'de `Neon.set_quality(Settings.effect_quality)` → `call_group(Neon.GROUP, "apply_quality")`. Ağaca yeni giren bileşen geçerli kaliteyi kendisi alır.
     - Ölçüm sahnesi `glow_bench.tscn` bu bileşenlerle kurulu; görüntüsü eskisiyle piksel piksel aynı (M3-01).
     - **Ders (M3-04):** GDScript, alt sınıf `_init` tanımlayınca üst sınıfın `_init`'ini kendiliğinden çağırmaz. `NeonLine` / `NeonShape`'ten türeyen sınıf `_init`'in başında `super()` çağırmalı; yoksa çizgiler hiç kurulmaz (`Trail`'de yaşandı, `trail_test.gd` yakalıyor).
@@ -532,7 +542,14 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Görünüş: kalınlık `trail_width` (18 px) kuyruğa doğru sıfıra iner (`width_curve`); çekirdek oyuncunun beyazından çevre renginde saydama söner (`gradient`), parlama çevre renginde. `Run` palet rengini `Player.set_ambient` ile aktarır.
   - Kozmetik izler M4'te `TrailDef` ile tanımlanır; hızla uzayan iz M3-13'te.
 - **Parçacıklar:** `CPUParticles2D`, düşük adetli.
-- **Ekran sarsıntısı:** `Camera2D` ofseti, "travma" modeliyle (travma² × gürültü).
+- **Ekran sarsıntısı ve ölümde donma (M3-10, ADR-053):** `GameCamera` (`scripts/components/game_camera.gd`) "travma" modeliyle sarsılır.
+  - `add_trauma(miktar)` travmayı artırır (en çok 1); travma `shake_decay` (1,5 /sn) hızıyla söner. Ofset = `shake_offset` (1 m = 50 px) × travma² × gürültü. **Yalnızca yatay:** oyuncunun üstünde görünen mesafe sarsıntıda da aynı kalır (görüş kuralı §3, test). Yalnızca görsel; `view_top()` / `view_bottom()` ve desen üretimi etkilenmez.
+  - Gürültü: 64 düğümlü döngüsel dizi; düğümler sırayla sola ve sağa, genlikleri rastgele 0,5–1 (kozmetik, global `randf`); düğümler arası `smoothstep` geçiş, hız `shake_frequency` (20 Hz). `FastNoiseLite` elendi: tek boyutta ortalama |değer| ≈ 0,18 (sarsıntı sönük kalıyordu) ve t = 0'da hep 0.
+  - Ofset fizik adımında hesaplanır (kamera da fizik adımında işler); ara değerleme konumla birlikte yumuşatır.
+  - **Ölümde donma:** `Run._frozen(delta)`, ölümün görüldüğü adımdan `death_freeze` (0,1 sn = 6 adım) boyunca dünyayı durdurur: vuruş saati, lazerler, dalga, duvar, iz (`Player.set_held`: oyuncu ve izi yerinde, iz ara değerlemeyi de bırakır; yoksa kuyruğu iki adım arasında titrerdi). Ara değerlenen arka plan titremesin diye son değerleri yeniden verilir. Donma bitince `death_trauma` (0,8) eklenir. `death_freeze` = 0 ise sarsıntı hemen başlar.
+  - Donma `Run`'a yereldir: `Engine.time_scale` değişmez; müzik ve UI etkilenmez. Main'in 0,35 sn'lik yeniden başlama beklemesinin içindedir, turlar arası süre uzamaz. Kalkan kırılınca `shield_trauma` (0,5) eklenir (donma yok).
+  - PC'de (kare dizisi): her ölümden sonra tam 6 donuk kare (kare farkı 0), ardından duvar ≈ ±12–19 dünya px'i yatayda sallanıyor, ≈ 14 karede yeni tur.
+  - **Tur başı ilk kare (M3-10'da bulundu):** yeniden başlama zamanlayıcısıyla kurulan turun ilk karesi kamerasız çiziliyordu (çöküş duvarı ekranı bir kare kırmızıya boyuyordu); duvarlar ve çöküş duvarı da ilk karelerde varsayılan konumlarından kayarak geliyordu. `Run._ready` sonunda duvarı yerine koyar, `reset_physics_interpolation()` (çocuklara yayılır) ve `force_update_scroll()` çağırır.
 - **Arka plan veri ağı (M3-07, ADR-050):** `Background` (`scripts/levels/background.gd`, `scenes/levels/background.tscn`), `Run`'ın çocuğu bir `CanvasLayer` (`layer = -1`): ekran koordinatında, dünyanın ardında. Altında ekranın temizleme rengi (sektörün arka planı) durur.
   - **Shader değil çizgi geometrisi.** İlk sürüm tam ekran bir shader'dı (her pikseli işleyen `ColorRect`); Redmi'de yüksek kalitede kareyi 8,4 ms'den 13,5–13,9 ms'ye (GPU %99,8) çıkardı (§16.1). Çizgiler ekranın yalnızca küçük bir kısmını boyar.
   - **Katmanlar:** `%Grid` altında `%Far` (uzak: hücre `grid_far_cell` 100 px, çizgi 1,5 px, saydamlık 0,06, paralaks `grid_far_parallax` 0,12) ve `%Near` (yakın: 300 px, 2,5 px, 0,1, paralaks 0,3; kesişimlerde `grid_node_radius` 6 px, 0,3 saydamlıkta düğüm). Dikey çizgiler ekranın ortasından (koridorun ortası) hizalı. Her katman ekran boyu değişince bir kez çizilir (`draw_multiline` + `draw_circle`, kenar yumuşatmalı), beyaz ve saydamlıkla; rengi `self_modulate` (sektörün çevre rengi).
@@ -560,7 +577,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 
 | Sınıf (`scripts/data/`) | Dosyalar | İçerik |
 | --- | --- | --- |
-| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Ayrıntı aşağıda |
+| `TuningConfig` | `data/tuning/default_tuning.tres` | His ayarları, `@export_group`'larla gruplu: Hareket (`gravity_accel`, `max_side_speed`; tırmanış hızı M2-08'de `SectorDef`'e taşındı), Adalet (`input_buffer_time`, `hurtbox_scale`, `coyote_time` M2-11, `shield_grace` M2-16), Baskı (`wall_start_distance`, `wall_max_distance`, `glimmer_push`, `near_miss_push`, `shield_pull`; M2-15), Kıl payı (`graze_margin`, `combo_window`, `combo_x2_at`, `combo_x3_at`; M2-14), Toplama (`pickup_radius`, M2-13), Kamera ve dünya (`lookahead`, `corridor_width`, `run_start_gap`, `sector_breath`), Zorluk (`difficulty_spread`, `no_repeat_count`; M2-10), Oyun hissi (`death_freeze`, `death_trauma`, `shield_trauma`, `shake_offset`, `shake_decay`, `shake_frequency`; M3-10). Tam sayı alanları ayar paneli tam sayı olarak yazar. Ayrıntı aşağıda |
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, `palette` (M3-02); `beat_px(bpm)`, `climb_px()`. Tempo M2-20'de sektörden turun parçasına taşındı |
 | `MusicTrack` | `data/music/<id>.tres` (M2-20) | `id`, `stream` (OGG), `bpm`, `loop_start`, `volume_db`, `title`, `author`, `license`, `source_url`; `beat_length()`, `length()`, `position_at(vuruş_saati)`. `tools/music_prep.py` üretir |
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
@@ -808,7 +825,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/systems/chunk_spawner_test.gd` (M2-04) | İlk parçanın tam vuruşta başlaması, 2 ekran önün boşluksuz dolu olması, 400 m kaydırmada düğüm sayısının sabit kalması, aynı tohumun iki ekran boyunda aynı haritayı vermesi, sektör süzgeci, koridor genişliği, gerçek turda 900 kare boyunca düğüm sayısı |
   | `tests/levels/determinism_test.gd` (M2-17) | Aynı tohum + başlangıç sektörü → oyuncunun ne yaptığından bağımsız aynı parça dizisi ve konumları (S1–S3), sektör sınırları aynı, farklı tohum farklı |
   | `tests/entities/shield_test.gd` (M2-16) | Kalkanla ilk diken emilir (ölüm yok, `shield_changed` [true, false], duvar 8 m yaklaşır), 1 sn içindeki ikinci diken dokunulmazlıkla geçilir, sonraki öldürür; kalkansız ilk diken öldürür |
-  | `tests/systems/pressure_system_test.gd` (M2-15) | Sürünme, itmede üst sınır, çekme, tek seferlik `wall_reached`; hızlı sürünmeli turda 2 sn'de `WALL` ölümü, görsel oyuncunun mesafe × 50 px altında, yakınlık artarak 1'e varıyor; ölümsüzken ölüm yok; Glimmer +1 m, kıl payı +3 m; gerçek turda duvarın glitch adımı vuruşla değişiyor (M3-09) |
+  | `tests/systems/pressure_system_test.gd` (M2-15) | Sürünme, itmede üst sınır, çekme, tek seferlik `wall_reached`; hızlı sürünmeli turda 2 sn'de `WALL` ölümü, görsel oyuncunun mesafe × 50 px altında, yakınlık artarak 1'e varıyor; ölümsüzken ölüm yok; Glimmer +1 m, kıl payı +3 m; gerçek turda duvarın glitch adımı vuruşla değişiyor (M3-09); M3-10 eki: duvar tur kurulur kurulmaz yerinde |
   | `tests/entities/collapse_wall_test.gd` (M3-09) | `Control` yok; glitch bandı yalnızca kenarın çevresinde (ekran boyunun < %15'i), dolgu opak ve ekranın altına kadar; kalite: yüksekte bant + renk kayması, ortada bant, düşükte kırık kenar çizgisi + dolgu; düşük kalitenin kenarı hiç öldürme çizgisinin altına inmiyor ve gerçekten kırık; shader dizilerinin boyu sabitlerle aynı, değerler sınırda, dilimlerin bir kısmı kayıyor; desen adım adım değişiyor, vuruşta nabız, adım sarılıyor |
   | `tests/entities/near_miss_test.gd` (M2-14) | 60 px yanından geçen tehlike kıl payı, 130 px'ten geçen değil, değen (ölümsüzken) değil; 0,5 sn arayla üç kıl payında kombo 1-2-3, çarpan ×2, 2,5 sn sonra `combo_ended` ve ×1; `RunResult.near_misses` |
   | `tests/entities/glimmer_test.gd` (M2-13) | Gerçek turda yoldaki Glimmer'lar toplanıyor, `Events` değeri, `RunStats` ve `RunResult.glimmers` tutuyor; ikinci değme sayılmıyor, `reset()` geri getiriyor; çarpan; görünüş çarpışma yarıçapında yeşil daire, vuruşta büyüyüp sönüyor (M3-06) |
@@ -827,6 +844,8 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/tools/chunk_validator_test.gd` (M2-05; M2-13 eki: çevrili Glimmer toplanamaz, tehlikeden uzak Glimmer riskli değil; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/components/trail_test.gd` (M3-04) | İz 60 ve 120 Hz'de aynı (adım başına bir ve iki kare); düz tırmanışta süresi kadar yolu kaplıyor, ara kesirde boyu değişmiyor; baş oyuncunun üstünde; çizgileri kurulu; oyuncu durunca iz sıfıra iniyor; renk beyazdan çevre rengine sönüyor |
   | `tests/components/neon_test.gd` (M3-01) | Çizgi ve blok parlaması yüksekte 2, ortada 1, düşükte 0 katman; diken ışık lekesi yüksek ve ortada var, düşükte yok; kalite değişince düğüm sayısı sabit; ağaca yeni giren bileşen geçerli kaliteyi alıyor; kapalı parlama gizli kalıyor; renk çizgiye ve parlamaya ulaşıyor; doku ve malzeme paylaşılıyor; vuruş nabzı vuruşta 1, sönüm süresinde azalıyor, sonra 0 (M3-03); `tone` sabit rengi kenar çizgisine ve parlamaya veriyor, `sharp` köşeleri sivriltiyor (M3-05). `main_test.gd` eki: `settings_changed` kaliteyi `Neon`'a aktarıyor |
+  | `tests/components/game_camera_test.gd` (M3-10) | Travma en çok 1, söner; sarsıntı yalnızca yatayda ve travma² ile sınırlı; gürültü düğümleri sırayla sola / sağa, sönük değil; gerçek turda ölümden sonra `death_freeze` boyunca vuruş saati ve iz duruyor, ardından kamera sarsılıyor ve oyuncunun üstündeki mesafe değişmiyor; donma 0 iken sarsıntı hemen; kalkan kırılınca hafif sarsıntı |
+  | `tests/systems/chunk_pools_test.gd` (M3-10) | Sonraki tur aynı parça düğümlerini ödünç alıyor (yeni düğüm yok, havuz büyümüyor); tur bitince parçalar gizli ve bağlantısız; Glimmer bağlantısı yalnızca etkin parçalarda; Main havuzu tura veriyor, yerleştiricinin çocuğu yok, çizim sırası koridor < parçalar < duvar, oyuncu |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -966,6 +985,8 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-050 | 2026-10-14 | Arka plan veri ağı shader değil çizgi geometrisi: `Background` (`CanvasLayer -1`) iki katman (uzak 100 px / paralaks 0,12, yakın 300 px / 0,3 + düğümler) bir kez çizilir; renk `self_modulate`, nabız `modulate`, kayma konumla (bir hücrelik sarılma + satır sayacı); her vuruşta düğümlerin %12'si parlar. Yüksek iki katman, orta yakın katman, düşük düz renk. Debug: 9 tuşu / "Kalite" düğmesi ve `--quality=` | Tam ekran shader Redmi'de kareyi 8,4 → 13,5–13,9 ms çıkardı (GPU %99,8); çizgiler 8,8–9,3 ms (≤ 10 ms). Görünüş aynı, yalnızca yöntem değişti (görev "shader" diyordu). Ders: tam ekran shader yok (§9) |
 | ADR-052 | 2026-10-14 | Çöküş duvarının kesin görseli: kenarın çevresindeki 170 px'lik bantta glitch shader'ı (orta ve üstü; yüksekte renk kayması), düşük kalitede aynı kırık kenarın çizgisi; dolgu opak. Sütun yükseklikleri ve kayan dilimler vuruş başına 4 adımda CPU'da hesaplanıp uniform dizisiyle verilir. Kırık kenar öldürme çizgisinin altına inmez. Vinyet tam ekrandan koridorun dışındaki iki yan şeride indirildi (dış %8, × 1,0) | GDD §14'teki glitch'li yok oluş; M3-07 dersi: tam ekran shader yok. Piksel başına özet Adreno 610'da ≈ 0,9 ms pahalıydı. Kenar yalnızca öldürme çizgisinin üstüne çıkar: duvar olduğundan yakın görünebilir, uzak görünmez (adalet). Eski vinyet koridorun kenarlarını kızartıyordu. Redmi tezgâhında duvar ekrandayken ≈ +0,5–0,8 ms; tezgâh toplamı 10 ms'nin üstünde (HUD ≈ 1 ms), M3-19'da gerçek sahnede ölçülür |
 | ADR-051 | 2026-10-14 | Sektör geçişinde renk dalgası: cephe 1,2 sn'de ekranın altından üstüne yürür (`NeonStyle.wave_*`). Arka plan: cephenin üstünü eski arka plan rengi örter, her ağ katmanının yeni paletli eşi cephenin altını çizer, cephede vurgu çizgisi + (orta ve üstü) çevre renginde ışık bandı. Duvarlar parça parça 400 px'lik yumuşak geçişle, iz oyuncunun y'sine göre. Afiş dalga kendi yüksekliğine gelince %125'ten belirir. 0,6 sn'lik tween kaldırıldı | GDD §12'deki "dalga" hissi. Tek palet geçişi tüm ekranı birden değiştiriyordu. Shader yok (ADR-050 dersi): örtü + çizgi eşleri. Redmi'de en kötü durumda (art arda dalga) ≈ 0,5–1 ms; oyunda sektör başına 1,2 sn, ölçüt (60 FPS'te ≤ 10 ms) tutuyor; M3-19'da yeniden ölçülür |
+| ADR-053 | 2026-10-14 | Ekran sarsıntısı `GameCamera`'da travma modeliyle (travma² × döngüsel düğüm gürültüsü), **yalnızca yatay**; ölümde dünya `death_freeze` (0,1 sn) boyunca `Run` içinde donar (`Engine.time_scale` değil), ardından `death_trauma` (0,8) sarsıntı; kalkan kırılınca 0,5. Değerler `TuningConfig` → Oyun hissi | Dikey sarsıntı oyuncunun üstündeki görüş mesafesini oynatırdı (kabul ölçütü, §3). Yerel donma müziği ve UI'yi durdurmaz, saat oranı (müzik `pitch_scale`) değişmez; Main'in yeniden başlama beklemesinin içinde kaldığı için turu uzatmaz. `FastNoiseLite` tek boyutta sönük ve t = 0'da sıfırdı |
+| ADR-054 | 2026-10-14 | Desen parçası havuzları turlar arasında korunur: `Main`'in çocuğu `ChunkPools` (`z_index` −1; `Corridor` −2), her `Run` havuzları ödünç alır, tur bitince etkin parçalar geri döner. `NeonShape` yalnızca seçilen parlama türünün düğümlerini kurar. ADR-029'un "tur başında kopya" kısmının yerini alır | Tur başında 130 kopya / 3552 düğüm kurmak Redmi'de ölümden yeni tura süreyi 516–526 ms'ye çıkarmıştı (ölçüt < 500 ms); korununca 370–381 ms. Taşımak yeniden kurmak kadar pahalı, kopyaları tekrar yasağına göre kısmak güvensiz (§8.7). İçerik büyüdükçe tur başı maliyeti artık büyümez |
 
 ## 18. Açık teknik sorular
 
