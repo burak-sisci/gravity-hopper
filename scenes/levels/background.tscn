@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/background.gd" id="1_background"]
+[ext_resource type="Script" path="res://scripts/levels/speed_lines.gd" id="2_speed_lines"]
 
 [node name="Background" type="CanvasLayer"]
 layer = -1
@@ -31,6 +32,10 @@ unique_name_in_owner = true
 
 [node name="Flash" type="Node2D" parent="."]
 unique_name_in_owner = true
+
+[node name="SpeedLines" type="Node2D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_speed_lines")
 
 [node name="Crest" type="Node2D" parent="."]
 unique_name_in_owner = true

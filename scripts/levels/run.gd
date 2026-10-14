@@ -24,6 +24,8 @@ extends Node2D
 ## yayılır; arka plan, duvarlar ve iz dalganın önüne göre boyanır. Afiş dalga ona varınca
 ## gelir (HUD aynı süreyi NeonStyle'dan okur).
 ## Arka plan veri ağı (M3-07): Background kameranın y'siyle paralaks kayar, vuruşta nabız atar.
+## Hız hissi (M3-13): sektörün tırmanış hızıyla hız çizgileri yoğunlaşır ve iz uzar (yalnızca
+## görsel); tur başında hemen, sektör geçişinde yavaşça.
 ## Oyun hissi (M3-10): ölümde dünya death_freeze boyunca donar, ardından kamera sarsılır; kalkan
 ## kırılınca da hafifçe sarsılır (yalnızca yatay, görüş kuralı bozulmaz). Parça havuzları
 ## turlar arasında Main'in ChunkPools'unda korunur (ADR-054).
@@ -109,6 +111,7 @@ func _ready() -> void:
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_background.reset_scroll(_camera.position.y)
+	_show_speed(def.climb_speed, true)
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_show_palette(def.palette, true)
 	_chunks.shared_pools = chunk_pools
@@ -177,6 +180,7 @@ func _enter_sector(next: int) -> void:
 	_pressure.creep = def.wall_creep
 	_next_boundary_y = _boundary_y(next)
 	_show_palette(def.palette, false)
+	_show_speed(def.climb_speed, false)
 	Events.sector_entered.emit(next)
 
 
@@ -236,6 +240,7 @@ func _frozen(delta: float) -> bool:
 			return false
 		_death_seen = true
 		_slow_motion.stop()
+		_background.stop_speed()
 		_freeze_left = tuning.death_freeze
 		if _freeze_left <= 0.0:
 			_shatter()
@@ -257,6 +262,13 @@ func _shatter() -> void:
 	_player.hide_core()
 	_effects.death_burst(_player.global_position)
 	_camera.add_trauma(tuning.death_trauma)
+
+
+## Hız hissi: hız çizgileri ve izin boyu sektörün tırmanış hızından (M3-13).
+func _show_speed(climb_speed: float, instant: bool) -> void:
+	var style: NeonStyle = Neon.STYLE
+	_background.set_speed(climb_speed, instant)
+	_player.set_trail_stretch(style.trail_stretch(style.speed_feel(climb_speed)))
 
 
 ## Sektörün bittiği dünya y'si (son sektörde -INF).

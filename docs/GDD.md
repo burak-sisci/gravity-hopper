@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-14 (M3-12 kıl payı geri bildirimi; önceki: M3-11 sıkışma-uzama ve parçacıklar) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-14 (M3-13 hız hissi: hız çizgileri ve uzayan iz; önceki: M3-12 kıl payı geri bildirimi) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -201,6 +201,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
   - İki zorunlu çevirme arasındaki süre, çevirme süresi + tepki payının altına inmez. Tepki payı **0,2 sn** (iki çevirme arası en az ≈ 0,57 sn); M2-18 oyun testinde zorluk adil bulundu, değer kaldı.
   - Tavandan sonra zorluk yalnızca desenlerle artar.
 - **Hız hissi, gerçek hızdan ucuzdur:** paralaks katmanları, hız çizgileri, uzayan iz ve yoğunlaşan müzik oyunu gerçekte hızlandırmadan daha hızlı hissettirir.
+  - **Hız çizgileri ve iz (M3-13):** Arka planda ince dikey çizgiler dünyadan hızlı aşağı akar. S1'de seyrek ve soluk (4 çizgi), tırmanış hızı arttıkça çoğalır, uzar, parlar ve hızlanır (S3'te 12, hız tavanında 24). Oyuncunun izi aynı oranda uzar (S3'te %30, tavanda %75). Yeni sektörde his ≈ 1 sn içinde yavaşça artar; ölümde çizgiler söner. Yalnızca görseldir; oynanışı değiştirmez.
 - **Oyuncu hızı değil baskıyı etkiler** (bkz. §14).
 
 ### 13.1 Onaylanan his değerleri (M1-14, 2026-10-11)

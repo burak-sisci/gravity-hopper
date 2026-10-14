@@ -40,6 +40,30 @@ extends Resource
 ## İzin baştaki kalınlığı; kuyruğa doğru sıfıra iner.
 @export_range(1.0, 60.0, 0.5, "suffix:px") var trail_width: float = 18.0
 
+@export_group("Hız hissi")
+## Hız hissinin 0 ve 1 olduğu tırmanış hızları (M3-13, GDD §13): S1 (12 m/sn) 0, tavan (22 m/sn)
+## 1, arası doğrusal. His arttıkça iz uzar, hız çizgileri yoğunlaşır.
+@export_range(4.0, 30.0, 0.5, "suffix:m/sn") var speed_feel_min_speed: float = 12.0
+@export_range(4.0, 30.0, 0.5, "suffix:m/sn") var speed_feel_max_speed: float = 22.0
+## Hız hissi tamken izin süresinin uzama oranı (0,75 = %75 uzun).
+@export_range(0.0, 2.0, 0.05) var trail_speed_stretch: float = 0.75
+## Hız çizgisi sayısı, hız hissi 0'da (x) ve 1'de (y), yüksek kalitede. Orta ve düşük kalitede
+## parçacık oranlarıyla azalır.
+@export var speed_line_count: Vector2i = Vector2i(4, 24)
+## Çizgi boyu (px), hız hissi 0'da ve 1'de.
+@export var speed_line_length: Vector2 = Vector2(160.0, 480.0)
+@export_range(0.5, 12.0, 0.5, "suffix:px") var speed_line_width: float = 3.0
+## Çizginin başındaki saydamlık, hız hissi 0'da ve 1'de (kuyruğa doğru söner).
+@export var speed_line_alpha: Vector2 = Vector2(0.15, 0.4)
+## Düşüş hızı, tırmanış hızının katı olarak, hız hissi 0'da ve 1'de (dünyadan hızlı akar).
+@export var speed_line_speed: Vector2 = Vector2(1.6, 2.6)
+## Her çizginin boyu ve hızı bu oranda rastgele sapar (±).
+@export_range(0.0, 0.9, 0.05) var speed_line_jitter: float = 0.3
+## Gösterilen hız hissinin yeni sektörün değerine yaklaşma hızı.
+@export_range(0.1, 10.0, 0.1, "suffix:/sn") var speed_feel_rate: float = 1.0
+## Ölümde çizgilerin sönme süresi.
+@export_range(0.05, 1.0, 0.05, "suffix:sn") var speed_line_fade: float = 0.25
+
 @export_group("Sıkışma-uzama")
 ## Çevirmede çekirdeğin yana uzama oranı (0,25 = %25 geniş ve o oranda ince; M3-11).
 @export_range(0.0, 1.0, 0.01) var stretch_on_flip: float = 0.25
@@ -247,6 +271,23 @@ func particle_amount(base: int, quality: GameTypes.Quality) -> int:
 		GameTypes.Quality.MEDIUM:
 			return maxi(roundi(base * particle_medium_ratio), 1)
 	return maxi(roundi(base * particle_low_ratio), 1)
+
+
+## Tırmanış hızının hız hissi (0–1; M3-13).
+func speed_feel(climb_speed: float) -> float:
+	if speed_feel_max_speed <= speed_feel_min_speed:
+		return 1.0 if climb_speed >= speed_feel_min_speed else 0.0
+	return clampf(inverse_lerp(speed_feel_min_speed, speed_feel_max_speed, climb_speed), 0.0, 1.0)
+
+
+## İzin süre çarpanı (hız hissiyle uzar).
+func trail_stretch(feel: float) -> float:
+	return 1.0 + trail_speed_stretch * feel
+
+
+## Verilen hız hissinde ve kalitede hız çizgisi sayısı.
+func speed_line_amount(feel: float, quality: GameTypes.Quality) -> int:
+	return particle_amount(roundi(lerpf(speed_line_count.x, speed_line_count.y, feel)), quality)
 
 
 ## Verilen kalitede ışık lekesi görünür mü.

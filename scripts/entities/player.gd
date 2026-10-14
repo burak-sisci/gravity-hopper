@@ -156,6 +156,11 @@ func set_ambient(color: Color) -> void:
 	_trail.set_ambient(color)
 
 
+## İzin süre çarpanı (Run, sektörün hız hissiyle verir; M3-13, yalnızca görsel).
+func set_trail_stretch(stretch: float) -> void:
+	_trail.stretch = stretch
+
+
 ## Bir girdi olayı çevirme dokunuşu mu? Her parmağın basışı sayılır; dokunuştan türetilen
 ## sahte fare olayı yok sayılır, yoksa her dokunuş iki kez sayılır (S-07). PC'de sol tık ve boşluk.
 static func is_tap(event: InputEvent) -> bool:

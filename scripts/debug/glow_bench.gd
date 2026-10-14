@@ -16,10 +16,12 @@ extends Node2D
 ## Parçacık modları (M3-11): oyunun Effects'i iniş kıvılcımını, Glimmer ve ölüm patlamasını
 ## oyundakinden çok daha sık çıkarır (en kötü durum); yüksek ve düşük kalitede. Ölçüm bitince
 ## tezgâh yüksek kaliteli parçacık modunda kalır (telefonda ekran görüntüsü için).
+## Hız çizgisi modu (M3-13): arka planın hız çizgileri tavan hızda (22 m/sn: en çok çizgi),
+## yüksek kalitede. Öteki modlarda hız çizgisi yok.
 
 enum Mode {
 	OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE, COLLAPSE, COLLAPSE_MEDIUM, PARTICLES,
-	PARTICLES_LOW,
+	PARTICLES_LOW, SPEED_LINES,
 }
 
 const MODE_NAMES: Array[String] = [
@@ -27,22 +29,24 @@ const MODE_NAMES: Array[String] = [
 	"Sahte parlama (orta kalite)", "Renk dalgası (yüksek kalite)",
 	"Çöküş duvarı (yüksek kalite)", "Çöküş duvarı (orta kalite)",
 	"Parçacıklar (yüksek kalite)", "Parçacıklar (düşük kalite)",
+	"Hız çizgileri (yüksek kalite, tavan hız)",
 ]
 const MODE_ARGS: Array[String] = [
 	"off", "env", "fake", "medium", "wave", "collapse", "collapse_medium", "particles",
-	"particles_low",
+	"particles_low", "speed",
 ]
 ## Her modda neon bileşenlerinin efekt kalitesi; düşük kalitede sahte parlama yok.
 const MODE_QUALITY: Array[GameTypes.Quality] = [
 	GameTypes.Quality.LOW, GameTypes.Quality.LOW, GameTypes.Quality.HIGH,
 	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH, GameTypes.Quality.HIGH,
 	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH, GameTypes.Quality.LOW,
+	GameTypes.Quality.HIGH,
 ]
 const BENCH_ORDER: Array[Mode] = [
 	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
-	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW,
+	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW, Mode.SPEED_LINES,
 	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
-	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW,
+	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW, Mode.SPEED_LINES,
 ]
 const WARMUP_SEC: float = 1.5
 const MEASURE_SEC: float = 4.0
@@ -57,6 +61,8 @@ const DEBUG_MENU_STYLE_COMPACT: int = 1
 
 ## S1 tırmanış hızı: 12 m/sn × 50 px/m.
 const SCROLL_SPEED: float = 600.0
+## Hız çizgisi modunun tırmanış hızı (tavan, m/sn).
+const SPEED_LINES_CLIMB: float = 22.0
 const RNG_SEED: int = 20261007
 const BAND_MARGIN: float = 200.0
 const WALL_INSET: float = 60.0
@@ -226,6 +232,7 @@ func _apply_mode(mode: Mode) -> void:
 	_hud.visible = collapse
 	Events.wall_proximity_changed.emit(COLLAPSE_PROXIMITY if collapse else 0.0)
 	Neon.set_quality(MODE_QUALITY[mode], get_tree())
+	_background.set_speed(SPEED_LINES_CLIMB if mode == Mode.SPEED_LINES else 0.0, true)
 	var prefix: String = "Dokun: sonraki mod"
 	if not _bench_done:
 		prefix = "Ölçülüyor %d/%d" % [_bench_index + 1, BENCH_ORDER.size()]
@@ -290,7 +297,7 @@ func _end_bench() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	print("BENCH done")
 	_add_debug_menu()
-	_apply_mode(Mode.PARTICLES)
+	_apply_mode(Mode.SPEED_LINES)
 
 
 ## Dalga modu: palet dalgası alttan üste yürür; bitince kısa bekleme ve sıradaki sektörün

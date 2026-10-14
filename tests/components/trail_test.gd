@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Oyuncu izi (M3-04, architecture.md §9): izin boyu ve süresi ekran yenileme hızından bağımsız
 ## (60 ve 120 Hz'de aynı), ara karede boy sıçramıyor, baş oyuncunun üstünde, ölünce iz toplanıyor.
+## Hızla uzayan iz (M3-13): süre çarpanı değişince iz sıfırlanmaz, yeni boyuna uzar.
 
 ## Fizik adımı başına tırmanış (px) ve çevirmede yan hız (px/adım).
 const CLIMB_PER_TICK: float = 10.0
@@ -33,6 +34,30 @@ func test_trail_covers_its_duration_without_jumps() -> void:
 		assert_float(_length(trail.points_at(fraction))).is_equal_approx(expected, 0.001)
 	var duration: float = float(trail.tick_count()) / Engine.physics_ticks_per_second
 	assert_float(duration).is_equal_approx(Neon.STYLE.trail_duration, 0.5 / 60.0)
+
+
+func test_stretch_keeps_the_trail_and_grows_it() -> void:
+	var trail: Trail = _add_trail()
+	for tick: int in TICKS:
+		trail.record(Vector2(0.0, -CLIMB_PER_TICK * tick))
+	var short_count: int = trail.tick_count()
+	var head: Vector2 = trail.points_at(1.0)[0]
+	var tail: Vector2 = trail.points_at(0.0)[short_count + 1]
+	trail.stretch = 1.5
+	assert_int(trail.tick_count()).is_equal(roundi(short_count * 1.5))
+	var next: Vector2 = Vector2(0.0, -CLIMB_PER_TICK * TICKS)
+	trail.record(next)
+	var grown: PackedVector2Array = trail.points_at(1.0)
+	# Kayıtlar korunur: baş yeni konumda, eski baş bir adım geride, kuyruk eski kuyrukta.
+	assert_int(grown.size()).is_equal(trail.tick_count() + 2)
+	assert_vector(grown[0]).is_equal(next)
+	assert_vector(grown[1]).is_equal(head)
+	assert_vector(grown[grown.size() - 1]).is_equal(tail)
+	# Düz tırmanış sürdükçe iz yeni süresinin yolunu kaplar.
+	for tick: int in range(TICKS + 1, TICKS * 2):
+		trail.record(Vector2(0.0, -CLIMB_PER_TICK * tick))
+	assert_float(_length(trail.points_at(0.0))).is_equal_approx(
+			trail.tick_count() * CLIMB_PER_TICK, 0.001)
 
 
 func test_head_is_on_owner() -> void:

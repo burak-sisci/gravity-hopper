@@ -3,6 +3,7 @@ extends GdUnitTestSuite
 ## çevirmede ve inişte yalnızca görsel esner (çarpışma şekilleri değişmez), Glimmer toplandığı
 ## yerde patlar, ölüm donmasının sonunda çekirdek gizlenip patlar. Çevirme, iniş, Glimmer ve ölüm
 ## dolu bir turda düğüm sayısı sabittir (.clauderules §6).
+## Hız hissi (M3-13): S3'te iz S1'dekinden uzun, hız çizgileri daha çok.
 
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
@@ -113,14 +114,32 @@ func test_node_count_stays_constant_during_a_run() -> void:
 	_run.free()
 
 
+func test_faster_sector_longer_trail_and_more_speed_lines() -> void:
+	await _start_run()
+	var s1: Array[int] = _speed_feel()
+	remove_child(_run)
+	_run.free()
+	await _start_run(null, 3)
+	var s3: Array[int] = _speed_feel()
+	assert_int(s3[0]).override_failure_message("İz uzamadı").is_greater(s1[0])
+	assert_int(s3[1]).override_failure_message("Hız çizgisi artmadı").is_greater(s1[1])
+
+
+## İzin adım sayısı ve görünen hız çizgisi sayısı.
+func _speed_feel() -> Array[int]:
+	var lines: SpeedLines = _run.get_node("%Background").get_node("%SpeedLines") as SpeedLines
+	return [(_player.get_node("Trail") as Trail).tick_count(), lines.active_count()]
+
+
 ## Diskteki varsayılan ayarların taze bir kopyasıyla tur kurar (paylaşılan örnek değişmez).
-func _start_run(pools: ChunkPools = null) -> void:
+func _start_run(pools: ChunkPools = null, sector: int = 1) -> void:
 	_run = RUN_SCENE.instantiate() as Run
 	if pools == null:
 		auto_free(_run)
 	_run.tuning = ResourceLoader.load(
 			TUNING_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as TuningConfig
 	_run.run_seed = 12345
+	_run.start_sector = sector
 	_run.chunk_pools = pools
 	_player = _run.get_node("Player") as Player
 	_player.landed.connect(_on_landed)

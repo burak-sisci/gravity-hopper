@@ -18,6 +18,9 @@ extends CanvasLayer
 ## plan rengi dalganın üstünü örter (Wash; ekranın temizleme rengi o an yenidir). Dalganın
 ## önünde vurgu renginde parlak bir çizgi yürür (Crest). Run start_wave, her adımda set_wave ve
 ## sonunda end_wave çağırır; dalga sırasında katmanlar her kare yeniden çizilir.
+##
+## Hız çizgileri (M3-13): SpeedLines ağın üstünde, dünyanın ardında aşağı akar; Run tırmanış
+## hızını set_speed ile verir, ölümde stop_speed çağırır.
 
 ## Parlayan düğümlerin seçimi bu kadar vuruşta bir tekrarlanır.
 const FLASH_CYCLE: int = 1024
@@ -57,6 +60,7 @@ var _wave_pulse_tint: Color = Color.WHITE
 @onready var _wave_near: Node2D = %WaveNear
 @onready var _flash: Node2D = %Flash
 @onready var _crest: Node2D = %Crest
+@onready var _speed_lines: SpeedLines = %SpeedLines
 
 
 func _enter_tree() -> void:
@@ -118,6 +122,7 @@ func set_beat(beat: float) -> void:
 func set_colors(ambient: Color, accent: Color) -> void:
 	_far.self_modulate = ambient
 	_near.self_modulate = ambient
+	_speed_lines.set_color(ambient)
 	_accent = accent
 	_flash.queue_redraw()
 	_pulse_tint = _pulse_tint_for(ambient, accent)
@@ -164,6 +169,16 @@ func is_wave_active() -> bool:
 ## Dalganın önünün ekrandaki y'si (dalga yokken INF).
 func wave_front() -> float:
 	return _front
+
+
+## Hız çizgileri: tırmanış hızı (m/sn); instant ise his hemen yerinde (tur başı).
+func set_speed(climb_speed: float, instant: bool) -> void:
+	_speed_lines.set_speed(climb_speed, instant)
+
+
+## Ölümde hız çizgileri yeniden doğmaz, söner.
+func stop_speed() -> void:
+	_speed_lines.stop()
 
 
 ## Ağı geçerli kaliteye göre gösterir (Neon.set_quality çağırır).
