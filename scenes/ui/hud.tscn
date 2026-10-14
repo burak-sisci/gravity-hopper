@@ -109,3 +109,36 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 56
 horizontal_alignment = 2
+
+[node name="NearMissLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+auto_translate_mode = 2
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 1450.0
+offset_right = -40.0
+offset_bottom = 1530.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 64
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ComboLabel" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+auto_translate_mode = 2
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 1530.0
+offset_right = -40.0
+offset_bottom = 1610.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.35, 0.95, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 60
+horizontal_alignment = 1
+vertical_alignment = 1

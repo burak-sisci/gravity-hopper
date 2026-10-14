@@ -204,7 +204,7 @@
   *Kabul:* Ölümden yeni tura hâlâ < 0,5 sn; sarsıntı oyuncunun üstündeki görüş mesafesini değiştirmiyor (testler).
 - [x] **M3-11** 🤖 Sıkışma-uzama (çevirme ve iniş, yalnızca görsel) + havuzlu parçacıklar (`CPUParticles2D`): iniş kıvılcımı, Glimmer patlaması, ölüm patlaması.
   *Kabul:* Tur sırasında düğüm sayısı sabit (test); Redmi'de kare süresi ölçüldü.
-- [ ] **M3-12** 🤖 Kıl payı geri bildirimi: yavaş çekim (0,5×, 0,25 sn), zincirin ilk halkasında ve kombo eşiklerinde; müzik de aynı oranda yavaşlar. "KIL PAYI!" yazısı (TR/EN) ve kombo göstergesi (×2 / ×3).
+- [x] **M3-12** 🤖 Kıl payı geri bildirimi: yavaş çekim (0,5×, 0,25 sn), zincirin ilk halkasında ve kombo eşiklerinde; müzik de aynı oranda yavaşlar. "KIL PAYI!" yazısı (TR/EN) ve kombo göstergesi (×2 / ×3).
   *Kabul:* Yavaş çekimde müzik kaymıyor (günlük); harita değişmiyor (belirlenimcilik testi); yazı iki dilde.
 - [ ] **M3-13** 🤖 Hız hissi: hız çizgileri ve uzayan iz, sektör hızıyla yoğunlaşır (GDD §13).
   *Kabul:* S1 ile S3'ün kare yakalamasında fark görünüyor; Redmi'de kare süresi ölçüldü.

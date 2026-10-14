@@ -112,6 +112,36 @@ func test_banner_on_start_from_later_sector() -> void:
 	assert_bool(_banner().visible).is_false()
 
 
+## Kıl payı yazısı ve kombo göstergesi (M3-12): iki dilde; yazı söner, gösterge zincirle biter.
+func test_near_miss_text_and_combo() -> void:
+	Events.run_started.emit(1, 1)
+	assert_bool(_near_miss().visible).is_false()
+	assert_bool(_combo().visible).is_false()
+	Events.near_miss.emit(1, 1)
+	assert_bool(_near_miss().visible).is_true()
+	assert_str(_near_miss().text).is_equal("NEAR MISS!")
+	assert_bool(_combo().visible).is_false()
+	Events.near_miss.emit(3, 2)
+	assert_bool(_combo().visible).is_true()
+	assert_str(_combo().text).is_equal("×2")
+	TranslationServer.set_locale("tr")
+	await get_tree().process_frame
+	assert_str(_near_miss().text).is_equal("KIL PAYI!")
+	Events.near_miss.emit(6, 3)
+	assert_str(_combo().text).is_equal("×3")
+	# Yazı 0,15 + 0,45 + 0,3 sn sonra söner; gösterge zincir bitene kadar kalır.
+	for i: int in 60:
+		await get_tree().process_frame
+	assert_bool(_near_miss().visible).is_false()
+	assert_bool(_combo().visible).is_true()
+	Events.combo_ended.emit()
+	assert_bool(_combo().visible).is_false()
+	Events.near_miss.emit(3, 2)
+	Events.run_started.emit(2, 1)
+	assert_bool(_combo().visible).is_false()
+	assert_bool(_near_miss().visible).is_false()
+
+
 func _result(height_m: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m
@@ -132,3 +162,11 @@ func _glimmer_label() -> Label:
 
 func _banner() -> Label:
 	return _hud.get_node("%SectorBanner") as Label
+
+
+func _near_miss() -> Label:
+	return _hud.get_node("%NearMissLabel") as Label
+
+
+func _combo() -> Label:
+	return _hud.get_node("%ComboLabel") as Label

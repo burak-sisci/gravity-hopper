@@ -29,6 +29,9 @@ extends Node2D
 ## turlar arasında Main'in ChunkPools'unda korunur (ADR-054).
 ## Parçacıklar (M3-11): Effects iniş kıvılcımını, Glimmer patlamasını ve donmanın sonunda ölüm
 ## patlamasını çıkarır (çekirdek o anda gizlenir).
+## Kıl payı yavaş çekimi (M3-12): zincirin ilk halkasında ve çarpanın büyüdüğü halkada
+## SlowMotion Engine.time_scale'i kısa süre düşürür (müzik de yavaşlar). Ölümde ve tur yarıda
+## bitince ölçek hemen geri verilir.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -73,6 +76,7 @@ var _wave_elapsed: float = 0.0
 ## Ölüm görüldü mü ve donmanın kalan süresi (M3-10).
 var _death_seen: bool = false
 var _freeze_left: float = 0.0
+var _slow_motion: SlowMotion = SlowMotion.new()
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -125,7 +129,13 @@ func _ready() -> void:
 	_camera.force_update_scroll()
 
 
+## Tur yavaş çekimin ortasında biterse (yeniden başlama) zaman ölçeği geri verilir.
+func _exit_tree() -> void:
+	_slow_motion.stop()
+
+
 func _physics_process(delta: float) -> void:
+	_slow_motion.advance(1.0 / Engine.physics_ticks_per_second)
 	if _frozen(delta):
 		return
 	_conductor.advance(delta)
@@ -171,9 +181,11 @@ func _enter_sector(next: int) -> void:
 
 
 ## Kıl payı: pencere içindeyse kombo uzar, değilse yeni zincir başlar. Glimmer çarpanı
-## kombo uzunluğuna göre ×1 / ×2 / ×3 (GDD §15).
+## kombo uzunluğuna göre ×1 / ×2 / ×3 (GDD §15). Yavaş çekim zincirin ilk halkasında ve
+## çarpanın büyüdüğü halkada.
 func _on_near_missed() -> void:
 	var now: float = _conductor.run_time
+	var previous: int = stats.multiplier
 	_combo = _combo + 1 if _combo > 0 and now - _last_graze_time <= tuning.combo_window else 1
 	_last_graze_time = now
 	stats.near_misses += 1
@@ -184,7 +196,10 @@ func _on_near_missed() -> void:
 		stats.multiplier = 2
 	else:
 		stats.multiplier = 1
-	Events.near_miss.emit(_combo)
+	if _combo == 1 or stats.multiplier > previous:
+		_slow_motion.start(tuning.slow_motion_scale, tuning.slow_motion_time,
+				tuning.slow_motion_return)
+	Events.near_miss.emit(_combo, stats.multiplier)
 
 
 ## Duvar görselini oyuncunun altına koyar ve yakınlığı yayar (ekranın altında 0, oyuncuda 1).
@@ -220,6 +235,7 @@ func _frozen(delta: float) -> bool:
 		if _player.is_alive():
 			return false
 		_death_seen = true
+		_slow_motion.stop()
 		_freeze_left = tuning.death_freeze
 		if _freeze_left <= 0.0:
 			_shatter()

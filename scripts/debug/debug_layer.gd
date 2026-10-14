@@ -176,7 +176,8 @@ func _connect_event_log() -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
 	Events.sector_entered.connect(func(index: int) -> void:
 		_log_event("sector_entered index=%d" % index))
-	Events.near_miss.connect(func(combo: int) -> void: _log_event("near_miss combo=%d" % combo))
+	Events.near_miss.connect(func(combo: int, multiplier: int) -> void:
+		_log_event("near_miss combo=%d x%d" % [combo, multiplier]))
 	Events.shield_changed.connect(func(active: bool) -> void:
 		_log_event("shield_changed active=%s" % active))
 	Events.combo_ended.connect(_log_event.bind("combo_ended"))

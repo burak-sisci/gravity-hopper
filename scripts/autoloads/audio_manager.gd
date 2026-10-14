@@ -79,6 +79,11 @@ func current_track() -> MusicTrack:
 	return _track
 
 
+## Müziğin çalma hızı; Engine.time_scale'i izler (testler ve debug).
+func music_pitch() -> float:
+	return _music.pitch_scale
+
+
 ## Parçayı çalara koyar; döngü dosyanın loop_start anından başlar.
 func _set_track(track: MusicTrack) -> void:
 	_track = track

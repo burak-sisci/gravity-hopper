@@ -7,6 +7,7 @@ const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 
 func after_test() -> void:
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Engine.time_scale = 1.0
 
 
 func test_run_plays_the_reported_track_with_its_loop() -> void:
@@ -30,6 +31,20 @@ func test_new_run_sets_the_track_again_and_death_silences() -> void:
 	assert_object(AudioManager.current_track()).is_null()
 	AudioManager.sync_beat_clock(0.0, _track(&"mountain_peak"))
 	assert_str(String(AudioManager.current_track().id)).is_equal("mountain_peak")
+
+
+## Yavaş çekimde müzik aynı oranda yavaşlar (M3-12, ADR-008).
+func test_music_pitch_follows_time_scale() -> void:
+	var track: MusicTrack = _track(&"epic_departure")
+	Events.run_started.emit(1, 1)
+	AudioManager.sync_beat_clock(0.0, track)
+	assert_float(AudioManager.music_pitch()).is_equal(1.0)
+	Engine.time_scale = 0.5
+	AudioManager.sync_beat_clock(0.1, track)
+	assert_float(AudioManager.music_pitch()).is_equal(0.5)
+	Engine.time_scale = 1.0
+	AudioManager.sync_beat_clock(0.2, track)
+	assert_float(AudioManager.music_pitch()).is_equal(1.0)
 
 
 func _track(id: StringName) -> MusicTrack:

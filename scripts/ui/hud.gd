@@ -11,6 +11,10 @@ extends Control
 ## Duvar vinyeti (M2-15, M3-09'da inceltildi): yalnızca ekranın iki kenarında, koridorun
 ## dışında kalan dar şeritler; alt dış köşede en koyu, yukarı ve içeri doğru söner. Duvarın
 ## kendisi artık ekranda göründüğü için vinyet engellerin üstüne düşmez.
+## Kıl payı (M3-12, GDD §15): her kıl payında oyuncunun hemen altında (ileri görüş 28 m = 1400 px;
+## geçilmiş bölge, gelen engelleri örtmez) "KIL PAYI!" büyüyerek belirip söner; altında Glimmer
+## çarpanı ×2 / ×3 olunca kombo göstergesi çıkar, zincir bitince kaybolur. Bu canlandırmalar
+## gerçek zamanla oynar; yavaş çekim onları yavaşlatmaz.
 
 ## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
 const VIGNETTE_MAX_ALPHA: float = 1.0
@@ -20,6 +24,13 @@ const BANNER_FADE: float = 0.4
 ## Dalga afişe varınca afişin başladığı büyüklük ve yerine oturma süresi (sn).
 const BANNER_POP_SCALE: float = 1.25
 const BANNER_POP_TIME: float = 0.25
+## Kıl payı yazısının ve kombo göstergesinin başladığı büyüklük ve yerine oturma süresi (sn).
+const NEAR_MISS_POP_SCALE: float = 1.4
+const COMBO_POP_SCALE: float = 1.6
+const POP_TIME: float = 0.15
+## Kıl payı yazısının ekranda kaldığı ve söndüğü süre (sn).
+const NEAR_MISS_TIME: float = 0.45
+const NEAR_MISS_FADE: float = 0.3
 
 ## Sektör adları ve renkleri için (veri; dünyaya erişim değil).
 @export var sectors: SectorCatalog
@@ -31,12 +42,18 @@ var _best_m: int = 0
 ## Afişte gösterilen sektör (0 = afiş yok).
 var _banner_sector: int = 0
 var _banner_tween: Tween
+## Gösterilen Glimmer çarpanı (1 = kombo göstergesi gizli).
+var _multiplier: int = 1
+var _near_miss_tween: Tween
+var _combo_tween: Tween
 
 @onready var _height_label: Label = %HeightLabel
 @onready var _best_label: Label = %BestLabel
 @onready var _sector_banner: Label = %SectorBanner
 @onready var _glimmer_label: Label = %GlimmerLabel
 @onready var _vignette: Control = %WallVignette
+@onready var _near_miss_label: Label = %NearMissLabel
+@onready var _combo_label: Label = %ComboLabel
 
 
 func _ready() -> void:
@@ -46,7 +63,10 @@ func _ready() -> void:
 	Events.sector_entered.connect(_on_sector_entered)
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
+	Events.near_miss.connect(_on_near_miss)
+	Events.combo_ended.connect(_on_combo_ended)
 	_sector_banner.visible = false
+	_near_miss_label.visible = false
 	_refresh()
 
 
@@ -59,6 +79,10 @@ func _on_run_started(_run_seed: int, start_sector: int) -> void:
 	_height_m = 0
 	_glimmers = 0
 	_vignette.modulate.a = 0.0
+	_multiplier = 1
+	if _near_miss_tween != null:
+		_near_miss_tween.kill()
+	_near_miss_label.visible = false
 	if start_sector > 1:
 		_show_banner(start_sector)
 	else:
@@ -84,6 +108,38 @@ func _on_height_changed(meters: int) -> void:
 func _on_run_ended(result: RunResult) -> void:
 	_best_m = maxi(_best_m, result.height_m)
 	_refresh()
+
+
+## Kıl payı: yazı her seferinde büyüyerek belirir; çarpan büyüyünce kombo göstergesi de.
+func _on_near_miss(_combo: int, multiplier: int) -> void:
+	_near_miss_tween = _pop(_near_miss_label, _near_miss_tween, NEAR_MISS_POP_SCALE)
+	_near_miss_tween.tween_interval(NEAR_MISS_TIME)
+	_near_miss_tween.tween_property(_near_miss_label, "modulate:a", 0.0, NEAR_MISS_FADE)
+	_near_miss_tween.tween_callback(_near_miss_label.hide)
+	if multiplier == _multiplier:
+		return
+	_multiplier = multiplier
+	_refresh()
+	if multiplier > 1:
+		_combo_tween = _pop(_combo_label, _combo_tween, COMBO_POP_SCALE)
+
+
+func _on_combo_ended() -> void:
+	_multiplier = 1
+	_refresh()
+
+
+## Etiketi ortasından büyüterek gösterir; önceki canlandırmasını keser. Tween gerçek zamanlıdır.
+func _pop(label: Label, previous: Tween, from_scale: float) -> Tween:
+	if previous != null:
+		previous.kill()
+	label.pivot_offset = label.size * 0.5
+	label.visible = true
+	label.modulate.a = 1.0
+	var tween: Tween = create_tween().set_ignore_time_scale()
+	tween.tween_property(label, "scale", Vector2.ONE, POP_TIME).from(Vector2.ONE * from_scale) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	return tween
 
 
 ## Sektör geçişi: afiş, renk dalgası afişin hizasına varınca gelir.
@@ -133,6 +189,9 @@ func _refresh() -> void:
 	_best_label.text = tr("HUD_BEST") % _best_m
 	_best_label.visible = _best_m > 0
 	_glimmer_label.text = tr("HUD_GLIMMERS") % _glimmers
+	_near_miss_label.text = tr("HUD_NEAR_MISS")
+	_combo_label.text = tr("HUD_COMBO") % _multiplier
+	_combo_label.visible = _multiplier > 1
 	if _banner_sector > 0 and sectors != null:
 		var def: SectorDef = sectors.def_at(_banner_sector)
 		_sector_banner.text = tr("HUD_SECTOR") % [_banner_sector, tr(def.name_key)]

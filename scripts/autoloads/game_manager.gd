@@ -55,7 +55,7 @@ func _on_glimmer_collected(value: int) -> void:
 		_glimmers += value
 
 
-func _on_near_miss(_combo: int) -> void:
+func _on_near_miss(_combo: int, _multiplier: int) -> void:
 	if state == AppState.RUNNING:
 		_near_misses += 1
 

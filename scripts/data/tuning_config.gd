@@ -48,6 +48,13 @@ const PX_PER_M: float = 50.0
 ## Glimmer çarpanı ×2 ve ×3 olduğu kombo uzunlukları (ilk değerler).
 @export_range(2, 10, 1) var combo_x2_at: int = 3
 @export_range(3, 20, 1) var combo_x3_at: int = 6
+## Kıl payı yavaş çekimi (M3-12, GDD §15): zincirin ilk halkasında ve çarpanın büyüdüğü halkada
+## oyun ve müzik bu ölçeğe yavaşlar. 1 = kapalı.
+@export_range(0.1, 1.0, 0.05) var slow_motion_scale: float = 0.5
+## Yavaş çekimin gerçek zamanla toplam süresi (dönüş dahil). 0 = kapalı.
+@export_range(0.0, 1.0, 0.01, "suffix:sn") var slow_motion_time: float = 0.25
+## Sürenin sonunda ölçeğin yumuşakça 1'e döndüğü kısım.
+@export_range(0.0, 0.5, 0.01, "suffix:sn") var slow_motion_return: float = 0.08
 
 @export_group("Toplama")
 ## Oyuncunun Glimmer toplama alanının yarıçapı (gövdeden büyük: affedici toplama, M2-13).

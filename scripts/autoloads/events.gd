@@ -25,7 +25,7 @@ signal height_changed(meters: int)
 signal sector_entered(index: int)
 signal chunk_placed(chunk_id: StringName, difficulty: int, sector: int)
 signal glimmer_collected(value: int)
-signal near_miss(combo: int)
+signal near_miss(combo: int, multiplier: int)
 signal combo_ended
 signal wall_proximity_changed(ratio: float)
 signal beat(index: int)
