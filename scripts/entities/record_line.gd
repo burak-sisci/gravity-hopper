@@ -7,6 +7,9 @@ extends NeonLine
 ## Yalnızca görseldir: çarpışması yoktur, oyuncuyu tanımaz. Run yerini place ile verir, oyuncunun
 ## y'sini ve vuruşu her fizik adımında track ile aşağı çağırır. Rekor yoksa görünmez.
 ## Şimdilik oturum rekoru (GameManager.best_height_m); kalıcı rekor M4'te.
+## Çizgiye varıldığı adımda yukarı passed yayılır (Run, Events.record_broken'a çevirir; M3-15).
+
+signal passed
 
 ## Yaklaşma: 0 uzakta – 1 çizgide.
 var _heat: float = 0.0
@@ -51,6 +54,7 @@ func track(player_y: float, beat: float) -> void:
 		_passed = true
 		_flash = 1.0
 		set_process(true)
+		passed.emit()
 	else:
 		_heat = 1.0 - clampf(distance_m / style.record_heat_distance, 0.0, 1.0)
 		_pulse = style.beat_pulse(beat)

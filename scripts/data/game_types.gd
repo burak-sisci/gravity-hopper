@@ -26,3 +26,16 @@ enum NeonTone {
 	GLIMMER, ## Glimmer yeşili
 	PLAYER, ## Oyuncu beyazı
 }
+
+## Ses efekti olayları (M3-15, architecture.md §8.8). Sıra tools/sfx_prep.py'deki SOUNDS ile aynı.
+enum Sfx {
+	FLIP, ## Çevirme (her dokunuş)
+	LAND, ## Duvara tutunma
+	GLIMMER, ## Glimmer toplama
+	NEAR_MISS, ## Kıl payı
+	COMBO_UP, ## Kombo eşiği: çarpan ×2 ya da ×3'e çıktı
+	SHIELD_BREAK, ## Kalkan kırıldı
+	DEATH, ## Ölüm
+	SECTOR, ## Yeni sektöre geçiş
+	RECORD, ## Oturum rekoru kırıldı (rekor çizgisine varıldı)
+}

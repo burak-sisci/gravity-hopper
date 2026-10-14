@@ -18,6 +18,7 @@ signal pause_changed(paused: bool)
 signal player_died(cause: GameTypes.DeathCause)
 signal player_revived
 signal player_flipped
+signal player_landed
 signal shield_changed(active: bool)
 
 # --- İlerleme ---
@@ -25,6 +26,7 @@ signal height_changed(meters: int)
 signal sector_entered(index: int)
 signal chunk_placed(chunk_id: StringName, difficulty: int, sector: int)
 signal glimmer_collected(value: int)
+signal record_broken
 signal near_miss(combo: int, multiplier: int)
 signal combo_ended
 signal wall_proximity_changed(ratio: float)

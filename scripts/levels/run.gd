@@ -129,6 +129,7 @@ func _ready() -> void:
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
 	_player.shield_broken.connect(_on_shield_broken)
 	_player.landed.connect(_effects.landing_spark)
+	_record_line.passed.connect(Events.record_broken.emit)
 	_update_view()
 	_update_wall()
 	# Tur ilk karesinden yerinde (M3-10'da bulundu): ara değerleme bütün dünyada sıfırlanır

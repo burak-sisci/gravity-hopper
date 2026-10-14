@@ -240,6 +240,7 @@ func _flip() -> void:
 func _land() -> void:
 	_squash.kick(-Neon.STYLE.squash_on_landing)
 	landed.emit(global_position + Vector2(_gravity_dir * _half_body(), 0.0), _gravity_dir)
+	Events.player_landed.emit()
 
 
 func _half_body() -> float:

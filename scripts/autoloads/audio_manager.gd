@@ -13,6 +13,12 @@ extends Node
 ## Duyulan konum = çalma konumu + son karıştırmadan beri geçen süre − çıkış gecikmesi.
 ## Tur başlayınca çalar, oyuncu ölünce durur.
 ##
+## Efektler (M3-15, ADR-059): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
+## Havuz sabit sayıda çalardır (SfxBank.voices), oyun açılırken kurulur; tur sırasında düğüm
+## oluşturulmaz. Boş çalar yoksa bitmesine en az kalan kesilir. Çalarlar SFX yolundadır.
+## Efektler gerçek zamanda çalar: Engine.time_scale'i izlemez (yavaş çekimde ses yavaşlamaz;
+## kural yalnızca müziğin vuruş senkronu için, .clauderules §5).
+##
 ## Ölçüm karıştırma tamponu kadar titrer (Android'de onlarca ms). Bu yüzden kayma son karelerin
 ## ortalamasıyla ölçülür ve sınır aşılırsa ölçüde en fazla bir kez yeniden konumlanır. Her karede
 ## seek (durdur + çal) yapmak Android'de ses iş parçacığını çökertti (M2-07). Gerçek kayma örneği:
@@ -30,6 +36,11 @@ const SETTLE_TIME: float = 0.5
 const BEATS_PER_BAR: int = 4
 ## Debug günlüğünde senkron raporu aralığı (ölçü).
 const REPORT_EVERY_BARS: int = 8
+const SFX_BANK: SfxBank = preload("res://data/audio/sfx_bank.tres")
+const USEC_PER_SEC: float = 1000000.0
+
+## Olay → ses eşlemesi (testler değiştirebilir). Çalar sayısı açılışta bundan kurulur.
+var sfx_bank: SfxBank = SFX_BANK
 
 var _music: AudioStreamPlayer
 ## Çalan parça (tur başında sıfırlanır; ilk sync_beat_clock kurar).
@@ -48,14 +59,36 @@ var _last_drift: float = 0.0
 var _resyncs: int = 0
 var _max_drift: float = 0.0
 var _reported_bar: int = 0
+var _voices: Array[AudioStreamPlayer] = []
+## Her çaların sesinin biteceği gerçek zaman (sn). play()'den hemen sonra `playing` hâlâ false
+## olabildiği için doluluk buradan okunur; yoksa aynı karedeki iki efekt aynı çalara düşerdi.
+var _voice_ends: PackedFloat64Array = PackedFloat64Array()
+var _last_sfx: SfxSound = null
+var _sfx_counts: Dictionary[GameTypes.Sfx, int] = {}
+## Kombo çarpanı: büyüdüğü kıl payında kombo eşiği sesi çalar.
+var _multiplier: int = 1
 
 
 func _ready() -> void:
 	_music = AudioStreamPlayer.new()
 	_music.bus = MUSIC_BUS
 	add_child(_music)
+	for i: int in sfx_bank.voices:
+		var voice := AudioStreamPlayer.new()
+		voice.bus = SFX_BUS
+		add_child(voice)
+		_voices.append(voice)
+	_voice_ends.resize(_voices.size())
 	Events.run_started.connect(_on_run_started)
 	Events.player_died.connect(_on_player_died)
+	Events.player_flipped.connect(play_sfx.bind(GameTypes.Sfx.FLIP))
+	Events.player_landed.connect(play_sfx.bind(GameTypes.Sfx.LAND))
+	Events.glimmer_collected.connect(_on_glimmer_collected)
+	Events.near_miss.connect(_on_near_miss)
+	Events.combo_ended.connect(_on_combo_ended)
+	Events.shield_changed.connect(_on_shield_changed)
+	Events.sector_entered.connect(_on_sector_entered)
+	Events.record_broken.connect(play_sfx.bind(GameTypes.Sfx.RECORD))
 
 
 ## Conductor her fizik adımında çağırır: turun parçasını vuruş saatine hizalar.
@@ -74,6 +107,39 @@ func sync_beat_clock(beat_time: float, track: MusicTrack) -> void:
 	_report(beat_time, bar)
 
 
+## Olayın sesini havuzdaki boş bir çalarla çalar; boş yoksa bitmesine en az kalanı keser.
+func play_sfx(event: GameTypes.Sfx) -> void:
+	var sound: SfxSound = sfx_bank.sound_for(event) if sfx_bank != null else null
+	if sound == null or sound.stream == null or _voices.is_empty():
+		return
+	var now: float = Time.get_ticks_usec() / USEC_PER_SEC
+	var index: int = _free_voice(now)
+	var voice: AudioStreamPlayer = _voices[index]
+	voice.stream = sound.stream
+	voice.volume_db = sound.volume_db
+	# Kozmetik rastgelelik: oynanışı etkilemez, turun RNG'si kullanılmaz (.clauderules §5).
+	voice.pitch_scale = 1.0 + randf_range(-sound.pitch_jitter, sound.pitch_jitter)
+	voice.play()
+	_voice_ends[index] = now + sound.duration(voice.pitch_scale)
+	_last_sfx = sound
+	_sfx_counts[event] = _sfx_counts.get(event, 0) + 1
+
+
+## Son çalınan efekt (testler ve debug).
+func last_sfx() -> SfxSound:
+	return _last_sfx
+
+
+## Olayın sesinin oyun açıldığından beri kaç kez çaldığı (testler ve debug).
+func sfx_count(event: GameTypes.Sfx) -> int:
+	return _sfx_counts.get(event, 0)
+
+
+## Efekt havuzundaki çalarlar (testler).
+func sfx_voices() -> Array[AudioStreamPlayer]:
+	return _voices
+
+
 ## Çalan parça (testler ve debug).
 func current_track() -> MusicTrack:
 	return _track
@@ -82,6 +148,17 @@ func current_track() -> MusicTrack:
 ## Müziğin çalma hızı; Engine.time_scale'i izler (testler ve debug).
 func music_pitch() -> float:
 	return _music.pitch_scale
+
+
+## Boş çalar; hepsi doluysa sesinin bitmesine en az kalan.
+func _free_voice(now: float) -> int:
+	var best: int = 0
+	for i: int in _voices.size():
+		if _voice_ends[i] <= now:
+			return i
+		if _voice_ends[i] < _voice_ends[best]:
+			best = i
+	return best
 
 
 ## Parçayı çalara koyar; döngü dosyanın loop_start anından başlar.
@@ -146,6 +223,7 @@ func _on_run_started(_run_seed: int, _start_sector: int) -> void:
 	_resyncs = 0
 	_max_drift = 0.0
 	_reported_bar = 0
+	_multiplier = 1
 	_music.stop()
 	if OS.is_debug_build():
 		print("AUDIO output_latency=%d ms mix_rate=%d" % [
@@ -157,6 +235,33 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 	_clock_active = false
 	_clock_playing = false
 	_music.stop()
+	play_sfx(GameTypes.Sfx.DEATH)
+
+
+func _on_glimmer_collected(_value: int) -> void:
+	play_sfx(GameTypes.Sfx.GLIMMER)
+
+
+## Her kıl payında kıl payı sesi; çarpan büyüdüyse üstüne kombo eşiği sesi.
+func _on_near_miss(_combo: int, multiplier: int) -> void:
+	play_sfx(GameTypes.Sfx.NEAR_MISS)
+	if multiplier > _multiplier:
+		play_sfx(GameTypes.Sfx.COMBO_UP)
+	_multiplier = multiplier
+
+
+func _on_combo_ended() -> void:
+	_multiplier = 1
+
+
+## Kalkan yalnızca tükenince kapanır (Shield.consume): kapanış kırılmadır.
+func _on_shield_changed(active: bool) -> void:
+	if not active:
+		play_sfx(GameTypes.Sfx.SHIELD_BREAK)
+
+
+func _on_sector_entered(_index: int) -> void:
+	play_sfx(GameTypes.Sfx.SECTOR)
 
 
 ## Debug build'de birkaç ölçüde bir senkron raporu (S-03 ölçümü).
