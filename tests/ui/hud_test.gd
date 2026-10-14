@@ -70,13 +70,20 @@ func test_sector_banner_shows_name_and_fades() -> void:
 	Events.run_started.emit(1, 1)
 	assert_bool(_banner().visible).is_false()
 	Events.sector_entered.emit(2)
-	assert_bool(_banner().visible).is_true()
+	# Afiş dalgayla gelir (M3-08): renk dalgası ekranın altından afişin hizasına varınca.
+	assert_bool(_banner().visible).is_false()
+	var waited: int = 0
+	while not _banner().visible and waited < 120:
+		await get_tree().process_frame
+		waited += 1
+	assert_int(waited).is_greater(1)
+	assert_float(waited / 60.0).is_less_equal(Neon.STYLE.wave_time + 0.1)
 	assert_str(_banner().text).is_equal("SECTOR 2 · DATA STREAM")
 	TranslationServer.set_locale("tr")
 	await get_tree().process_frame
 	assert_str(_banner().text).is_equal("SEKTÖR 2 · VERİ AKIŞI")
-	# 2 sn görünür, 0,4 sn'de söner (60 Hz'de 144 kare).
-	for i: int in 150:
+	# Büyüyerek oturur (0,25 sn), 2 sn görünür, 0,4 sn'de söner (60 Hz'de 159 kare).
+	for i: int in 170:
 		await get_tree().process_frame
 	assert_bool(_banner().visible).is_false()
 

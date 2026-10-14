@@ -12,6 +12,10 @@ extends Node2D
 ## Neon görünüş (M3-03, architecture.md §9): her parçacık saydam bir dolgu (Polygon2D) ve iç
 ## kenarında bir NeonLine'dır. Boşluğa bakan uçta çizgi duvar kalınlığı boyunca döner (temiz
 ## kesik). Renk paletten (set_colors); vuruşta bütün koridor vurgu rengine doğru nabız atar.
+##
+## Renk dalgası (M3-08): sektör geçişinde Run her adımda set_wave verir; her parça dalganın
+## önüne uzaklığına göre eski renkten yenisine geçer (NeonStyle.wave_weight). Dalga bitince
+## set_colors hepsini yeni renge çeker. Parça rengi değişmedikçe yeniden boyanmaz.
 
 const SEGMENT_HEIGHT: float = 400.0
 const WALL_THICKNESS: float = 60.0
@@ -33,9 +37,9 @@ var _ring_height: float = 0.0
 var _shapes: Dictionary[StaticBody2D, Array] = {}
 var _pieces: Dictionary[StaticBody2D, Array] = {}
 var _edges: Dictionary[StaticBody2D, Array] = {}
-var _fills: Array[Polygon2D] = []
-var _fill_alphas: Array[float] = []
-var _lines: Array[NeonLine] = []
+## Her parçanın dolgu saydamlığı (açık / koyu sırayla) ve son boyandığı çevre rengi.
+var _fill_alpha: Dictionary[StaticBody2D, float] = {}
+var _painted: Dictionary[StaticBody2D, Color] = {}
 var _ambient: Color = Color.WHITE
 ## Nabız tepesindeki modulate: kanal kanal vurgu / çevre oranı.
 var _pulse_tint: Color = Color.WHITE
@@ -68,19 +72,21 @@ func set_gaps(gaps: Array[Vector3]) -> void:
 
 
 ## Duvarları paletin çevre ve vurgu rengine göre boyar: dolgu ve parlama çevre renginde, kenarın
-## çekirdeği beyaza yakın; nabız vurgu rengine çeker. Sektör geçişindeki yumuşak geçişi Run yapar.
+## çekirdeği beyaza yakın; nabız vurgu rengine çeker. Sektör geçişindeki dalgayı Run yapar.
 func set_colors(ambient_color: Color, accent: Color) -> void:
 	_ambient = ambient_color
-	var core: Color = ambient_color.lerp(Color.WHITE, Neon.STYLE.wall_core_whiten)
-	for line: NeonLine in _lines:
-		line.color = core
-		line.glow_color = ambient_color
-	for i: int in _fills.size():
-		_fills[i].color = Color(ambient_color, _fill_alphas[i])
-	var boost: float = Neon.STYLE.beat_pulse_boost
-	_pulse_tint = Color(accent.r / maxf(ambient_color.r, MIN_CHANNEL) * boost,
-			accent.g / maxf(ambient_color.g, MIN_CHANNEL) * boost,
-			accent.b / maxf(ambient_color.b, MIN_CHANNEL) * boost)
+	for segment: StaticBody2D in _left + _right:
+		_paint(segment, ambient_color)
+	_pulse_tint = _pulse_tint_for(ambient_color, accent)
+
+
+## Renk dalgası: front_y (dünya) dalganın önü. Önün altındaki parçalar yeni çevre renginde,
+## üstündekiler eski renkte (set_colors'un rengi), aradaki bantta karışık. Nabız yeni paletten.
+func set_wave(front_y: float, to_ambient: Color, to_accent: Color) -> void:
+	for segment: StaticBody2D in _left + _right:
+		var weight: float = Neon.STYLE.wave_weight(segment.position.y, front_y)
+		_paint(segment, _ambient.lerp(to_ambient, weight))
+	_pulse_tint = _pulse_tint_for(to_ambient, to_accent)
 
 
 ## Vuruş nabzı (yalnızca görsel): beat, tempo ızgarasının başından beri geçen vuruş sayısı.
@@ -89,9 +95,19 @@ func set_beat(beat: float) -> void:
 	modulate = Color.WHITE.lerp(_pulse_tint, strength)
 
 
-## Duvarların şu anki çevre rengi.
+## Duvarların şu anki çevre rengi (dalga sırasında dalganın üstündeki eski renk).
 func ambient() -> Color:
 	return _ambient
+
+
+## Bir duvarın parçalarının çevre renkleri, yukarıdan aşağıya (y, renk); testler için.
+func segment_colors(side: float) -> Array[Vector4]:
+	var result: Array[Vector4] = []
+	for segment: StaticBody2D in (_left if side < 0.0 else _right):
+		var color: Color = _painted[segment]
+		result.append(Vector4(segment.position.y, color.r, color.g, color.b))
+	result.sort_custom(func(a: Vector4, b: Vector4) -> bool: return a.x < b.x)
+	return result
 
 
 ## Bir duvarın katı aralıkları (üst y, alt y), dünyada; testler için.
@@ -212,18 +228,37 @@ func _make_segment(fill_alpha: float, y: float) -> StaticBody2D:
 		visual.visible = i == 0
 		body.add_child(visual)
 		pieces.append(visual)
-		_fills.append(visual)
-		_fill_alphas.append(fill_alpha)
 		var edge: NeonLine = NeonLine.new()
 		edge.visible = i == 0
 		body.add_child(edge)
 		edges.append(edge)
-		_lines.append(edge)
 	_shapes[body] = shapes
 	_pieces[body] = pieces
 	_edges[body] = edges
+	_fill_alpha[body] = fill_alpha
 	add_child(body)
 	return body
+
+
+## Parçayı çevre rengine boyar: kenarın çekirdeği beyaza yakın, parlama ve dolgu çevre renginde.
+func _paint(segment: StaticBody2D, ambient_color: Color) -> void:
+	if _painted.has(segment) and _painted[segment] == ambient_color:
+		return
+	_painted[segment] = ambient_color
+	var core: Color = ambient_color.lerp(Color.WHITE, Neon.STYLE.wall_core_whiten)
+	for line: NeonLine in _edges[segment]:
+		line.color = core
+		line.glow_color = ambient_color
+	for piece: Polygon2D in _pieces[segment]:
+		piece.color = Color(ambient_color, _fill_alpha[segment])
+
+
+## Nabız tepesindeki modulate: kanal kanal vurgu / çevre oranı, parlaklık çarpanıyla.
+static func _pulse_tint_for(ambient_color: Color, accent: Color) -> Color:
+	var boost: float = Neon.STYLE.beat_pulse_boost
+	return Color(accent.r / maxf(ambient_color.r, MIN_CHANNEL) * boost,
+			accent.g / maxf(ambient_color.g, MIN_CHANNEL) * boost,
+			accent.b / maxf(ambient_color.b, MIN_CHANNEL) * boost)
 
 
 ## Kenar çizgisi (parçanın yerel koordinatında): iç kenar boyunca; boşluğa bakan uçta duvar

@@ -127,6 +127,21 @@ extends Resource
 ## Yanıp sönen düğümün tepedeki saydamlığı (vurgu renginde).
 @export_range(0.0, 1.0, 0.05) var grid_flash_alpha: float = 0.5
 
+@export_group("Renk dalgası")
+## Sektör geçişinde yeni paletin ekranın altından üstüne varma süresi (sn; M3-08).
+@export_range(0.2, 4.0, 0.05, "suffix:sn") var wave_time: float = 1.2
+## Duvarların ve izin eski renkten yenisine geçtiği bant: yarısı dalganın önünde, yarısı
+## arkasında.
+@export_range(1.0, 1200.0, 10.0, "suffix:px") var wave_blend: float = 400.0
+## Dalganın önündeki parlak çizginin kalınlığı.
+@export_range(0.5, 20.0, 0.5, "suffix:px") var wave_crest_width: float = 5.0
+## Çizginin çevresindeki ışık bandının yüksekliği.
+@export_range(0.0, 800.0, 10.0, "suffix:px") var wave_glow_height: float = 220.0
+## Işık bandının tepedeki saydamlığı (yeni paletin çevre renginde).
+@export_range(0.0, 1.0, 0.05) var wave_glow_alpha: float = 0.6
+## Işık bandının göründüğü en düşük kalite; altında yalnızca çizgi.
+@export var wave_glow_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
+
 @export_group("Vuruş nabzı")
 ## Nabzın vuruştan sonra sönme süresi (vuruşun kesri). Sesi kapalı oynayan ritmi bundan görür.
 @export_range(0.05, 1.0, 0.05) var beat_pulse_length: float = 0.35
@@ -173,3 +188,24 @@ func shows_blob(quality: GameTypes.Quality) -> bool:
 func beat_pulse(beat: float) -> float:
 	var fade: float = clampf(1.0 - fposmod(beat, 1.0) / beat_pulse_length, 0.0, 1.0)
 	return fade * fade
+
+
+## Renk dalgasının ilerleyişi (0 ekranın altında – 1 üstünde): geçişten beri geçen süreye göre.
+func wave_progress(elapsed: float) -> float:
+	return clampf(elapsed / wave_time, 0.0, 1.0)
+
+
+## Dalganın önünün y'si: progress 0'da bottom, 1'de top (ekranda ya da dünyada aynı).
+func wave_front(progress: float, top: float, bottom: float) -> float:
+	return lerpf(bottom, top, progress)
+
+
+## y'deki bir şeyin yeni palete ne kadar geçtiği (0 eski – 1 yeni): dalganın önünün altında
+## (geçtiği yer) yeni, üstünde eski; aradaki wave_blend bandında yumuşak.
+func wave_weight(y: float, front: float) -> float:
+	return clampf((y - front) / wave_blend + 0.5, 0.0, 1.0)
+
+
+## Dalganın ekranda yukarıdan ratio kesrindeki (0 üst – 1 alt) yere varma süresi (sn).
+func wave_reach_time(ratio: float) -> float:
+	return wave_time * (1.0 - clampf(ratio, 0.0, 1.0))

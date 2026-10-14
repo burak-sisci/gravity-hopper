@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Koridor ve duvar boşlukları (M2-11, architecture.md §5.2): boşluk aralığında duvar yok, sınırlar
 ## tam boşluk kenarında, düğüm sayısı değişmez. Neon kenarlar (M3-03) çarpışmayla aynı yerde,
-## kesik yalnızca boşluk kenarında; vuruşta nabız.
+## kesik yalnızca boşluk kenarında; vuruşta nabız. Renk dalgası (M3-08) parçaları önün altında
+## yeni, üstünde eski renge boyar.
 
 const HALF_WIDTH: float = 450.0
 ## İki duvarda boşluklar; ikisi parça sınırına (-1000, -1400) tam denk gelir.
@@ -108,6 +109,40 @@ func test_beat_pulse_brightens_walls_toward_accent() -> void:
 	assert_bool(peak.r > peak.g and peak.g > 1.0 and peak.b > 1.0).is_true()
 	_corridor.set_beat(4.1)
 	assert_bool(_corridor.modulate.r < peak.r and _corridor.modulate.r > 1.0).is_true()
+
+
+func test_wave_paints_below_front_new_and_above_old() -> void:
+	var old_color: Color = Color(0.3, 0.85, 0.95)
+	var new_color: Color = Color(0.65, 0.45, 1.0)
+	_corridor.set_colors(old_color, Color(0.8, 0.97, 1.0))
+	var front: float = -2000.0
+	var half_band: float = Neon.STYLE.wave_blend * 0.5
+	_corridor.set_wave(front, new_color, Color(0.88, 0.8, 1.0))
+	var counts: Vector3i = Vector3i.ZERO
+	for side: float in [-1.0, 1.0]:
+		for entry: Vector4 in _corridor.segment_colors(side):
+			var color: Color = Color(entry.y, entry.z, entry.w)
+			if entry.x >= front + half_band:
+				assert_bool(color.is_equal_approx(new_color)).is_true()
+				counts.x += 1
+			elif entry.x <= front - half_band:
+				assert_bool(color.is_equal_approx(old_color)).is_true()
+				counts.y += 1
+			else:
+				# Bantta karışık: kırmızı kanal iki rengin arasında.
+				assert_float(color.r).is_between(old_color.r, new_color.r)
+				counts.z += 1
+	assert_bool(counts.x > 0 and counts.y > 0).is_true()
+	# Görünüş de boyanıyor: kenar parlamaları iki renkte.
+	var glows: Array[Color] = []
+	for line: Node in _corridor.find_children("*", "NeonLine", true, false):
+		glows.append((line as NeonLine).glow_color)
+	assert_array(glows).contains([old_color, new_color])
+	# Dalganın üstündeki renk set_colors'unki; dalga bitince set_colors hepsini yeniler.
+	assert_bool(_corridor.ambient().is_equal_approx(old_color)).is_true()
+	_corridor.set_colors(new_color, Color(0.88, 0.8, 1.0))
+	for entry: Vector4 in _corridor.segment_colors(-1.0):
+		assert_bool(Color(entry.y, entry.z, entry.w).is_equal_approx(new_color)).is_true()
 
 
 ## Çizginin dikey kısmı: (x, üst y, alt y).

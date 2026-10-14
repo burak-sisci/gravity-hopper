@@ -45,6 +45,13 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	# Tur başında palet anında gelir (M3-02).
 	assert_bool(corridor.ambient().is_equal_approx(_palette(1).ambient)).is_true()
 	var ambient_on_entry: Color = Color.BLACK
+	var background: Background = run.get_node("%Background") as Background
+	# Renk dalgası (M3-08): girişte başlıyor mu, kaç adım sürüyor, ortasında duvarlar.
+	var wave_on_entry: bool = false
+	var clear_on_entry: Color = Color.BLACK
+	var wave_steps: int = 0
+	var mid_wave: Array[Vector4] = []
+	var half_wave: int = roundi(Neon.STYLE.wave_time * 30.0)
 	# await physics_frame adım işlenmeden döner; ölçüm ilk tam adımdan sonra başlar.
 	await _frames(2)
 	var previous_y: float = player.position.y
@@ -57,11 +64,17 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 			entered_at[run.sector] = conductor.run_time
 			if run.sector == 2:
 				ambient_on_entry = corridor.ambient()
+				wave_on_entry = background.is_wave_active()
+				clear_on_entry = RenderingServer.get_default_clear_color()
 		elif not speeds.has(run.sector):
 			speeds[run.sector] = step
 		else:
 			# Adım tam sabit (Player, kaymanın dikey payını geri alır; M2-10).
 			assert_float(step).is_equal_approx(speeds[run.sector], 0.002)
+		if run.sector == 2 and run.sector == previous_sector and background.is_wave_active():
+			wave_steps += 1
+			if wave_steps == half_wave:
+				mid_wave = corridor.segment_colors(-1.0)
 		previous_sector = run.sector
 		var half_beat: float = conductor.beat_length() * 0.5
 		for chunk: ChunkInfo in spawner.active_chunks():
@@ -92,13 +105,23 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	assert_str(String(run.track.id)).is_equal(String(track_id))
 	assert_float(conductor.bpm).is_equal(run.track.bpm)
 	assert_float(conductor.beat_time()).is_equal_approx(conductor.run_time, 0.000001)
-	# Renkler paletten (M3-02): S2'ye girişte geçiş yeni başlıyor (renk sıçramıyor); S3'e çok
-	# önce girildi, 0,6 sn'lik geçiş bitti: duvarlar ve arka plan S3 paletinde.
+	# Renkler paletten (M3-02): S2'ye girişte dalga yeni başlıyor (duvarlar hâlâ S1 renginde,
+	# ekranın temizleme rengi S2'ninki; eskisini dalganın üstü örter). Dalga wave_time sürer;
+	# ortasında üstteki duvarlar eski, alttakiler yeni renkte. S3'e çok önce girildi, dalga
+	# bitti: duvarlar ve arka plan S3 paletinde.
 	assert_float(_channel_gap(ambient_on_entry, _palette(1).ambient)).is_less(0.05)
 	assert_float(_channel_gap(ambient_on_entry, _palette(2).ambient)).is_greater(0.1)
+	assert_bool(wave_on_entry).is_true()
+	assert_bool(clear_on_entry.is_equal_approx(_palette(2).background)).is_true()
+	assert_int(wave_steps).is_between(half_wave * 2 - 2, half_wave * 2 + 1)
+	var top: Vector4 = mid_wave[0]
+	var bottom: Vector4 = mid_wave[mid_wave.size() - 1]
+	assert_bool(Color(top.y, top.z, top.w).is_equal_approx(_palette(1).ambient)).is_true()
+	assert_bool(Color(bottom.y, bottom.z, bottom.w).is_equal_approx(_palette(2).ambient)).is_true()
+	assert_bool(background.is_wave_active()).is_false()
 	assert_bool(corridor.ambient().is_equal_approx(_palette(3).ambient)).is_true()
-	var background: Color = RenderingServer.get_default_clear_color()
-	assert_bool(background.is_equal_approx(_palette(3).background)).is_true()
+	var clear: Color = RenderingServer.get_default_clear_color()
+	assert_bool(clear.is_equal_approx(_palette(3).background)).is_true()
 
 
 func test_start_sector_sets_height_and_speed() -> void:

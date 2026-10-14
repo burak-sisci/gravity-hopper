@@ -19,14 +19,14 @@ extends Node2D
 ## yayılır.
 ##
 ## Renkler (M3-02): sektörün paleti (SectorPalette) duvarlara ve arka plana (ekranın temizleme
-## rengi) uygulanır; tur başında anında, sektör geçişinde yumuşak geçişle (yalnızca görsel).
+## rengi) uygulanır; tur başında anında, sektör geçişinde renk dalgasıyla (yalnızca görsel).
+## Renk dalgası (M3-08, ADR-051): yeni palet ekranın altından üstüne NeonStyle.wave_time'da
+## yayılır; arka plan, duvarlar ve iz dalganın önüne göre boyanır. Afiş dalga ona varınca
+## gelir (HUD aynı süreyi NeonStyle'dan okur).
 ## Arka plan veri ağı (M3-07): Background kameranın y'siyle paralaks kayar, vuruşta nabız atar.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
-## Sektör geçişinde paletin yumuşak geçiş süresi (yalnızca görsel; renk dalgası M3-08'de).
-const PALETTE_FADE_TIME: float = 0.6
-
 @export var tuning: TuningConfig
 @export var sectors: SectorCatalog
 @export var music: MusicCatalog
@@ -55,11 +55,13 @@ var _proximity: float = -1.0
 ## Kıl payı kombosu (M2-14): zincir uzunluğu ve son kıl payının oyun zamanı.
 var _combo: int = 0
 var _last_graze_time: float = 0.0
-## Gösterilen çevre ve arka plan rengi (geçiş sırasında iki paletin arası).
+## Gösterilen palet (dalga sırasında dalganın üstündeki eski palet).
 var _ambient: Color = Color.WHITE
 var _accent: Color = Color.WHITE
 var _background_color: Color = Color.BLACK
-var _palette_tween: Tween
+## Renk dalgasının getirdiği palet (dalga yokken null) ve dalganın başından beri geçen süre.
+var _wave_palette: SectorPalette = null
+var _wave_elapsed: float = 0.0
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -109,6 +111,7 @@ func _physics_process(delta: float) -> void:
 	if _player.position.y <= _next_boundary_y:
 		_enter_sector(sector + 1)
 	_update_view()
+	_advance_wave(delta)
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
 	# Duvarlar ve arka plan ağı vuruşta nabız atar (M3-03, M3-07; yalnızca görsel).
 	var beat: float = _conductor.beat_time() / _conductor.beat_length()
@@ -195,25 +198,45 @@ func _update_view() -> void:
 	_corridor.update_view(_camera.view_bottom(), half_width)
 
 
-## Sektörün paletini gösterir: anında ya da PALETTE_FADE_TIME boyunca şu anki renklerden.
+## Sektörün paletini gösterir: anında ya da renk dalgasıyla.
 func _show_palette(palette: SectorPalette, instant: bool) -> void:
 	if palette == null:
 		return
-	if _palette_tween != null:
-		_palette_tween.kill()
+	if _wave_palette != null:
+		_finish_wave()
 	if instant:
 		_apply_colors(palette.ambient, palette.accent, palette.background)
 		return
-	_palette_tween = create_tween()
-	var fade: Callable = _fade_palette.bind(_ambient, _accent, _background_color, palette)
-	_palette_tween.tween_method(fade, 0.0, 1.0, PALETTE_FADE_TIME)
+	_wave_palette = palette
+	_wave_elapsed = 0.0
+	# Ekranın temizleme rengi hemen yenisi; eskisi dalganın üstünü örter (Background).
+	_background.start_wave(_background_color, palette.ambient, palette.accent)
+	RenderingServer.set_default_clear_color(palette.background)
+	_advance_wave(0.0)
 
 
-func _fade_palette(weight: float, from_ambient: Color, from_accent: Color, from_background: Color,
-		palette: SectorPalette) -> void:
-	_apply_colors(from_ambient.lerp(palette.ambient, weight),
-			from_accent.lerp(palette.accent, weight),
-			from_background.lerp(palette.background, weight))
+## Dalganın önünü ilerletir (ekranda alttan üste; dünyada kameranın görünür alanına göre).
+func _advance_wave(delta: float) -> void:
+	if _wave_palette == null:
+		return
+	var style: NeonStyle = Neon.STYLE
+	_wave_elapsed += delta
+	var progress: float = style.wave_progress(_wave_elapsed)
+	if progress >= 1.0:
+		_finish_wave()
+		return
+	var front_y: float = style.wave_front(progress, _camera.view_top(), _camera.view_bottom())
+	_background.set_wave(progress)
+	_corridor.set_wave(front_y, _wave_palette.ambient, _wave_palette.accent)
+	var weight: float = style.wave_weight(_player.position.y, front_y)
+	_player.set_ambient(_ambient.lerp(_wave_palette.ambient, weight))
+
+
+func _finish_wave() -> void:
+	var palette: SectorPalette = _wave_palette
+	_wave_palette = null
+	_background.end_wave()
+	_apply_colors(palette.ambient, palette.accent, palette.background)
 
 
 func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:

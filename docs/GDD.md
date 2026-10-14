@@ -176,7 +176,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 1. Engeller durur; kısa bir boş koridor gelir.
 2. Ekranda sektör afişi belirir ("SEKTÖR 2 · VERİ AKIŞI").
-3. Renk dalgası aşağıdan yukarıya yayılır; müzik kesilmeden sürer, yeni sektörün engelleri müziğin vuruşuyla başlar.
+3. Renk dalgası aşağıdan yukarıya yayılır (~1,2 sn; afiş dalga ona ulaşınca belirir); müzik kesilmeden sürer, yeni sektörün engelleri müziğin vuruşuyla başlar.
 4. Hız bir basamak artar; küçük bir Glimmer bonusu verilir.
 
 **Kontrol noktaları:**

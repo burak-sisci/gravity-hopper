@@ -8,22 +8,24 @@ extends Node2D
 ## efekt kalitesini (Neon.quality) değiştirir.
 ## Arka plan, oyunun veri ağıdır (Background, M3-07): kaliteyle birlikte değişir (düşükte ve
 ## WorldEnvironment modunda düz renk), kayar ve vuruşta nabız atar.
+## Renk dalgası modu (M3-08): yüksek kalitede, sektör paletleri arasında art arda renk dalgası
+## (dalganın maliyeti). Ölçüm bitince tezgâh bu modda kalır (telefonda ekran görüntüsü için).
 
-enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM }
+enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE }
 
 const MODE_NAMES: Array[String] = [
 	"Parlama yok (düşük kalite)", "WorldEnvironment glow", "Sahte parlama (yüksek kalite)",
-	"Sahte parlama (orta kalite)",
+	"Sahte parlama (orta kalite)", "Renk dalgası (yüksek kalite)",
 ]
-const MODE_ARGS: Array[String] = ["off", "env", "fake", "medium"]
+const MODE_ARGS: Array[String] = ["off", "env", "fake", "medium", "wave"]
 ## Her modda neon bileşenlerinin efekt kalitesi; düşük kalitede sahte parlama yok.
 const MODE_QUALITY: Array[GameTypes.Quality] = [
 	GameTypes.Quality.LOW, GameTypes.Quality.LOW, GameTypes.Quality.HIGH,
-	GameTypes.Quality.MEDIUM,
+	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH,
 ]
 const BENCH_ORDER: Array[Mode] = [
-	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM,
-	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE,
 ]
 const WARMUP_SEC: float = 1.5
 const MEASURE_SEC: float = 4.0
@@ -53,6 +55,9 @@ const PLAYER_HEIGHT_RATIO: float = 0.62
 ## Arka plan ağının nabız temposu (müzik parçalarının aralığında).
 const BENCH_BPM: float = 120.0
 const SECONDS_PER_MINUTE: float = 60.0
+## Dalga modunda iki dalga arasındaki bekleme (sn).
+const WAVE_GAP_SEC: float = 0.3
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 
 ## S1 paleti taslağı; kesin tonlar M3'te seçilecek.
 const COLOR_WALL: Color = Color(0.0, 0.9, 1.0)
@@ -69,6 +74,10 @@ var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 ## Sahte kameranın y'si (dünya yukarı doğru akar) ve vuruş sayacı: arka plan ağı için.
 var _scroll_y: float = 0.0
 var _beat: float = 0.0
+## Dalga modu: sıradaki paletin sektörü ve bu dalganın başından beri geçen süre.
+var _wave_sector: int = 1
+var _wave_elapsed: float = 0.0
+var _default_clear: Color = Color.BLACK
 
 var _bench_done: bool = false
 var _bench_index: int = 0
@@ -94,6 +103,7 @@ func _ready() -> void:
 	_glow_environment = _world_environment.environment
 	_build_world()
 	_background.set_colors(COLOR_WALL, COLOR_ACCENT)
+	_default_clear = RenderingServer.get_default_clear_color()
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 	_last_tick_usec = Time.get_ticks_usec()
 
@@ -139,6 +149,8 @@ func _physics_process(delta: float) -> void:
 	_background.set_scroll(_scroll_y)
 	_beat += delta * BENCH_BPM / SECONDS_PER_MINUTE
 	_background.set_beat(_beat)
+	if _mode == Mode.WAVE:
+		_advance_wave(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -161,6 +173,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _apply_mode(mode: Mode) -> void:
+	if _mode == Mode.WAVE and mode != Mode.WAVE:
+		_stop_wave()
 	_mode = mode
 	# Parlama dışındaki modlarda ortam tamamen kaldırılır; böylece taban ölçüm,
 	# WorldEnvironment'ı hiç olmayan bir oyunu temsil eder.
@@ -230,7 +244,41 @@ func _end_bench() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	print("BENCH done")
 	_add_debug_menu()
-	_apply_mode(Mode.FAKE_GLOW)
+	_apply_mode(Mode.WAVE)
+
+
+## Dalga modu: palet dalgası alttan üste yürür; bitince kısa bekleme ve sıradaki sektörün
+## paletiyle yeni dalga.
+func _advance_wave(delta: float) -> void:
+	var style: NeonStyle = Neon.STYLE
+	if not _background.is_wave_active():
+		_wave_elapsed += delta
+		if _wave_elapsed < WAVE_GAP_SEC:
+			return
+		var from: SectorPalette = SECTORS.def_at(_wave_sector).palette
+		_wave_sector = wrapi(_wave_sector + 1, 1, SECTORS.count() + 1)
+		var to: SectorPalette = SECTORS.def_at(_wave_sector).palette
+		_background.start_wave(from.background, to.ambient, to.accent)
+		RenderingServer.set_default_clear_color(to.background)
+		_wave_elapsed = 0.0
+	_wave_elapsed += delta
+	var progress: float = style.wave_progress(_wave_elapsed)
+	_background.set_wave(progress)
+	if progress >= 1.0:
+		var palette: SectorPalette = SECTORS.def_at(_wave_sector).palette
+		_background.end_wave()
+		_background.set_colors(palette.ambient, palette.accent)
+		_wave_elapsed = 0.0
+
+
+## Dalga modundan çıkınca tezgâhın kendi renklerine dönülür.
+func _stop_wave() -> void:
+	if _background.is_wave_active():
+		_background.end_wave()
+	_background.set_colors(COLOR_WALL, COLOR_ACCENT)
+	RenderingServer.set_default_clear_color(_default_clear)
+	_wave_sector = 1
+	_wave_elapsed = 0.0
 
 
 func _sample_gpubusy() -> void:
