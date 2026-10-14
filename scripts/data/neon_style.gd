@@ -40,6 +40,28 @@ extends Resource
 ## İzin baştaki kalınlığı; kuyruğa doğru sıfıra iner.
 @export_range(1.0, 60.0, 0.5, "suffix:px") var trail_width: float = 18.0
 
+@export_group("Sıkışma-uzama")
+## Çevirmede çekirdeğin yana uzama oranı (0,25 = %25 geniş ve o oranda ince; M3-11).
+@export_range(0.0, 1.0, 0.01) var stretch_on_flip: float = 0.25
+## İnişte çekirdeğin duvara basılma oranı (yana daralır, boyu uzar).
+@export_range(0.0, 0.9, 0.01) var squash_on_landing: float = 0.22
+## Geri yaylanmanın salınım sıklığı.
+@export_range(0.5, 20.0, 0.1, "suffix:Hz") var squash_frequency: float = 5.0
+## Geri yaylanmanın sönümü (0 = hiç sönmez, 1'e yakın = salınımsız).
+@export_range(0.05, 0.95, 0.01) var squash_damping: float = 0.4
+
+@export_group("Parçacıklar")
+## Orta kalitede parçacık sayısının yüksek kaliteye oranı (M3-11).
+@export_range(0.0, 1.0, 0.05) var particle_medium_ratio: float = 0.75
+## Düşük kalitede parçacık sayısının oranı; her patlamada en az bir parçacık kalır.
+@export_range(0.0, 1.0, 0.05) var particle_low_ratio: float = 0.4
+## İniş kıvılcımı: duvara değilen noktadan koridorun içine saçılır (sektörün çevre renginde).
+@export var landing_spark: BurstStyle
+## Glimmer patlaması: toplanan Glimmer'ın yerinde, her yöne.
+@export var glimmer_burst: BurstStyle
+## Ölüm patlaması: çekirdek dağılır (ölüm donmasının sonunda).
+@export var death_burst: BurstStyle
+
 @export_group("Tehlikeler")
 ## Sivri köşeli kenar çizgisinde köşe sivriliğinin sınırı (Line2D.sharp_limit).
 @export_range(1.0, 20.0, 0.5) var sharp_limit: float = 8.0
@@ -215,6 +237,16 @@ func tone_color(tone: GameTypes.NeonTone, custom: Color) -> Color:
 		GameTypes.NeonTone.PLAYER:
 			return player_color
 	return custom
+
+
+## Verilen kalitede bir patlamanın parçacık sayısı (en az 1).
+func particle_amount(base: int, quality: GameTypes.Quality) -> int:
+	match quality:
+		GameTypes.Quality.HIGH:
+			return base
+		GameTypes.Quality.MEDIUM:
+			return maxi(roundi(base * particle_medium_ratio), 1)
+	return maxi(roundi(base * particle_low_ratio), 1)
 
 
 ## Verilen kalitede ışık lekesi görünür mü.

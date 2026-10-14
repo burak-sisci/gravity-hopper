@@ -6,8 +6,9 @@ extends Area2D
 ## Parça havuzdan yeniden gelince reset() ile yeniden etkinleşir.
 ## Görünüş (M3-06): yeşil neon daire (NeonShape, ışık lekesi); her vuruşta büyüyüp söner.
 ## Daire çarpışma yarıçapından kurulur. Vuruşu ChunkInfo'dan alır (set_beat).
+## Toplanınca yeri de bildirilir (M3-11): Run orada Glimmer patlamasını çıkarır.
 
-signal collected(value: int)
+signal collected(value: int, at: Vector2)
 
 ## Temel değer; kombo çarpanı RunStats'ta uygulanır.
 @export var value: int = 1
@@ -53,4 +54,4 @@ func _on_area_entered(_area: Area2D) -> void:
 	visible = false
 	# Fizik bildirimi sırasında şekil değiştirilemez; bir sonraki adımda kapanır.
 	_shape.set_deferred("disabled", true)
-	collected.emit(value)
+	collected.emit(value, global_position)

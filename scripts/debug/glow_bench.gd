@@ -12,30 +12,37 @@ extends Node2D
 ## (dalganın maliyeti).
 ## Çöküş duvarı modları (M3-09): oyunun CollapseWall'u ekranın alt dörtte birinde (oyuncuya
 ## yakın), glitch'i vuruşla değişir; oyunun HUD'u ve duvar vinyeti açık. Yüksek ve orta
-## kalitede. Ölçüm bitince tezgâh yüksek kaliteli duvar modunda kalır (telefonda ekran
-## görüntüsü için).
+## kalitede.
+## Parçacık modları (M3-11): oyunun Effects'i iniş kıvılcımını, Glimmer ve ölüm patlamasını
+## oyundakinden çok daha sık çıkarır (en kötü durum); yüksek ve düşük kalitede. Ölçüm bitince
+## tezgâh yüksek kaliteli parçacık modunda kalır (telefonda ekran görüntüsü için).
 
-enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE, COLLAPSE, COLLAPSE_MEDIUM }
+enum Mode {
+	OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE, COLLAPSE, COLLAPSE_MEDIUM, PARTICLES,
+	PARTICLES_LOW,
+}
 
 const MODE_NAMES: Array[String] = [
 	"Parlama yok (düşük kalite)", "WorldEnvironment glow", "Sahte parlama (yüksek kalite)",
 	"Sahte parlama (orta kalite)", "Renk dalgası (yüksek kalite)",
 	"Çöküş duvarı (yüksek kalite)", "Çöküş duvarı (orta kalite)",
+	"Parçacıklar (yüksek kalite)", "Parçacıklar (düşük kalite)",
 ]
 const MODE_ARGS: Array[String] = [
-	"off", "env", "fake", "medium", "wave", "collapse", "collapse_medium",
+	"off", "env", "fake", "medium", "wave", "collapse", "collapse_medium", "particles",
+	"particles_low",
 ]
 ## Her modda neon bileşenlerinin efekt kalitesi; düşük kalitede sahte parlama yok.
 const MODE_QUALITY: Array[GameTypes.Quality] = [
 	GameTypes.Quality.LOW, GameTypes.Quality.LOW, GameTypes.Quality.HIGH,
 	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH, GameTypes.Quality.HIGH,
-	GameTypes.Quality.MEDIUM,
+	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH, GameTypes.Quality.LOW,
 ]
 const BENCH_ORDER: Array[Mode] = [
 	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
-	Mode.COLLAPSE_MEDIUM,
+	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW,
 	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
-	Mode.COLLAPSE_MEDIUM,
+	Mode.COLLAPSE_MEDIUM, Mode.PARTICLES, Mode.PARTICLES_LOW,
 ]
 const WARMUP_SEC: float = 1.5
 const MEASURE_SEC: float = 4.0
@@ -74,6 +81,13 @@ const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
 ## yakınlığı.
 const COLLAPSE_HEIGHT_RATIO: float = 0.75
 const COLLAPSE_PROXIMITY: float = 0.6
+## Parçacık modlarında patlamaların aralığı (sn). Oyunda iniş en çok ≈ 0,4 sn'de bir, Glimmer
+## ve ölüm çok daha seyrek; burada üçü birden sürekli.
+const SPARK_INTERVAL: float = 0.35
+const GLIMMER_INTERVAL: float = 0.2
+const DEATH_INTERVAL: float = 1.0
+## Glimmer patlamalarının çıktığı bant (ekran yüksekliğine oranla).
+const GLIMMER_BAND: Vector2 = Vector2(0.2, 0.7)
 
 ## S1 paleti taslağı; kesin tonlar M3'te seçilecek.
 const COLOR_WALL: Color = Color(0.0, 0.9, 1.0)
@@ -96,6 +110,13 @@ var _wave_elapsed: float = 0.0
 var _default_clear: Color = Color.BLACK
 var _collapse: CollapseWall
 var _hud: Control
+var _effects: Effects
+var _player_pos: Vector2 = Vector2.ZERO
+## Parçacık modlarının patlama sayaçları ve kıvılcımın çıktığı duvar.
+var _spark_elapsed: float = 0.0
+var _glimmer_elapsed: float = 0.0
+var _death_elapsed: float = 0.0
+var _spark_right: bool = false
 
 var _bench_done: bool = false
 var _bench_index: int = 0
@@ -170,6 +191,8 @@ func _physics_process(delta: float) -> void:
 	_collapse.set_beat(_beat)
 	if _mode == Mode.WAVE:
 		_advance_wave(delta)
+	if _mode == Mode.PARTICLES or _mode == Mode.PARTICLES_LOW:
+		_advance_particles(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -267,7 +290,7 @@ func _end_bench() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	print("BENCH done")
 	_add_debug_menu()
-	_apply_mode(Mode.COLLAPSE)
+	_apply_mode(Mode.PARTICLES)
 
 
 ## Dalga modu: palet dalgası alttan üste yürür; bitince kısa bekleme ve sıradaki sektörün
@@ -292,6 +315,28 @@ func _advance_wave(delta: float) -> void:
 		_background.end_wave()
 		_background.set_colors(palette.ambient, palette.accent)
 		_wave_elapsed = 0.0
+
+
+## Parçacık modları: iki duvarda sırayla iniş kıvılcımı, bantta rastgele Glimmer patlaması,
+## ortada ölüm patlaması.
+func _advance_particles(delta: float) -> void:
+	var view: Vector2 = get_viewport_rect().size
+	_spark_elapsed += delta
+	_glimmer_elapsed += delta
+	_death_elapsed += delta
+	if _spark_elapsed >= SPARK_INTERVAL:
+		_spark_elapsed = 0.0
+		_spark_right = not _spark_right
+		var wall_x: float = view.x - WALL_INSET if _spark_right else WALL_INSET
+		_effects.landing_spark(Vector2(wall_x, _player_pos.y), 1.0 if _spark_right else -1.0)
+	if _glimmer_elapsed >= GLIMMER_INTERVAL:
+		_glimmer_elapsed = 0.0
+		_effects.glimmer_burst(Vector2(
+				_rng.randf_range(WALL_INSET * 2.0, view.x - WALL_INSET * 2.0),
+				view.y * _rng.randf_range(GLIMMER_BAND.x, GLIMMER_BAND.y)))
+	if _death_elapsed >= DEATH_INTERVAL:
+		_death_elapsed = 0.0
+		_effects.death_burst(Vector2(view.x * 0.5, _player_pos.y))
 
 
 ## Dalga modundan çıkınca tezgâhın kendi renklerine dönülür.
@@ -388,12 +433,18 @@ func _build_world() -> void:
 
 	# Oyuncu: sol duvara tutunmuş beyaz çekirdek ve sağ duvardan gelen iz
 	var player_pos: Vector2 = Vector2(left_x + 40.0, view.y * PLAYER_HEIGHT_RATIO)
+	_player_pos = player_pos
 	_add_trail(player_pos, right_x - 40.0)
 	var player: NeonShape = _add_shape(_shapes, PackedVector2Array([
 		player_pos + Vector2(0.0, -48.0), player_pos + Vector2(30.0, 0.0),
 		player_pos + Vector2(0.0, 48.0), player_pos + Vector2(-30.0, 0.0),
 	]), COLOR_PLAYER)
 	player.fill_alpha = PLAYER_FILL_ALPHA
+
+	# Parçacıklar (yalnızca parçacık modlarında patlar)
+	_effects = Effects.new()
+	_shapes.add_child(_effects)
+	_effects.set_ambient(COLOR_WALL)
 
 
 ## Kaydırılan (aşağı akan) bir kap ekler ve bandın içinde rastgele bir yüksekliğe koyar.

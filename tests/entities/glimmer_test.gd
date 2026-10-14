@@ -50,7 +50,7 @@ func test_reset_brings_glimmer_back() -> void:
 	add_child(chunk)
 	var glimmer: Glimmer = chunk.items()[0] as Glimmer
 	var values: Array[int] = []
-	chunk.glimmer_collected.connect(func(value: int) -> void: values.append(value))
+	chunk.glimmer_collected.connect(func(value: int, _at: Vector2) -> void: values.append(value))
 	glimmer.area_entered.emit(auto_free(Area2D.new()))
 	assert_bool(glimmer.is_taken()).is_true()
 	assert_bool(glimmer.visible).is_false()

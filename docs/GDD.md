@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-14 (M3-10 ölümde donma ve ekran sarsıntısı; önceki: M3-09 çöküş duvarının görünüşü) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-14 (M3-11 sıkışma-uzama ve parçacıklar; önceki: M3-10 ölümde donma ve ekran sarsıntısı) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -272,6 +272,9 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
   - **Ölüm (M3-10):** dünya 0,1 sn donar (engeller, ışınlar, duvar, iz yerinde; müzik sürer), ardından ekran güçlü biçimde **yalnızca yana** sarsılır ve hızla söner. Oyuncunun üstünde görünen mesafe sarsıntıda değişmez, yeni tur yine yarım saniyeden kısa sürede başlar. Kalkan kırılınca daha hafif bir sarsıntı (donma yok). Değerler ayar panelinde (Oyun hissi).
+  - **Ölüm patlaması (M3-11):** donma bitince çekirdek kaybolur ve yerinde beyaz kıvılcımlarla dağılır (sarsıntıyla aynı anda); iz o noktaya toplanır.
+  - **Sıkışma-uzama (M3-11, yalnızca görsel):** çevirmede çekirdek yana %25 uzar (o oranda incelir), duvara inince %22 basılır; bir yayla, bir kez hafifçe geri yaylanarak eski haline döner. Çarpışma kutusu değişmez.
+  - **Parçacıklar (M3-11):** duvara her inişte değilen noktadan koridorun içine sektör renginde kısa kıvılcımlar; Glimmer toplanınca yeşil bir patlama. Düşük kalitede parçacık sayısı azalır (%40), ortada %75.
 
 ## 20. Arayüz ekranları
 

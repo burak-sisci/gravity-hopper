@@ -27,6 +27,8 @@ extends Node2D
 ## Oyun hissi (M3-10): ölümde dünya death_freeze boyunca donar, ardından kamera sarsılır; kalkan
 ## kırılınca da hafifçe sarsılır (yalnızca yatay, görüş kuralı bozulmaz). Parça havuzları
 ## turlar arasında Main'in ChunkPools'unda korunur (ADR-054).
+## Parçacıklar (M3-11): Effects iniş kıvılcımını, Glimmer patlamasını ve donmanın sonunda ölüm
+## patlamasını çıkarır (çekirdek o anda gizlenir).
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -80,6 +82,7 @@ var _freeze_left: float = 0.0
 @onready var _player: Player = %Player
 @onready var _pressure: PressureSystem = %PressureSystem
 @onready var _collapse_wall: CollapseWall = %CollapseWall
+@onready var _effects: Effects = %Effects
 
 
 func _ready() -> void:
@@ -111,6 +114,7 @@ func _ready() -> void:
 	_pressure.setup(tuning.wall_start_distance, tuning.wall_max_distance, def.wall_creep)
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
 	_player.shield_broken.connect(_on_shield_broken)
+	_player.landed.connect(_effects.landing_spark)
 	_update_view()
 	_update_wall()
 	# Tur ilk karesinden yerinde (M3-10'da bulundu): ara değerleme bütün dünyada sıfırlanır
@@ -200,15 +204,17 @@ func _on_shield_broken() -> void:
 	_camera.add_trauma(tuning.shield_trauma)
 
 
-func _on_glimmer_collected(value: int) -> void:
+func _on_glimmer_collected(value: int, at: Vector2) -> void:
 	Events.glimmer_collected.emit(stats.add_glimmer(value))
 	_pressure.push(tuning.glimmer_push)
+	_effects.glimmer_burst(at)
 
 
 ## Ölümde kısa donma (M3-10, GDD §19): ölümün görüldüğü adımdan death_freeze boyunca dünya
 ## ilerlemez (vuruş, lazer, dalga, duvar, iz); bitince kamera sarsılır. Ara değerlenen arka plan
 ## titremesin diye son değerleri yeniden verilir. Ölü oyuncunun turunda oynanış yoktur; donma
-## yeniden başlama süresinin içindedir. Dünya bu adım donuksa true.
+## yeniden başlama süresinin içindedir. Donma bitince çekirdek patlar (_shatter). Dünya bu adım
+## donuksa true.
 func _frozen(delta: float) -> bool:
 	if not _death_seen:
 		if _player.is_alive():
@@ -216,7 +222,7 @@ func _frozen(delta: float) -> bool:
 		_death_seen = true
 		_freeze_left = tuning.death_freeze
 		if _freeze_left <= 0.0:
-			_camera.add_trauma(tuning.death_trauma)
+			_shatter()
 			return false
 		_player.set_held(true)
 	if _freeze_left <= 0.0:
@@ -226,8 +232,15 @@ func _frozen(delta: float) -> bool:
 	_advance_wave(0.0)
 	if _freeze_left <= 0.0:
 		_player.set_held(false)
-		_camera.add_trauma(tuning.death_trauma)
+		_shatter()
 	return true
+
+
+## Ölüm donmasının sonu (M3-11): çekirdek gizlenir, yerinde ölüm patlaması çıkar, kamera sarsılır.
+func _shatter() -> void:
+	_player.hide_core()
+	_effects.death_burst(_player.global_position)
+	_camera.add_trauma(tuning.death_trauma)
 
 
 ## Sektörün bittiği dünya y'si (son sektörde -INF).
@@ -293,4 +306,5 @@ func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:
 	_corridor.set_colors(ambient, accent)
 	_background.set_colors(ambient, accent)
 	_player.set_ambient(ambient)
+	_effects.set_ambient(ambient)
 	RenderingServer.set_default_clear_color(background)

@@ -25,7 +25,7 @@ extends Node2D
 ## düğümün altında kurulur ve turla birlikte silinir.
 
 ## Etkin bir parçadaki Glimmer toplandı (M2-13); Run, RunStats'a verir.
-signal glimmer_collected(value: int)
+signal glimmer_collected(value: int, at: Vector2)
 
 ## Görünür alanın üstünde dolu tutulan alan (ekran boyu cinsinden).
 const AHEAD_SCREENS: float = 2.0

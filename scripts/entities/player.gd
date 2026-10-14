@@ -16,11 +16,16 @@ extends CharacterBody2D
 ## Görsel (M3-04): neon elmas (Visual, NeonShape) ve iz (Trail). İz her fizik adımında konumu
 ## alır; ölünce kayıt sürer, böylece iz çekirdeğe doğru toplanır.
 ## Ölümde kısa donma (M3-10): Run set_held() ile oyuncuyu ve izini bir süre yerinde tutar.
+## Sıkışma-uzama (M3-11, yalnızca görsel): çevirmede çekirdek yana uzar, duvara inince basılır
+## (SquashStretch, Visual'ın ölçeği); çarpışma şekilleri değişmez. Duvara iniş yukarı landed ile
+## bildirilir (Run iniş kıvılcımını çıkarır). Ölüm patlamasında Run hide_core() çağırır.
 
 ## Bir tehlike çarpışma kutusuna değmeden kıl payı alanından geçti (Run bağlar).
 signal near_missed
 ## Kalkan bir darbeyi emdi (Run çöküş duvarını çeker).
 signal shield_broken
+## Oyuncu duvara indi: at duvara değilen nokta (dünya), side duvarın yönü (Run kıvılcımı çıkarır).
+signal landed(at: Vector2, side: float)
 
 ## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
 const INVINCIBLE_ALPHA: float = 0.45
@@ -41,6 +46,9 @@ var _invincible: bool = false
 var _coyote_left: float = 0.0
 ## Run'ın ölüm donması: oyuncu ve izi yerinde kalır (yalnızca görsel; ölü oyuncu).
 var _held: bool = false
+## Önceki adımda duvara yaslı mıydı (iniş anı: yaslı değilken yaslanmak).
+var _was_on_wall: bool = false
+var _squash: SquashStretch = SquashStretch.new()
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
@@ -48,6 +56,7 @@ var _held: bool = false
 @onready var _graze: GrazeDetector = $GrazeDetector
 @onready var _shield: Shield = $Shield
 @onready var _trail: Trail = $Trail
+@onready var _visual: NeonShape = $Visual
 
 
 func _ready() -> void:
@@ -96,11 +105,15 @@ func _physics_process(delta: float) -> void:
 	position.y = climb_y
 	# Duvara yaslanınca yan hız sıfırlanır; yoksa duvarın içine doğru birikir ve çevirmeden
 	# sonra önce o hızı eritmek gerekir (karakter duvardan geç ayrılırdı).
-	if is_on_wall():
+	var on_wall: bool = is_on_wall()
+	if on_wall:
 		velocity.x = 0.0
 		_coyote_left = tuning.coyote_time
+		if not _was_on_wall:
+			_land()
 	else:
 		_coyote_left = maxf(_coyote_left - delta, 0.0)
+	_was_on_wall = on_wall
 	# Dokunma tamponu: havadayken yapılan dokunuş, duvara değilen adımda uygulanır.
 	if _buffer_left > 0.0:
 		if is_on_wall():
@@ -114,6 +127,9 @@ func _physics_process(delta: float) -> void:
 	if _coyote_left <= 0.0:
 		_check_fall()
 	_trail.record(position)
+	_squash.advance(delta)
+	_visual.scale = _squash.visual_scale()
+	_visual.position = _squash.visual_offset(_half_body(), _gravity_dir)
 
 
 ## Aktif duvar sağda mı (Run ve testler için).
@@ -162,6 +178,13 @@ func set_held(held: bool) -> void:
 	_trail.set_process(not held)
 
 
+## Çekirdeği ve kalkan halkasını gizler (Run, ölüm patlamasında çağırır). İz, çekirdeğin
+## kaldığı yere toplanmayı sürdürür.
+func hide_core() -> void:
+	_visual.visible = false
+	_shield.visible = false
+
+
 ## Oyuncuyu öldürür (çöküş duvarı gibi dışarıdan gelen ölümler; Run çağırır).
 ## Ölümsüzken yok sayılır.
 func die(cause: GameTypes.DeathCause) -> void:
@@ -204,12 +227,23 @@ func _flip() -> void:
 	# Coyote çevirmesinde dışarı doğru birikmiş hız silinir; geçiş duvardan başlar gibi olur.
 	velocity.x = 0.0
 	_coyote_left = 0.0
+	_squash.kick(Neon.STYLE.stretch_on_flip)
 	Events.player_flipped.emit()
+
+
+## Duvara iniş: çekirdek duvara basılır, değilen nokta yukarı bildirilir.
+func _land() -> void:
+	_squash.kick(-Neon.STYLE.squash_on_landing)
+	landed.emit(global_position + Vector2(_gravity_dir * _half_body(), 0.0), _gravity_dir)
+
+
+func _half_body() -> float:
+	return (_body.shape as RectangleShape2D).size.x * 0.5
 
 
 ## Koridorun dışına çıkan oyuncu düşmüştür (duvar çizgisi + gövdenin yarısı).
 func _check_fall() -> void:
-	var half_body: float = (_body.shape as RectangleShape2D).size.x * 0.5
+	var half_body: float = _half_body()
 	var edge: float = TuningConfig.to_px(tuning.corridor_width) * 0.5 + half_body
 	if absf(position.x) <= edge:
 		return

@@ -8,8 +8,9 @@ extends Node2D
 ## Dünyaya yerleşirken yalnızca konumlar ölçeklenir (y vuruş boyuna, x koridor genişliğine);
 ## şekiller esnemez.
 
-## Parçadaki bir Glimmer toplandı (M2-13); ChunkSpawner yukarı iletir.
-signal glimmer_collected(value: int)
+## Parçadaki bir Glimmer toplandı (M2-13); ChunkSpawner yukarı iletir. at: Glimmer'ın dünyadaki
+## yeri (M3-11, patlama efekti).
+signal glimmer_collected(value: int, at: Vector2)
 
 ## Tasarımda bir vuruşun dikey boyu.
 const BEAT_GRID_PX: float = 100.0
