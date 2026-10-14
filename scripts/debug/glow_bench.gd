@@ -9,23 +9,33 @@ extends Node2D
 ## Arka plan, oyunun veri ağıdır (Background, M3-07): kaliteyle birlikte değişir (düşükte ve
 ## WorldEnvironment modunda düz renk), kayar ve vuruşta nabız atar.
 ## Renk dalgası modu (M3-08): yüksek kalitede, sektör paletleri arasında art arda renk dalgası
-## (dalganın maliyeti). Ölçüm bitince tezgâh bu modda kalır (telefonda ekran görüntüsü için).
+## (dalganın maliyeti).
+## Çöküş duvarı modları (M3-09): oyunun CollapseWall'u ekranın alt dörtte birinde (oyuncuya
+## yakın), glitch'i vuruşla değişir; oyunun HUD'u ve duvar vinyeti açık. Yüksek ve orta
+## kalitede. Ölçüm bitince tezgâh yüksek kaliteli duvar modunda kalır (telefonda ekran
+## görüntüsü için).
 
-enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE }
+enum Mode { OFF, ENV_GLOW, FAKE_GLOW, FAKE_MEDIUM, WAVE, COLLAPSE, COLLAPSE_MEDIUM }
 
 const MODE_NAMES: Array[String] = [
 	"Parlama yok (düşük kalite)", "WorldEnvironment glow", "Sahte parlama (yüksek kalite)",
 	"Sahte parlama (orta kalite)", "Renk dalgası (yüksek kalite)",
+	"Çöküş duvarı (yüksek kalite)", "Çöküş duvarı (orta kalite)",
 ]
-const MODE_ARGS: Array[String] = ["off", "env", "fake", "medium", "wave"]
+const MODE_ARGS: Array[String] = [
+	"off", "env", "fake", "medium", "wave", "collapse", "collapse_medium",
+]
 ## Her modda neon bileşenlerinin efekt kalitesi; düşük kalitede sahte parlama yok.
 const MODE_QUALITY: Array[GameTypes.Quality] = [
 	GameTypes.Quality.LOW, GameTypes.Quality.LOW, GameTypes.Quality.HIGH,
-	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH,
+	GameTypes.Quality.MEDIUM, GameTypes.Quality.HIGH, GameTypes.Quality.HIGH,
+	GameTypes.Quality.MEDIUM,
 ]
 const BENCH_ORDER: Array[Mode] = [
-	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE,
-	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
+	Mode.COLLAPSE_MEDIUM,
+	Mode.OFF, Mode.ENV_GLOW, Mode.FAKE_GLOW, Mode.FAKE_MEDIUM, Mode.WAVE, Mode.COLLAPSE,
+	Mode.COLLAPSE_MEDIUM,
 ]
 const WARMUP_SEC: float = 1.5
 const MEASURE_SEC: float = 4.0
@@ -58,6 +68,12 @@ const SECONDS_PER_MINUTE: float = 60.0
 ## Dalga modunda iki dalga arasındaki bekleme (sn).
 const WAVE_GAP_SEC: float = 0.3
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
+const COLLAPSE_SCENE: PackedScene = preload("res://scenes/entities/collapse_wall.tscn")
+const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
+## Duvar modlarında duvarın kenarı ekranın bu yüksekliğinde (oyuncu 0,62'de) ve vinyetin
+## yakınlığı.
+const COLLAPSE_HEIGHT_RATIO: float = 0.75
+const COLLAPSE_PROXIMITY: float = 0.6
 
 ## S1 paleti taslağı; kesin tonlar M3'te seçilecek.
 const COLOR_WALL: Color = Color(0.0, 0.9, 1.0)
@@ -78,6 +94,8 @@ var _beat: float = 0.0
 var _wave_sector: int = 1
 var _wave_elapsed: float = 0.0
 var _default_clear: Color = Color.BLACK
+var _collapse: CollapseWall
+var _hud: Control
 
 var _bench_done: bool = false
 var _bench_index: int = 0
@@ -149,6 +167,7 @@ func _physics_process(delta: float) -> void:
 	_background.set_scroll(_scroll_y)
 	_beat += delta * BENCH_BPM / SECONDS_PER_MINUTE
 	_background.set_beat(_beat)
+	_collapse.set_beat(_beat)
 	if _mode == Mode.WAVE:
 		_advance_wave(delta)
 
@@ -179,6 +198,10 @@ func _apply_mode(mode: Mode) -> void:
 	# Parlama dışındaki modlarda ortam tamamen kaldırılır; böylece taban ölçüm,
 	# WorldEnvironment'ı hiç olmayan bir oyunu temsil eder.
 	_world_environment.environment = _glow_environment if mode == Mode.ENV_GLOW else null
+	var collapse: bool = mode == Mode.COLLAPSE or mode == Mode.COLLAPSE_MEDIUM
+	_collapse.visible = collapse
+	_hud.visible = collapse
+	Events.wall_proximity_changed.emit(COLLAPSE_PROXIMITY if collapse else 0.0)
 	Neon.set_quality(MODE_QUALITY[mode], get_tree())
 	var prefix: String = "Dokun: sonraki mod"
 	if not _bench_done:
@@ -244,7 +267,7 @@ func _end_bench() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 	print("BENCH done")
 	_add_debug_menu()
-	_apply_mode(Mode.WAVE)
+	_apply_mode(Mode.COLLAPSE)
 
 
 ## Dalga modu: palet dalgası alttan üste yürür; bitince kısa bekleme ve sıradaki sektörün
@@ -351,6 +374,17 @@ func _build_world() -> void:
 		_add_shape(_add_scroller(), PackedVector2Array([
 			Vector2(gx, -22.0), Vector2(gx + 16.0, 0.0), Vector2(gx, 22.0), Vector2(gx - 16.0, 0.0),
 		]), COLOR_GLIMMER)
+
+	# Çöküş duvarı (yalnızca duvar modlarında görünür) ve oyunun HUD'u (vinyet için)
+	_collapse = COLLAPSE_SCENE.instantiate() as CollapseWall
+	_collapse.position = Vector2(view.x * 0.5, view.y * COLLAPSE_HEIGHT_RATIO)
+	_collapse.visible = false
+	_shapes.add_child(_collapse)
+	var hud_layer: CanvasLayer = CanvasLayer.new()
+	add_child(hud_layer)
+	_hud = HUD_SCENE.instantiate() as Control
+	_hud.visible = false
+	hud_layer.add_child(_hud)
 
 	# Oyuncu: sol duvara tutunmuş beyaz çekirdek ve sağ duvardan gelen iz
 	var player_pos: Vector2 = Vector2(left_x + 40.0, view.y * PLAYER_HEIGHT_RATIO)

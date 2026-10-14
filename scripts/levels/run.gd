@@ -70,7 +70,7 @@ var _wave_elapsed: float = 0.0
 @onready var _camera: GameCamera = %GameCamera
 @onready var _player: Player = %Player
 @onready var _pressure: PressureSystem = %PressureSystem
-@onready var _collapse_wall: Node2D = %CollapseWall
+@onready var _collapse_wall: CollapseWall = %CollapseWall
 
 
 func _ready() -> void:
@@ -113,11 +113,13 @@ func _physics_process(delta: float) -> void:
 	_update_view()
 	_advance_wave(delta)
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
-	# Duvarlar ve arka plan ağı vuruşta nabız atar (M3-03, M3-07; yalnızca görsel).
+	# Duvarlar, arka plan ağı ve çöküş duvarının glitch'i vuruşta nabız atar (M3-03, M3-07,
+	# M3-09; yalnızca görsel).
 	var beat: float = _conductor.beat_time() / _conductor.beat_length()
 	_chunks.set_beat(beat)
 	_corridor.set_beat(beat)
 	_background.set_beat(beat)
+	_collapse_wall.set_beat(beat)
 	_background.set_scroll(_camera.position.y)
 	_update_wall()
 	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:

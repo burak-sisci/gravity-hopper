@@ -195,7 +195,7 @@
   *Kabul:* Redmi'de kare süresi ve GPU doluluğu ölçüldü (≤ 10 ms); üç kalite seviyesinin ekran görüntüsü.
 - [x] **M3-08** 🤖 Sektör geçişinde renk dalgası: yeni palet aşağıdan yukarıya yayılır, afiş dalgayla gelir (GDD §12).
   *Kabul:* Kare dizisinde dalga aşağıdan yukarıya ilerliyor; geçişte engel yok (mevcut test).
-- [ ] **M3-09** 🤖 Çöküş duvarı: glitch görseli (shader, kaliteye bağlı; yalnızca duvarın alanında, tam ekran değil: M3-07 ölçümü) + yaklaşma vinyetinin inceltilmesi.
+- [x] **M3-09** 🤖 Çöküş duvarı: glitch görseli (shader, kaliteye bağlı; yalnızca duvarın alanında, tam ekran değil: M3-07 ölçümü) + yaklaşma vinyetinin inceltilmesi.
   *Kabul:* Duvar yakınken engeller okunuyor (Redmi ekran görüntüsü); kare süresi ölçüldü.
 
 **Oyun hissi**
@@ -225,7 +225,7 @@
 - [ ] **M3-18** 🤖 HUD stili: seçilen font, neon yazılar (yükseklik, rekor, Glimmer, sektör afişi, kombo).
   *Kabul:* Üç ekran oranında ekran görüntüsü (`6` tuşu); HUD dokunuşu yutmuyor (test).
 - [ ] **M3-19** 🤖 Redmi'de performans kontrolü: en yoğun sahne (S3, bütün efektler), üç kalite seviyesi.
-  *Kabul:* Yüksek kalitede 60 FPS'te kare süresi ≤ 10 ms; ölçüm tablosu `architecture.md` §16'da. Sektör geçişindeki renk dalgası da ölçülür (M3-08'de en kötü durumda ≈ +0,5–1 ms).
+  *Kabul:* Yüksek kalitede 60 FPS'te kare süresi ≤ 10 ms; ölçüm tablosu `architecture.md` §16'da. Sektör geçişindeki renk dalgası da ölçülür (M3-08'de en kötü durumda ≈ +0,5–1 ms). Çöküş duvarı ekrandayken de ölçülür (M3-09 tezgâhında ≈ +0,5–0,8 ms; tezgâhın toplamı 10,9–11,3 ms). Oyunun HUD'u tek başına ≈ 1 ms GPU (M3-09 ölçümü): ölçüt tutmazsa ilk bakılacak yer (M3-18).
 - [ ] **M3-20** 🤝 Oyun testi (sesi açık ve kapalı: ritim görüntüden de hissediliyor mu?) + Planlama Gözden Geçirmesi → 🚪
 
 ## M4 — Meta döngü

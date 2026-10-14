@@ -8,9 +8,12 @@ extends Control
 ## Yalnızca Events sinyallerini dinler; oyun dünyasındaki hiçbir düğüme erişmez (.clauderules §3).
 ## Metinler çeviri anahtarlarıyla kodda kurulur; dil değişince yeniden yazılır.
 ## Kök düğüm dokunuşları yutmaz (mouse_filter = IGNORE); yoksa dokunuş çevirme olmazdı.
+## Duvar vinyeti (M2-15, M3-09'da inceltildi): yalnızca ekranın iki kenarında, koridorun
+## dışında kalan dar şeritler; alt dış köşede en koyu, yukarı ve içeri doğru söner. Duvarın
+## kendisi artık ekranda göründüğü için vinyet engellerin üstüne düşmez.
 
 ## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
-const VIGNETTE_MAX_ALPHA: float = 0.6
+const VIGNETTE_MAX_ALPHA: float = 1.0
 ## Afişin ekranda kaldığı süre ve sönme süresi (sn).
 const BANNER_TIME: float = 2.0
 const BANNER_FADE: float = 0.4
@@ -33,7 +36,7 @@ var _banner_tween: Tween
 @onready var _best_label: Label = %BestLabel
 @onready var _sector_banner: Label = %SectorBanner
 @onready var _glimmer_label: Label = %GlimmerLabel
-@onready var _vignette: TextureRect = %WallVignette
+@onready var _vignette: Control = %WallVignette
 
 
 func _ready() -> void:

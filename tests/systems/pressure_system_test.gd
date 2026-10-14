@@ -53,8 +53,11 @@ func test_wall_catches_a_slow_player() -> void:
 	# Görsel, oyuncunun mesafe × 50 px altında.
 	assert_float(wall.position.y - player.position.y).is_equal_approx(
 			TuningConfig.to_px(pressure.distance_m), 0.5)
+	var step: int = (wall as CollapseWall).glitch_step()
 	# 20 m ÷ 10 m/sn = 2 sn.
 	await _frames(110)
+	# Glitch deseni müziğin vuruşuyla değişiyor (M3-09; Run vuruşu verir).
+	assert_int((wall as CollapseWall).glitch_step()).is_not_equal(step)
 	assert_array(_deaths).is_equal([GameTypes.DeathCause.WALL])
 	assert_float(_proximities.back()).is_equal_approx(1.0, 0.0001)
 	# Yakınlık duvar yaklaştıkça artar.

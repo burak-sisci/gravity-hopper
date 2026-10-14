@@ -142,6 +142,45 @@ extends Resource
 ## Işık bandının göründüğü en düşük kalite; altında yalnızca çizgi.
 @export var wave_glow_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
 
+@export_group("Çöküş duvarı")
+## Duvarın içinin rengi (opak: altında kalan her şey silinmiş görünür; M3-09). Kenarı tehlike
+## kırmızısında.
+@export var collapse_body_color: Color = Color(0.14, 0.015, 0.04)
+## Glitch bandının (shader) göründüğü en düşük kalite; altında kırık kenar çizgisi ve düz dolgu.
+@export var collapse_glitch_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
+## Kenardaki renk kaymasının (RGB) göründüğü en düşük kalite.
+@export var collapse_split_min_quality: GameTypes.Quality = GameTypes.Quality.HIGH
+## Glitch deseninin vuruş başına kaç kez değiştiği.
+@export_range(1, 8) var collapse_steps_per_beat: int = 4
+## Glitch bandının kenarın üstünde kalan yüksekliği (ışık ve veri kırıntıları).
+@export_range(0.0, 400.0, 5.0, "suffix:px") var collapse_rise: float = 70.0
+## Glitch bandının kenarın altında kalan yüksekliği (bozuk bloklar, tarama çizgileri).
+@export_range(0.0, 600.0, 5.0, "suffix:px") var collapse_depth: float = 100.0
+## Kırık kenarın sütun genişliği.
+@export_range(4.0, 200.0, 1.0, "suffix:px") var collapse_column: float = 36.0
+## Kırık kenarın en büyük yüksekliği; kenar hep öldürme çizgisinde ya da üstünde.
+@export_range(0.0, 120.0, 1.0, "suffix:px") var collapse_jag: float = 36.0
+## Yana kayan dilimlerin yüksekliği.
+@export_range(2.0, 80.0, 1.0, "suffix:px") var collapse_slice: float = 14.0
+## Bir dilimin en büyük yana kayması.
+@export_range(0.0, 200.0, 1.0, "suffix:px") var collapse_slice_shift: float = 40.0
+## Bir dilimin bir adımda kayma olasılığı.
+@export_range(0.0, 1.0, 0.01) var collapse_slice_chance: float = 0.2
+## Veri kırıntılarının ve içteki bozuk blokların boyu.
+@export_range(2.0, 60.0, 1.0, "suffix:px") var collapse_block: float = 12.0
+## Kenarın hemen üstünde kırıntı sıklığı (yukarı doğru seyrelir).
+@export_range(0.0, 1.0, 0.01) var collapse_dust_density: float = 0.12
+## Kenar çizgisinin kalınlığı.
+@export_range(1.0, 30.0, 0.5, "suffix:px") var collapse_edge_width: float = 6.0
+## Kenarın üstündeki ışığın sönme uzunluğu.
+@export_range(1.0, 120.0, 1.0, "suffix:px") var collapse_glow: float = 24.0
+## Kenarın üstündeki ışığın en yüksek saydamlığı.
+@export_range(0.0, 1.0, 0.05) var collapse_glow_alpha: float = 0.5
+## Renk kaymasında kopyaların kenardan uzaklığı.
+@export_range(0.0, 20.0, 0.5, "suffix:px") var collapse_split: float = 5.0
+## Vuruşta kenarın ve ışığın parlaklık artışı (0 = nabız yok).
+@export_range(0.0, 2.0, 0.05) var collapse_pulse_gain: float = 0.6
+
 @export_group("Vuruş nabzı")
 ## Nabzın vuruştan sonra sönme süresi (vuruşun kesri). Sesi kapalı oynayan ritmi bundan görür.
 @export_range(0.05, 1.0, 0.05) var beat_pulse_length: float = 0.35

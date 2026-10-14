@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-13 (M3-06 lazerin uyarı ışıması; önceki: M2 Planlama Gözden Geçirmesi) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-14 (M3-09 çöküş duvarının görünüşü ve ince vinyet; önceki: M3-06 lazerin uyarı ışıması) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -222,6 +222,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 ## 14. Çöküş duvarı (baskı)
 
 - Aşağıdan gelen, glitch'li bir veri yok oluşu. Oyuncunun tırmanış hızından biraz daha hızlı ilerler; aradaki fark aşağıdaki tablodaki "sürünme" hızıdır.
+- **Görünüş (M3-09):** Sütun sütun kırık, müzikle titreyen parlak kırmızı bir kenar; kenarın üstünde dağılan veri kırıntıları, kayan dilimler, altında koyu ve opak bir gövde (yuttuğu her şey silinmiş görünür). Kırık kenar hiç gerçek öldürme çizgisinin altına inmez: duvar olduğundan uzak görünmez. Düşük kalitede yalnızca kırık kenar ve gövde.
 
 | Olay | Etki (başlangıç) |
 | --- | --- |
@@ -231,7 +232,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | Kalkanla darbe almak | −8 m (duvarı çeker) |
 | Başlangıç mesafesi / en fazla | 20 m / 30 m |
 
-- Duvar ekrana girdiğinde kenarlarda kırmızı bir vinyet belirir ve gerilim sesi yükselir.
+- Duvar ekrana girdiğinde ekranın iki yan kenarında, koridorun dışında ince kırmızı bir vinyet belirir ve gerilim sesi yükselir. Vinyet koridorun içine taşmaz; engeller hep okunur (M3-09).
 - **Amaç öldürmek değil, gerilim yaratmaktır.** S1'de duvar çok yavaştır. Pasif ve aşırı temkinli oynayan oyuncu er geç yakalanır; cesur oynayan rahat nefes alır.
 
 ## 15. Kıl payı ve kombo

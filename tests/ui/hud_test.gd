@@ -3,6 +3,7 @@ extends GdUnitTestSuite
 ## gelir ve dil değişince yenilenir.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
+const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
 
 var _hud: Control
 var _locale: String
@@ -57,13 +58,28 @@ func test_glimmer_counter() -> void:
 
 
 func test_wall_vignette_follows_proximity() -> void:
-	var vignette: TextureRect = _hud.get_node("%WallVignette") as TextureRect
+	var vignette: Control = _hud.get_node("%WallVignette") as Control
 	assert_float(vignette.modulate.a).is_equal(0.0)
 	Events.wall_proximity_changed.emit(0.5)
-	assert_float(vignette.modulate.a).is_equal_approx(0.3, 0.0001)
+	assert_float(vignette.modulate.a).is_equal_approx(0.5, 0.0001)
 	assert_int(vignette.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
 	Events.run_started.emit(3, 1)
 	assert_float(vignette.modulate.a).is_equal(0.0)
+
+
+## İnceltilmiş vinyet (M3-09): iki kenar şeridi, koridorun içine taşmıyor, dokunuş yutmuyor.
+func test_wall_vignette_stays_outside_corridor() -> void:
+	var strips: Array[Node] = _hud.get_node("%WallVignette").get_children()
+	assert_int(strips.size()).is_equal(2)
+	var width: float = _hud.get_viewport_rect().size.x
+	var margin: float = (width - TuningConfig.to_px(TUNING.corridor_width)) * 0.5
+	for node: Node in strips:
+		var strip: Control = node as Control
+		var rect: Rect2 = strip.get_global_rect()
+		assert_int(strip.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
+		assert_float(rect.size.x).is_greater(0.0)
+		assert_bool(rect.end.x <= margin or rect.position.x >= width - margin).override_failure_message(
+				"%s koridorun içine taşıyor: %s" % [strip.name, rect]).is_true()
 
 
 func test_sector_banner_shows_name_and_fades() -> void:
