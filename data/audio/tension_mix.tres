@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="TensionMix" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/tension_mix.gd" id="1_mix"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/tension.ogg" id="2_tension"]
+
+[resource]
+script = ExtResource("1_mix")
+open_hz = 12000.0
+closed_hz = 700.0
+filter_curve = 1.0
+stream = ExtResource("2_tension")
+volume_db = -18.6
+volume_curve = 1.5
+pitch_far = 1.0
+pitch_near = 1.2
+smoothing = 0.15
+title = "computerNoise_000.ogg (Sci-fi Sounds), dikişsiz döngü"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+source_url = "https://kenney.nl/assets/sci-fi-sounds"

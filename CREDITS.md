@@ -30,7 +30,7 @@ Müzik parçaları değiştirildi (CC-BY gereği belirtilir): baş ilk vuruşa k
 
 ### Ses efektleri (M3-15)
 
-Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar değiştirilmedi, yalnızca olay adıyla yeniden adlandırıldı; ses düzeyi `data/audio/sfx_bank.tres`'teki `volume_db` ile ayarlanır (`tools/sfx_prep.py`). Paketler 2026-10-14'te indirildi.
+Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar değiştirilmedi, yalnızca olay adıyla yeniden adlandırıldı; ses düzeyi `data/audio/sfx_bank.tres`'teki `volume_db` ile ayarlanır (`tools/sfx_prep.py`). Paketler 2026-10-14'te indirildi. Tek istisna gerilim sesi (M3-16): sonu başına çapraz geçişle bindirilerek dikişsiz döngüye çevrildi ve yeniden kodlandı (CC0 değiştirmeye izin verir).
 
 | Varlık | Kaynak | Yazar | Lisans | Kullanıldığı yer |
 | --- | --- | --- | --- | --- |
@@ -43,6 +43,7 @@ Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar de�
 | explosionCrunch_000.ogg (Sci-fi Sounds) | [kenney.nl/assets/sci-fi-sounds](https://kenney.nl/assets/sci-fi-sounds) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Ölüm (`assets/audio/sfx/death.ogg`) |
 | zapThreeToneUp.ogg (Digital Audio) | [kenney.nl/assets/digital-audio](https://kenney.nl/assets/digital-audio) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Sektör geçişi (`assets/audio/sfx/sector.ogg`) |
 | jingles_PIZZI10.ogg (Music Jingles) | [kenney.nl/assets/music-jingles](https://kenney.nl/assets/music-jingles) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Rekor kırma (`assets/audio/sfx/record.ogg`) |
+| computerNoise_000.ogg (Sci-fi Sounds), dikişsiz döngüye çevrildi | [kenney.nl/assets/sci-fi-sounds](https://kenney.nl/assets/sci-fi-sounds) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Çöküş duvarı gerilim sesi (`assets/audio/sfx/tension.ogg`, M3-16) |
 
 ## Fontlar
 

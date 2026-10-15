@@ -19,6 +19,13 @@ extends Node
 ## Efektler gerçek zamanda çalar: Engine.time_scale'i izlemez (yavaş çekimde ses yavaşlamaz;
 ## kural yalnızca müziğin vuruş senkronu için, .clauderules §5).
 ##
+## Gerilim (M3-16, ADR-062): çöküş duvarı yaklaştıkça (Events.wall_proximity_changed) Music
+## yolundaki alçak geçiren süzgeç kapanır (müzik boğuklaşır) ve döngülü gerilim sesi yükselir;
+## değerler TensionMix'te (data/audio/tension_mix.tres). Ses, yakınlığa _process'te kısa bir zaman
+## sabitiyle yetişir (yalnızca ses). Yakınlık 0'ken süzgeç kapalı, gerilim sesi durmuş olur
+## (işlemci harcanmaz). Tur başında ve ölümde hemen sıfırlanır; ölümden sonraki yakınlık yok
+## sayılır.
+##
 ## Ölçüm karıştırma tamponu kadar titrer (Android'de onlarca ms). Bu yüzden kayma son karelerin
 ## ortalamasıyla ölçülür ve sınır aşılırsa ölçüde en fazla bir kez yeniden konumlanır. Her karede
 ## seek (durdur + çal) yapmak Android'de ses iş parçacığını çökertti (M2-07). Gerçek kayma örneği:
@@ -37,10 +44,15 @@ const BEATS_PER_BAR: int = 4
 ## Debug günlüğünde senkron raporu aralığı (ölçü).
 const REPORT_EVERY_BARS: int = 8
 const SFX_BANK: SfxBank = preload("res://data/audio/sfx_bank.tres")
+const TENSION_MIX: TensionMix = preload("res://data/audio/tension_mix.tres")
+## Duyulan yakınlık hedefe bu kadar yaklaşınca ona eşitlenir (0'a inebilsin).
+const TENSION_SNAP: float = 0.001
 const USEC_PER_SEC: float = 1000000.0
 
 ## Olay → ses eşlemesi (testler değiştirebilir). Çalar sayısı açılışta bundan kurulur.
 var sfx_bank: SfxBank = SFX_BANK
+## Gerilim karışımı (testler değiştirebilir).
+var tension_mix: TensionMix = TENSION_MIX
 
 var _music: AudioStreamPlayer
 ## Çalan parça (tur başında sıfırlanır; ilk sync_beat_clock kurar).
@@ -67,6 +79,16 @@ var _last_sfx: SfxSound = null
 var _sfx_counts: Dictionary[GameTypes.Sfx, int] = {}
 ## Kombo çarpanı: büyüdüğü kıl payında kombo eşiği sesi çalar.
 var _multiplier: int = 1
+var _tension: AudioStreamPlayer
+## Gerilim sesi çalıyor mu (play()'den hemen sonra `playing` hâlâ false olabilir).
+var _tension_on: bool = false
+var _music_bus: int = -1
+## Music yolundaki alçak geçiren süzgeç ve sırası (yol düzeninde yoksa null).
+var _lowpass: AudioEffectLowPassFilter = null
+var _lowpass_index: int = -1
+## Duvarın bildirilen yakınlığı ve sesin ona yetişen değeri.
+var _wall_proximity: float = 0.0
+var _heard_proximity: float = 0.0
 
 
 func _ready() -> void:
@@ -79,6 +101,10 @@ func _ready() -> void:
 		add_child(voice)
 		_voices.append(voice)
 	_voice_ends.resize(_voices.size())
+	_tension = AudioStreamPlayer.new()
+	_tension.bus = SFX_BUS
+	add_child(_tension)
+	_find_lowpass()
 	Events.run_started.connect(_on_run_started)
 	Events.player_died.connect(_on_player_died)
 	Events.player_flipped.connect(play_sfx.bind(GameTypes.Sfx.FLIP))
@@ -89,6 +115,19 @@ func _ready() -> void:
 	Events.shield_changed.connect(_on_shield_changed)
 	Events.sector_entered.connect(_on_sector_entered)
 	Events.record_broken.connect(play_sfx.bind(GameTypes.Sfx.RECORD))
+	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
+
+
+## Gerilim karışımı duvarın yakınlığına yumuşakça yetişir (yalnızca ses).
+func _process(delta: float) -> void:
+	if _heard_proximity == _wall_proximity:
+		return
+	var smoothing: float = tension_mix.smoothing
+	var step: float = 1.0 if smoothing <= 0.0 else 1.0 - exp(-delta / smoothing)
+	_heard_proximity = lerpf(_heard_proximity, _wall_proximity, step)
+	if absf(_heard_proximity - _wall_proximity) < TENSION_SNAP:
+		_heard_proximity = _wall_proximity
+	_apply_tension()
 
 
 ## Conductor her fizik adımında çağırır: turun parçasını vuruş saatine hizalar.
@@ -150,6 +189,31 @@ func music_pitch() -> float:
 	return _music.pitch_scale
 
 
+## Music yolundaki alçak geçiren süzgeç (testler ve debug).
+func music_lowpass() -> AudioEffectLowPassFilter:
+	return _lowpass
+
+
+## Süzgeç açık mı (testler ve debug).
+func music_lowpass_enabled() -> bool:
+	return _lowpass != null and AudioServer.is_bus_effect_enabled(_music_bus, _lowpass_index)
+
+
+## Gerilim sesinin çaları (testler ve debug).
+func tension_player() -> AudioStreamPlayer:
+	return _tension
+
+
+## Gerilim sesi çalıyor mu (testler ve debug).
+func tension_playing() -> bool:
+	return _tension_on
+
+
+## Sesin duvar yakınlığına yetişmiş değeri (testler ve debug).
+func heard_proximity() -> float:
+	return _heard_proximity
+
+
 ## Boş çalar; hepsi doluysa sesinin bitmesine en az kalan.
 func _free_voice(now: float) -> int:
 	var best: int = 0
@@ -159,6 +223,45 @@ func _free_voice(now: float) -> int:
 		if _voice_ends[i] < _voice_ends[best]:
 			best = i
 	return best
+
+
+## Music yolundaki alçak geçiren süzgeci bulur (sırası yol düzenine bağlı kalmasın).
+func _find_lowpass() -> void:
+	_music_bus = AudioServer.get_bus_index(MUSIC_BUS)
+	if _music_bus < 0:
+		return
+	for i: int in AudioServer.get_bus_effect_count(_music_bus):
+		var effect: AudioEffectLowPassFilter = AudioServer.get_bus_effect(_music_bus, i) \
+				as AudioEffectLowPassFilter
+		if effect != null:
+			_lowpass = effect
+			_lowpass_index = i
+			return
+
+
+## Duyulan yakınlığı süzgece ve gerilim sesine uygular.
+func _apply_tension() -> void:
+	var active: bool = _heard_proximity > 0.0
+	if _lowpass != null:
+		_lowpass.cutoff_hz = tension_mix.cutoff_at(_heard_proximity)
+		AudioServer.set_bus_effect_enabled(_music_bus, _lowpass_index, active)
+	if not active or tension_mix.stream == null:
+		_tension.stop()
+		_tension_on = false
+		return
+	_tension.volume_db = tension_mix.volume_at(_heard_proximity)
+	_tension.pitch_scale = tension_mix.pitch_at(_heard_proximity)
+	if not _tension_on:
+		_tension.stream = tension_mix.stream
+		_tension.play()
+		_tension_on = true
+
+
+## Gerilimi hemen sıfırlar (tur başı, ölüm).
+func _reset_tension() -> void:
+	_wall_proximity = 0.0
+	_heard_proximity = 0.0
+	_apply_tension()
 
 
 ## Parçayı çalara koyar; döngü dosyanın loop_start anından başlar.
@@ -225,6 +328,7 @@ func _on_run_started(_run_seed: int, _start_sector: int) -> void:
 	_reported_bar = 0
 	_multiplier = 1
 	_music.stop()
+	_reset_tension()
 	if OS.is_debug_build():
 		print("AUDIO output_latency=%d ms mix_rate=%d" % [
 			roundi(AudioServer.get_output_latency() * 1000.0), roundi(AudioServer.get_mix_rate()),
@@ -235,7 +339,14 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 	_clock_active = false
 	_clock_playing = false
 	_music.stop()
+	_reset_tension()
 	play_sfx(GameTypes.Sfx.DEATH)
+
+
+## Yalnızca tur sürerken: ölümden sonra kamera sarsılırken bildirilen yakınlık gerilimi açmasın.
+func _on_wall_proximity_changed(ratio: float) -> void:
+	if _clock_active:
+		_wall_proximity = clampf(ratio, 0.0, 1.0)
 
 
 func _on_glimmer_collected(_value: int) -> void:

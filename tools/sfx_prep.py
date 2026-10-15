@@ -9,6 +9,10 @@ Kenney ses paketlerinden (CC0, ADR-042) seçilen efektleri oyuna hazırlar:
      geçmeyecek kadarla sınırlanır.
   3. data/audio/sfx_bank.tres (SfxBank) dosyasını yazar. Ses düzeyi dosyaya işlenmez,
      volume_db alanına yazılır.
+  4. Gerilim sesini (M3-16) hazırlar: kaynağın son CROSSFADE saniyesi başına eşit güçlü çapraz
+     geçişle bindirilir (dikişsiz döngü, assets/audio/sfx/tension.ogg; yeniden kodlanır). Düzeyi
+     müziğin ortanca düzeyine göre TENSION_DB'ye çekilir ve data/audio/tension_mix.tres'teki
+     volume_db satırına yazılır (dosyanın diğer değerleri elle ayarlanır).
 
 Olay sırası GameTypes.Sfx ile aynıdır (enum değeri = SOUNDS'taki sıra).
 
@@ -65,6 +69,16 @@ SOUNDS = [
     {"id": "record", "pack": "music-jingles", "file": "jingles_PIZZI10", "tier": "moment",
      "jitter": 0.0},
 ]
+
+# Gerilim sesi: sürekli çalan döngü. Düzeyi (en yakında) müziğin ortanca düzeyinin biraz altı;
+# o anda müzik de boğuklaşmıştır.
+TENSION = {"id": "tension", "pack": "sci-fi-sounds", "file": "computerNoise_000"}
+TENSION_DB = -3.0
+TENSION_PATH = ROOT / "data" / "audio" / "tension_mix.tres"
+CROSSFADE = 0.5
+TENSION_PEAK = 0.95
+OGG_COMPRESSION = 0.4
+WRITE_BLOCK = 4096
 
 WINDOW = 0.05
 PHONE_LOW_HZ = 250.0
@@ -131,6 +145,41 @@ def prepare(src_dir: Path, sound: dict, reference: float) -> dict:
                 limited=gain < wanted - 0.05)
 
 
+def make_loop(x: np.ndarray, sr: int) -> np.ndarray:
+    """Son CROSSFADE saniyeyi başa eşit güçlü çapraz geçişle bindirir. Döngünün sonu kaynağın
+    çapraz geçişten hemen önceki örneği, başı ise ondan sonraki örneğidir: dikiş süreklidir."""
+    fade = int(CROSSFADE * sr)
+    angle = np.linspace(0.0, math.pi / 2, fade)
+    loop = x[:len(x) - fade].copy()
+    loop[:fade] = x[:fade] * np.sin(angle) + x[len(x) - fade:] * np.cos(angle)
+    return loop
+
+
+def prepare_tension(src_dir: Path, reference: float) -> dict:
+    x, sr = load_mono(find_source(src_dir, TENSION))
+    loop = make_loop(x, sr)
+    peak = float(np.max(np.abs(loop)))
+    scale = min(1.0, TENSION_PEAK / peak)
+    loop *= scale
+    level = float(np.median(short_term_db(phone_band(loop, sr), sr)))
+    gain = max(MIN_GAIN_DB, min(MAX_GAIN_DB, reference + TENSION_DB - level))
+    # Dikişte düzey sıçraması: döngünün sonu ile başındaki 50 ms'lik pencereler.
+    seam = short_term_db(np.concatenate([loop[-int(WINDOW * sr):], loop[:int(WINDOW * sr)]]), sr)
+    with sf.SoundFile(str(AUDIO_DIR / (TENSION["id"] + ".ogg")), "w", sr, 1, format="OGG",
+                      subtype="VORBIS", compression_level=OGG_COMPRESSION) as f:
+        # libsndfile'in Vorbis kodlayıcısı büyük tek yazımda çöküyor (music_prep.py).
+        samples = loop.astype(np.float32)
+        for start in range(0, len(samples), WRITE_BLOCK):
+            f.write(samples[start:start + WRITE_BLOCK])
+    text = TENSION_PATH.read_text(encoding="utf-8")
+    text, count = re.subn(r"^volume_db = .*$", f"volume_db = {gain:.1f}", text, flags=re.M)
+    if count != 1:
+        raise SystemExit(f"{TENSION_PATH.name}: volume_db satırı bulunamadı")
+    TENSION_PATH.write_text(text, encoding="utf-8", newline="\n")
+    return dict(TENSION, length=len(loop) / sr, level=level, gain=round(gain, 1),
+                seam=float(seam[1] - seam[0]))
+
+
 def write_bank(infos: list[dict]) -> None:
     lines = ['[gd_resource type="Resource" script_class="SfxBank" format=3]', "",
              '[ext_resource type="Script" path="res://scripts/data/sfx_bank.gd" id="1_bank"]',
@@ -171,6 +220,11 @@ def main() -> None:
                  info["gain"], heard, heard - reference,
                  " | tepe sınırı" if info["limited"] else ""))
     write_bank(infos)
+    tension = prepare_tension(src_dir, reference)
+    print("%-13s %-24s %4.2f sn döngü | ortanca düzey %6.1f | kazanç %+5.1f dB → müzikten %+.1f"
+          " | dikiş %+.1f dB"
+          % (tension["id"], tension["file"], tension["length"], tension["level"],
+             tension["gain"], tension["level"] + tension["gain"] - reference, tension["seam"]))
 
 
 if __name__ == "__main__":
