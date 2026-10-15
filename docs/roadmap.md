@@ -97,7 +97,7 @@
   *Kabul:* Oynarken değer değişiyor; kaydedilen dosyayı Claude okuyabiliyor.
 - [x] **M1-12** 🤖 Debug tuşları: ölümsüzlük (`2`), çarpışma kutuları (`3`), yavaş çekim (`4`), anında yeniden başlama (`R`); telefonda debug panelinde aynı düğmeler.
   *Kabul:* Tuşlar `architecture.md` §13 tablosuyla uyumlu.
-- [ ] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma: itch.io, şifreli sayfa (D-12, ADR-027). *(Claude'un kısmı tamam: Web ön ayarı, `tools/web_build.ps1`, zip, tarayıcı denemesi. Kalan: senin itch.io sayfasını açıp zip'i yüklemen. ⏸ Ertelendi, kullanıcı kararı 2026-10-08; istediğin zaman kaldığı yerden sürer, M1 kapısını beklemez.)*
+- [x] **M1-13** 🤝 Web dışa aktarma denemesi (arkadaşlara link). Barındırma: itch.io (D-12, ADR-027); sayfa herkese açık, şifresiz (kullanıcı kararı 2026-10-15, ADR-060): https://burak-sisci.itch.io/gravity-hopper. *(Claude'un kısmı tamam: Web ön ayarı, `tools/web_build.ps1`, zip, tarayıcı denemesi. Kalan: senin itch.io sayfasını açıp zip'i yüklemen. ⏸ Ertelendi, kullanıcı kararı 2026-10-08; istediğin zaman kaldığı yerden sürer, M1 kapısını beklemez.)*
   *Kabul:* Tarayıcıda oynanabilir bir link var.
 - [x] **M1-14** 👤 His testi: PC + Redmi, ayar paneliyle "doğru his"i bul. Ayrıca iki başparmakla hızlı dokunuşlar: hiçbiri kaybolmamalı (S-07).
   *Kabul:* Beğendiğin değerler kaydedildi; iki başparmak denemesi geçti. *(2026-10-11: başlangıç değerleri değiştirilmeden kaydedildi. İki başparmak denemesi M2-18 oyun testinde geçti.)*
