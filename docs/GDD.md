@@ -163,7 +163,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 | --- | --- | --- | --- | --- | --- | --- |
 | S1 | ÖNYÜKLEME / BOOT SEQUENCE | Camgöbeği | 12 m/sn | 750 m | 750 m | Diken |
 | S2 | VERİ AKIŞI / DATA STREAM | Mor | 14 m/sn | 1000 m | 1750 m | Boşluk, veri bloğu |
-| S3 | GÜVENLİK DUVARI / FIREWALL | Kehribar | 16 m/sn | 1500 m | 3250 m | Lazer kapısı |
+| S3 | GÜVENLİK DUVARI / FIREWALL | Turuncu | 16 m/sn | 1500 m | 3250 m | Lazer kapısı |
 | S4 | ÇEKİRDEK / KERNEL | Eflatun | 18 m/sn | 1750 m | 5000 m | Dönen şekil, hareketli blok |
 | S5 | BOZULMA / CORRUPTION | Beyaz + glitch | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
 | ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | 7500 m | Final anı + başarım izi |
@@ -171,7 +171,17 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 
 **Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, beş müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (80–120 BPM). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
 
-**Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Her sektörün bir paleti var: çevre (duvarlar, ağ), vurgu (afiş, nabız) ve koyu arka plan. Şimdilik yukarıdaki tonlarla geçici paletler kullanılıyor (M3-02); kural otomatik testle denetleniyor. Kesin renkler M3-17'de birlikte seçilecek.
+**Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Her sektörün bir paleti var: çevre (duvarlar, ağ), vurgu (afiş, nabız, renk dalgası) ve koyu arka plan. Kural otomatik testle denetleniyor.
+
+**Kesin paletler (kullanıcı kararı, 2026-10-15, M3-17):** "Elektrik" paleti seçildi: doygun neon tonlar, koyu zemin. Seçenekler (şimdiki, elektrik, gece) Redmi'de gerçek tur ve HUD ile karşılaştırıldı. S3'ün eski kehribarı sarı rekor çizgisiyle (§8) karışıyordu; turuncuya kaydı. Değerler `data/sectors/palette_0N.tres`'te (RGB, 0–1):
+
+| # | Çevre | Vurgu | Zemin |
+| --- | --- | --- | --- |
+| S1 | 0 · 0,85 · 1 | 0,75 · 0,97 · 1 | 0,02 · 0,04 · 0,1 |
+| S2 | 0,58 · 0,3 · 1 | 0,85 · 0,75 · 1 | 0,06 · 0,03 · 0,12 |
+| S3 | 1 · 0,6 · 0,12 | 1 · 0,85 · 0,6 | 0,09 · 0,05 · 0,02 |
+
+S4–S5 paletleri o sektörler eklenirken (M4-07) aynı kuralla ve aynı doygunlukta seçilir; çevre rengi sarı rekor çizgisinden de ayırt edilmeli.
 
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 
@@ -289,6 +299,8 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | **Yükseltmeler / İzler** | Kartlar: mevcut seviye, sonraki etki, maliyet |
 | **Ayarlar** | Müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında (lisanslar) |
 
+**Font (kullanıcı kararı, 2026-10-15, M3-17):** Exo 2, kalın kesim (SIL OFL 1.1). Okunaklı, hafif fütüristik; küçük yazılarda da net. Tüm ekranlarda aynı font. Adaylar Chakra Petch ve Audiowide'dı (Audiowide'ın rakamları süslü, küçükken zor okunuyor); Orbitron'da Türkçe harfler eksik.
+
 ## 21. Gelir modeli (M7)
 
 - **Ödüllü reklam, yalnızca oyuncu isterse:** diriliş (tur başına 1) ve tur sonu Glimmer ×2.
@@ -309,5 +321,4 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | --- | --- | --- |
 | D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
 | D-04 | Günlük meydan okumada deneme hakkı | M7 |
-| — | Sektör renklerinin kesin tonları ve font | M3-17 |
 | — | Tüm sayısal değerler (hız, uzunluk, maliyet, basınç) | M1–M4, ayar paneliyle |

@@ -48,7 +48,7 @@ Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar de�
 
 | Font | Kaynak | Lisans | Kullanıldığı yer |
 | --- | --- | --- | --- |
-| — | — | — | — |
+| Exo 2, Version 2.010 (`Exo2[wght].ttf`, değişken ağırlık; google/fonts `ofl/exo2`, blob `9cb2018`, 2026-10-15'te indirildi, değiştirilmedi). Copyright 2013 The Exo 2 Project Authors | [github.com/googlefonts/Exo-2.0](https://github.com/googlefonts/Exo-2.0) · [fonts.google.com/specimen/Exo+2](https://fonts.google.com/specimen/Exo+2) | [SIL OFL 1.1](https://openfontlicense.org) (`assets/fonts/exo2_OFL.txt`) | Oyunun tüm yazıları (`assets/fonts/exo2.ttf`; kalın kesim `exo2_bold.tres`, M3-17) |
 
 ## Geliştirme araçları ve eklentileri (yayın sürümüne girmez)
 

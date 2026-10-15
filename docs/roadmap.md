@@ -220,7 +220,7 @@
 
 **Kimlik ve kapanış**
 
-- [ ] **M3-17** 🤝 Font (S-06) ve kesin sektör renkleri: Claude 2–3 font adayı (SIL OFL, Türkçe karakterli) ve palet seçeneklerini telefon ekran görüntüleriyle sunar, sen seçersin.
+- [x] **M3-17** 🤝 Font (S-06) ve kesin sektör renkleri: Claude 2–3 font adayı (SIL OFL, Türkçe karakterli) ve palet seçeneklerini telefon ekran görüntüleriyle sunar, sen seçersin.
   *Kabul:* Seçilen font `assets/fonts/`'ta ve `CREDITS.md`'de; paletler kesin, GDD §12 güncel.
 - [ ] **M3-18** 🤖 HUD stili: seçilen font, neon yazılar (yükseklik, rekor, Glimmer, sektör afişi, kombo).
   *Kabul:* Üç ekran oranında ekran görüntüsü (`6` tuşu); HUD dokunuşu yutmuyor (test).

@@ -93,7 +93,7 @@ gravity-hopper/
 │   ├── audio/
 │   │   ├── sfx/              # Efektler (çevirme, toplama, ölüm, kıl payı)
 │   │   └── music/            # Tur müzikleri (OGG; tools/music_prep.py hazırlar, M2-20)
-│   ├── fonts/                # Türkçe karakter destekli fontlar
+│   ├── fonts/                # exo2.ttf + OFL lisansı, exo2_bold.tres (proje fontu, M3-17)
 │   └── shaders/              # collapse_glitch.gdshader (M3-09: yalnızca duvarın kenar bandı). Arka plan ağı ve sahte parlama shader'sız (§9, ADR-050)
 │
 ├── data/                     # İçerik ve ayar kaynakları (.tres)
@@ -513,10 +513,10 @@ Run (Node2D)                          scenes/levels/run.tscn
 ## 9. Görsel mimari
 
 - **Şekiller:** Tüm oyun şekilleri beyaz `Polygon2D` / `Line2D` olarak çizilir. Renkler koddan, aktif sektörün `SectorPalette` kaynağından atanır. Sektör geçişinde yeni palet alttan üste bir renk dalgasıyla yayılır (M3-08).
-- **Paletler (M3-02, ADR-044):** Her `SectorDef`'in `palette`'i var (`data/sectors/palette_NN.tres`): `ambient` (duvarlar, ağ, iz parlaması), `accent` (sektör afişi, vuruş nabzı, rekor çizgisi), `background` (koyu).
+- **Paletler (M3-02, ADR-044):** Her `SectorDef`'in `palette`'i var (`data/sectors/palette_NN.tres`): `ambient` (duvarlar, ağ, iz parlaması), `accent` (sektör afişi, vuruş nabzı, ağ parlaması, renk dalgasının cephesi), `background` (koyu).
   - Sektörden bağımsız sabit renkler `NeonStyle`'da: `hazard_color` (kırmızı), `glimmer_color` (yeşil), `player_color` (beyaz). Çevre ve vurgu rengi bunların tonuna 30°'den yakın olamaz; doygunluğu 0,2'nin altındaki renkler (beyaz, gri) serbest. Arka planın parlaklığı ≤ 0,2. Hepsi testle denetlenir (`sector_catalog_test.gd`).
   - `Run` paleti uygular: duvarlar `Corridor.set_colors(çevre, vurgu)`, arka plan ekranın temizleme rengi (`RenderingServer.set_default_clear_color`; tam ekran çizim yok, Adreno'da bedava). Tur başında anında, sektöre girişte renk dalgasıyla (aşağıda). HUD sektör afişini `palette.accent` ile boyar.
-  - Tonlar geçici (GDD §12: camgöbeği, mor, kehribar); kesin renkler M3-17'de.
+  - Kesin renkler M3-17'de seçildi ("elektrik" paleti, ADR-059; değerler GDD §12). Ekranın temizleme rengi (`project.godot`) ve `SectorPalette` varsayılanları S1'inkiler. Rekor çizgisinin sarısı paletten bağımsız (`NeonStyle.record_color`).
 - **Vuruş nabzı (M3-03, ADR-046):** Sesi kapalı oynayan ritmi görsün diye (GDD §16) duvarlar (ve M3-07'de arka plan ağı) her vuruşta nabız atar. Güç `NeonStyle.beat_pulse(vuruş)`: vuruş anında 1, `beat_pulse_length` (0,35 vuruş) içinde karesel söner. Uygulama tek bir `modulate`: kanal kanal `vurgu / çevre × beat_pulse_boost` (1,4) oranına `beat_pulse_gain` (0,7) kadar çekilir; düğüm başına iş yok. Yalnızca görsel; zaman `Conductor`'dan, bu yüzden yavaş çekimde de müzikle aynı.
 - **Parlama (glow): nesne başına sahte parlama (ADR-020).** Her neon nesne kendi parlamasını taşır. Parlama toplamsal karışımla (`CanvasItemMaterial.blend_mode = ADD`) çizilir ve yalnızca nesnenin çevresini boyar. Tam ekran efekt yoktur.
   - **Çizgiler** (duvar, iz) ve geniş açılı şekiller (blok): çizginin geniş kopyaları, enine yumuşak sönen bir dokuyla çizilir. İki katman var: 64 px / %35 ve 26 px / %70.
@@ -681,7 +681,10 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Koddan atanan metinler `tr("KEY")` ile gösterilir.
   - Sahnede `Label` ya da `Button` metnine doğrudan anahtar yazılır (`text = "UI_TAP"`). Godot bunu otomatik çevirir (`auto_translate_mode` varsayılanı) ve dil değişince kendisi günceller.
 - Varsayılan dil: cihaz dili Türkçe ise TR, değilse EN. Ayarlardan değiştirilebilir.
-- Fontlar Türkçe karakterleri (ş ğ ı İ ö ü ç) içermek zorundadır (S-06, M3).
+- **Font (M3-17, ADR-059):** Exo 2 (SIL OFL 1.1), değişken ağırlıklı tek dosya `assets/fonts/exo2.ttf`; kalın (700) kesimi `assets/fonts/exo2_bold.tres` (`FontVariation`). Proje ayarı `gui/theme/custom_font` onu gösterir: her `Control` kendiliğinden bu fontu kullanır, sahnelerde font ataması yoktur.
+  - Fontlar Türkçe karakterleri (ş ğ ı İ ö ü ç) ve HUD işaretlerini (× ·) içermek zorundadır (S-06); `tests/ui/font_test.gd` denetler.
+  - **Ders:** `variation_opentype`'ta eksen metin anahtarıyla (`"wght"`) yazılırsa Godot etkisiz bırakıyor, font ince kalıyor. Sayı etiketi (`TextServer.name_to_tag("wght")` = 2003265652) ya da `"weight"` gerekir.
+  - Bir `Theme`'in `default_font`'u, varsayılan temada tanımlı tür fontunu (Label) ezmiyor; tema ile font denenecekse `set_font("font", "Label", ...)` kullanılır (M3-17 önizlemesinde yaşandı).
 - Büyük harf metinler çeviri dosyasına büyük harfle yazılır; kodda dönüştürülmez (`i` → `İ` sorunu).
 - **Anahtar adları** `BÜYÜK_YILAN` biçiminde ve alan önekli: `APP_` (uygulama adı ve mağaza metinleri), `UI_`, `HUD_`, `SECTOR_`, `UPGRADE_`, `TRAIL_`, `SETTINGS_` (ör. `APP_TITLE`, `UI_TAP`, `SECTOR_1_NAME`).
 - **Dil seçimi** (`Settings.resolve_language`): oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce. Seçim `user://settings.cfg`'de saklanır; boş değer "cihaz dili" demektir.
@@ -1058,6 +1061,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-056 | 2026-10-14 | Kıl payı yavaş çekimi `Engine.time_scale` ile bütün oyunu yavaşlatır (`SlowMotion`, `Run` içinde); süre gerçek zamanla (fizik adımı sayısıyla) sayılır, sonunda yumuşak dönüş. Yalnızca zincirin ilk halkasında ve çarpanın büyüdüğü halkada. Taban, başladığı andaki ölçektir. Ölümde ve tur kaldırılınca hemen geri verilir. `Events.near_miss`'e çarpan eklendi; HUD canlandırmaları zaman ölçeğini yok sayar | Tek ölçek, müziğin aynı oranda yavaşlaması kuralını (ADR-008) bedavaya sağlar; oynanış `delta` ile ilerlediği için harita değişmez (test). Gerçek zamanlı süre, 0,5× ölçekte de 0,25 sn'yi korur. Her kıl payında yavaşlamak yorucu olurdu (GDD §15). HUD eşikleri bilmesin diye çarpanı sinyalden alır. Redmi'de 25 yavaş çekimde yeniden hizalama yok, kayma ≤ 35 ms |
 | ADR-057 | 2026-10-14 | Hız hissi yalnızca görseldir ve sektörün tırmanış hızından türetilir (`NeonStyle.speed_feel`: 12 m/sn 0, 22 m/sn 1): hız çizgileri (`SpeedLines`, `Background`'ın çocuğu, sabit dizilerde tek doku ile `_draw`) ve iz süresinin çarpanı (`Trail.stretch`, kayıtlar korunarak). Sektör geçişinde his yavaşça değişir, yeni çizgiler üstten girer | Hız tavanı ve tepki süreleri (GDD §13) oyunu gerçekte hızlandırmaya izin vermiyor; his görselden gelmeli. `CPUParticles2D` yerine çizim: tek düğüm, en çok 24 doku çizimi, tur sırasında ayırma yok; kalite oranı parçacıklarınkiyle aynı. Ani geçişte yeni çizgiler ekranın ortasında belirir, iz sıfırlanıp yeniden uzardı. Redmi'de en kötü durumda ≈ +0,7–1,1 ms |
 | ADR-058 | 2026-10-14 | Rekor çizgisi dünyada bir `NeonLine` (`RecordLine`, `Run`'ın çocuğu, koridorun hemen üstünde, tehlikelerin altında); oturum rekoru `GameManager.best_height_m`, `Main` her tura `Run.record_height` olarak verir; çizginin yeri HUD yüksekliğiyle aynı hesap. Sahne denetimine dünya ↔ UI katman kuralı eklendi | Dünya UI'yı tanımaz (§3); rekoru tur dışından almak tohum ve başlangıç sektörüyle aynı yol, `Run` testte tek başına kurulabiliyor. Çizgi tehlikeyi örtmemeli (adalet). Kabul ölçütü "dünya HUD'a erişmiyor" önceden yalnızca dolaylı denetleniyordu (sahne dışı ad bulunamaz); `/root/` yolu ve dosya yükleme gözden kaçabiliyordu |
+| ADR-059 | 2026-10-15 | Oyunun fontu Exo 2 kalın (kullanıcı kararı; adaylar Chakra Petch, Audiowide ve Godot'nun varsayılanı, Redmi ekran görüntüleriyle). Değişken font tek dosyada, kalın kesim bir `FontVariation`; proje ayarı `gui/theme/custom_font` onu gösterir. Kesin sektör renkleri "elektrik" paleti (kullanıcı kararı; şimdiki / elektrik / gece arasından): daha doygun çevre, daha koyu zemin, S3 turuncuya kaydı. Ekranın temizleme rengi S1 zemini | Okunaklı, küçük boyutta net; Audiowide'ın rakamları süslü. Proje fontu her ekranı (ileride menüler) kendiliğinden kapsar, sahnelerde atama gerekmez. Değişken font HUD stili (M3-18) başka ağırlık isterse yeni dosya gerektirmez. S3'ün eski kehribarı sarı rekor çizgisiyle karışıyordu |
 | ADR-054 | 2026-10-14 | Desen parçası havuzları turlar arasında korunur: `Main`'in çocuğu `ChunkPools` (`z_index` −1; `Corridor` −2), her `Run` havuzları ödünç alır, tur bitince etkin parçalar geri döner. `NeonShape` yalnızca seçilen parlama türünün düğümlerini kurar. ADR-029'un "tur başında kopya" kısmının yerini alır | Tur başında 130 kopya / 3552 düğüm kurmak Redmi'de ölümden yeni tura süreyi 516–526 ms'ye çıkarmıştı (ölçüt < 500 ms); korununca 370–381 ms. Taşımak yeniden kurmak kadar pahalı, kopyaları tekrar yasağına göre kısmak güvensiz (§8.7). İçerik büyüdükçe tur başı maliyeti artık büyümez |
 
 ## 18. Açık teknik sorular
@@ -1069,7 +1073,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | S-03 | ✅ Çözüldü (M2-07, M2-18, M2-20): Redmi'de kayma 17–25 ms, 40 ms eşiği uygun; çıkış gecikmesi API'si Android'de 0 ms dönüyor ama kulak testlerinde geç kalan ses duyulmadı. Başka cihazlar için gerekirse "ses kaydırma" ayarı (M5-05) | — |
 | S-04 | ✅ Çözüldü (M0-08): Godot 4.7 debug anahtarını kendisi oluşturuyor (`%APPDATA%\Godot\keystores\debug.keystore`); Java/SDK yollarını da kendisi buldu | — |
 | S-05 | Play Games ve AdMob eklentilerinin Godot 4.7 uyumlu sürümleri | M7 |
-| S-06 | Neon stile uygun, Türkçe karakter destekli, lisansı temiz font | M3-17 |
+| S-06 | ✅ Çözüldü (M3-17): Exo 2 (OFL), Türkçe harfleri tam (§12). Orbitron'da Ğ İ Ş ğ ş · eksikti, elendi | — |
 | S-07 | ✅ Çözüldü (M0-10, M2-18): Emülasyon fare olayları `DEVICE_ID_EMULATION` ile ayrılıyor; gerçek iki başparmak denemesi M2-18 oyun testinde geçti (§8.1) | — |
 | S-08 | ✅ Çözüldü (M0-06): `--headless --script` modunda autoload'lar yükleniyor | — |
 

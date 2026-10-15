@@ -40,6 +40,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
+[gui]
+
+theme/custom_font="res://assets/fonts/exo2_bold.tres"
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.tr.translation")
@@ -61,4 +65,4 @@ common/physics_interpolation=true
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
-environment/defaults/default_clear_color=Color(0.039, 0.055, 0.122, 1)
+environment/defaults/default_clear_color=Color(0.02, 0.04, 0.1, 1)
