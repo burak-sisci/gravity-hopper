@@ -13,7 +13,7 @@ extends Node
 ## Duyulan konum = çalma konumu + son karıştırmadan beri geçen süre − çıkış gecikmesi.
 ## Tur başlayınca çalar, oyuncu ölünce durur.
 ##
-## Efektler (M3-15, ADR-059): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
+## Efektler (M3-15, ADR-061): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
 ## Havuz sabit sayıda çalardır (SfxBank.voices), oyun açılırken kurulur; tur sırasında düğüm
 ## oluşturulmaz. Boş çalar yoksa bitmesine en az kalan kesilir. Çalarlar SFX yolundadır.
 ## Efektler gerçek zamanda çalar: Engine.time_scale'i izlemez (yavaş çekimde ses yavaşlamaz;

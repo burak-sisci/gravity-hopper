@@ -91,7 +91,7 @@ gravity-hopper/
 ├── assets/                   # Görsel ve işitsel materyaller
 │   ├── sprites/              # UI ikonları, parçacık dokuları, uygulama ikonu
 │   ├── audio/
-│   │   ├── sfx/              # Efektler (çevirme, toplama, ölüm, kıl payı)
+│   │   ├── sfx/              # Efektler: <olay>.ogg (Kenney CC0, değiştirilmeden; M3-15, §8.8)
 │   │   └── music/            # Tur müzikleri (OGG; tools/music_prep.py hazırlar, M2-20)
 │   ├── fonts/                # exo2.ttf + OFL lisansı, exo2_bold.tres (proje fontu, M3-17)
 │   └── shaders/              # collapse_glitch.gdshader (M3-09: yalnızca duvarın kenar bandı). Arka plan ağı ve sahte parlama shader'sız (§9, ADR-050)
@@ -100,6 +100,7 @@ gravity-hopper/
 │   ├── tuning/               # TuningConfig (hareket, kamera, adalet, basınç)
 │   ├── chunks/               # ChunkLibrary: oyundaki desen parçalarının listesi (M2-04)
 │   ├── music/                # MusicTrack (parça başına) + MusicCatalog (M2-20)
+│   ├── audio/                # SfxBank: olay → ses eşlemesi (sfx_bank.tres; tools/sfx_prep.py yazar, M3-15)
 │   ├── sectors/              # SectorDef + paletler
 │   ├── visual/               # NeonStyle: neon parlama değerleri, kaliteye göre katmanlar (M3-01); içinde üç BurstStyle (M3-11)
 │   ├── upgrades/             # UpgradeDef
@@ -128,7 +129,7 @@ gravity-hopper/
 ├── tools/                    # Geliştirici araçları: check.ps1 + check_scripts.gd + warning_keys.gd (M0-06), deploy.ps1 (M0-08),
 │                             #   scene_tool.gd + fixtures/ (M0-11), lint_hook.py (M0-12), web_build.ps1 (M1-13),
 │                             #   chunk_validator.gd + validate_chunks.gd (M2-05), notify.ps1 (ntfy, ADR-033),
-│                             #   music_prep.py (müzik hazırlama, M2-20)
+│                             #   music_prep.py (müzik hazırlama, M2-20), sfx_prep.py (efekt ses düzeyi, M3-15)
 ├── tests/                    # Otomatik testler (gdUnit4, M2-01); klasörler scripts/ ile aynı (tests/systems/run_rng_test.gd)
 └── addons/                   # Sürümü sabit eklentiler (her biri CREDITS.md'de)
     ├── debug_menu/           # godot-debug-menu, commit ff12461 (M0-09); yalnızca debug
@@ -244,7 +245,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `SaveManager` | Kayıt dosyalarını okuma/yazma, şifreleme, sürüm geçişi | Yalnızca kalıcılık; oyun kuralı bilmez |
 | `Progression` | Glimmer cüzdanı, yükseltme seviyeleri, izler, açılmış sektörler | Veriyi `SaveManager` ile saklar |
 | `Settings` | Ses, müzik, titreşim, dil, efekt kalitesi | `user://settings.cfg` |
-| `AudioManager` | Efekt havuzu, müzik çalma ve geçişleri, `pitch_scale` senkronu | Olayları `Events`'ten dinler |
+| `AudioManager` | Efekt havuzu (8 çalar, açılışta kurulur; §8.8), müzik çalma ve geçişleri, `pitch_scale` senkronu | Olayları `Events`'ten dinler |
 
 İleride: `Ads`, `PlayGames` (M7). **Debug araçları autoload değildir:** Autoload'lar her derlemede yüklenir. Bu yüzden debug araçları `Main/Debug` katmanına yalnızca `OS.is_debug_build()` iken yüklenir (§13, ADR-020). **Yeni autoload eklemeden önce bu tablo güncellenir.**
 
@@ -267,14 +268,16 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `pause_changed` | `paused: bool` | GameManager | HUD, AudioManager |
 | `player_died` | `cause: GameTypes.DeathCause` (HAZARD, FELL, WALL) | Player (WALL: PressureSystem → Run → `Player.die`, M2-15) | GameManager, HUD, AudioManager |
 | `player_revived` | — | GameManager | HUD, AudioManager |
-| `player_flipped` | — | Player | AudioManager (ses, titreşim) |
+| `player_flipped` | — | Player | AudioManager (efekt, M3-15; titreşim M5) |
+| `player_landed` | — | Player (`_land`: duvara her gerçek iniş, M3-15) | AudioManager (tutunma sesi) |
 | `shield_changed` | `active: bool` | Player | HUD, AudioManager |
 | `height_changed` | `meters: int` | Run (yalnızca tam sayı değişince) | HUD, GameManager (`RunResult.height_m`) |
-| `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı. Müzik sektörde değişmez (ADR-040) |
+| `sector_entered` | `index: int` | Run (sınır geçilince, M2-08) | HUD (afiş, M2-09), GameManager (`sector_reached`), debug katmanı, AudioManager (efekt, M3-15). Müzik sektörde değişmez (ADR-040) |
 | `chunk_placed` | `chunk_id: StringName, difficulty: int, sector: int` | ChunkSpawner (her parça yerleştiğinde, M2-06) | Debug olay günlüğü (zorluk ve tekrar ölçümü, M2-10) |
 | `glimmer_collected` | `value: int` | Run | HUD, AudioManager |
 | `near_miss` | `combo: int, multiplier: int` (M3-12'de çarpan eklendi) | Run | HUD (kıl payı yazısı, kombo göstergesi), GameManager (`near_misses`), debug günlüğü, AudioManager (efekt, M3-15) |
-| `combo_ended` | — | Run | HUD |
+| `combo_ended` | — | Run | HUD, AudioManager (kombo eşiği sayacı) |
+| `record_broken` | — | Run (`RecordLine.passed`'i aktarır, turda bir kez; M3-15) | AudioManager (rekor sesi) |
 | `wall_proximity_changed` | `ratio: float` (0 uzak – 1 yakın) | PressureSystem | HUD (kenar vinyeti), AudioManager |
 | `beat` | `index: int` | Conductor | Arka plan, HUD (nabız) |
 | `start_requested` | `sector: int` | UI (M5), debug katmanı (`5`, M2-08) | Main (o sektörden yeni tur) |
@@ -510,6 +513,32 @@ Run (Node2D)                          scenes/levels/run.tscn
   - Neden taşımak değil korumak: düğümü başka ebeveyne taşımak (ağaçtan çıkıp girmek) PC'de 125 kopyada ≈ 12 ms; yeniden kurmak (≈ 14 + 11 ms) kadar pahalı. Kopya sayısını tekrar yasağına göre kısmak da güvenli değil: kural sektör sonunda esniyor.
   - Silme sırası: tur, havuzdan önce silinmeli (yerleştirici çıkarken parçaları geri verir). `Main`'de `World` `ChunkPools`'tan önce gelir; testte tur elle silinir.
 
+### 8.8 Ses efektleri (M3-15, ADR-061)
+
+- **Veri:** `SfxBank` (`data/audio/sfx_bank.tres`): `voices` (havuzdaki çalar sayısı, 8) ve `sounds` (`SfxSound` alt kaynakları). `SfxSound`: `event` (`GameTypes.Sfx`), `stream` (OGG, döngüsüz), `volume_db` (müzikle dengeleyen düzeltme), `pitch_jitter`, atıf alanları (`title`, `author`, `license`, `source_url`); `duration(perde)`. Bankayı `tools/sfx_prep.py` yazar.
+- **Olay → ses** (hepsi Kenney, CC0; dosyalar `assets/audio/sfx/<olay>.ogg`, değiştirilmeden):
+
+  | Olay (`GameTypes.Sfx`) | Ne zaman (`Events`) | Kenney dosyası | `volume_db` | Perde oynaması |
+  | --- | --- | --- | --- | --- |
+  | `FLIP` | `player_flipped` | `phaseJump2` (Digital Audio) | −14,4 | ±%6 |
+  | `LAND` | `player_landed` (Player `_land`; tur başındaki ilk iniş dahil, oyuncu koridorun ortasından duvara iner) | `impactGeneric_light_000` (Impact Sounds) | −8,7 | ±%8 |
+  | `GLIMMER` | `glimmer_collected` | `confirmation_003` (Interface Sounds) | −12,5 | ±%3 |
+  | `NEAR_MISS` | `near_miss` | `phaserUp4` (Digital Audio) | −3,8 | ±%4 |
+  | `COMBO_UP` | `near_miss`, çarpan büyüdüğünde (×2, ×3); `combo_ended` ve `run_started` sayacı sıfırlar | `highUp` (Digital Audio) | −15,6 | — |
+  | `SHIELD_BREAK` | `shield_changed(false)` (kalkan yalnızca tükenince kapanır) | `glass_004` (Interface Sounds) | −9,4 | — |
+  | `DEATH` | `player_died` | `explosionCrunch_000` (Sci-fi Sounds) | −1,4 | — |
+  | `SECTOR` | `sector_entered` | `zapThreeToneUp` (Digital Audio) | −12,2 | — |
+  | `RECORD` | `record_broken` (`RecordLine.passed` → `Run`, turda bir kez) | `jingles_PIZZI10` (Music Jingles) | −5,4 | — |
+
+- **Havuz (`AudioManager`):** `SfxBank.voices` kadar `AudioStreamPlayer`, `SFX` yolunda, oyun açılırken kurulur; tur sırasında düğüm oluşmaz (.clauderules §6). `play_sfx(olay)` boş çaları kullanır; boş yoksa sesinin bitmesine en az kalanı keser.
+  - Doluluk gerçek zamanla tutulur (`Time.get_ticks_usec` + `SfxSound.duration`): `play()`'den hemen sonra `playing` hâlâ `false` olabildiği için (§8.3 dersi) aynı karedeki iki efekt aynı çalara düşerdi.
+  - Efektler `Engine.time_scale`'i **izlemez**: yavaş çekimde yalnızca müzik yavaşlar (kural vuruş senkronu için, .clauderules §5). Perde oynaması kozmetik `randf`'tir (oynanışı etkilemez).
+  - Testler için: `last_sfx()`, `sfx_count(olay)`, `sfx_voices()`; `sfx_bank` değiştirilebilir.
+- **Ses düzeyi (`tools/sfx_prep.py`):** Her efektin en yüksek kısa süreli düzeyi (50 ms RMS) müziğin ortanca kısa süreli düzeyine (beş parçada −23,4 dBFS) göre katmanına çekilir: sık çalanlar (çevirme, tutunma) −3 dB, ödüller (Glimmer, kıl payı, kombo) +3 dB, büyük anlar (kalkan, ölüm, sektör, rekor) +6 dB. Telefon hoparlörü alçak sesleri vermediği için iki ölçüm de 250 Hz altı atılarak yapılır. Kazanç tepe −1 dBFS'yi geçmeyecek kadarla ve −24…+6 dB ile sınırlı. Kenney paketleri proje dışında indirilir (`PACKS`); kaynaklar depoya girmez.
+- **Seçim:** Kullanıcı Redmi'de dinledi ve onayladı ("sesler güzel", 2026-10-15).
+- **Ders:** Kalkan için ilk aday `impactGlass_heavy_001` tepe sınırına takıldı (kazanç verilemedi, sessiz kaldı); yerine `glass_004` alındı.
+- **Test:** `tests/autoloads/sfx_test.gd`; tutunma sesinin her inişte bir kez çalması `run_effects_test.gd`'de.
+
 ## 9. Görsel mimari
 
 - **Şekiller:** Tüm oyun şekilleri beyaz `Polygon2D` / `Line2D` olarak çizilir. Renkler koddan, aktif sektörün `SectorPalette` kaynağından atanır. Sektör geçişinde yeni palet alttan üste bir renk dalgasıyla yayılır (M3-08).
@@ -614,6 +643,8 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `SectorDef` | `data/sectors/sector_01.tres` … `sector_03.tres` (M2-08) | `name_key` (`SECTOR_N_NAME`), `climb_speed` (m/sn), `length` (m), `allowed_hazards`, `min_difficulty`–`max_difficulty`, `palette` (M3-02); `beat_px(bpm)`, `climb_px()`. Tempo M2-20'de sektörden turun parçasına taşındı |
 | `MusicTrack` | `data/music/<id>.tres` (M2-20) | `id`, `stream` (OGG), `bpm`, `loop_start`, `volume_db`, `title`, `author`, `license`, `source_url`; `beat_length()`, `length()`, `position_at(vuruş_saati)`. `tools/music_prep.py` üretir |
 | `MusicCatalog` | `data/music/music_catalog.tres` (M2-20) | Tur müzikleri; `pick(tohum)`, `tempos()`, `max_bpm()` |
+| `SfxBank` | `data/audio/sfx_bank.tres` (M3-15) | `voices` (havuz), `sounds: Array[SfxSound]`; `sound_for(olay)` (§8.8) |
+| `SfxSound` | `sfx_bank.tres` içinde alt kaynak (M3-15) | `event` (`GameTypes.Sfx`), `stream`, `volume_db`, `pitch_jitter`, `title`, `author`, `license`, `source_url`; `duration(perde)` |
 | `SectorCatalog` | `data/sectors/sector_catalog.tres` (M2-08) | Sıralı sektör listesi; `def_at(n)`, `start_height(n)`, `end_height(n)` (son sektör: INF), `sector_at(m)`, `min_beat_px(bpm)`. S4–S5 M4-07'de eklenir; o zamana kadar S3 bitmez |
 | `SectorPalette` | `data/sectors/palette_01.tres` … `palette_03.tres` (M3-02) | `ambient`, `accent`, `background` (§9). `SectorDef.palette` ile bağlı |
 | `NeonStyle` | `data/visual/neon_style.tres` (M3-01) | Kaliteye göre çizgi parlama katmanları (`high_layers`, `medium_layers`, `low_layers`; x = genişlik px, y = yoğunluk), `blob_min_quality`, `blob_scale`, `blob_padding`, `blob_intensity`, `line_width`, `fill_alpha`; sabit renkler `hazard_color`, `glimmer_color`, `player_color` (M3-02); `shield_color`, iz `trail_duration`, `trail_width` (M3-04); duvar `wall_fill_light`, `wall_fill_dark`, `wall_core_whiten`, nabız `beat_pulse_length`, `beat_pulse_gain`, `beat_pulse_boost` (M3-03); arka plan ağı `grid_min_quality`, `grid_far_min_quality`, `grid_near_cell`, `grid_near_parallax`, `grid_near_width`, `grid_near_alpha`, `grid_node_radius`, `grid_node_alpha`, `grid_far_cell`, `grid_far_parallax`, `grid_far_width`, `grid_far_alpha`, `grid_pulse_alpha`, `grid_flash_density`, `grid_flash_alpha` (M3-07); renk dalgası `wave_time`, `wave_blend`, `wave_crest_width`, `wave_glow_height`, `wave_glow_alpha`, `wave_glow_min_quality` (M3-08); çöküş duvarı `collapse_body_color`, `collapse_glitch_min_quality`, `collapse_split_min_quality`, `collapse_steps_per_beat`, `collapse_rise`, `collapse_depth`, `collapse_column`, `collapse_jag`, `collapse_slice`, `collapse_slice_shift`, `collapse_slice_chance`, `collapse_block`, `collapse_dust_density`, `collapse_edge_width`, `collapse_glow`, `collapse_glow_alpha`, `collapse_split`, `collapse_pulse_gain` (M3-09); sıkışma-uzama `stretch_on_flip`, `squash_on_landing`, `squash_frequency`, `squash_damping`, parçacıklar `particle_medium_ratio`, `particle_low_ratio`, `landing_spark`, `glimmer_burst`, `death_burst` (M3-11); hız hissi `speed_feel_min_speed`, `speed_feel_max_speed`, `trail_speed_stretch`, `speed_line_count`, `speed_line_length`, `speed_line_width`, `speed_line_alpha`, `speed_line_speed`, `speed_line_jitter`, `speed_feel_rate`, `speed_line_fade` (M3-13); `layers_for(kalite)`, `max_layer_count()`, `shows_blob(kalite)`, `beat_pulse(vuruş)`, `wave_progress(süre)`, `wave_front(ilerleme, üst, alt)`, `wave_weight(y, cephe)`, `wave_reach_time(oran)`, `particle_amount(sayı, kalite)`, `speed_feel(tırmanış hızı)`, `trail_stretch(his)`, `speed_line_amount(his, kalite)` |
@@ -623,7 +654,7 @@ Run (Node2D)                          scenes/levels/run.tscn
 | `ChunkInfo` | desen parçası sahnelerinin kökü | Zorluk, sektör aralığı, vuruş uzunluğu, etiketler |
 | `ChunkLibrary` | `data/chunks/chunk_library.tres` | Oyunda kullanılan desen parçası sahnelerinin listesi (M2-04) |
 | `RunResult` | (kod, `RefCounted`) | Yükseklik, Glimmer, kıl payı sayısı, ölüm nedeni, ulaşılan sektör, tohum |
-| `GameTypes` | (kod, `RefCounted`) | Paylaşılan enum'lar: `DeathCause`, `Quality`. Autoload'ların iç enum'ları tip olarak kullanılamadığı için ortak türler burada durur |
+| `GameTypes` | (kod, `RefCounted`) | Paylaşılan enum'lar: `DeathCause`, `Quality`, `Sfx` (M3-15). Autoload'ların iç enum'ları tip olarak kullanılamadığı için ortak türler burada durur |
 
 **`TuningConfig` kuralları (M1-01, ADR-024):**
 
@@ -879,6 +910,8 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/levels/run_sector_test.gd` (M2-08, M2-09, M3-02, M3-08) | Kısa sektörlerle S1→S2→S3: her sektörde adım hızı doğru, `sector_entered` [2, 3], her sektörde diken yarım vuruşta geçiyor, yeni sektörün ilk 2,5 sn'sinde diken yok, renkler paletten (tur başında anında; S2'ye girişte renk dalgası başlıyor ve temizleme rengi S2'ninki, dalga `wave_time` sürüyor, ortasında üst duvar S1, alt duvar S2 renginde; S3'te duvarlar ve arka plan S3 paletinde; M3-02, M3-08), tempo; S2'den başlayan turda yükseklik ve hız |
   | `tests/systems/conductor_test.gd` (M2-07) | Vuruşlar BPM'e göre doğru karede, yavaş çekimde oyun zamanına göre; gerçek turda her diken yarım vuruş anında geçiyor |
   | `tests/autoloads/audio_manager_test.gd` (M2-07; M2-20'de yeniden yazıldı) | Tur başlayınca bildirilen parça çalara konur, döngüsü `loop_start`'tan kurulur; ölümden sonra bildirilen saat yok sayılır, yeni turda parça yeniden kurulur; müziğin hızı `Engine.time_scale`'i izliyor (M3-12) |
+  | `tests/autoloads/sfx_test.gd` (M3-15) | Her olayın atıflı, döngüsüz bir sesi var; `Events`'teki olay doğru sesi çalıyor, kalkan takılınca ses yok; kombo eşiği yalnızca çarpan büyüyünce; aynı karedeki efektler ayrı çalarlarda, havuz dolunca bitmesine en az kalan kesiliyor, düğüm sayısı sabit; yavaş çekimde efektin perdesi 1 |
+  | `tests/ui/font_test.gd` (M3-17) | Proje fontu Exo 2, ağırlık 700 (sayı etiketiyle); Türkçe harfler ve HUD işaretleri (× ·) fontta var |
   | `tests/data/music_catalog_test.gd` (M2-20) | Beş parça ve dört tempo; her parçanın süresi tam vuruş, döngüsü tam ölçü, ses düzeltmesi sınırda; atıf ve lisans (CC0 / CC-BY) tam; seçim tohuma bağlı ve 300 tohumda her parça seçiliyor; döngü içinde konum sarılıyor |
   | `tests/tools/chunk_validator_test.gd` (M2-05; M2-13 eki: çevrili Glimmer toplanamaz, tehlikeden uzak Glimmer riskli değil; M2-11 eki: iki duvarda üst üste uzun boşluk yakalanıyor, tek boşluk S2'de adil, S1'de izinsiz; M2-12 eki: koridoru kapatan ışın vuruşta yanıyorsa geçilemez, yarım vuruşta yanıyorsa geçilir; lazer S2'de izinsiz) | Örnek parça her sektörde adil; iki duvarı kapatan parça, her vuruşta taraf değiştiren dikenler (S5), parça başındaki diken, sınırdan taşan diken yakalanıyor; havadan geçilebilen diken çifti geçiyor; kamera kuralı; sektör kapsamı |
   | `tests/components/trail_test.gd` (M3-04; M3-13 eki: süre çarpanı değişince kayıtlar korunuyor, iz yeni süresinin yolunu kaplayana dek uzuyor) | İz 60 ve 120 Hz'de aynı (adım başına bir ve iki kare); düz tırmanışta süresi kadar yolu kaplıyor, ara kesirde boyu değişmiyor; baş oyuncunun üstünde; çizgileri kurulu; oyuncu durunca iz sıfıra iniyor; renk beyazdan çevre rengine sönüyor |
@@ -892,7 +925,7 @@ Run (Node2D)                          scenes/levels/run.tscn
   | `tests/entities/record_line_test.gd` (M3-14) | Yerleşene dek görünmez; koridoru boydan boya geçer; yaklaştıkça kalınlaşıp parlar, vuruşta beyaza çekilir; çizgiye varınca beyaz parlar, söner, o turda geri gelmez |
   | `tests/levels/run_record_test.gd` (M3-14) | Gerçek turda çizgi rekorun yüksekliğinde: oyuncu çizgiye vardığı adımda yükseklik tam rekor, daha önce değil (çizgi 1 m yukarı konunca test 8 hatayla kırıldı, denendi); rekor yokken ve tur rekorun üstünden başlayınca çizgi yok; sonraki sektörden başlayan turda başlangıç yüksekliğinden sayılıyor |
   | `tests/tools/scene_tool_test.gd` (M3-14) | Katman kuralı: UI yolları, sınıf adları ve `/root/` yolları bulunuyor; yorumlar, benzer adlar ve önekle başlamayan metinler sayılmıyor; sahnedeki UI kaynağı bulunuyor |
-  | `tests/levels/run_effects_test.gd` (M3-11; M3-13 eki: S3'ten başlayan turda iz S1'dekinden uzun, hız çizgisi daha çok) | Gerçek turda iniş bir kez bildiriliyor (duvarın iç kenarında, yönüyle; duvarda kayarken yeni iniş yok), kıvılcım değilen noktada; çevirmede görsel uzuyor, inişten sonra tam 1'e dönüyor, çarpışma şekilleri ve oyuncunun ölçeği değişmiyor; Glimmer toplandığı yerde patlıyor; ölüm donmasının sonunda çekirdek gizleniyor ve patlıyor; çevirme, iniş, Glimmer ve ölüm dolu turda düğüm sayısı sabit (`Performance.OBJECT_NODE_COUNT`; bir düğüm eklenince test kırılıyor, denendi) ve havuz büyümüyor |
+  | `tests/levels/run_effects_test.gd` (M3-11; M3-13 eki: S3'ten başlayan turda iz S1'dekinden uzun, hız çizgisi daha çok) | Gerçek turda iniş bir kez bildiriliyor ve tutunma sesi bir kez çalıyor (M3-15; duvarın iç kenarında, yönüyle; duvarda kayarken yeni iniş yok), kıvılcım değilen noktada; çevirmede görsel uzuyor, inişten sonra tam 1'e dönüyor, çarpışma şekilleri ve oyuncunun ölçeği değişmiyor; Glimmer toplandığı yerde patlıyor; ölüm donmasının sonunda çekirdek gizleniyor ve patlıyor; çevirme, iniş, Glimmer ve ölüm dolu turda düğüm sayısı sabit (`Performance.OBJECT_NODE_COUNT`; bir düğüm eklenince test kırılıyor, denendi) ve havuz büyümüyor |
   | `tests/levels/chunk_info_test.gd` (M2-03) | Örnek parçanın değerleri, klasördeki her parçanın ızgara kuralları, kural ihlallerinin yakalanması, vuruş boyu, tasarımdan dünyaya ölçekleme |
 
   - **Kabul (M2-02):** Kod bilerek bozuldu (sahte fare kuralı, çevirme, yeniden başlama süresi 0,8 sn, rekorun düşmesi); testler 12 hatayla yakaladı, geri alınınca 30/30 geçti.
@@ -1064,6 +1097,7 @@ Sahne: `scenes/debug/glow_bench.tscn`. Duvarlar, 14 diken, 8 blok, 20 Glimmer, o
 | ADR-058 | 2026-10-14 | Rekor çizgisi dünyada bir `NeonLine` (`RecordLine`, `Run`'ın çocuğu, koridorun hemen üstünde, tehlikelerin altında); oturum rekoru `GameManager.best_height_m`, `Main` her tura `Run.record_height` olarak verir; çizginin yeri HUD yüksekliğiyle aynı hesap. Sahne denetimine dünya ↔ UI katman kuralı eklendi | Dünya UI'yı tanımaz (§3); rekoru tur dışından almak tohum ve başlangıç sektörüyle aynı yol, `Run` testte tek başına kurulabiliyor. Çizgi tehlikeyi örtmemeli (adalet). Kabul ölçütü "dünya HUD'a erişmiyor" önceden yalnızca dolaylı denetleniyordu (sahne dışı ad bulunamaz); `/root/` yolu ve dosya yükleme gözden kaçabiliyordu |
 | ADR-059 | 2026-10-15 | Oyunun fontu Exo 2 kalın (kullanıcı kararı; adaylar Chakra Petch, Audiowide ve Godot'nun varsayılanı, Redmi ekran görüntüleriyle). Değişken font tek dosyada, kalın kesim bir `FontVariation`; proje ayarı `gui/theme/custom_font` onu gösterir. Kesin sektör renkleri "elektrik" paleti (kullanıcı kararı; şimdiki / elektrik / gece arasından): daha doygun çevre, daha koyu zemin, S3 turuncuya kaydı. Ekranın temizleme rengi S1 zemini | Okunaklı, küçük boyutta net; Audiowide'ın rakamları süslü. Proje fontu her ekranı (ileride menüler) kendiliğinden kapsar, sahnelerde atama gerekmez. Değişken font HUD stili (M3-18) başka ağırlık isterse yeni dosya gerektirmez. S3'ün eski kehribarı sarı rekor çizgisiyle karışıyordu |
 | ADR-060 | 2026-10-15 | itch.io sayfası herkese açık ve şifresiz (kullanıcı kararı, M1-13; ADR-027'deki şifreli "Restricted" sayfanın yerine): https://burak-sisci.itch.io/gravity-hopper. Yüklenen zip yayın çıktısı | Kullanıcı kararı (yükleme sırasında). Link şifresiz paylaşılıyor; yayın çıktısında debug özellikleri yok. Görünürlük itch.io'da istenince geri alınabilir |
+| ADR-061 | 2026-10-15 | Ses efektleri: olay → ses eşlemesi veride (`SfxBank` + `SfxSound`, `data/audio/sfx_bank.tres`), Kenney CC0 dosyaları değiştirilmeden; ses düzeyi `volume_db`'de, `tools/sfx_prep.py` müziğe göre ölçer (telefon bandı, kademeler). `AudioManager`'da açılışta kurulan 8 çalarlık havuz; boş yoksa bitmesine en az kalan kesilir; doluluk gerçek zamanla. Efektler `Engine.time_scale`'i izlemez. Yeni sinyaller `player_landed`, `record_broken` | Ses seçimi kod değiştirmeden yenilenir; dosyayı yeniden kodlamamak kaliteyi korur. Telefon hoparlörü 250 Hz altını vermediği için tam bant ölçüm alçak sesli efektleri yanıltıcı biçimde yüksek gösterirdi. Tur sırasında düğüm yok (.clauderules §6); `playing` bayrağı `play()`'den hemen sonra güvenilmez (M2-07 dersi). Yavaşlayan efekt sesi kıl payı anını boğuk yapardı; kural yalnızca müziğin senkronu içindir |
 | ADR-054 | 2026-10-14 | Desen parçası havuzları turlar arasında korunur: `Main`'in çocuğu `ChunkPools` (`z_index` −1; `Corridor` −2), her `Run` havuzları ödünç alır, tur bitince etkin parçalar geri döner. `NeonShape` yalnızca seçilen parlama türünün düğümlerini kurar. ADR-029'un "tur başında kopya" kısmının yerini alır | Tur başında 130 kopya / 3552 düğüm kurmak Redmi'de ölümden yeni tura süreyi 516–526 ms'ye çıkarmıştı (ölçüt < 500 ms); korununca 370–381 ms. Taşımak yeniden kurmak kadar pahalı, kopyaları tekrar yasağına göre kısmak güvensiz (§8.7). İçerik büyüdükçe tur başı maliyeti artık büyümez |
 
 ## 18. Açık teknik sorular

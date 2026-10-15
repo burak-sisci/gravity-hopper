@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
-## Turdaki görsel his (M3-11, architecture.md §9): iniş bir kez bildirilir ve kıvılcım çıkar,
-## çevirmede ve inişte yalnızca görsel esner (çarpışma şekilleri değişmez), Glimmer toplandığı
+## Turdaki görsel his (M3-11, architecture.md §9): iniş bir kez bildirilir, kıvılcım çıkar ve
+## tutunma sesi bir kez çalar (M3-15); çevirmede ve inişte yalnızca görsel esner (çarpışma
+## şekilleri değişmez), Glimmer toplandığı
 ## yerde patlar, ölüm donmasının sonunda çekirdek gizlenip patlar. Çevirme, iniş, Glimmer ve ölüm
 ## dolu bir turda düğüm sayısı sabittir (.clauderules §6).
 ## Hız hissi (M3-13): S3'te iz S1'dekinden uzun, hız çizgileri daha çok.
@@ -29,9 +30,11 @@ func after_test() -> void:
 
 
 func test_landing_is_reported_once_per_arrival() -> void:
+	var sounds: int = AudioManager.sfx_count(GameTypes.Sfx.LAND)
 	await _start_run()
-	# Oyuncu tur başında koridorun ortasından sol duvara iner.
+	# Oyuncu tur başında koridorun ortasından sol duvara iner (gerçek bir iniş: sesi de çalar).
 	assert_int(_landings.size()).is_equal(1)
+	assert_int(AudioManager.sfx_count(GameTypes.Sfx.LAND) - sounds).is_equal(1)
 	assert_float(_landings[0].x).is_equal_approx(-WALL_EDGE_X, POSITION_TOLERANCE)
 	assert_array(_sides).is_equal([-1.0])
 	# Duvarda kayarken (parça birleşim yerleri dahil) yeni iniş sayılmaz.
@@ -40,6 +43,7 @@ func test_landing_is_reported_once_per_arrival() -> void:
 	_tap()
 	await _frames(TRANSIT_FRAMES)
 	assert_int(_landings.size()).is_equal(2)
+	assert_int(AudioManager.sfx_count(GameTypes.Sfx.LAND) - sounds).is_equal(2)
 	assert_float(_landings[1].x).is_equal_approx(WALL_EDGE_X, POSITION_TOLERANCE)
 	assert_float(_sides[1]).is_equal(1.0)
 	# Kıvılcım yayıcısı değilen noktada.

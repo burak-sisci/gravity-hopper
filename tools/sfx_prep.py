@@ -1,4 +1,4 @@
-"""Ses efekti hazırlama aracı (M3-15, architecture.md §8.8, ADR-059).
+"""Ses efekti hazırlama aracı (M3-15, architecture.md §8.8, ADR-061).
 
 Kenney ses paketlerinden (CC0, ADR-042) seçilen efektleri oyuna hazırlar:
   1. Her olayın sesini bulur ve assets/audio/sfx/<olay>.ogg olarak kopyalar. Dosya yeniden

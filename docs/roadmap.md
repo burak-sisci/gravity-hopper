@@ -213,7 +213,7 @@
 
 **Ses**
 
-- [ ] **M3-15** 🤖 Ses efektleri (insan yapımı, ücretsiz kütüphanelerden: Kenney CC0, gerekirse Freesound yalnızca CC0 / CC-BY; ADR-042): `AudioManager` efekt havuzu (sabit sayıda çalar, tur sırasında düğüm oluşturulmaz), olay → ses eşlemesi bir veri kaynağında. İlk set: çevirme, tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma. `CREDITS.md`.
+- [x] **M3-15** 🤖 Ses efektleri (insan yapımı, ücretsiz kütüphanelerden: Kenney CC0, gerekirse Freesound yalnızca CC0 / CC-BY; ADR-042): `AudioManager` efekt havuzu (sabit sayıda çalar, tur sırasında düğüm oluşturulmaz), olay → ses eşlemesi bir veri kaynağında. İlk set: çevirme, tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma. `CREDITS.md`.
   *Kabul:* Her olay doğru sesi çalıyor (test); ses düzeyleri müzikle dengeli (ölçüm); Redmi günlüğünde hata yok.
 - [ ] **M3-16** 🤖 Gerilim: çöküş duvarı yaklaştıkça müziğe alçak geçiren süzgeç (boğuklaşma) ve gerilim sesi (GDD §14).
   *Kabul:* Süzgeç duvarın yakınlığıyla değişiyor (test); Redmi'de sesli deneme.
