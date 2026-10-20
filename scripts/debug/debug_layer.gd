@@ -17,6 +17,10 @@ const QUALITY_ARG: String = "--quality="
 ## Başlatma argümanı (`-- --record=40`): oturum rekoru baştan bu yükseklikte, ilk turda rekor
 ## çizgisi görünür (kare yakalama, M3-14).
 const RECORD_ARG: String = "--record="
+## Başlatma argümanı (`-- --perf=6`): oyunun içinde performans ölçümü, evre süresi sn (M3-19,
+## PerfProbe). `-- --auto-tap=0.5` ölçüm sırasında bu aralıkla dokunuş gönderir.
+const PERF_ARG: String = "--perf="
+const AUTO_TAP_ARG: String = "--auto-tap="
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -62,6 +66,8 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_place_debug_menu)
 	_place_debug_menu()
 	_connect_event_log()
+	var perf_sec: float = 0.0
+	var tap_interval: float = 0.0
 	for arg: String in OS.get_cmdline_user_args():
 		if arg == INVINCIBLE_ARG:
 			_invincible_button.button_pressed = true
@@ -76,6 +82,15 @@ func _ready() -> void:
 		elif arg.begins_with(RECORD_ARG):
 			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
 			GameManager.best_height_m = int(arg.trim_prefix(RECORD_ARG))
+		elif arg.begins_with(PERF_ARG):
+			perf_sec = float(arg.trim_prefix(PERF_ARG))
+		elif arg.begins_with(AUTO_TAP_ARG):
+			tap_interval = float(arg.trim_prefix(AUTO_TAP_ARG))
+	if perf_sec > 0.0:
+		var probe: PerfProbe = PerfProbe.new()
+		probe.phase_sec = perf_sec
+		probe.tap_interval = tap_interval
+		add_child(probe)
 	_show_quality()
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.
 	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:

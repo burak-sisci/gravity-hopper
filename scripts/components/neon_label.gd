@@ -5,6 +5,9 @@ extends Label
 ## düğüm, doku ya da shader yok. Kalınlıklar yazı boyutunun oranıdır (NeonStyle →
 ## HUD yazıları); kalite değişince yalnızca katmanlar yeniden yazılır.
 ## Dokunuş yutmaz (mouse_filter = IGNORE): HUD'un üstüne dokunuş çevirme yapar.
+## Isıtma (M3-19): yeni bir harf ilk kez çizilince her dış çizgi için ayrıca hazırlanır; Redmi'de
+## afişin yeni sektör adı tek karede ≈ 20 ms tuttu. warm_glyphs'teki harfler bu yüzden görünmez
+## bir kopyada önceden bir kez çizilir.
 
 ## Parlamanın rengi (tone CUSTOM iken); çekirdek bunun beyaza çekilmişidir.
 @export var color: Color = Color.WHITE:
@@ -21,6 +24,20 @@ extends Label
 	set(value):
 		font_size = value
 		apply_quality()
+
+## Yazının ileride gösterebileceği harfler (ör. rakamlar, sektör adları; her harften bir tane
+## tutulur). Görünmez kopyada bir kez çizilir: atanınca ve kalınlıklar (kalite, boyut)
+## değişince. Renk değişimi yeniden çizdirmez.
+var warm_glyphs: String = "":
+	set(value):
+		warm_glyphs = NeonLabel.unique_chars(value)
+		_warmed_key = ""
+		_warm()
+
+## Isıtma kopyası: aynı LabelSettings, saydam; çizildiği karede gizlenir.
+var _warmer: Label
+## Son ısıtılan kalınlıklar (yazı boyutu / kenar / katmanlar).
+var _warmed_key: String = ""
 
 
 func _init() -> void:
@@ -51,11 +68,45 @@ func apply_quality() -> void:
 	for i: int in layers.size():
 		settings.set_stacked_outline_size(i, _px(layers[i].x))
 		settings.set_stacked_outline_color(i, Color(glow, layers[i].y))
+	_warm()
 
 
 ## Yazının görünen parlama rengi: tone'a göre sabit renk ya da color.
 func shown_color() -> Color:
 	return Neon.STYLE.tone_color(tone, color)
+
+
+## Metindeki her harften birer tane, ilk görülme sırasıyla.
+static func unique_chars(source: String) -> String:
+	var result: String = ""
+	for c: String in source:
+		if not result.contains(c):
+			result += c
+	return result
+
+
+## Harfleri görünmez kopyada bir kez çizdirir; kalınlıklar son ısıtmadan beri aynıysa çizdirmez.
+## Harfler yazının kendi tuvalinde (aynı ölçekte) hazırlanır, böylece önbellek aynı olur.
+func _warm() -> void:
+	var settings: LabelSettings = label_settings
+	if warm_glyphs.is_empty() or settings == null:
+		return
+	var key: String = "%d/%d" % [settings.font_size, settings.outline_size]
+	for i: int in settings.stacked_outline_count:
+		key += "/%d" % settings.get_stacked_outline_size(i)
+	if key == _warmed_key:
+		return
+	_warmed_key = key
+	if _warmer == null:
+		_warmer = Label.new()
+		_warmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_warmer.self_modulate = Color.TRANSPARENT
+		_warmer.label_settings = settings
+		# Çizimden hemen sonra gizlenir: harfler hazırdır, ekrana bir şey çıkmaz.
+		_warmer.draw.connect(_warmer.hide, CONNECT_DEFERRED)
+		add_child(_warmer, false, Node.INTERNAL_MODE_FRONT)
+	_warmer.text = warm_glyphs
+	_warmer.show()
 
 
 ## Yazı boyutunun oranını piksele çevirir (oran 0 değilse en az 1 px).

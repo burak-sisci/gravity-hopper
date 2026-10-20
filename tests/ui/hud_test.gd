@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## HUD (M1-10, architecture.md §12): yalnızca Events'i dinler; metinler çeviri anahtarlarından
-## gelir ve dil değişince yenilenir. Neon yazılar (M3-18) dokunuş yutmaz.
+## gelir ve dil değişince yenilenir. Neon yazılar (M3-18) dokunuş yutmaz; gösterebilecekleri
+## harfleri önceden çizer (M3-19).
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -184,6 +185,39 @@ func test_taps_on_labels_flip_player() -> void:
 		await _physics_frames(2)
 		assert_bool(player.is_gravity_right()).override_failure_message(
 				"%s dokunuşu yuttu" % node.name).is_not_equal(was_right)
+
+
+## Isıtma (M3-19): her yazı geçerli dilde gösterebileceği bütün harfleri önceden çizer; afiş
+## bütün sektörlerin adlarını.
+func test_labels_warm_every_glyph_they_can_show() -> void:
+	var sectors: SectorCatalog = (_hud as Object).get("sectors") as SectorCatalog
+	var shown: Dictionary[String, String] = {
+		"%HeightLabel": tr("HUD_HEIGHT") % 1234567890,
+		"%BestLabel": tr("HUD_BEST") % 1234567890,
+		"%GlimmerLabel": tr("HUD_GLIMMERS") % 1234567890,
+		"%NearMissLabel": tr("HUD_NEAR_MISS"),
+		"%ComboLabel": tr("HUD_COMBO") % 23,
+		"%SectorBanner": "",
+	}
+	for index: int in range(1, sectors.count() + 1):
+		shown["%SectorBanner"] += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
+	_assert_warmed(shown)
+	TranslationServer.set_locale("tr")
+	shown["%BestLabel"] = tr("HUD_BEST") % 1234567890
+	shown["%NearMissLabel"] = tr("HUD_NEAR_MISS")
+	shown["%SectorBanner"] = ""
+	for index: int in range(1, sectors.count() + 1):
+		shown["%SectorBanner"] += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
+	assert_str(shown["%NearMissLabel"]).is_not_equal("NEAR MISS!")
+	_assert_warmed(shown)
+
+
+func _assert_warmed(shown: Dictionary[String, String]) -> void:
+	for path: String in shown:
+		var warmed: String = (_hud.get_node(path) as NeonLabel).warm_glyphs
+		for c: String in shown[path]:
+			assert_bool(warmed.contains(c)).override_failure_message(
+					"%s: '%s' önceden çizilmiyor" % [path, c]).is_true()
 
 
 func _result(height_m: int) -> RunResult:

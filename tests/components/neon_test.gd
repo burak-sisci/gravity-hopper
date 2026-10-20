@@ -3,7 +3,7 @@ extends GdUnitTestSuite
 ## değişir (yüksek 2, orta 1, düşük 0), düğüm sayısı değişmez, doku ve malzeme paylaşılır.
 ## Vuruş nabzı (M3-03) vuruşta tepe yapar ve söner. Sabit renkli şekil rengini tone'dan alır,
 ## sharp köşeleri sivriltir (M3-05). Neon yazı (M3-18) katmanlarını kaliteden, kalınlıklarını
-## yazı boyutundan alır.
+## yazı boyutundan alır; harflerini görünmez kopyada önceden çizer (M3-19).
 
 const SPIKE: PackedVector2Array = [Vector2(0, -35), Vector2(60, 0), Vector2(0, 35)]
 const BLOCK: PackedVector2Array = [
@@ -139,6 +139,39 @@ func test_label_layers_follow_quality_and_size() -> void:
 	label.font_size = 50
 	assert_int(settings.outline_size).is_equal(roundi(50 * Neon.STYLE.text_edge))
 	assert_int(label.get_child_count()).is_equal(0)
+
+
+## Isıtma: harfler saydam kopyada bir kez çizilir, kopya çizildiği karede gizlenir. Kalınlıklar
+## (kalite, boyut) değişince yeniden çizilir, renk değişince çizilmez.
+func test_label_warms_glyphs_once_per_look() -> void:
+	var label: NeonLabel = auto_free(NeonLabel.new()) as NeonLabel
+	add_child(label)
+	label.warm_glyphs = "ABBA 12A"
+	assert_str(label.warm_glyphs).is_equal("AB 12")
+	assert_int(label.get_child_count()).is_equal(0)
+	assert_int(label.get_child_count(true)).is_equal(1)
+	var warmer: Label = label.get_child(0, true) as Label
+	assert_str(warmer.text).is_equal("AB 12")
+	assert_object(warmer.label_settings).is_same(label.label_settings)
+	assert_float(warmer.self_modulate.a).is_equal(0.0)
+	assert_int(warmer.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_bool(warmer.visible).is_true()
+	await _frames(2)
+	assert_bool(warmer.visible).is_false()
+	label.color = Color.RED
+	assert_bool(warmer.visible).is_false()
+	Neon.set_quality(GameTypes.Quality.MEDIUM, get_tree())
+	assert_bool(warmer.visible).is_true()
+	await _frames(2)
+	assert_bool(warmer.visible).is_false()
+	label.font_size = 40
+	assert_bool(warmer.visible).is_true()
+	assert_int(label.get_child_count(true)).is_equal(1)
+
+
+func _frames(count: int) -> void:
+	for i: int in count:
+		await get_tree().process_frame
 
 
 func _add_line() -> NeonLine:

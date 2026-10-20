@@ -18,7 +18,11 @@ extends Control
 ## Neon yazılar (M3-18): bütün yazılar NeonLabel. Yükseklik, kıl payı ve afiş sektörün vurgu
 ## renginde parlar; yeni sektörde renk, dalga afişe varınca (afişle birlikte) değişir. Rekor
 ## satırı rekor çizgisinin sarısında, Glimmer sayacı ve kombo Glimmer yeşilinde.
+## Yazıların gösterebileceği bütün harfler açılışta ve dil değişince önceden çizilir
+## (NeonLabel.warm_glyphs, M3-19): tur sırasında ilk kez çizilen harf takılma yapmasın.
 
+## Sayılarda görünebilecek rakamlar (önceden çizilir).
+const DIGITS: String = "0123456789"
 ## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
 const VIGNETTE_MAX_ALPHA: float = 1.0
 ## Afişin ekranda kaldığı süre ve sönme süresi (sn).
@@ -71,11 +75,13 @@ func _ready() -> void:
 	_sector_banner.visible = false
 	_near_miss_label.visible = false
 	_refresh()
+	_warm_glyphs()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
 		_refresh()
+		_warm_glyphs()
 
 
 func _on_run_started(_run_seed: int, start_sector: int) -> void:
@@ -196,6 +202,20 @@ func _hide_banner() -> void:
 		_banner_tween.kill()
 	_banner_sector = 0
 	_sector_banner.visible = false
+
+
+## Her yazıya geçerli dilde gösterebileceği harfleri verir (afişe bütün sektörlerinkini).
+func _warm_glyphs() -> void:
+	_height_label.warm_glyphs = tr("HUD_HEIGHT") % 0 + DIGITS
+	_best_label.warm_glyphs = tr("HUD_BEST") % 0 + DIGITS
+	_glimmer_label.warm_glyphs = tr("HUD_GLIMMERS") % 0 + DIGITS
+	_near_miss_label.warm_glyphs = tr("HUD_NEAR_MISS")
+	_combo_label.warm_glyphs = tr("HUD_COMBO") % 0 + DIGITS
+	var banners: String = DIGITS
+	if sectors != null:
+		for index: int in range(1, sectors.count() + 1):
+			banners += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
+	_sector_banner.warm_glyphs = banners
 
 
 func _refresh() -> void:
