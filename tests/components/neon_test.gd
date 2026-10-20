@@ -2,7 +2,8 @@ extends GdUnitTestSuite
 ## Neon bileşenleri (M3-01, architecture.md §9): parlama katman sayısı efekt kalitesine göre
 ## değişir (yüksek 2, orta 1, düşük 0), düğüm sayısı değişmez, doku ve malzeme paylaşılır.
 ## Vuruş nabzı (M3-03) vuruşta tepe yapar ve söner. Sabit renkli şekil rengini tone'dan alır,
-## sharp köşeleri sivriltir (M3-05).
+## sharp köşeleri sivriltir (M3-05). Neon yazı (M3-18) katmanlarını kaliteden, kalınlıklarını
+## yazı boyutundan alır.
 
 const SPIKE: PackedVector2Array = [Vector2(0, -35), Vector2(60, 0), Vector2(0, 35)]
 const BLOCK: PackedVector2Array = [
@@ -112,6 +113,32 @@ func test_tone_takes_fixed_color_and_sharp_sets_joints() -> void:
 	shape.sharp = true
 	assert_int(outline.joint_mode).is_equal(Line2D.LINE_JOINT_SHARP)
 	assert_float(outline.sharp_limit).is_equal(Neon.STYLE.sharp_limit)
+
+
+func test_label_layers_follow_quality_and_size() -> void:
+	var label: NeonLabel = auto_free(NeonLabel.new()) as NeonLabel
+	label.font_size = 100
+	label.tone = GameTypes.NeonTone.RECORD
+	add_child(label)
+	var settings: LabelSettings = label.label_settings
+	var glow: Color = Neon.STYLE.record_color
+	assert_int(label.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_int(settings.font_size).is_equal(100)
+	assert_object(settings.outline_color).is_equal(glow)
+	assert_object(settings.font_color).is_equal(Neon.STYLE.text_core(glow))
+	assert_int(settings.outline_size).is_equal(roundi(100 * Neon.STYLE.text_edge))
+	assert_int(settings.stacked_outline_count).is_equal(Neon.STYLE.text_high_layers.size())
+	var inner: Vector2 = Neon.STYLE.text_high_layers[0]
+	assert_int(settings.get_stacked_outline_size(0)).is_equal(roundi(100 * inner.x))
+	assert_object(settings.get_stacked_outline_color(0)).is_equal(Color(glow, inner.y))
+	Neon.set_quality(GameTypes.Quality.MEDIUM, get_tree())
+	assert_int(settings.stacked_outline_count).is_equal(Neon.STYLE.text_medium_layers.size())
+	Neon.set_quality(GameTypes.Quality.LOW, get_tree())
+	assert_int(settings.stacked_outline_count).is_equal(0)
+	assert_int(settings.outline_size).is_greater(0)
+	label.font_size = 50
+	assert_int(settings.outline_size).is_equal(roundi(50 * Neon.STYLE.text_edge))
+	assert_int(label.get_child_count()).is_equal(0)
 
 
 func _add_line() -> NeonLine:

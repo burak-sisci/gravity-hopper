@@ -222,7 +222,7 @@
 
 - [x] **M3-17** 🤝 Font (S-06) ve kesin sektör renkleri: Claude 2–3 font adayı (SIL OFL, Türkçe karakterli) ve palet seçeneklerini telefon ekran görüntüleriyle sunar, sen seçersin.
   *Kabul:* Seçilen font `assets/fonts/`'ta ve `CREDITS.md`'de; paletler kesin, GDD §12 güncel.
-- [ ] **M3-18** 🤖 HUD stili: seçilen font, neon yazılar (yükseklik, rekor, Glimmer, sektör afişi, kombo).
+- [x] **M3-18** 🤖 HUD stili: seçilen font, neon yazılar (yükseklik, rekor, Glimmer, sektör afişi, kombo).
   *Kabul:* Üç ekran oranında ekran görüntüsü (`6` tuşu); HUD dokunuşu yutmuyor (test).
 - [ ] **M3-19** 🤖 Redmi'de performans kontrolü: en yoğun sahne (S3, bütün efektler), üç kalite seviyesi.
   *Kabul:* Yüksek kalitede 60 FPS'te kare süresi ≤ 10 ms; ölçüm tablosu `architecture.md` §16'da. Sektör geçişindeki renk dalgası da ölçülür (M3-08'de en kötü durumda ≈ +0,5–1 ms). Çöküş duvarı ekrandayken de ölçülür (M3-09 tezgâhında ≈ +0,5–0,8 ms; tezgâhın toplamı 10,9–11,3 ms). Oyunun HUD'u tek başına ≈ 1 ms GPU (M3-09 ölçümü): ölçüt tutmazsa ilk bakılacak yer (M3-18).

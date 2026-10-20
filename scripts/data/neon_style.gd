@@ -250,6 +250,23 @@ extends Resource
 @export_range(1.0, 40.0, 0.5, "suffix:px") var record_flash_width: float = 16.0
 @export_range(0.05, 2.0, 0.05, "suffix:sn") var record_fade: float = 0.6
 
+@export_group("HUD yazıları")
+## Neon yazı (M3-18, NeonLabel): hafif renkli açık çekirdek, renkli kenar ve kaliteye göre üst
+## üste, dışa doğru sönen parlama katmanları. Kalınlıklar yazı boyutunun oranıdır; her boyutta
+## aynı görünüş. Koyu ayırıcı denendi, parlamayı çamurlu kahverengiye çeviriyordu (M3-18).
+## Çekirdeğin parlama renginden beyaza çekilme oranı (1 = beyaz).
+@export_range(0.0, 1.0, 0.05) var text_core_mix: float = 0.45
+## Renkli kenarın kalınlığı (yazı boyutunun oranı).
+@export_range(0.0, 0.3, 0.01) var text_edge: float = 0.09
+## Parlama katmanları: x = kalınlık (yazı boyutunun oranı; katmanlar birbirinin dışına eklenir),
+## y = yoğunluk. İçten dışa. İnce ve çok katman yumuşak bir sönüm verir.
+@export var text_high_layers: Array[Vector2] = [
+	Vector2(0.06, 0.28), Vector2(0.08, 0.16), Vector2(0.1, 0.1), Vector2(0.12, 0.06),
+	Vector2(0.14, 0.04),
+]
+@export var text_medium_layers: Array[Vector2] = [Vector2(0.08, 0.3), Vector2(0.16, 0.1)]
+@export var text_low_layers: Array[Vector2] = []
+
 
 ## Verilen kalitedeki çizgi parlama katmanları.
 func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
@@ -259,6 +276,21 @@ func layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
 		GameTypes.Quality.MEDIUM:
 			return medium_layers
 	return low_layers
+
+
+## Verilen kalitedeki yazı parlama katmanları (M3-18).
+func text_layers_for(quality: GameTypes.Quality) -> Array[Vector2]:
+	match quality:
+		GameTypes.Quality.HIGH:
+			return text_high_layers
+		GameTypes.Quality.MEDIUM:
+			return text_medium_layers
+	return text_low_layers
+
+
+## Neon yazının çekirdek rengi: parlama renginin beyaza çekilmişi.
+func text_core(glow: Color) -> Color:
+	return glow.lerp(Color.WHITE, text_core_mix)
 
 
 ## Herhangi bir kalitedeki en çok katman sayısı: bileşenler bu kadar kopyayı baştan kurar.
@@ -275,6 +307,8 @@ func tone_color(tone: GameTypes.NeonTone, custom: Color) -> Color:
 			return glimmer_color
 		GameTypes.NeonTone.PLAYER:
 			return player_color
+		GameTypes.NeonTone.RECORD:
+			return record_color
 	return custom
 
 

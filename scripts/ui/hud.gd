@@ -15,6 +15,9 @@ extends Control
 ## geçilmiş bölge, gelen engelleri örtmez) "KIL PAYI!" büyüyerek belirip söner; altında Glimmer
 ## çarpanı ×2 / ×3 olunca kombo göstergesi çıkar, zincir bitince kaybolur. Bu canlandırmalar
 ## gerçek zamanla oynar; yavaş çekim onları yavaşlatmaz.
+## Neon yazılar (M3-18): bütün yazılar NeonLabel. Yükseklik, kıl payı ve afiş sektörün vurgu
+## renginde parlar; yeni sektörde renk, dalga afişe varınca (afişle birlikte) değişir. Rekor
+## satırı rekor çizgisinin sarısında, Glimmer sayacı ve kombo Glimmer yeşilinde.
 
 ## Çöküş duvarı yakınken kenarlardaki kırmızı vinyetin en yüksek görünürlüğü (GDD §14).
 const VIGNETTE_MAX_ALPHA: float = 1.0
@@ -47,13 +50,13 @@ var _multiplier: int = 1
 var _near_miss_tween: Tween
 var _combo_tween: Tween
 
-@onready var _height_label: Label = %HeightLabel
-@onready var _best_label: Label = %BestLabel
-@onready var _sector_banner: Label = %SectorBanner
-@onready var _glimmer_label: Label = %GlimmerLabel
+@onready var _height_label: NeonLabel = %HeightLabel
+@onready var _best_label: NeonLabel = %BestLabel
+@onready var _sector_banner: NeonLabel = %SectorBanner
+@onready var _glimmer_label: NeonLabel = %GlimmerLabel
 @onready var _vignette: Control = %WallVignette
-@onready var _near_miss_label: Label = %NearMissLabel
-@onready var _combo_label: Label = %ComboLabel
+@onready var _near_miss_label: NeonLabel = %NearMissLabel
+@onready var _combo_label: NeonLabel = %ComboLabel
 
 
 func _ready() -> void:
@@ -83,6 +86,7 @@ func _on_run_started(_run_seed: int, start_sector: int) -> void:
 	if _near_miss_tween != null:
 		_near_miss_tween.kill()
 	_near_miss_label.visible = false
+	_tint(start_sector)
 	if start_sector > 1:
 		_show_banner(start_sector)
 	else:
@@ -175,6 +179,16 @@ func _show_banner(index: int, delay: float = 0.0) -> void:
 func _pop_banner() -> void:
 	_sector_banner.pivot_offset = _sector_banner.size * 0.5
 	_sector_banner.visible = true
+	_tint(_banner_sector)
+
+
+## Sektörün vurgu rengini yükseklik ve kıl payı yazısına verir.
+func _tint(index: int) -> void:
+	if sectors == null:
+		return
+	var accent: Color = sectors.def_at(index).palette.accent
+	_height_label.color = accent
+	_near_miss_label.color = accent
 
 
 func _hide_banner() -> void:
@@ -195,4 +209,4 @@ func _refresh() -> void:
 	if _banner_sector > 0 and sectors != null:
 		var def: SectorDef = sectors.def_at(_banner_sector)
 		_sector_banner.text = tr("HUD_SECTOR") % [_banner_sector, tr(def.name_key)]
-		_sector_banner.add_theme_color_override("font_color", def.palette.accent)
+		_sector_banner.color = def.palette.accent

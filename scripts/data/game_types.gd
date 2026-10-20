@@ -25,6 +25,7 @@ enum NeonTone {
 	HAZARD, ## Tehlike kırmızısı
 	GLIMMER, ## Glimmer yeşili
 	PLAYER, ## Oyuncu beyazı
+	RECORD, ## Rekor sarısı (M3-18: HUD'un rekor satırı)
 }
 
 ## Ses efekti olayları (M3-15, architecture.md §8.8). Sıra tools/sfx_prep.py'deki SOUNDS ile aynı.

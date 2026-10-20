@@ -1,9 +1,14 @@
 extends GdUnitTestSuite
 ## HUD (M1-10, architecture.md §12): yalnızca Events'i dinler; metinler çeviri anahtarlarından
-## gelir ve dil değişince yenilenir.
+## gelir ve dil değişince yenilenir. Neon yazılar (M3-18) dokunuş yutmaz.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
+const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
+## Oyunun açılıp oyuncunun duvara yaslanması için beklenen fizik adımı.
+const SETTLE_FRAMES: int = 40
+## Dokunuştan önce oyuncunun duvara varmasını en çok bu kadar adım bekle.
+const WALL_WAIT_FRAMES: int = 120
 
 var _hud: Control
 var _locale: String
@@ -18,6 +23,8 @@ func before_test() -> void:
 
 func after_test() -> void:
 	TranslationServer.set_locale(_locale)
+	Events.debug_invincibility_changed.emit(false)
+	Engine.time_scale = 1.0
 
 
 func test_height_follows_events() -> void:
@@ -142,6 +149,43 @@ func test_near_miss_text_and_combo() -> void:
 	assert_bool(_near_miss().visible).is_false()
 
 
+## Neon yazılar (M3-18): HUD'daki hiçbir Control dokunuşu yutmaz.
+func test_hud_controls_ignore_mouse() -> void:
+	var controls: Array[Node] = _hud.find_children("*", "Control", true, false)
+	assert_int(controls.size()).is_greater(6)
+	for node: Node in controls:
+		assert_int((node as Control).mouse_filter).override_failure_message(
+				"%s dokunuşu yutuyor" % node.name).is_equal(Control.MOUSE_FILTER_IGNORE)
+	assert_int(_hud.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
+
+
+## Oyunun içinde: görünür her yazının ortasına dokunuş oyuncuyu çevirir (telefondaki gibi).
+func test_taps_on_labels_flip_player() -> void:
+	var main: Node = auto_free(MAIN_SCENE.instantiate()) as Node
+	add_child(main)
+	Events.debug_invincibility_changed.emit(true)
+	await _physics_frames(SETTLE_FRAMES)
+	var player: Player = main.get_node("%World").get_child(0).get_node("Player") as Player
+	var labels: Array[Node] = main.get_node("UI/Hud").find_children("*", "NeonLabel", true, false)
+	assert_int(labels.size()).is_equal(6)
+	for node: Node in labels:
+		var label: NeonLabel = node as NeonLabel
+		label.visible = true
+		label.modulate.a = 1.0
+		label.text = "TEST 123"
+	for node: Node in labels:
+		# Dokunuş oyuncu duvara yaslıyken verilir; havadaki dokunuş tampona girer.
+		var waited: int = 0
+		while not player.is_on_wall() and waited < WALL_WAIT_FRAMES:
+			await get_tree().physics_frame
+			waited += 1
+		var was_right: bool = player.is_gravity_right()
+		_push_touch((node as Control).get_global_rect().get_center())
+		await _physics_frames(2)
+		assert_bool(player.is_gravity_right()).override_failure_message(
+				"%s dokunuşu yuttu" % node.name).is_not_equal(was_right)
+
+
 func _result(height_m: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m
@@ -170,3 +214,19 @@ func _near_miss() -> Label:
 
 func _combo() -> Label:
 	return _hud.get_node("%ComboLabel") as Label
+
+
+## Telefondaki gibi: dokunuş ve bırakma (debug_layer_test ile aynı yol).
+func _push_touch(at: Vector2) -> void:
+	var touch := InputEventScreenTouch.new()
+	touch.position = at
+	touch.pressed = true
+	get_tree().root.push_input(touch, true)
+	var release: InputEventScreenTouch = touch.duplicate() as InputEventScreenTouch
+	release.pressed = false
+	get_tree().root.push_input(release, true)
+
+
+func _physics_frames(count: int) -> void:
+	for i: int in count:
+		await get_tree().physics_frame
