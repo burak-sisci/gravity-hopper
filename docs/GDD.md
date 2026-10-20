@@ -245,6 +245,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | Başlangıç mesafesi / en fazla | 20 m / 30 m |
 
 - Duvar ekrana girdiğinde ekranın iki yan kenarında, koridorun dışında ince kırmızı bir vinyet belirir ve gerilim sesi yükselir. Vinyet koridorun içine taşmaz; engeller hep okunur (M3-09).
+- **Gerilim sesi (M3-16):** duvar yaklaştıkça müzik boğuklaşır (tizleri kısılır, ritim duyulmaya devam eder) ve altta yükselen, perdesi giderek tizleşen bir "bozuk veri" cızırtısı belirir. Duvar uzaklaşınca (Glimmer, kıl payı) ses yumuşakça açılır. Ölümde ve yeni turda hemen biter.
 - **Amaç öldürmek değil, gerilim yaratmaktır.** S1'de duvar çok yavaştır. Pasif ve aşırı temkinli oynayan oyuncu er geç yakalanır; cesur oynayan rahat nefes alır.
 
 ## 15. Kıl payı ve kombo
@@ -282,6 +283,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 - **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları. Kaynak müzikteki gibi insan yapımı, ücretsiz kütüphaneler: Kenney (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY) (kullanıcı kararı, D-05, ADR-042).
   - **İlk set (M3-15):** dokuz Kenney sesi (CC0); kullanıcı Redmi'de dinleyip onayladı (2026-10-15). Sık çalanlar (çevirme, tutunma) müziğin biraz altında, ödüller (Glimmer, kıl payı, kombo) biraz üstünde, büyük anlar (kalkan kırılması, ölüm, sektör geçişi, rekor) belirgin biçimde üstünde. Sık çalanların perdesi her seferinde hafifçe oynar ki tekrar yormasın. Kombo eşiği sesi yalnızca ×2 ve ×3'e çıkılan kıl payında çalar. Aynı anda en çok 8 efekt; yavaş çekimde müzik yavaşlar, efektler yavaşlamaz. UI tıklamaları arayüzle birlikte (M5).
+  - **Gerilim (M3-16):** çöküş duvarı yaklaştıkça müziğin boğuklaşması ve gerilim sesi (§14).
 - **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Seçilen **beş parçanın hepsi** oyunda ve her tur birini rastgele çalar (kullanıcı kararı, 2026-10-13, ADR-040): Epic Journey, Mountain Peak, Treasure Hunter, Epic Departure, Determined Pursuit. Menü müziği M5'te. Ayrıntı: `docs/music_research.md` §12.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.

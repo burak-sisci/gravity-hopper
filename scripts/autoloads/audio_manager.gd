@@ -82,6 +82,8 @@ var _multiplier: int = 1
 var _tension: AudioStreamPlayer
 ## Gerilim sesi çalıyor mu (play()'den hemen sonra `playing` hâlâ false olabilir).
 var _tension_on: bool = false
+## Gerilim sesi çalarken ulaşılan en büyük yakınlık (debug günlüğü).
+var _tension_peak: float = 0.0
 var _music_bus: int = -1
 ## Music yolundaki alçak geçiren süzgeç ve sırası (yol düzeninde yoksa null).
 var _lowpass: AudioEffectLowPassFilter = null
@@ -246,15 +248,24 @@ func _apply_tension() -> void:
 		_lowpass.cutoff_hz = tension_mix.cutoff_at(_heard_proximity)
 		AudioServer.set_bus_effect_enabled(_music_bus, _lowpass_index, active)
 	if not active or tension_mix.stream == null:
+		if _tension_on and OS.is_debug_build():
+			print("AUDIO tension off peak=%.2f cutoff=%d Hz volume=%.1f dB" % [
+				_tension_peak, roundi(tension_mix.cutoff_at(_tension_peak)),
+				tension_mix.volume_at(_tension_peak),
+			])
 		_tension.stop()
 		_tension_on = false
 		return
 	_tension.volume_db = tension_mix.volume_at(_heard_proximity)
 	_tension.pitch_scale = tension_mix.pitch_at(_heard_proximity)
+	_tension_peak = maxf(_tension_peak, _heard_proximity)
 	if not _tension_on:
 		_tension.stream = tension_mix.stream
 		_tension.play()
 		_tension_on = true
+		_tension_peak = _heard_proximity
+		if OS.is_debug_build():
+			print("AUDIO tension on")
 
 
 ## Gerilimi hemen sıfırlar (tur başı, ölüm).
@@ -383,8 +394,10 @@ func _report(beat_time: float, bar: float) -> void:
 	if bar_index < _reported_bar + REPORT_EVERY_BARS:
 		return
 	_reported_bar = bar_index
-	print("AUDIO sync bar=%d drift=%d ms max_drift=%d ms resyncs=%d latency=%d ms" % [
+	print(("AUDIO sync bar=%d drift=%d ms max_drift=%d ms resyncs=%d latency=%d ms "
+			+ "tension=%.2f lowpass=%s cutoff=%d Hz") % [
 		bar_index, roundi(_last_drift * 1000.0), roundi(_max_drift * 1000.0), _resyncs,
-		roundi(AudioServer.get_output_latency() * 1000.0),
+		roundi(AudioServer.get_output_latency() * 1000.0), _heard_proximity,
+		music_lowpass_enabled(), roundi(_lowpass.cutoff_hz) if _lowpass != null else 0,
 	])
 	_max_drift = 0.0
