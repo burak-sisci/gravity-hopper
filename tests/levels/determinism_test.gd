@@ -2,7 +2,8 @@ extends GdUnitTestSuite
 ## Belirlenimcilik (M2-17, architecture.md §8.2): harita yalnızca tohum + başlangıç sektörüne
 ## bağlıdır. Aynı tohumla kurulan iki gerçek tur, oyuncu hiç dokunmasa da sık sık dokunsa da
 ## (yol, Glimmer, kıl payı ve çöküş duvarı değişir) aynı parça dizisini ve konumlarını verir.
-## Sektörler kısaltılır (150 m) ki 25 sn'de sınırlar geçilsin. Ekran boyundan bağımsızlık
+## Sektörler kısaltılır (150 m) ki 35 sn'de sınırlar geçilsin; bu süre en yavaş parçada da
+## (90 BPM, M3-21) her başlangıç sektöründe yeterince parça yerleştirir. Ekran boyundan bağımsızlık
 ## tests/systems/chunk_spawner_test.gd'de.
 ## Kıl payı yavaş çekimi (M3-12) oyun zamanını yavaşlatır: turlar aynı oyun zamanı kadar oynanır
 ## ve yerleşen parçaların ortak başı karşılaştırılır (son adımın farkı bir parça ekleyebilir).
@@ -11,7 +12,7 @@ const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 ## Bir turun oynandığı oyun zamanı (sn) ve güvenlik için kare sınırı.
-const PLAY_TIME: float = 25.0
+const PLAY_TIME: float = 35.0
 const MAX_FRAMES: int = 3000
 ## Dokunan oyuncu bu kadar karede bir dokunur.
 const TAP_EVERY: int = 23

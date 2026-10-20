@@ -1,25 +1,25 @@
 extends GdUnitTestSuite
-## Müzik kataloğu (M2-20, ADR-040): beş parça, her biri ilk vuruşla başlıyor ve tam ölçülük
-## döngüyle bitiyor (vuruş ızgarası döngüde kaymaz), atıf bilgisi tam, lisans kurala uygun.
+## Müzik kataloğu (M2-20, ADR-040; M3-21, ADR-065): üç özgün parça, her biri ilk vuruşla
+## başlıyor ve tam ölçülük döngüyle bitiyor (vuruş ızgarası döngüde kaymaz), atıf bilgisi tam,
+## lisans kurala uygun ve her parçanın bestesi (kaynak betiği) depoda.
 ## Seçim yalnızca tohumdan gelir ve bütün parçalar seçilebilir.
 
 const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 const BEATS_PER_BAR: int = 4
 ## Ses dosyası süresinin tam vuruş katından en çok sapması (sn).
 const TIME_TOLERANCE: float = 0.002
-## .clauderules §7: ses için yalnızca CC0 ve CC-BY.
-const ALLOWED_LICENSES: Array[String] = ["CC0 1.0", "CC-BY 4.0", "CC-BY 3.0"]
+## .clauderules §7: ses için yalnızca CC0 ve CC-BY; "Original" projenin kendi bestesi (ADR-065).
+const ALLOWED_LICENSES: Array[String] = ["Original", "CC0 1.0", "CC-BY 4.0", "CC-BY 3.0"]
+## Özgün parçaların bestesi: tools/music/tracks/<id>.py (çalgı kayıtları CC0, CREDITS.md).
+const SCORE_DIR: String = "tools/music/tracks/"
 
 
 func test_catalog_has_the_chosen_tracks() -> void:
 	var ids: Array[String] = []
 	for track: MusicTrack in MUSIC.tracks:
 		ids.append(String(track.id))
-	assert_array(ids).contains_exactly_in_any_order([
-		"epic_journey", "mountain_peak", "treasure_hunter", "epic_departure",
-		"determined_pursuit",
-	])
-	assert_array(MUSIC.tempos()).is_equal([80.0, 90.0, 100.0, 120.0])
+	assert_array(ids).contains_exactly_in_any_order(["caravan", "pagoda", "castle"])
+	assert_array(MUSIC.tempos()).is_equal([90.0, 100.0, 120.0])
 	assert_float(MUSIC.max_bpm()).is_equal(120.0)
 
 
@@ -48,8 +48,10 @@ func test_every_track_is_credited() -> void:
 		assert_str(track.title).override_failure_message(label).is_not_empty()
 		assert_str(track.author).override_failure_message(label).is_not_empty()
 		assert_array(ALLOWED_LICENSES).override_failure_message(label).contains([track.license])
-		assert_str(track.source_url).override_failure_message(label).starts_with(
-				"https://opengameart.org/")
+		assert_str(track.source_url).override_failure_message(label).is_equal(
+				SCORE_DIR + label + ".py")
+		assert_bool(FileAccess.file_exists("res://" + track.source_url)).override_failure_message(
+				label).is_true()
 
 
 func test_pick_follows_the_seed_and_reaches_every_track() -> void:
@@ -59,7 +61,7 @@ func test_pick_follows_the_seed_and_reaches_every_track() -> void:
 		var track: MusicTrack = MUSIC.pick(run_seed)
 		seen[track.id] = seen.get(track.id, 0) + 1
 	assert_int(seen.size()).is_equal(MUSIC.count())
-	# 300 tohumda her parça kabaca beşte bir (en az 30 kez).
+	# 300 tohumda her parça kabaca üçte bir (en az 30 kez).
 	for id: StringName in seen:
 		assert_int(seen[id]).override_failure_message(String(id)).is_greater(30)
 	assert_object(MusicCatalog.new().pick(1)).is_null()

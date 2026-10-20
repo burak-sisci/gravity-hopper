@@ -1,7 +1,7 @@
 class_name MusicTrack
 extends Resource
-## Bir müzik parçası (architecture.md §8.3, ADR-040). Dosyalar data/music/<id>.tres;
-## tools/music_prep.py üretir. Ses dosyası ilk vuruşla başlar (0. saniye = turun 0. vuruşu) ve
+## Bir müzik parçası (architecture.md §8.3, ADR-040, ADR-065). Dosyalar data/music/<id>.tres;
+## tools/music/build.py üretir. Ses dosyası ilk vuruşla başlar (0. saniye = turun 0. vuruşu) ve
 ## döngü tam ölçüdür: loop_start'tan dosyanın sonuna kadar çalar, sonra loop_start'a döner.
 ## Turun temposu çalan parçanın temposudur (kullanıcı kararı, 2026-10-13).
 

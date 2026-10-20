@@ -2,6 +2,8 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
+> **Durum (2026-10-20, M3-21, ADR-065):** Kullanıcı isteğiyle eski beş parçanın yerine Claude'un bestelediği üç özgün parça geldi (gerçek enstrüman kayıtları, CC0; `tools/music/`, architecture.md §8.3). Aşağıdaki araştırma ve parça ölçümleri kayıt olarak duruyor.
+>
 > **Durum (2026-10-13):** Uygulandı (M2-20, ADR-040) ve kulak testi geçti: beş parça her turda rastgele çalar, turun temposu parçanındır. Sektör tempolarından ve sektör parçalarından söz eden bölümler (§1, §5, §6, §10, §12 "Sektör düşüncesi") bu kararla eskidi, kayıt olarak duruyor.
 >
 > **Son karar (2026-10-13, ADR-039):** İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar; yapay zekâ yalnızca yedek. Ana tema adayları ve ölçümler §12'de. Yapay zekâ araştırması §11'de, aşağıdaki önceki kararlar kayıt olarak duruyor.

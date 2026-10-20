@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MusicTrack" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/music_track.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/pagoda.ogg" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"pagoda"
+stream = ExtResource("2_stream")
+bpm = 90.0
+loop_start = 0.0
+volume_db = -1.7
+title = "Pagoda"
+author = "Claude (Anthropic), Gravity Hopper için"
+license = "Original"
+source_url = "tools/music/tracks/pagoda.py"

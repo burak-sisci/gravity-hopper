@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MusicTrack" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/music_track.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/caravan.ogg" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"caravan"
+stream = ExtResource("2_stream")
+bpm = 100.0
+loop_start = 0.0
+volume_db = -2.5
+title = "Kervan"
+author = "Claude (Anthropic), Gravity Hopper için"
+license = "Original"
+source_url = "tools/music/tracks/caravan.py"

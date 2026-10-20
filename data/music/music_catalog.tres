@@ -2,12 +2,10 @@
 
 [ext_resource type="Script" path="res://scripts/data/music_catalog.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/data/music_track.gd" id="2_track"]
-[ext_resource type="Resource" path="res://data/music/epic_journey.tres" id="3_epic_journey"]
-[ext_resource type="Resource" path="res://data/music/mountain_peak.tres" id="4_mountain_peak"]
-[ext_resource type="Resource" path="res://data/music/treasure_hunter.tres" id="5_treasure_hunter"]
-[ext_resource type="Resource" path="res://data/music/epic_departure.tres" id="6_epic_departure"]
-[ext_resource type="Resource" path="res://data/music/determined_pursuit.tres" id="7_determined_pursuit"]
+[ext_resource type="Resource" path="res://data/music/caravan.tres" id="3_caravan"]
+[ext_resource type="Resource" path="res://data/music/pagoda.tres" id="4_pagoda"]
+[ext_resource type="Resource" path="res://data/music/castle.tres" id="5_castle"]
 
 [resource]
 script = ExtResource("1_script")
-tracks = Array[ExtResource("2_track")]([ExtResource("3_epic_journey"), ExtResource("4_mountain_peak"), ExtResource("5_treasure_hunter"), ExtResource("6_epic_departure"), ExtResource("7_determined_pursuit")])
+tracks = Array[ExtResource("2_track")]([ExtResource("3_caravan"), ExtResource("4_pagoda"), ExtResource("5_castle")])

@@ -112,7 +112,7 @@ def load_mono(path: Path) -> tuple[np.ndarray, int]:
 
 def music_reference() -> float:
     """Müziğin oyunda çalan ortanca kısa süreli düzeyi: parçaların volume_db'si uygulanmış,
-    beş parçanın ortalaması."""
+    parçaların ortalaması."""
     levels = []
     for res in sorted(MUSIC_DATA.glob("*.tres")):
         match = re.search(r"^volume_db = (-?[\d.]+)$", res.read_text(encoding="utf-8"), re.M)
@@ -167,7 +167,7 @@ def prepare_tension(src_dir: Path, reference: float) -> dict:
     seam = short_term_db(np.concatenate([loop[-int(WINDOW * sr):], loop[:int(WINDOW * sr)]]), sr)
     with sf.SoundFile(str(AUDIO_DIR / (TENSION["id"] + ".ogg")), "w", sr, 1, format="OGG",
                       subtype="VORBIS", compression_level=OGG_COMPRESSION) as f:
-        # libsndfile'in Vorbis kodlayıcısı büyük tek yazımda çöküyor (music_prep.py).
+        # libsndfile'in Vorbis kodlayıcısı büyük tek yazımda çöküyor (architecture.md §8.3).
         samples = loop.astype(np.float32)
         for start in range(0, len(samples), WRITE_BLOCK):
             f.write(samples[start:start + WRITE_BLOCK])

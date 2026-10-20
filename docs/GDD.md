@@ -169,7 +169,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 | ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | 7500 m | Final anı + başarım izi |
 | ∞ | TAŞMA / OVERFLOW | Döngüsel | 22 m/sn (tavan) | Sonsuz | — | Remiks desenler |
 
-**Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, beş müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (80–120 BPM). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
+**Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, üç müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (90–120 BPM; M3-21, ADR-065). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
 
 **Renk kuralı:** **Kırmızı** (tehlike) ve **yeşil** (Glimmer) hiçbir sektörde çevre rengi olarak kullanılmaz. Oyuncu çekirdeği her zaman beyazdır. Her sektörün bir paleti var: çevre (duvarlar, ağ), vurgu (afiş, nabız, renk dalgası) ve koyu arka plan. Kural otomatik testle denetleniyor.
 
@@ -199,7 +199,7 @@ S4–S5 paletleri o sektörler eklenirken (M4-07) aynı kuralla ve aynı doygunl
 
 ## 13. Hız ve zorluk
 
-- **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (80 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
+- **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (90 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
 - **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
@@ -284,7 +284,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları. Kaynak müzikteki gibi insan yapımı, ücretsiz kütüphaneler: Kenney (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY) (kullanıcı kararı, D-05, ADR-042).
   - **İlk set (M3-15):** dokuz Kenney sesi (CC0); kullanıcı Redmi'de dinleyip onayladı (2026-10-15). Sık çalanlar (çevirme, tutunma) müziğin biraz altında, ödüller (Glimmer, kıl payı, kombo) biraz üstünde, büyük anlar (kalkan kırılması, ölüm, sektör geçişi, rekor) belirgin biçimde üstünde. Sık çalanların perdesi her seferinde hafifçe oynar ki tekrar yormasın. Kombo eşiği sesi yalnızca ×2 ve ×3'e çıkılan kıl payında çalar. Aynı anda en çok 8 efekt; yavaş çekimde müzik yavaşlar, efektler yavaşlamaz. UI tıklamaları arayüzle birlikte (M5).
   - **Gerilim (M3-16):** çöküş duvarı yaklaştıkça müziğin boğuklaşması ve gerilim sesi (§14).
-- **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar kullanılır: orkestra ve net bir davul ritmi (ADR-039). Uygun parça bulunamazsa yapay zekâ yedektir. Adaylar `docs/music_research.md` §12'de. Seçilen **beş parçanın hepsi** oyunda ve her tur birini rastgele çalar (kullanıcı kararı, 2026-10-13, ADR-040): Epic Journey, Mountain Peak, Treasure Hunter, Epic Departure, Determined Pursuit. Menü müziği M5'te. Ayrıntı: `docs/music_research.md` §12.
+- **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). **Age of Empires** benzeri, uygarlık renkli özgün parçalar (kullanıcı isteği, 2026-10-20: "arka plan müziği yeterince akıcı değil… sen kendin Age of Empires'takine benzer bir müzik üret"; ADR-065). Claude besteler; gerçek enstrüman kayıtlarıyla (CC0) seslendirilir: tek bir ana ezgi çalgısı (obua, flüt, blok flüt, keman), altında akan telli ve arp, net bir el davulu ritmi, doruklarda yaylılar ve korno. Üç parça her tur biri rastgele çalar (ADR-040): **Kervan** (Orta Doğu: darbuka, saz, obua; 100 BPM), **Pagoda** (Doğu Asya: zither, taiko, flüt; 90 BPM), **Kale** (Orta Çağ Avrupa: blok flüt, tef, jig ritmi; 120 BPM). Eski beş kütüphane parçası (ADR-039) kalktı. Menü müziği M5'te.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
   - **Ölüm (M3-10):** dünya 0,1 sn donar (engeller, ışınlar, duvar, iz yerinde; müzik sürer), ardından ekran güçlü biçimde **yalnızca yana** sarsılır ve hızla söner. Oyuncunun üstünde görünen mesafe sarsıntıda değişmez, yeni tur yine yarım saniyeden kısa sürede başlar. Kalkan kırılınca daha hafif bir sarsıntı (donma yok). Değerler ayar panelinde (Oyun hissi).

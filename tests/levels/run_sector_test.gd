@@ -24,11 +24,11 @@ func after_test() -> void:
 
 
 func test_spikes_stay_on_music_beat_at_fastest_tempo() -> void:
-	await _check_sectors_on_beat(&"epic_departure")
+	await _check_sectors_on_beat(&"castle")
 
 
 func test_spikes_stay_on_music_beat_at_slowest_tempo() -> void:
-	await _check_sectors_on_beat(&"determined_pursuit")
+	await _check_sectors_on_beat(&"pagoda")
 
 
 ## Tur tek parçayla (verilen id) S1'den S3'e tırmanır: her sektörde adım sabit, tempo tur boyunca

@@ -1,7 +1,7 @@
 class_name MusicCatalog
 extends Resource
-## Turlarda çalabilecek müzik parçaları (architecture.md §8.3, ADR-040;
-## data/music/music_catalog.tres, tools/music_prep.py üretir). Her tur bir parçayı rastgele
+## Turlarda çalabilecek müzik parçaları (architecture.md §8.3, ADR-040, ADR-065;
+## data/music/music_catalog.tres, tools/music/build.py üretir). Her tur bir parçayı rastgele
 ## çalar; seçim yalnızca turun tohumundan gelir. Böylece aynı tohum (günlük meydan okuma, testler)
 ## hep aynı parçayı ve aynı tempoyu verir. Seçim, desen parçalarının RunRng dizisini kaydırmasın
 ## diye ayrı bir diziden çekilir.

@@ -11,7 +11,7 @@ func after_test() -> void:
 
 
 func test_run_plays_the_reported_track_with_its_loop() -> void:
-	var track: MusicTrack = _track(&"epic_departure")
+	var track: MusicTrack = _track(&"castle")
 	Events.run_started.emit(1, 1)
 	AudioManager.sync_beat_clock(0.0, track)
 	assert_object(AudioManager.current_track()).is_same(track)
@@ -22,20 +22,20 @@ func test_run_plays_the_reported_track_with_its_loop() -> void:
 
 func test_new_run_sets_the_track_again_and_death_silences() -> void:
 	Events.run_started.emit(1, 1)
-	AudioManager.sync_beat_clock(0.0, _track(&"treasure_hunter"))
+	AudioManager.sync_beat_clock(0.0, _track(&"pagoda"))
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 	# Ölümden sonra bildirilen saat yok sayılır.
-	AudioManager.sync_beat_clock(1.0, _track(&"mountain_peak"))
-	assert_str(String(AudioManager.current_track().id)).is_equal("treasure_hunter")
+	AudioManager.sync_beat_clock(1.0, _track(&"caravan"))
+	assert_str(String(AudioManager.current_track().id)).is_equal("pagoda")
 	Events.run_started.emit(2, 1)
 	assert_object(AudioManager.current_track()).is_null()
-	AudioManager.sync_beat_clock(0.0, _track(&"mountain_peak"))
-	assert_str(String(AudioManager.current_track().id)).is_equal("mountain_peak")
+	AudioManager.sync_beat_clock(0.0, _track(&"caravan"))
+	assert_str(String(AudioManager.current_track().id)).is_equal("caravan")
 
 
 ## Yavaş çekimde müzik aynı oranda yavaşlar (M3-12, ADR-008).
 func test_music_pitch_follows_time_scale() -> void:
-	var track: MusicTrack = _track(&"epic_departure")
+	var track: MusicTrack = _track(&"castle")
 	Events.run_started.emit(1, 1)
 	AudioManager.sync_beat_clock(0.0, track)
 	assert_float(AudioManager.music_pitch()).is_equal(1.0)
