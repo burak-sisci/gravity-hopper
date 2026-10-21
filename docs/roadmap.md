@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-10-13 (M2 Planlama Gözden Geçirmesi: M3 atomik hale getirildi, 20 görev; ADR-041)
+> Son güncelleme: 2026-10-21 (M3 Planlama Gözden Geçirmesi: M3 onaylandı, M4 atomik hale getirildi, 15 görev; ADR-066)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -11,7 +11,7 @@
 - **Mesai türü (ADR-045):** *Standart mesaide* sen ekran başındasın; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler ve seni bekler. *Otonom mesaide* Claude tek başına çalışır: yalnızca 🤖 görevleri yapar, 🤝/👤 görevleri ve karar bekleyenleri atlayıp `state.json` → `standard_queue`'ya yazar; bunlar sonraki standart mesaide yapılır. Kapı otonom mesaide de geçilmez.
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
-- **Kademeli planlama:** M0–M3 atomik, M4–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
+- **Kademeli planlama:** M0–M4 atomik, M5–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
 
 ## Genel bakış
 
@@ -228,30 +228,70 @@
   *Kabul:* Üç ekran oranında ekran görüntüsü (`6` tuşu); HUD dokunuşu yutmuyor (test).
 - [x] **M3-19** 🤖 Redmi'de performans kontrolü: en yoğun sahne (S3, bütün efektler), üç kalite seviyesi.
   *Kabul:* Yüksek kalitede 60 FPS'te kare süresi ≤ 10 ms; ölçüm tablosu `architecture.md` §16'da. Sektör geçişindeki renk dalgası da ölçülür (M3-08'de en kötü durumda ≈ +0,5–1 ms). Çöküş duvarı ekrandayken de ölçülür (M3-09 tezgâhında ≈ +0,5–0,8 ms; tezgâhın toplamı 10,9–11,3 ms). Oyunun HUD'u tek başına ≈ 1 ms GPU (M3-09 ölçümü): ölçüt tutmazsa ilk bakılacak yer (M3-18).
-- [ ] **M3-20** 🤝 Oyun testi (sesi açık ve kapalı: ritim görüntüden de hissediliyor mu?) + Planlama Gözden Geçirmesi → 🚪
+- [x] **M3-20** 🤝 Oyun testi (sesi açık ve kapalı: ritim görüntüden de hissediliyor mu?) + Planlama Gözden Geçirmesi → 🚪
+  ✅ M3 senin tarafından onaylandı, 2026-10-21 ("denemeler başarılı").
 
 ## M4 — Meta döngü
 
 **Hedef:** Her turun sonunda elinde bir şey kalması.
+*(M3 gözden geçirmesinde atomik hale getirildi, 2026-10-21; ADR-066.)*
 
-- [ ] **M4-01** 🤖 `SaveManager`: şifreli, atomik, sürümlü kayıt + testleri
-- [ ] **M4-02** 🤖 `Progression`: Glimmer cüzdanı, tur sonu kazanç hesabı
-- [ ] **M4-03** 🤖 `UpgradeDef` kaynakları + satın alma mantığı
-- [ ] **M4-04** 🤖 Yükseltme etkileri: Mıknatıs, Kalkan, Başlangıç Sıçraması, Glimmer Çarpanı, İkinci Şans
-- [ ] **M4-05** 🤖 Kozmetik izler (`TrailDef`) + kuşanma
-- [ ] **M4-06** 🤖 Sektör kontrol noktaları
-- [ ] **M4-07** 🤖 S4–S5 içerikleri, Büyük Depolama Birimi finali, Taşma modu
-- [ ] **M4-08** 🤖 Ekonomi simülasyon betiği + ilk dengeleme
-- [ ] **M4-09** 🤝 Oyun testi + Planlama Gözden Geçirmesi → 🚪
+- Menüler ve ekranlar M5'te gelir. M4'teki ilerleme, debug panelinin **İlerleme** sayfasıyla denenir (M4-03'ten itibaren; cüzdan, yükseltme satın alma, iz kuşanma, başlangıç sektörü, kaydı sıfırlama). Bu sayfa yalnızca debug yapısında var.
+- Oynanış yükseltmeleri haritayı değiştirmez: aynı tohum aynı parça dizisini verir (belirlenimcilik testi). Etkiler tur başında `Run`'a tek bir yükleme olarak verilir; günlük meydan okumada (M7-03) bu yükleme boş verilir.
+- Ekonomi değerleri veride durur (`data/upgrades/`, `data/trails/`); sayılar M4-14'teki simülasyonla dengelenir.
+
+**Kayıt ve cüzdan**
+
+- [ ] **M4-01** 🤖 `SaveManager`: şema 1 (`architecture.md` §11.2), yayın yapısında şifreli, debug yapısında düz JSON; atomik yazma (`.tmp` → geri okuma → `.bak` → `.dat`), yükleme sırası (`.dat` → `.bak` → yeni kayıt), sürüm geçişi zinciri, eksik alanların varsayılanla tamamlanması.
+  *Kabul:* Testler: yazıp okuma; bozuk `.dat`'ta `.bak`'tan, ikisi de bozuksa yeni kayıtla açılış; yarıda kalan `.tmp` eski kaydı bozmuyor; şifreli dosya düz metin değil; eski sürümlü kayıt yükseltiliyor. Redmi'de kayıt dosyası oluşuyor.
+- [ ] **M4-02** 🤖 `Progression` ve kalıcı rekor: cüzdan, rekor, en yüksek sektör ve istatistikler kayıttan yüklenir. Tur sonunda kazanç hesaplanır (toplanan Glimmer + sektör tamamlama bonusu 25 × sektör numarası) ve kaydedilir; uygulama arka plana geçince ve kapanırken de kaydedilir. Oturum rekoru (`GameManager.best_height_m`) kalkar: rekor çizgisi ve HUD'un rekor satırı kalıcı rekordan gelir.
+  *Kabul:* Kazanç hesabı ve kayıt testte. Redmi'de oyun kapatılıp açılınca rekor çizgisi ilk turda yerinde, cüzdan korunuyor (günlük).
+- [ ] **M4-03** 🤖 Yükseltme verisi ve satın alma: `UpgradeDef` (`data/upgrades/*.tres`; GDD §10'daki seviye maliyetleri ve etkileri) + katalog, `Progression.buy_upgrade(id)` (cüzdan yetmezse ya da en üst seviyedeyse olmaz), `Events.upgrade_purchased`. Debug paneline **İlerleme** sayfası: cüzdan, seviyeler, satın alma, +1000 Glimmer, kaydı sıfırlama.
+  *Kabul:* Satın alma kuralları ve maliyetlerin GDD ile aynı olduğu testte. Redmi'de panelden alınan seviye uygulama yeniden açılınca duruyor.
+
+**Yükseltme etkileri**
+
+- [ ] **M4-04** 🤖 Mıknatıs ve Glimmer Çarpanı: mıknatıs yarıçapına (90–250 px) giren Glimmer'lar oyuncuya doğru akar; Glimmer Çarpanı tur sonu kazancını artırır (+%10 / seviye).
+  *Kabul:* Seviye arttıkça daha uzaktaki Glimmer toplanıyor, harita değişmiyor, tur sırasında düğüm oluşmuyor (test); çarpan testte; Redmi'de çekim görünüyor.
+- [ ] **M4-05** 🤖 Kalkan yükseltmesi: 1. seviyede tur kalkanla başlar; 2.–5. seviyede kırılan kalkan 1500 / 1200 / 900 / 600 m sonra yenilenir.
+  *Kabul:* Başlangıç kalkanı ve yenilenme mesafesi testte; günlükte `shield_changed`.
+- [ ] **M4-06** 🤖 Başlangıç Sıçraması: tur başında dokunulmaz, hızlı bir sıçrama (100–500 m), yoldaki Glimmer'ları toplar. Bitince oyuncu bir duvara iner ve müziğin vuruşuyla hizalı devam eder.
+  *Kabul:* Sıçrama boyu seviyeyle değişiyor, sıçramada ölüm yok, sonrasında dikenler yine vuruşta geçiliyor, harita aynı (testler); Redmi'de deneme.
+- [ ] **M4-07** 🤖 İkinci Şans ve diriliş (GDD §7): ölümde, hak varsa, yakındaki tehlikeler temizlenir, çöküş duvarı geri itilir, 2 sn dokunulmazlık verilir, müzik sürer; tur başına en çok 1 ücretsiz diriliş. Sonuç ekranı gelene kadar diriliş kendiliğinden olur (M5-03'te düğmeye bağlanır).
+  *Kabul:* Dirilişten sonra tur sürüyor, ikinci ölüm turu bitiriyor, tur sırasında düğüm oluşmuyor (test); günlükte `player_revived`.
+
+**Kozmetik ve ilerleme**
+
+- [ ] **M4-08** 🤖 Kozmetik izler: `TrailDef` (`data/trails/`; renk geçişi, kalınlık, parlama). 4–6 satın alınan iz (300–3000 Glimmer) ve başarım izleri (Büyük Depolama Birimi, toplam 500 kıl payı; 7 günlük seri M7-03'te). Satın alma ve kuşanma; çekirdek beyaz kalır.
+  *Kabul:* Satın alma, kuşanma ve başarımla açılma testte; kuşanılan iz turda görünüyor (Redmi ekran görüntüsü, iki iz).
+- [ ] **M4-09** 🤖 Sektör kontrol noktaları: ulaşılan her sektörün başı açılır ve kaydedilir. Tur seçilen açık sektörden başlar (seçim şimdilik İlerleme sayfasında, menüde M5-02); skor mutlak yükseklikten sayılır.
+  *Kabul:* S2'ye varınca S2 açılıyor, kilitli sektör seçilemiyor, seçim uygulama yeniden açılınca duruyor (test).
+
+**İçerik: S4, S5 ve final**
+
+- [ ] **M4-10** 🤖 Yeni tehlikeler: dönen şekil (vuruş temposunda dönen köşeli engel) ve hareketli blok (duvarlar arasında ritimle gidip gelen). Görüntü çarpışmayla aynı adımda; parça doğrulayıcısı hareketli tehlikeleri vuruş vuruş dener.
+  *Kabul:* Görüntü ve çarpışma her 120 Hz adımında aynı (test); doğrulayıcı geçilemeyen hareketli deseni yakalıyor (test); varlık galerisinde Redmi ekran görüntüsü.
+- [ ] **M4-11** 🤖 S4 ÇEKİRDEK: `SectorDef` (18 m/sn, 1750 m, duvar sürünmesi 0,675 m/sn), eflatun palet (renk kuralına uygun, rekor sarısından ayrı), yeni tehlikeli desen parçaları, zorluk aralığı.
+  *Kabul:* Doğrulayıcı her tempoda geçiyor; S3 → S4 geçişi testte; Redmi'de S4 ekran görüntüsü ve kare süresi.
+- [ ] **M4-12** 🤖 S5 BOZULMA: `SectorDef` (20 m/sn, 2500 m, 0,8 m/sn), beyaz + glitch paleti (renk kayması yalnızca kendi alanında, kaliteye bağlı), bütün tehlikeleri karıştıran yoğun desenler.
+  *Kabul:* Doğrulayıcı geçiyor; Redmi'de S5'te yüksek kalitede kare süresi ≤ 10 ms.
+- [ ] **M4-13** 🤖 Büyük Depolama Birimi ve Taşma: 7500 m'de final anı (afiş, renk patlaması, ses; başarım izi açılır), ardından sonsuz Taşma modu (22 m/sn tavan, döngüsel palet, önceki sektörlerin desenlerinden remiks).
+  *Kabul:* Final 7500 m'de bir kez oynuyor ve başarım izi açılıyor; Taşma'da hız tavanı ve ≥ 1,2 sn görüş kuralı tutuyor (test); Redmi'de ölümsüz turla final anının görüntüsü.
+
+**Denge ve kapanış**
+
+- [ ] **M4-14** 🤖 Ekonomi simülasyonu (`tools/`): beceri profillerine göre tur kazançları → "kaç turda ne alınır?". Değerler GDD §9.3 hedeflerine çekilir: ilk yükseltme 2.–3. turda, hepsi yaklaşık 2 haftada (≈ 22.000 Glimmer).
+  *Kabul:* Simülasyon tablosu `architecture.md`'de, hedefler tutuyor; değişen değerler GDD'de.
+- [ ] **M4-15** 🤝 Oyun testi ("bir tur daha" döngüsü, İlerleme sayfası, S4–S5, final) + Planlama Gözden Geçirmesi → 🚪
 
 ## M5 — Arayüz ve akış
 
 **Hedef:** Oyun baştan sona, menüleriyle birlikte oynanıyor.
 
 - [ ] **M5-01** 🤖 `GameManager` durum makinesi ve sahne geçişleri
-- [ ] **M5-02** 🤖 Ana menü (sektör seçimi dahil)
-- [ ] **M5-03** 🤖 Sonuç ekranı (rekor, "rekora X m", tek dokunuşla tekrar)
-- [ ] **M5-04** 🤖 Yükseltmeler ve izler ekranları
+- [ ] **M5-02** 🤖 Ana menü (sektör seçimi dahil; kontrol noktaları M4-09'da hazır)
+- [ ] **M5-03** 🤖 Sonuç ekranı (rekor, "rekora X m", kazanılan Glimmer, tek dokunuşla tekrar; İkinci Şans dirilişi düğmeye bağlanır, M4-07)
+- [ ] **M5-04** 🤖 Yükseltmeler ve izler ekranları (mantık M4-03 / M4-08'de; debug İlerleme sayfasının yerine)
 - [ ] **M5-05** 🤖 Ayarlar: ses, müzik, titreşim, dil, kalite, 60 FPS sınırı; başka cihazlarda gerekirse ses kaydırma (S-03)
 - [ ] **M5-06** 🤖 Duraklatma + arka plana geçince otomatik duraklatma ve kayıt
 - [ ] **M5-07** 🤖 İlk açılış deneyimi (FTUE)

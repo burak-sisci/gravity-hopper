@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-14 (M3-14 rekor çizgisi; önceki: M3-13 hız hissi) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-10-21 (M3 Planlama Gözden Geçirmesi: M3 onaylandı, M4 görev numaraları; önceki: M3-21 özgün müzik) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -64,7 +64,7 @@ Her tasarım kararı bu dört sütuna göre tartılır:
          └──────────────◄──────────────────┘
 ```
 
-**Meta döngü:** Glimmer → yükseltmeler → daha uzağa tırmanma → yeni sektörler (renk, müzik, engel) → kontrol noktaları → Büyük Depolama Birimi → Taşma (sonsuz).
+**Meta döngü:** Glimmer → yükseltmeler → daha uzağa tırmanma → yeni sektörler (renk, hız, engel) → kontrol noktaları → Büyük Depolama Birimi → Taşma (sonsuz).
 
 ## 6. Dünya ve tehlikeler
 
@@ -102,7 +102,7 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 
 - **Skor = tırmanılan yükseklik (metre).** Tek, anlaşılır, karşılaştırılabilir bir sayı. Arayüzdeki gösterim: `1045 m`.
 - **Rekor çizgisi:** Oyun dünyasında, kişisel rekorun yüksekliğinde parlayan yatay bir çizgi. Oyuncu yaklaştıkça heyecan artar.
-  - **M3-14:** Sarı neon çizgi koridoru duvardan duvara geçer. Uzaktayken ince ve soluk; son 40 m'de kalınlaşıp parlar ve müziğin vuruşunda beyaza çakar. Oyuncu çizgiye varınca beyaz parlayıp söner (rekor kırıldı). Şimdilik oturum rekoru (oyun kapanınca sıfırlanır); kalıcı rekor M4'te. İlk turda çizgi yoktur. Kontrol noktasından rekorun üstünde başlanırsa çizgi görünmez. Çizgi tehlikelerin altında çizilir, onları örtmez.
+  - **M3-14:** Sarı neon çizgi koridoru duvardan duvara geçer. Uzaktayken ince ve soluk; son 40 m'de kalınlaşıp parlar ve müziğin vuruşunda beyaza çakar. Oyuncu çizgiye varınca beyaz parlayıp söner (rekor kırıldı). Şimdilik oturum rekoru (oyun kapanınca sıfırlanır); kalıcı rekor M4-02'de. İlk turda çizgi yoktur. Kontrol noktasından rekorun üstünde başlanırsa çizgi görünmez. Çizgi tehlikelerin altında çizilir, onları örtmez.
 - **Sonuç ekranı:** "YENİ REKOR!" ya da "Rekora 120 m kaldı!"
 - Kıl payı ve kombolar **skoru değil Glimmer'ı** artırır (skor sade kalsın).
 - Kontrol noktasından başlanan turlarda skor mutlak yükseklikten sayılır (Sektör 3'ten başlayan oyuncu 1750 m'den başlar).
@@ -181,7 +181,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`
 | S2 | 0,58 · 0,3 · 1 | 0,85 · 0,75 · 1 | 0,06 · 0,03 · 0,12 |
 | S3 | 1 · 0,6 · 0,12 | 1 · 0,85 · 0,6 | 0,09 · 0,05 · 0,02 |
 
-S4–S5 paletleri o sektörler eklenirken (M4-07) aynı kuralla ve aynı doygunlukta seçilir; çevre rengi sarı rekor çizgisinden de ayırt edilmeli.
+S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı doygunlukta seçilir; çevre rengi sarı rekor çizgisinden de ayırt edilmeli.
 
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 
@@ -257,7 +257,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
   - Çöküş duvarı geri itilir.
 - **Kombo:** 2,5 sn içinde gelen her yeni kıl payı zinciri uzatır. Zincir büyüdükçe Glimmer çarpanı ×2, ×3'e çıkar (ilk değerler: 3. kıl payında ×2, 6.'da ×3; M2-14). Kıl payı alanı oyuncunun çarpışma kutusundan her yanda 0,8 m büyüktür.
 - **Kombo göstergesi:** çarpan ×2 / ×3 olunca yazının altında Glimmer yeşiliyle belirir, zincir bitince kaybolur (M3-12).
-- Yavaş çekim her kıl payında tekrarlanırsa yorucu olabilir: zincirin ilk halkasında ve kombo eşiklerinde tetiklenir (M3-12). Son 0,08 sn'de normal hıza yumuşakça döner. Sıklık ve süre M3-20 oyun testinde gözden geçirilir.
+- Yavaş çekim her kıl payında tekrarlanırsa yorucu olabilir: zincirin ilk halkasında ve kombo eşiklerinde tetiklenir (M3-12). Son 0,08 sn'de normal hıza yumuşakça döner. Sıklık ve süre M3-20 oyun testinde onaylandı (2026-10-21).
 
 ## 16. Ritim
 
@@ -281,7 +281,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 ## 19. Ses ve his
 
-- **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları. Kaynak müzikteki gibi insan yapımı, ücretsiz kütüphaneler: Kenney (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY) (kullanıcı kararı, D-05, ADR-042).
+- **Efektler:** çevirme, duvara tutunma, Glimmer, kıl payı, kombo eşiği, kalkan kırılması, ölüm, sektör geçişi, rekor kırma, UI tıklamaları. Kaynak: insan yapımı, ücretsiz kütüphaneler: Kenney (CC0), gerekirse Freesound (yalnızca CC0 / CC-BY) (kullanıcı kararı, D-05, ADR-042).
   - **İlk set (M3-15):** dokuz Kenney sesi (CC0); kullanıcı Redmi'de dinleyip onayladı (2026-10-15). Sık çalanlar (çevirme, tutunma) müziğin biraz altında, ödüller (Glimmer, kıl payı, kombo) biraz üstünde, büyük anlar (kalkan kırılması, ölüm, sektör geçişi, rekor) belirgin biçimde üstünde. Sık çalanların perdesi her seferinde hafifçe oynar ki tekrar yormasın. Kombo eşiği sesi yalnızca ×2 ve ×3'e çıkılan kıl payında çalar. Aynı anda en çok 8 efekt; yavaş çekimde müzik yavaşlar, efektler yavaşlamaz. UI tıklamaları arayüzle birlikte (M5).
   - **Gerilim (M3-16):** çöküş duvarı yaklaştıkça müziğin boğuklaşması ve gerilim sesi (§14).
 - **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). **Age of Empires** benzeri, uygarlık renkli özgün parçalar (kullanıcı isteği, 2026-10-20: "arka plan müziği yeterince akıcı değil… sen kendin Age of Empires'takine benzer bir müzik üret"; ADR-065). Claude besteler; gerçek enstrüman kayıtlarıyla (CC0) seslendirilir: tek bir ana ezgi çalgısı (obua, flüt, blok flüt, keman), altında akan telli ve arp, net bir el davulu ritmi, doruklarda yaylılar ve korno. Üç parça her tur biri rastgele çalar (ADR-040): **Kervan** (Orta Doğu: darbuka, saz, obua; 100 BPM), **Pagoda** (Doğu Asya: zither, taiko, flüt; 90 BPM), **Kale** (Orta Çağ Avrupa: blok flüt, tef, jig ritmi; 120 BPM). Eski beş kütüphane parçası (ADR-039) kalktı. Menü müziği M5'te.
