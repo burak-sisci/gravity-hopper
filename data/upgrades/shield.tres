@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/upgrade_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"shield"
+name_key = "UPGRADE_SHIELD"
+desc_key = "UPGRADE_SHIELD_DESC"
+costs = Array[int]([150, 300, 600, 1200, 2400])
+values = Array[float]([0.0, 1500.0, 1200.0, 900.0, 600.0])
+unit = "m"

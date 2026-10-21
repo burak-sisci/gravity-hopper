@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="UpgradeCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/upgrade_catalog.gd" id="1_catalog"]
+[ext_resource type="Resource" path="res://data/upgrades/magnet.tres" id="2_magnet"]
+[ext_resource type="Resource" path="res://data/upgrades/shield.tres" id="3_shield"]
+[ext_resource type="Resource" path="res://data/upgrades/head_start.tres" id="4_head_start"]
+[ext_resource type="Resource" path="res://data/upgrades/glimmer_boost.tres" id="5_glimmer_boost"]
+[ext_resource type="Resource" path="res://data/upgrades/second_chance.tres" id="6_second_chance"]
+
+[resource]
+script = ExtResource("1_catalog")
+upgrades = Array[UpgradeDef]([ExtResource("2_magnet"), ExtResource("3_shield"), ExtResource("4_head_start"), ExtResource("5_glimmer_boost"), ExtResource("6_second_chance")])

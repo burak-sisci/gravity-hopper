@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/upgrade_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"second_chance"
+name_key = "UPGRADE_SECOND_CHANCE"
+desc_key = "UPGRADE_SECOND_CHANCE_DESC"
+costs = Array[int]([5000])
+values = Array[float]([1.0])
+unit = "count"

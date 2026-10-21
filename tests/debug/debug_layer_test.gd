@@ -93,6 +93,25 @@ func test_keys_toggle_panel_invincibility_and_slow_motion() -> void:
 	assert_bool(get_tree().debug_collisions_hint).is_false()
 
 
+## İlerleme sayfası (M4-03): ayar panelindeki düğmeyle ya da 0 tuşuyla açılır, ayar paneliyle
+## aynı anda açık kalmaz.
+func test_progress_page_opens_from_the_panel_and_key_0() -> void:
+	var progress: Control = _main.get_node("%Debug").find_children(
+			"ProgressPanel", "", true, false)[0] as Control
+	assert_bool(progress.visible).is_false()
+	_push_key(KEY_1)
+	(_panel().find_child("ProgressButton", true, false) as Button).pressed.emit()
+	assert_bool(progress.visible).is_true()
+	assert_bool(_panel().visible).is_false()
+	_push_key(KEY_0)
+	assert_bool(progress.visible).is_false()
+	_push_key(KEY_0)
+	assert_bool(progress.visible).is_true()
+	_push_key(KEY_1)
+	assert_bool(_panel().visible).is_true()
+	assert_bool(progress.visible).is_false()
+
+
 func test_key_5_starts_next_sector() -> void:
 	var sectors: Array[int] = []
 	var on_started: Callable = func(_seed: int, start_sector: int) -> void:

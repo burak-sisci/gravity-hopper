@@ -14,7 +14,7 @@ const INVINCIBLE_ARG: String = "--invincible"
 const START_SECTOR_ARG: String = "--start-sector="
 ## Başlatma argümanı (`-- --quality=low`): efekt kalitesi bu oturum için (kaydedilmez; M3-07).
 const QUALITY_ARG: String = "--quality="
-## Başlatma argümanı (`-- --record=40`): oturum rekoru baştan bu yükseklikte, ilk turda rekor
+## Başlatma argümanı (`-- --record=40`): rekor baştan bu yükseklikte, ilk turda rekor
 ## çizgisi görünür (kare yakalama, M3-14).
 const RECORD_ARG: String = "--record="
 ## Başlatma argümanı (`-- --perf=6`): oyunun içinde performans ölçümü, evre süresi sn (M3-19,
@@ -41,6 +41,7 @@ var _invincible: bool = false
 var _sector: int = 1
 
 @onready var _tuning_panel: Control = %TuningPanel
+@onready var _progress_panel: ProgressPanel = %ProgressPanel
 @onready var _invincible_button: Button = %InvincibleButton
 @onready var _collisions_button: Button = %CollisionsButton
 @onready var _slow_button: Button = %SlowButton
@@ -59,6 +60,7 @@ func _ready() -> void:
 	_bind_key(KEY_8, KEY_KP_8, _on_shield_pressed)
 	_bind_key(KEY_6, KEY_KP_6, _cycle_aspect)
 	_bind_key(KEY_7, KEY_KP_7, _cycle_fps)
+	_bind_key(KEY_0, KEY_KP_0, _toggle_progress_panel)
 	_bind_key(KEY_9, KEY_KP_9, _cycle_quality)
 	_key_actions[KEY_R] = _on_restart_pressed
 	_debug_menu = (load(DEBUG_MENU_PATH) as PackedScene).instantiate() as CanvasLayer
@@ -116,6 +118,12 @@ func _on_debug_button_pressed() -> void:
 	_toggle_tuning_panel()
 
 
+## Ayar panelindeki "İlerleme" düğmesi: İlerleme sayfası ayar panelinin yerini alır (M4-03).
+func _on_progress_pressed() -> void:
+	_tuning_panel.visible = false
+	_progress_panel.visible = true
+
+
 ## Tuşlar da düğmenin basılı durumunu değiştirir; böylece düğme ve tuş hep aynı durumu gösterir.
 func _on_invincible_toggled(enabled: bool) -> void:
 	_invincible = enabled
@@ -140,7 +148,7 @@ func _on_restart_pressed() -> void:
 	Events.retry_requested.emit()
 
 
-## Oyuncuya kalkan verir (M2-16; yükseltme M4'te).
+## Oyuncuya kalkan verir (M2-16; Kalkan yükseltmesi M4-05).
 func _on_shield_pressed() -> void:
 	Events.debug_shield_requested.emit()
 
@@ -158,6 +166,14 @@ func _bind_key(key: Key, keypad_key: Key, action: Callable) -> void:
 
 func _toggle_tuning_panel() -> void:
 	_tuning_panel.visible = not _tuning_panel.visible
+	if _tuning_panel.visible:
+		_progress_panel.visible = false
+
+
+func _toggle_progress_panel() -> void:
+	_progress_panel.visible = not _progress_panel.visible
+	if _progress_panel.visible:
+		_tuning_panel.visible = false
 
 
 ## Pencereyi sıradaki ekran oranına getirir. Telefonda pencere boyutu değişmez, tuş etkisizdir.

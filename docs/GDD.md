@@ -133,7 +133,7 @@ Yükseltmeler (§10) ve kozmetik izler (§11).
 
 ## 10. Kalıcı yükseltmeler
 
-Maliyet formülü: `taban × 2^(seviye-1)`
+Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upgrades/*.tres` dosyalarında (M4-03); satın alma şimdilik debug "İlerleme" sayfasından, mağaza ekranı M5'te.
 
 | Yükseltme | Etki | Seviye | Maliyetler (başlangıç) |
 | --- | --- | --- | --- |

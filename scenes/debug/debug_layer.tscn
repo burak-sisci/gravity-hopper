@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/debug/debug_layer.gd" id="1_dbg"]
 [ext_resource type="Script" path="res://scripts/debug/tuning_panel.gd" id="2_panel"]
+[ext_resource type="Script" path="res://scripts/debug/progress_panel.gd" id="3_progress"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.04, 0.06, 0.11, 0.9)
@@ -206,6 +207,26 @@ auto_translate_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Kapat"
 
+[node name="ProgressButton" type="Button" parent="TuningPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+focus_mode = 0
+auto_translate_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "İlerleme ›"
+
+[node name="ProgressPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 270.0
+offset_right = -24.0
+offset_bottom = 1240.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("3_progress")
+
 [connection signal="pressed" from="DebugButton" to="." method="_on_debug_button_pressed"]
 [connection signal="fps_requested" from="TuningPanel" to="." method="_cycle_fps"]
 [connection signal="toggled" from="TuningPanel/Margin/VBox/DebugToggles/InvincibleButton" to="." method="_on_invincible_toggled"]
@@ -220,3 +241,4 @@ text = "Kapat"
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/FpsButton" to="TuningPanel" method="_on_fps_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/ShieldButton" to="." method="_on_shield_pressed"]
 [connection signal="pressed" from="TuningPanel/Margin/VBox/Buttons/CloseButton" to="TuningPanel" method="_on_close_pressed"]
+[connection signal="pressed" from="TuningPanel/Margin/VBox/ProgressButton" to="." method="_on_progress_pressed"]

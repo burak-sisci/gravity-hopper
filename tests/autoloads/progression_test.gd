@@ -107,6 +107,57 @@ func test_reset_starts_from_an_empty_save() -> void:
 	assert_int(SaveManager.load_game()["glimmers"]).is_equal(0)
 
 
+## Satın alma (M4-03): cüzdan yetmezse ya da en üst seviyedeyse olmaz; alınan seviye hemen
+## kaydedilir ve duyurulur.
+func test_buying_an_upgrade_spends_and_saves() -> void:
+	var purchases: Array[String] = []
+	var on_purchase: Callable = func(id: StringName, level: int) -> void:
+		purchases.append("%s:%d" % [id, level])
+	Events.upgrade_purchased.connect(on_purchase)
+	assert_bool(Progression.buy_upgrade(&"magnet")).is_false()
+	Progression.add_glimmers(99)
+	assert_bool(Progression.can_buy(&"magnet")).is_false()
+	assert_bool(Progression.buy_upgrade(&"magnet")).is_false()
+	Progression.add_glimmers(1)
+	assert_bool(Progression.buy_upgrade(&"magnet")).is_true()
+	assert_int(Progression.upgrade_level(&"magnet")).is_equal(1)
+	assert_int(Progression.glimmers).is_equal(0)
+	assert_int(Progression.upgrade_cost(&"magnet")).is_equal(200)
+	assert_float(Progression.upgrade_value(&"magnet")).is_equal_approx(1.8, 0.0001)
+	assert_array(purchases).is_equal(["magnet:1"])
+	assert_int(_wallets.back()).is_equal(0)
+	var saved: Dictionary[String, Variant] = SaveManager.load_game()
+	assert_int((saved["upgrades"] as Dictionary)["magnet"]).is_equal(1)
+	assert_int(saved["glimmers"]).is_equal(0)
+	Events.upgrade_purchased.disconnect(on_purchase)
+
+
+func test_top_level_cannot_be_bought_again() -> void:
+	Progression.add_glimmers(20000)
+	assert_bool(Progression.buy_upgrade(&"second_chance")).is_true()
+	assert_int(Progression.upgrade_cost(&"second_chance")).is_equal(-1)
+	assert_bool(Progression.buy_upgrade(&"second_chance")).is_false()
+	assert_int(Progression.glimmers).is_equal(15000)
+	for i: int in 5:
+		assert_bool(Progression.buy_upgrade(&"shield")).is_true()
+	assert_bool(Progression.buy_upgrade(&"shield")).is_false()
+	assert_int(Progression.glimmers).is_equal(15000 - 4650)
+	assert_float(Progression.upgrade_value(&"shield")).is_equal(600.0)
+	# Bilinmeyen yükseltme alınamaz.
+	assert_bool(Progression.buy_upgrade(&"laser_eyes")).is_false()
+	assert_int(Progression.upgrade_cost(&"laser_eyes")).is_equal(-1)
+	assert_float(Progression.upgrade_value(&"laser_eyes")).is_equal(0.0)
+
+
+func test_bought_levels_survive_a_restart() -> void:
+	Progression.add_glimmers(300)
+	Progression.buy_upgrade(&"head_start")
+	Progression.reload()
+	assert_int(Progression.upgrade_level(&"head_start")).is_equal(1)
+	assert_int(Progression.glimmers).is_equal(180)
+	assert_int(Progression.upgrade_level(&"magnet")).is_equal(0)
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

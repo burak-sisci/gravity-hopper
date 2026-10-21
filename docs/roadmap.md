@@ -246,7 +246,7 @@
   *Kabul:* Testler: yazıp okuma; bozuk `.dat`'ta `.bak`'tan, ikisi de bozuksa yeni kayıtla açılış; yarıda kalan `.tmp` eski kaydı bozmuyor; şifreli dosya düz metin değil; eski sürümlü kayıt yükseltiliyor. Redmi'de kayıt dosyası oluşuyor.
 - [x] **M4-02** 🤖 `Progression` ve kalıcı rekor: cüzdan, rekor, en yüksek sektör ve istatistikler kayıttan yüklenir. Tur sonunda kazanç hesaplanır (toplanan Glimmer + sektör tamamlama bonusu 25 × sektör numarası) ve kaydedilir; uygulama arka plana geçince ve kapanırken de kaydedilir. Oturum rekoru (`GameManager.best_height_m`) kalkar: rekor çizgisi ve HUD'un rekor satırı kalıcı rekordan gelir.
   *Kabul:* Kazanç hesabı ve kayıt testte. Redmi'de oyun kapatılıp açılınca rekor çizgisi ilk turda yerinde, cüzdan korunuyor (günlük).
-- [ ] **M4-03** 🤖 Yükseltme verisi ve satın alma: `UpgradeDef` (`data/upgrades/*.tres`; GDD §10'daki seviye maliyetleri ve etkileri) + katalog, `Progression.buy_upgrade(id)` (cüzdan yetmezse ya da en üst seviyedeyse olmaz), `Events.upgrade_purchased`. Debug paneline **İlerleme** sayfası: cüzdan, seviyeler, satın alma, +1000 Glimmer, kaydı sıfırlama.
+- [x] **M4-03** 🤖 Yükseltme verisi ve satın alma: `UpgradeDef` (`data/upgrades/*.tres`; GDD §10'daki seviye maliyetleri ve etkileri) + katalog, `Progression.buy_upgrade(id)` (cüzdan yetmezse ya da en üst seviyedeyse olmaz), `Events.upgrade_purchased`. Debug paneline **İlerleme** sayfası: cüzdan, seviyeler, satın alma, +1000 Glimmer, kaydı sıfırlama.
   *Kabul:* Satın alma kuralları ve maliyetlerin GDD ile aynı olduğu testte. Redmi'de panelden alınan seviye uygulama yeniden açılınca duruyor.
 
 **Yükseltme etkileri**

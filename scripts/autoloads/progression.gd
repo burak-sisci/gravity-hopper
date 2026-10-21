@@ -1,6 +1,6 @@
 extends Node
-## Kalıcı ilerleme: Glimmer cüzdanı, rekor, en yüksek sektör ve istatistikler; yükseltme seviyeleri
-## ve izler sonraki görevlerde (M4-03, M4-08).
+## Kalıcı ilerleme: Glimmer cüzdanı, rekor, en yüksek sektör, istatistikler ve yükseltme seviyeleri
+## (satın alma M4-03); izler M4-08.
 ##
 ## Veriyi SaveManager ile saklar (architecture.md §11). Açılışta kaydı yükler; ilk açılışta
 ## (ya da yalnızca yedek sağlamsa) hemen yazar. Tur sonunda GameManager finish_run'ı çağırır:
@@ -8,6 +8,7 @@ extends Node
 ## kapanırken kaydedilmemiş bir değişiklik varsa o da yazılır.
 
 const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
+const UPGRADES: UpgradeCatalog = preload("res://data/upgrades/upgrade_catalog.tres")
 
 ## Oyuncunun sahip olduğu Glimmer.
 var glimmers: int = 0
@@ -88,6 +89,45 @@ func finish_run(result: RunResult) -> void:
 	_log("run earned=%d bonus=%d wallet=%d best=%d" % [
 		result.earned, result.sector_bonus, glimmers, best_height_m,
 	])
+
+
+## Yükseltmenin seviyesi (0 = alınmamış).
+func upgrade_level(id: StringName) -> int:
+	var levels: Dictionary = _data["upgrades"]
+	return int(levels.get(String(id), 0))
+
+
+## Yükseltmenin şu anki etkisi (UpgradeDef.values; alınmamışsa 0).
+func upgrade_value(id: StringName) -> float:
+	var def: UpgradeDef = UPGRADES.get_def(id)
+	return def.value_at(upgrade_level(id)) if def != null else 0.0
+
+
+## Sonraki seviyenin fiyatı; en üst seviyedeyse ya da yükseltme bilinmiyorsa -1.
+func upgrade_cost(id: StringName) -> int:
+	var def: UpgradeDef = UPGRADES.get_def(id)
+	return def.cost_for(upgrade_level(id) + 1) if def != null else -1
+
+
+func can_buy(id: StringName) -> bool:
+	var cost: int = upgrade_cost(id)
+	return cost >= 0 and glimmers >= cost
+
+
+## Yükseltmenin sonraki seviyesini satın alır. Cüzdan yetmezse ya da en üst seviyedeyse olmaz
+## (false). Alınınca hemen kaydedilir, cüzdan ve yeni seviye duyurulur.
+func buy_upgrade(id: StringName) -> bool:
+	if not can_buy(id):
+		return false
+	var cost: int = upgrade_cost(id)
+	var level: int = upgrade_level(id) + 1
+	glimmers -= cost
+	(_data["upgrades"] as Dictionary)[String(id)] = level
+	save()
+	Events.glimmers_changed.emit(glimmers)
+	Events.upgrade_purchased.emit(id, level)
+	_log("bought %s level=%d cost=%d wallet=%d" % [id, level, cost, glimmers])
+	return true
 
 
 ## Turda tamamlanan sektörlerin bonusu: start_sector'dan reached'e kadar geçilen her sektör

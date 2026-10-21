@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="UpgradeDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/upgrade_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"glimmer_boost"
+name_key = "UPGRADE_GLIMMER_BOOST"
+desc_key = "UPGRADE_GLIMMER_BOOST_DESC"
+costs = Array[int]([200, 400, 800, 1600, 3200])
+values = Array[float]([0.1, 0.2, 0.3, 0.4, 0.5])
+unit = "ratio"

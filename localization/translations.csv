@@ -10,3 +10,13 @@ HUD_COMBO,×%d,×%d
 SECTOR_1_NAME,BOOT SEQUENCE,ÖNYÜKLEME
 SECTOR_2_NAME,DATA STREAM,VERİ AKIŞI
 SECTOR_3_NAME,FIREWALL,GÜVENLİK DUVARI
+UPGRADE_MAGNET,MAGNET,MIKNATIS
+UPGRADE_MAGNET_DESC,Pulls Glimmers in from farther away.,Glimmer'ları daha uzaktan çeker.
+UPGRADE_SHIELD,SHIELD,KALKAN
+UPGRADE_SHIELD_DESC,Start every run with a shield. Higher levels recharge a broken shield as you climb.,Her tura kalkanla başla. Üst seviyelerde kırılan kalkan tırmandıkça yenilenir.
+UPGRADE_HEAD_START,HEAD START,BAŞLANGIÇ SIÇRAMASI
+UPGRADE_HEAD_START_DESC,"Dash up at the start of a run, untouchable, collecting Glimmers on the way.","Tur başında dokunulmaz bir sıçramayla yüksel, yoldaki Glimmer'ları topla."
+UPGRADE_GLIMMER_BOOST,GLIMMER BOOST,GLIMMER ÇARPANI
+UPGRADE_GLIMMER_BOOST_DESC,Earn more Glimmers from every run.,Her turdan daha fazla Glimmer kazan.
+UPGRADE_SECOND_CHANCE,SECOND CHANCE,İKİNCİ ŞANS
+UPGRADE_SECOND_CHANCE_DESC,"Revive once per run, for free.","Her turda bir kez, ücretsiz diril."

@@ -1,0 +1,65 @@
+extends GdUnitTestSuite
+## Debug İlerleme sayfası (M4-03, architecture.md §13): cüzdanı, seviyeleri ve fiyatları
+## gösterir; satın alma düğmesi cüzdan yetmezse kapalı; +1000 Glimmer ve kaydı sıfırlama
+## kayda iner. Testler geçici kayıtla çalışır.
+
+var _panel: ProgressPanel
+var _locale: String
+
+
+func before_test() -> void:
+	_locale = TranslationServer.get_locale()
+	TranslationServer.set_locale("en")
+	Progression.reset()
+	_panel = auto_free(ProgressPanel.new()) as ProgressPanel
+	add_child(_panel)
+
+
+func after_test() -> void:
+	Progression.reset()
+	TranslationServer.set_locale(_locale)
+
+
+func test_shows_wallet_levels_and_prices() -> void:
+	assert_str(_panel.summary_label().text).contains("Cüzdan 0 Glimmer")
+	assert_str(_panel.level_label(&"magnet").text).is_equal("MAGNET  0/5")
+	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al 100")
+	assert_bool(_panel.buy_button(&"magnet").disabled).is_true()
+	assert_str(_panel.level_label(&"second_chance").text).is_equal("SECOND CHANCE  0/1")
+
+
+func test_gift_then_buy_updates_the_page_and_the_save() -> void:
+	_press("+1000 Glimmer")
+	assert_int(Progression.glimmers).is_equal(1000)
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(1000)
+	assert_bool(_panel.buy_button(&"magnet").disabled).is_false()
+	_panel.buy_button(&"magnet").pressed.emit()
+	assert_int(Progression.upgrade_level(&"magnet")).is_equal(1)
+	assert_str(_panel.level_label(&"magnet").text).is_equal("MAGNET  1/5")
+	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al 200")
+	assert_str(_panel.summary_label().text).contains("Cüzdan 900 Glimmer")
+	# İkinci Şans 5000: cüzdan yetmiyor.
+	assert_bool(_panel.buy_button(&"second_chance").disabled).is_true()
+	for i: int in 5:
+		_press("+1000 Glimmer")
+	_panel.buy_button(&"second_chance").pressed.emit()
+	assert_str(_panel.buy_button(&"second_chance").text).is_equal("En üst")
+	assert_bool(_panel.buy_button(&"second_chance").disabled).is_true()
+
+
+func test_reset_clears_the_save() -> void:
+	_press("+1000 Glimmer")
+	_panel.buy_button(&"shield").pressed.emit()
+	_press("Kaydı sıfırla")
+	assert_int(Progression.glimmers).is_equal(0)
+	assert_int(Progression.upgrade_level(&"shield")).is_equal(0)
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(0)
+	assert_str(_panel.level_label(&"shield").text).is_equal("SHIELD  0/5")
+
+
+func _press(text: String) -> void:
+	for node: Node in _panel.find_children("*", "Button", true, false):
+		if (node as Button).text == text:
+			(node as Button).pressed.emit()
+			return
+	fail("Düğme yok: %s" % text)
