@@ -21,6 +21,9 @@ const RECORD_ARG: String = "--record="
 ## PerfProbe). `-- --auto-tap=0.5` ölçüm sırasında bu aralıkla dokunuş gönderir.
 const PERF_ARG: String = "--perf="
 const AUTO_TAP_ARG: String = "--auto-tap="
+## Başlatma argümanı (`-- --upgrade=magnet:5`, tekrarlanabilir): yükseltme seviyesi baştan bu
+## (kare yakalama, M4-04). Kalıcıdır: bir sonraki kayıt anında (debug) kayda yazılır.
+const UPGRADE_ARG: String = "--upgrade="
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -85,6 +88,11 @@ func _ready() -> void:
 			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
 			# Kalıcı rekordur: tur sonunda (debug) kayda da yazılır.
 			Progression.best_height_m = int(arg.trim_prefix(RECORD_ARG))
+		elif arg.begins_with(UPGRADE_ARG):
+			# Main ilk turun yükünü debug katmanını yükledikten hemen sonra alır.
+			var parts: PackedStringArray = arg.trim_prefix(UPGRADE_ARG).split(":")
+			if parts.size() == 2:
+				Progression.set_upgrade_level(StringName(parts[0]), int(parts[1]))
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):
@@ -222,9 +230,9 @@ func _connect_event_log() -> void:
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))
 	Events.run_ended.connect(func(result: RunResult) -> void:
-		_log_event("run_ended height=%d cause=%s earned=%d bonus=%d record=%s" % [
+		_log_event("run_ended height=%d cause=%s earned=%d bonus=%d boost=%d record=%s" % [
 			result.height_m, GameTypes.DeathCause.keys()[result.cause], result.earned,
-			result.sector_bonus, result.new_record,
+			result.sector_bonus, result.boost_bonus, result.new_record,
 		]))
 
 

@@ -123,6 +123,12 @@ func active_chunks() -> Array[ChunkInfo]:
 	return _active.duplicate()
 
 
+## Mıknatıs (M4-04): oyuncunun yerini etkin parçalara iletir.
+func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
+	for chunk: ChunkInfo in _active:
+		chunk.attract(target, magnet, delta)
+
+
 ## Vuruş konumunu etkin parçalara iletir (lazerler, M2-12).
 func set_beat(beat: float) -> void:
 	for chunk: ChunkInfo in _active:

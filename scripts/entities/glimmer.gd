@@ -7,6 +7,8 @@ extends Area2D
 ## Görünüş (M3-06): yeşil neon daire (NeonShape, ışık lekesi); her vuruşta büyüyüp söner.
 ## Daire çarpışma yarıçapından kurulur. Vuruşu ChunkInfo'dan alır (set_beat).
 ## Toplanınca yeri de bildirilir (M3-11): Run orada Glimmer patlamasını çıkarır.
+## Mıknatıs (M4-04): Run oyuncunun yerini ChunkInfo üstünden aşağı verir (attract); menzile
+## giren Glimmer yakalanır ve toplanana dek oraya akar. Yerini parçanın yerleşimi geri kurar.
 
 signal collected(value: int, at: Vector2)
 
@@ -14,6 +16,10 @@ signal collected(value: int, at: Vector2)
 @export var value: int = 1
 
 var _taken: bool = false
+## Çarpışma dairesinin yarıçapı (px).
+var _radius: float = 0.0
+## Mıknatısın çekiş hızı (px/sn); 0 = yakalanmamış.
+var _pull_speed: float = 0.0
 
 @onready var _shape: CollisionShape2D = $Shape
 @onready var _visual: NeonShape = $Visual
@@ -21,18 +27,19 @@ var _taken: bool = false
 
 func _ready() -> void:
 	area_entered.connect(_on_area_entered)
-	var radius: float = (_shape.shape as CircleShape2D).radius
+	_radius = (_shape.shape as CircleShape2D).radius
 	var segments: int = Neon.STYLE.glimmer_segments
 	var circle: PackedVector2Array = PackedVector2Array()
 	for i: int in segments:
-		circle.append(Vector2.from_angle(TAU * i / segments) * radius)
+		circle.append(Vector2.from_angle(TAU * i / segments) * _radius)
 	_visual.polygon = circle
 	_visual.fill_alpha = Neon.STYLE.glimmer_fill_alpha
 
 
-## Yeniden etkinleştirir (parça havuzdan geldiğinde).
+## Yeniden etkinleştirir (parça havuzdan geldiğinde; yerini parçanın yerleşimi kurar).
 func reset() -> void:
 	_taken = false
+	_pull_speed = 0.0
 	visible = true
 	_shape.set_deferred("disabled", false)
 
@@ -43,8 +50,23 @@ func set_beat(beat: float) -> void:
 	_visual.scale = Vector2.ONE * (1.0 + grow)
 
 
+## Mıknatıs (M4-04): menzile girince yakalanır, sonra her adımda hızlanarak hedefe akar
+## (menzilden çıksa da bırakılmaz). Toplanınca durur.
+func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
+	if _taken:
+		return
+	if _pull_speed <= 0.0 and not magnet.captures(global_position.distance_to(target), _radius):
+		return
+	_pull_speed = magnet.pull_speed(_pull_speed, delta)
+	global_position = global_position.move_toward(target, _pull_speed * delta)
+
+
 func is_taken() -> bool:
 	return _taken
+
+
+func is_pulled() -> bool:
+	return _pull_speed > 0.0
 
 
 func _on_area_entered(_area: Area2D) -> void:

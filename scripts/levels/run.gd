@@ -37,6 +37,9 @@ extends Node2D
 ## Rekor çizgisi (M3-14): RecordLine, record_height yüksekliğinde (Main kalıcı rekoru verir)
 ## parlar; oyuncu yaklaştıkça güçlenir, varınca söner. Rekor yoksa ya da tur rekorun üstünden
 ## başladıysa çizgi yoktur.
+## Yükseltmeler (M4-04, ADR-066): Main tur başında yükü (RunLoadout) verir; tur boyunca
+## değişmez. Mıknatıs varsa Run her adımda oyuncunun yerini ChunkSpawner üstünden Glimmer'lara
+## iletir (Magnet); menzile giren Glimmer oyuncuya akar. Harita değişmez.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -48,8 +51,11 @@ const PROXIMITY_STEP: float = 0.01
 @export var run_seed: int = 0
 ## Turun başladığı sektör (kontrol noktası; Main verir). Katalog dışındaysa sınırlanır.
 @export var start_sector: int = 1
-## Rekor yüksekliği (m; Main, GameManager'ın oturum rekorunu verir). 0 ise rekor çizgisi yok.
+## Rekor yüksekliği (m; Main, Progression'ın kalıcı rekorunu verir). 0 ise rekor çizgisi yok.
 @export var record_height: int = 0
+
+## Turun yükseltme yükü (Main, Progression'dan verir). Boş yük yükseltmesiz turdur.
+var loadout: RunLoadout = RunLoadout.new()
 
 var rng: RunRng
 ## Turun müzik parçası (katalog boşsa null; tempo o zaman Conductor.bpm'in varsayılanı).
@@ -84,6 +90,8 @@ var _wave_elapsed: float = 0.0
 var _death_seen: bool = false
 var _freeze_left: float = 0.0
 var _slow_motion: SlowMotion = SlowMotion.new()
+## Mıknatıs yükseltmesi (yükte yoksa null).
+var _magnet: Magnet = null
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -124,6 +132,8 @@ func _ready() -> void:
 	_chunks.shared_pools = chunk_pools
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
+	if loadout.magnet_m > 0.0:
+		_magnet = Magnet.new(tuning, loadout.magnet_m)
 	_player.near_missed.connect(_on_near_missed)
 	_pressure.setup(tuning.wall_start_distance, tuning.wall_max_distance, def.wall_creep)
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
@@ -155,6 +165,8 @@ func _physics_process(delta: float) -> void:
 	if _player.position.y <= _next_boundary_y:
 		_enter_sector(sector + 1)
 	_update_view()
+	if _magnet != null and _player.is_alive():
+		_chunks.attract(_player.global_position, _magnet, delta)
 	_advance_wave(delta)
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
 	# Duvarlar, arka plan ağı ve çöküş duvarının glitch'i vuruşta nabız atar (M3-03, M3-07,

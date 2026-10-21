@@ -158,6 +158,55 @@ func test_bought_levels_survive_a_restart() -> void:
 	assert_int(Progression.upgrade_level(&"magnet")).is_equal(0)
 
 
+## Glimmer Çarpanı (M4-04, GDD §9.1): tur sonu kazancına (Glimmer + sektör bonusu) +%10 / seviye,
+## en yakın tam sayıya yuvarlanır.
+func test_glimmer_boost_raises_the_run_earnings() -> void:
+	var result: RunResult = _result(120, 30, 1, 3)
+	result.glimmer_boost = 0.3
+	Progression.finish_run(result)
+	# 30 + 75 bonus = 105; %30'u 31,5 → 32.
+	assert_int(result.boost_bonus).is_equal(32)
+	assert_int(result.earned).is_equal(137)
+	assert_int(Progression.glimmers).is_equal(137)
+	assert_int((SaveManager.load_game()["stats"] as Dictionary)["glimmers_earned"]).is_equal(137)
+	var plain: RunResult = _result(10, 7, 1, 1)
+	Progression.finish_run(plain)
+	assert_int(plain.boost_bonus).is_equal(0)
+	assert_int(plain.earned).is_equal(7)
+	assert_int(Progression.boost_bonus(7, 0.1)).is_equal(1)
+	assert_int(Progression.boost_bonus(4, 0.1)).is_equal(0)
+
+
+## Tur başındaki yük satın alınan seviyelerin etkisidir; tur sırasında alınan seviye o turun
+## kazancını değiştirmez (GameManager yükü tur başında alır).
+func test_loadout_follows_levels_and_is_fixed_for_the_run() -> void:
+	var empty: RunLoadout = Progression.loadout()
+	assert_float(empty.magnet_m).is_equal(0.0)
+	assert_float(empty.glimmer_boost).is_equal(0.0)
+	Progression.set_upgrade_level(&"magnet", 3)
+	Progression.set_upgrade_level(&"glimmer_boost", 2)
+	var loadout: RunLoadout = Progression.loadout()
+	assert_float(loadout.magnet_m).is_equal_approx(3.4, 0.0001)
+	assert_float(loadout.glimmer_boost).is_equal_approx(0.2, 0.0001)
+	var results: Array[RunResult] = []
+	var on_end: Callable = func(result: RunResult) -> void: results.append(result)
+	Events.run_ended.connect(on_end)
+	GameManager.begin_run(7, 1, loadout)
+	Events.glimmer_collected.emit(10)
+	Progression.set_upgrade_level(&"glimmer_boost", 5)
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Events.run_ended.disconnect(on_end)
+	assert_int(results.size()).is_equal(1)
+	assert_float(results[0].glimmer_boost).is_equal_approx(0.2, 0.0001)
+	assert_int(results[0].boost_bonus).is_equal(2)
+	assert_int(results[0].earned).is_equal(12)
+	# Debug seviye koyma sınırlanır; bilinmeyen yükseltme yok sayılır.
+	Progression.set_upgrade_level(&"magnet", 9)
+	assert_int(Progression.upgrade_level(&"magnet")).is_equal(5)
+	Progression.set_upgrade_level(&"laser_eyes", 2)
+	assert_int(Progression.upgrade_level(&"laser_eyes")).is_equal(0)
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

@@ -90,6 +90,12 @@ func set_beat(beat: float) -> void:
 		glimmer.set_beat(beat)
 
 
+## Mıknatıs (M4-04): oyuncunun yerini (dünyada) parçanın Glimmer'larına iletir.
+func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
+	for glimmer: Glimmer in _glimmers:
+		glimmer.attract(target, magnet, delta)
+
+
 ## Parçanın duvar boşlukları (M2-11).
 func gaps() -> Array[WallGap]:
 	var result: Array[WallGap] = []

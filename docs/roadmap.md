@@ -251,7 +251,7 @@
 
 **Yükseltme etkileri**
 
-- [ ] **M4-04** 🤖 Mıknatıs ve Glimmer Çarpanı: mıknatıs yarıçapına (90–250 px) giren Glimmer'lar oyuncuya doğru akar; Glimmer Çarpanı tur sonu kazancını artırır (+%10 / seviye).
+- [x] **M4-04** 🤖 Mıknatıs ve Glimmer Çarpanı: mıknatıs yarıçapına (90–250 px) giren Glimmer'lar oyuncuya doğru akar; Glimmer Çarpanı tur sonu kazancını artırır (+%10 / seviye).
   *Kabul:* Seviye arttıkça daha uzaktaki Glimmer toplanıyor, harita değişmiyor, tur sırasında düğüm oluşmuyor (test); çarpan testte; Redmi'de çekim görünüyor.
 - [ ] **M4-05** 🤖 Kalkan yükseltmesi: 1. seviyede tur kalkanla başlar; 2.–5. seviyede kırılan kalkan 1500 / 1200 / 900 / 600 m sonra yenilenir.
   *Kabul:* Başlangıç kalkanı ve yenilenme mesafesi testte; günlükte `shield_changed`.

@@ -16,6 +16,8 @@ var _height_m: int = 0
 var _sector_reached: int = 1
 var _glimmers: int = 0
 var _near_misses: int = 0
+## Turun Glimmer Çarpanı (yükten, M4-04).
+var _glimmer_boost: float = 0.0
 
 
 func _ready() -> void:
@@ -38,8 +40,10 @@ func new_run_seed() -> int:
 
 ## Main, yeni turu dünyaya ekledikten sonra çağırır; tur başlamış sayılır ve duyurulur.
 ## Kalıcı değerler (cüzdan, rekor) de yeniden duyurulur: arayüz ilk değerlerini böyle alır.
-func begin_run(run_seed: int, start_sector: int) -> void:
+## Yük (M4-04) turun yükseltmeleridir; Glimmer Çarpanı tur sonu kazancına uygulanır.
+func begin_run(run_seed: int, start_sector: int, loadout: RunLoadout = null) -> void:
 	_run_seed = run_seed
+	_glimmer_boost = loadout.glimmer_boost if loadout != null else 0.0
 	_start_sector = start_sector
 	_height_m = 0
 	_sector_reached = start_sector
@@ -80,6 +84,7 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	result.sector_reached = _sector_reached
 	result.glimmers = _glimmers
 	result.near_misses = _near_misses
+	result.glimmer_boost = _glimmer_boost
 	# Kazanç ve rekor sonuca yazılır, kayıt run_ended'den önce diske iner (§7.3).
 	Progression.finish_run(result)
 	Events.run_ended.emit(result)

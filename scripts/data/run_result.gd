@@ -20,7 +20,11 @@ var cause: GameTypes.DeathCause = GameTypes.DeathCause.HAZARD
 var run_seed: int = 0
 ## Sektör tamamlama bonusu (Progression.sector_bonus).
 var sector_bonus: int = 0
-## Cüzdana giren toplam kazanç: toplanan Glimmer + sektör bonusu.
+## Turun Glimmer Çarpanı (yükten; 0,1 = +%10, M4-04).
+var glimmer_boost: float = 0.0
+## Glimmer Çarpanının eklediği (Glimmer + sektör bonusu üstünden, yuvarlanmış).
+var boost_bonus: int = 0
+## Cüzdana giren toplam kazanç: toplanan Glimmer + sektör bonusu + çarpan eki.
 var earned: int = 0
 ## Bu tur rekor kırdı mı.
 var new_record: bool = false

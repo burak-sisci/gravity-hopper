@@ -59,6 +59,11 @@ const PX_PER_M: float = 50.0
 @export_group("Toplama")
 ## Oyuncunun Glimmer toplama alanının yarıçapı (gövdeden büyük: affedici toplama, M2-13).
 @export_range(0.5, 4.0, 0.1, "suffix:m") var pickup_radius: float = 1.5
+## Mıknatıs (M4-04): yakalanan Glimmer oyuncuya bu hızla akmaya başlar ve bu ivmeyle hızlanır.
+## İlk hız en yüksek tırmanış hızından düşük olsa da ivme, oyuncunun altında kalan Glimmer'ı da
+## yarım saniyenin altında yetiştirir; düşük ilk hız çekimi gözle görülür kılar.
+@export_range(5.0, 60.0, 1.0, "suffix:m/sn") var magnet_pull_speed: float = 15.0
+@export_range(20.0, 400.0, 10.0, "suffix:m/sn²") var magnet_pull_accel: float = 120.0
 
 @export_group("Kamera ve dünya")
 ## Kameranın oyuncunun üstünde gösterdiği mesafe; her cihazda aynıdır (sabit ileri görüş kuralı).

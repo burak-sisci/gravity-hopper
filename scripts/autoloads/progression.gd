@@ -1,6 +1,7 @@
 extends Node
 ## Kalıcı ilerleme: Glimmer cüzdanı, rekor, en yüksek sektör, istatistikler ve yükseltme seviyeleri
-## (satın alma M4-03); izler M4-08.
+## (satın alma M4-03); izler M4-08. Tur başında yükseltmelerin etkileri tek bir yük olarak verilir
+## (loadout, M4-04).
 ##
 ## Veriyi SaveManager ile saklar (architecture.md §11). Açılışta kaydı yükler; ilk açılışta
 ## (ya da yalnızca yedek sağlamsa) hemen yazar. Tur sonunda GameManager finish_run'ı çağırır:
@@ -72,7 +73,8 @@ func add_glimmers(amount: int) -> void:
 ## cüzdanı, rekoru, en yüksek sektörü ve istatistikleri günceller, kaydeder.
 func finish_run(result: RunResult) -> void:
 	result.sector_bonus = sector_bonus(result.start_sector, result.sector_reached)
-	result.earned = result.glimmers + result.sector_bonus
+	result.boost_bonus = boost_bonus(result.glimmers + result.sector_bonus, result.glimmer_boost)
+	result.earned = result.glimmers + result.sector_bonus + result.boost_bonus
 	result.new_record = result.height_m > best_height_m
 	var stats: Dictionary = _data["stats"]
 	stats["runs"] = int(stats["runs"]) + 1
@@ -86,8 +88,8 @@ func finish_run(result: RunResult) -> void:
 	result.best_height_m = best_height_m
 	add_glimmers(result.earned)
 	save()
-	_log("run earned=%d bonus=%d wallet=%d best=%d" % [
-		result.earned, result.sector_bonus, glimmers, best_height_m,
+	_log("run earned=%d bonus=%d boost=%d wallet=%d best=%d" % [
+		result.earned, result.sector_bonus, result.boost_bonus, glimmers, best_height_m,
 	])
 
 
@@ -128,6 +130,32 @@ func buy_upgrade(id: StringName) -> bool:
 	Events.upgrade_purchased.emit(id, level)
 	_log("bought %s level=%d cost=%d wallet=%d" % [id, level, cost, glimmers])
 	return true
+
+
+## Turun yükseltme yükü (ADR-066): oynanışı etkileyen yükseltmelerin şu anki etkileri. Main her
+## tur başında alır; tur boyunca değişmez (tur sırasında alınan seviye sonraki turda geçerli).
+func loadout() -> RunLoadout:
+	var result: RunLoadout = RunLoadout.new()
+	result.magnet_m = upgrade_value(&"magnet")
+	result.glimmer_boost = upgrade_value(&"glimmer_boost")
+	_log("loadout magnet=%.1f boost=%.1f" % [result.magnet_m, result.glimmer_boost])
+	return result
+
+
+## Yükseltmenin seviyesini doğrudan koyar (debug `--upgrade=` argümanı, testler); 0 ile en üst
+## seviye arasına sınırlanır, bilinmeyen yükseltme yok sayılır. Bir sonraki kayıt anında yazılır.
+func set_upgrade_level(id: StringName, level: int) -> void:
+	var def: UpgradeDef = UPGRADES.get_def(id)
+	if def == null:
+		return
+	(_data["upgrades"] as Dictionary)[String(id)] = clampi(level, 0, def.max_level())
+	_dirty = true
+
+
+## Glimmer Çarpanının tur sonu kazancına eklediği (GDD §9.1: +%10 / seviye), en yakın tam sayıya
+## yuvarlanır.
+func boost_bonus(base: int, boost: float) -> int:
+	return roundi(base * boost)
 
 
 ## Turda tamamlanan sektörlerin bonusu: start_sector'dan reached'e kadar geçilen her sektör
