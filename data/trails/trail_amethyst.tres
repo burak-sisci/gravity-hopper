@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TrailDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/trail_def.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"trail_amethyst"
+name_key = "TRAIL_AMETHYST"
+unlock = 1
+cost = 600
+colors = PackedColorArray(1, 1, 1, 1, 0.72, 0.45, 1, 1)
+glow_color = Color(0.6, 0.3, 1, 1)
+width_scale = 1.1
+glow_scale = 1.1

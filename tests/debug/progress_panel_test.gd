@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Debug İlerleme sayfası (M4-03, architecture.md §13): cüzdanı, seviyeleri ve fiyatları
 ## gösterir; satın alma düğmesi cüzdan yetmezse kapalı; +1000 Glimmer ve kaydı sıfırlama
-## kayda iner. Testler geçici kayıtla çalışır.
+## kayda iner. İzler sayfası (M4-08): satın alma, kuşanma ve başarım izini debug için açma.
+## Testler geçici kayıtla çalışır.
 
 var _panel: ProgressPanel
 var _locale: String
@@ -55,6 +56,40 @@ func test_reset_clears_the_save() -> void:
 	assert_int(Progression.upgrade_level(&"shield")).is_equal(0)
 	assert_int(SaveManager.load_game()["glimmers"]).is_equal(0)
 	assert_str(_panel.level_label(&"shield").text).is_equal("SHIELD  0/5")
+
+
+func test_trail_page_buys_equips_and_grants() -> void:
+	assert_bool(_panel.showing_trails()).is_false()
+	_panel.page_button().pressed.emit()
+	assert_bool(_panel.showing_trails()).is_true()
+	assert_str(_panel.page_button().text).is_equal("Yükseltmeler ›")
+	assert_str(_panel.trail_label(&"trail_default").text).is_equal("NEON  · kuşanılı")
+	assert_str(_panel.trail_button(&"trail_default").text).is_equal("Kuşanılı")
+	assert_bool(_panel.trail_button(&"trail_default").disabled).is_true()
+	assert_str(_panel.trail_label(&"trail_frost").text).is_equal("FROST  · 300 Glimmer")
+	assert_str(_panel.trail_button(&"trail_frost").text).is_equal("Al 300")
+	assert_bool(_panel.trail_button(&"trail_frost").disabled).is_true()
+	_press("+1000 Glimmer")
+	_panel.trail_button(&"trail_frost").pressed.emit()
+	assert_bool(Progression.owns_trail(&"trail_frost")).is_true()
+	assert_int(Progression.glimmers).is_equal(700)
+	assert_str(_panel.trail_button(&"trail_frost").text).is_equal("Kuşan")
+	assert_str(_panel.trail_label(&"trail_frost").text).is_equal("FROST  · sahip")
+	_panel.trail_button(&"trail_frost").pressed.emit()
+	assert_str(String(Progression.equipped_trail())).is_equal("trail_frost")
+	assert_str(_panel.trail_button(&"trail_frost").text).is_equal("Kuşanılı")
+	assert_str(_panel.trail_button(&"trail_default").text).is_equal("Kuşan")
+	# Başarım izi satılmaz; debug düğmesi bedelsiz açar ve kaydeder.
+	var close_call: String = _panel.trail_label(&"trail_close_call").text
+	assert_str(close_call).is_equal("CLOSE CALL  · başarım: 500 kıl payı")
+	assert_str(_panel.trail_button(&"trail_close_call").text).is_equal("Aç (debug)")
+	_panel.trail_button(&"trail_close_call").pressed.emit()
+	assert_int(Progression.glimmers).is_equal(700)
+	var owned: Array = (SaveManager.load_game()["trails"] as Dictionary)["owned"]
+	assert_array(owned).contains(["trail_close_call"])
+	_panel.page_button().pressed.emit()
+	assert_bool(_panel.showing_trails()).is_false()
+	assert_str(_panel.page_button().text).is_equal("İzler ›")
 
 
 func _press(text: String) -> void:

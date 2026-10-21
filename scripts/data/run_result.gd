@@ -18,7 +18,7 @@ var sector_reached: int = 1
 var cause: GameTypes.DeathCause = GameTypes.DeathCause.HAZARD
 ## Haritayı üreten tohum (günlük meydan okuma ve hata yeniden üretimi için).
 var run_seed: int = 0
-## Sektör tamamlama bonusu (Progression.sector_bonus).
+## Sektör tamamlama bonusu (Earnings.sector_bonus).
 var sector_bonus: int = 0
 ## Turun Glimmer Çarpanı (yükten; 0,1 = +%10, M4-04).
 var glimmer_boost: float = 0.0

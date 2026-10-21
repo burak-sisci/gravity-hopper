@@ -24,6 +24,9 @@ const AUTO_TAP_ARG: String = "--auto-tap="
 ## Başlatma argümanı (`-- --upgrade=magnet:5`, tekrarlanabilir): yükseltme seviyesi baştan bu
 ## (kare yakalama, M4-04). Kalıcıdır: bir sonraki kayıt anında (debug) kayda yazılır.
 const UPGRADE_ARG: String = "--upgrade="
+## Başlatma argümanı (`-- --trail=trail_gold`): iz bedelsiz verilir ve kuşanılır (kaydedilir;
+## kare yakalama, M4-08).
+const TRAIL_ARG: String = "--trail="
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -95,6 +98,10 @@ func _ready() -> void:
 			var parts: PackedStringArray = arg.trim_prefix(UPGRADE_ARG).split(":")
 			if parts.size() == 2:
 				Progression.set_upgrade_level(StringName(parts[0]), int(parts[1]))
+		elif arg.begins_with(TRAIL_ARG):
+			var trail: StringName = StringName(arg.trim_prefix(TRAIL_ARG))
+			Progression.grant_trail(trail)
+			Progression.equip_trail(trail)
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):
@@ -236,6 +243,10 @@ func _connect_event_log() -> void:
 		]))
 	Events.height_changed.connect(func(meters: int) -> void: _height = meters)
 	Events.combo_ended.connect(_log_event.bind("combo_ended"))
+	Events.trail_unlocked.connect(func(id: StringName) -> void:
+		_log_event("trail_unlocked id=%s" % id))
+	Events.trail_equipped.connect(func(id: StringName) -> void:
+		_log_event("trail_equipped id=%s" % id))
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))
 	Events.run_ended.connect(func(result: RunResult) -> void:

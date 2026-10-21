@@ -44,14 +44,16 @@ static func make_halo(closed: bool) -> Line2D:
 	return halo
 
 
-## Parlama kopyalarını geçerli kaliteye göre ayarlar; fazla kopyalar gizlenir.
-static func apply_halos(halos: Array[Line2D], color: Color, enabled: bool) -> void:
+## Parlama kopyalarını geçerli kaliteye göre ayarlar; fazla kopyalar gizlenir. width_scale
+## katmanların kalınlığını çarpar (kalın kozmetik izler, M4-08).
+static func apply_halos(
+		halos: Array[Line2D], color: Color, enabled: bool, width_scale: float = 1.0) -> void:
 	var layers: Array[Vector2] = STYLE.layers_for(quality)
 	for i: int in halos.size():
 		var halo: Line2D = halos[i]
 		halo.visible = enabled and i < layers.size()
 		if halo.visible:
-			halo.width = layers[i].x
+			halo.width = layers[i].x * width_scale
 			halo.default_color = Color(color, layers[i].y)
 
 

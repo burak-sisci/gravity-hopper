@@ -50,6 +50,11 @@ extends Node2D
 	set(value):
 		glow_enabled = value
 		apply_quality()
+## Parlama katmanlarının kalınlık çarpanı (kozmetik izler, M4-08).
+@export_range(0.5, 2.0, 0.05) var glow_width_scale: float = 1.0:
+	set(value):
+		glow_width_scale = value
+		apply_quality()
 
 var _halos: Array[Line2D] = []
 var _core: Line2D
@@ -76,7 +81,7 @@ func apply_quality() -> void:
 	if _core == null:
 		return
 	var glow: Color = shown_color() if glow_color.a <= 0.0 else glow_color
-	Neon.apply_halos(_halos, glow, glow_enabled)
+	Neon.apply_halos(_halos, glow, glow_enabled, glow_width_scale)
 
 
 ## Çizginin görünen rengi: tone'a göre sabit renk ya da color.

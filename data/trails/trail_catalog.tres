@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TrailCatalog" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/trail_catalog.gd" id="1_catalog"]
+[ext_resource type="Resource" path="res://data/trails/trail_default.tres" id="2_default"]
+[ext_resource type="Resource" path="res://data/trails/trail_frost.tres" id="3_frost"]
+[ext_resource type="Resource" path="res://data/trails/trail_amethyst.tres" id="4_amethyst"]
+[ext_resource type="Resource" path="res://data/trails/trail_gold.tres" id="5_gold"]
+[ext_resource type="Resource" path="res://data/trails/trail_plasma.tres" id="6_plasma"]
+[ext_resource type="Resource" path="res://data/trails/trail_comet.tres" id="7_comet"]
+[ext_resource type="Resource" path="res://data/trails/trail_close_call.tres" id="8_close_call"]
+[ext_resource type="Resource" path="res://data/trails/trail_great_storage.tres" id="9_great_storage"]
+
+[resource]
+script = ExtResource("1_catalog")
+trails = Array[TrailDef]([ExtResource("2_default"), ExtResource("3_frost"), ExtResource("4_amethyst"), ExtResource("5_gold"), ExtResource("6_plasma"), ExtResource("7_comet"), ExtResource("8_close_call"), ExtResource("9_great_storage")])

@@ -151,11 +151,15 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 ## 11. Kozmetik izler
 
 - Çekirdeğin arkasında bıraktığı neon iz. Görsel tatmin ve paylaşılabilirlik için.
-- **Satın alınanlar** (300–3000 Glimmer): renk geçişleri, kalınlık, parıltı desenleri.
+- **Satın alınanlar** (300–3000 Glimmer): renk geçişleri, kalınlık, parlama ve boy.
+  - M4-08: Ayaz 300, Ametist 600, Altın 1000, Plazma 1800, Kuyruklu Yıldız 3000. Fiyat arttıkça iz kalınlaşır ve uzar; pahalı izlerde renk geçişi üç durakludur.
+  - Satın almak kuşandırmaz; kuşanılan iz sonraki turda görünür. Varsayılan iz (Neon) sektörün rengini izler, ötekiler her sektörde kendi rengindedir.
+  - Renkler tehlike kırmızısından ve Glimmer yeşilinden uzak durur.
 - **Başarımla açılanlar** (satın alınamaz, statü göstergesi):
   - "Büyük Depolama Birimi'ne ulaş"
   - "Toplam 500 kıl payı"
-  - "7 gün üst üste günlük meydan okuma"
+  - "7 gün üst üste günlük meydan okuma" (M7-03)
+  - M4-08: Kıl Payı izi (turuncu-altın) 500. kıl payının yapıldığı turun sonunda, Büyük Depo izi (camgöbeği → mor → pembe, en kalın ve en uzun) Büyük Depoya varınca açılır.
 - Oyuncunun kendi rengi (**beyaz çekirdek**) değişmez. Kozmetik olan yalnızca izdir; böylece okunabilirlik bozulmaz.
 
 ## 12. Sektörler ve ilerleme hissi
@@ -288,7 +292,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - **Müzik:** Akıcı, **orkestral** bir his (kullanıcı isteği, 2026-10-13: "kodla yazılmış tekdüze müzik değil, gerçek orkestral bir iş"). **Age of Empires** benzeri, uygarlık renkli özgün parçalar (kullanıcı isteği, 2026-10-20: "arka plan müziği yeterince akıcı değil… sen kendin Age of Empires'takine benzer bir müzik üret"; ADR-065). Claude besteler; gerçek enstrüman kayıtlarıyla (CC0) seslendirilir: tek bir ana ezgi çalgısı (obua, flüt, blok flüt, keman), altında akan telli ve arp, net bir el davulu ritmi, doruklarda yaylılar ve korno. Üç parça her tur biri rastgele çalar (ADR-040): **Kervan** (Orta Doğu: darbuka, saz, obua; 100 BPM), **Pagoda** (Doğu Asya: zither, taiko, flüt; 90 BPM), **Kale** (Orta Çağ Avrupa: blok flüt, tef, jig ritmi; 120 BPM). Eski beş kütüphane parçası (ADR-039) kalktı. Menü müziği M5'te.
 - **Titreşim:** çevirmede çok hafif, kıl payında kısa, ölümde belirgin. Ayarlardan kapatılabilir.
 - **Oyun hissi (juice):** ölümde kısa donma ve sarsıntı, çevirmede sıkışma-uzama, Glimmer'da parçacık patlaması.
-  - **Ölüm (M3-10):** dünya 0,1 sn donar (engeller, ışınlar, duvar, iz yerinde; müzik sürer), ardından ekran güçlü biçimde **yalnızca yana** sarsılır ve hızla söner. Oyuncunun üstünde görünen mesafe sarsıntıda değişmez, yeni tur yine yarım saniyeden kısa sürede başlar. Kalkan kırılınca daha hafif bir sarsıntı (donma yok). Değerler ayar panelinde (Oyun hissi).
+  - **Ölüm (M3-10):** dünya 0,1 sn donar (engeller, ışınlar, duvar, iz yerinde; müzik kesilir, ölüm sesi çalar), ardından ekran güçlü biçimde **yalnızca yana** sarsılır ve hızla söner. Oyuncunun üstünde görünen mesafe sarsıntıda değişmez, yeni tur yine yarım saniyeden kısa sürede başlar. Kalkan kırılınca daha hafif bir sarsıntı (donma yok). Değerler ayar panelinde (Oyun hissi).
   - **Ölüm patlaması (M3-11):** donma bitince çekirdek kaybolur ve yerinde beyaz kıvılcımlarla dağılır (sarsıntıyla aynı anda); iz o noktaya toplanır.
   - **Sıkışma-uzama (M3-11, yalnızca görsel):** çevirmede çekirdek yana %25 uzar (o oranda incelir), duvara inince %22 basılır; bir yayla, bir kez hafifçe geri yaylanarak eski haline döner. Çarpışma kutusu değişmez.
   - **Parçacıklar (M3-11):** duvara her inişte değilen noktadan koridorun içine sektör renginde kısa kıvılcımlar; Glimmer toplanınca yeşil bir patlama. Düşük kalitede parçacık sayısı azalır (%40), ortada %75.

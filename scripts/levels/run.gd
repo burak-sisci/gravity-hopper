@@ -39,7 +39,8 @@ extends Node2D
 ## başladıysa çizgi yoktur.
 ## Yükseltmeler (M4-04, ADR-066): Main tur başında yükü (RunLoadout) verir; tur boyunca
 ## değişmez. Mıknatıs varsa Run her adımda oyuncunun yerini ChunkSpawner üstünden Glimmer'lara
-## iletir (Magnet); menzile giren Glimmer oyuncuya akar. Harita değişmez.
+## iletir (Magnet); menzile giren Glimmer oyuncuya akar. Harita değişmez. Yükteki kozmetik iz
+## (M4-08) tur başında oyuncunun izine verilir.
 ## Kalkan yükseltmesi (M4-05): yükte varsa oyuncu tura kalkanla başlar; yenilenme mesafesi
 ## varsa kırılan kalkan, kırıldığı yerden o kadar tırmanılınca yeniden takılır.
 ## Başlangıç Sıçraması (M4-06): yükte varsa tur, oyuncunun normal tırmanışının üstüne ek bir yolla
@@ -143,6 +144,7 @@ func _ready() -> void:
 	_next_boundary_y = _boundary_y(sector)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_background.reset_scroll(_camera.position.y)
+	_player.set_trail(loadout.trail)
 	_show_speed(def.climb_speed, true)
 	_corridor.build(_camera.view_top() - Corridor.SEGMENT_HEIGHT)
 	_show_palette(def.palette, true)

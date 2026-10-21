@@ -8,11 +8,18 @@ extends NeonLine
 ## Hızla uzayan iz (M3-13): süre stretch katıyla uzar (hız hissi, NeonStyle.trail_stretch).
 ## Süre değişince kayıtlar korunur; uzarken eklenen kayıtlar kuyruktaki konumdadır, iz yeni boyuna
 ## kendiliğinden uzar.
+## Kozmetik iz (M4-08): apply_def() renk geçişini, kalınlığı, parlamayı ve boyu TrailDef'ten alır.
+## Varsayılan iz (tanım yok ya da renksiz) beyazdan sektörün çevre rengine söner; renkli izde
+## yalnızca saydam parlama rengi sektörü izler.
 
 ## İzin süre çarpanı (Player.set_trail_stretch verir).
 var stretch: float = 1.0
 ## Kayıtlı konumlar (dünya), en yenisi başta: tick_count() + 2 adet.
 var _history: PackedVector2Array = PackedVector2Array()
+## Kuşanılan iz; null = varsayılan.
+var _def: TrailDef
+## Sektörün çevre rengi (son set_ambient).
+var _ambient: Color = Color.WHITE
 
 
 func _init() -> void:
@@ -25,7 +32,7 @@ func _init() -> void:
 	width_curve = taper
 	var fade: Gradient = Gradient.new()
 	gradient = fade
-	set_ambient(Color.WHITE)
+	_update_colors()
 
 
 func _process(_delta: float) -> void:
@@ -35,9 +42,22 @@ func _process(_delta: float) -> void:
 	points = Transform2D(0.0, -world[0]) * world
 
 
-## İzin kaç fizik adımı geriye uzandığı (süre NeonStyle'da).
+## İzin kaç fizik adımı geriye uzandığı (süre NeonStyle'da; izin boy çarpanı ve hız uzaması).
 func tick_count() -> int:
-	return maxi(roundi(Neon.STYLE.trail_duration * stretch * Engine.physics_ticks_per_second), 1)
+	var duration: float = Neon.STYLE.trail_duration * stretch * _length_scale()
+	return maxi(roundi(duration * Engine.physics_ticks_per_second), 1)
+
+
+## Kuşanılan izi uygular (Player.set_trail; null = varsayılan iz). Kayıtlar korunur.
+func apply_def(def: TrailDef) -> void:
+	_def = def
+	width = Neon.STYLE.trail_width * (def.width_scale if def != null else 1.0)
+	glow_width_scale = def.glow_scale if def != null else 1.0
+	_update_colors()
+
+
+func trail_def() -> TrailDef:
+	return _def
 
 
 ## Sahibi her fizik adımında çağırır: bu adımın sonundaki konum (dünya).
@@ -81,8 +101,30 @@ func points_at(fraction: float) -> PackedVector2Array:
 	return result
 
 
-## İzin rengi: çekirdek oyuncunun beyazından paletin çevre rengine söner; parlama çevre renginde.
+## Sektörün çevre rengi (Player.set_ambient, palet geçişinde): varsayılan iz oyuncunun beyazından
+## bu renge söner, parlama bu renktedir. Renkli izde yalnızca saydam parlama rengi bunu izler.
 func set_ambient(ambient: Color) -> void:
-	glow_color = ambient
-	gradient.colors = PackedColorArray([Neon.STYLE.player_color, Color(ambient, 0.0)])
-	gradient.offsets = PackedFloat32Array([0.0, 1.0])
+	_ambient = ambient
+	_update_colors()
+
+
+func _length_scale() -> float:
+	return _def.length_scale if _def != null else 1.0
+
+
+## Renk geçişi eşit aralıklı, kuyruk saydama söner.
+func _update_colors() -> void:
+	var colors: PackedColorArray = PackedColorArray([Neon.STYLE.player_color, _ambient])
+	if _def != null and not _def.follows_ambient():
+		colors = _def.colors.duplicate()
+	var last: int = colors.size() - 1
+	colors[last] = Color(colors[last], 0.0)
+	var offsets: PackedFloat32Array = PackedFloat32Array()
+	for i: int in colors.size():
+		offsets.append(float(i) / last)
+	gradient.offsets = offsets
+	gradient.colors = colors
+	var glow: Color = _ambient
+	if _def != null and _def.glow_color.a > 0.0:
+		glow = _def.glow_color
+	glow_color = glow

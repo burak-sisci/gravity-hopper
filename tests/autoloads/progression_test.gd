@@ -24,13 +24,13 @@ func after_test() -> void:
 
 func test_sector_bonus_counts_completed_sectors() -> void:
 	# Her geçilen sektör için 25 × sektör numarası (GDD §9.1).
-	assert_int(Progression.sector_bonus(1, 1)).is_equal(0)
-	assert_int(Progression.sector_bonus(1, 2)).is_equal(25)
-	assert_int(Progression.sector_bonus(1, 3)).is_equal(25 + 50)
-	assert_int(Progression.sector_bonus(1, 5)).is_equal(25 + 50 + 75 + 100)
+	assert_int(Earnings.sector_bonus(1, 1)).is_equal(0)
+	assert_int(Earnings.sector_bonus(1, 2)).is_equal(25)
+	assert_int(Earnings.sector_bonus(1, 3)).is_equal(25 + 50)
+	assert_int(Earnings.sector_bonus(1, 5)).is_equal(25 + 50 + 75 + 100)
 	# Kontrol noktasından başlayan tur yalnızca kendi geçtiği sektörleri alır.
-	assert_int(Progression.sector_bonus(3, 5)).is_equal(75 + 100)
-	assert_int(Progression.sector_bonus(3, 3)).is_equal(0)
+	assert_int(Earnings.sector_bonus(3, 5)).is_equal(75 + 100)
+	assert_int(Earnings.sector_bonus(3, 3)).is_equal(0)
 
 
 func test_finished_run_fills_the_wallet_and_is_saved() -> void:
@@ -173,8 +173,8 @@ func test_glimmer_boost_raises_the_run_earnings() -> void:
 	Progression.finish_run(plain)
 	assert_int(plain.boost_bonus).is_equal(0)
 	assert_int(plain.earned).is_equal(7)
-	assert_int(Progression.boost_bonus(7, 0.1)).is_equal(1)
-	assert_int(Progression.boost_bonus(4, 0.1)).is_equal(0)
+	assert_int(Earnings.boost_bonus(7, 0.1)).is_equal(1)
+	assert_int(Earnings.boost_bonus(4, 0.1)).is_equal(0)
 
 
 ## Tur başındaki yük satın alınan seviyelerin etkisidir; tur sırasında alınan seviye o turun

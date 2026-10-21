@@ -206,6 +206,11 @@ func set_ambient(color: Color) -> void:
 	_trail.set_ambient(color)
 
 
+## Kuşanılan kozmetik iz (Run, tur başında yükten verir; M4-08). Çekirdek her izde beyaz kalır.
+func set_trail(def: TrailDef) -> void:
+	_trail.apply_def(def)
+
+
 ## İzin süre çarpanı (Run, sektörün hız hissiyle verir; M3-13, yalnızca görsel).
 func set_trail_stretch(stretch: float) -> void:
 	_trail.stretch = stretch

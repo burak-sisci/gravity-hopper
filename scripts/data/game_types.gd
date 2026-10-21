@@ -40,3 +40,11 @@ enum Sfx {
 	SECTOR, ## Yeni sektöre geçiş
 	RECORD, ## Oturum rekoru kırıldı (rekor çizgisine varıldı)
 }
+
+## Kozmetik izin nasıl açıldığı (M4-08, GDD §11). Yedi günlük seri başarımı M7-03'te eklenir.
+enum TrailUnlock {
+	FREE, ## Baştan açık (varsayılan iz)
+	PURCHASE, ## Glimmer ile satın alınır (TrailDef.cost)
+	GREAT_STORAGE, ## Başarım: Büyük Depolama Birimi'ne ulaş (M4-13)
+	NEAR_MISSES, ## Başarım: toplam kıl payı sayısı TrailDef.goal'a ulaşır
+}

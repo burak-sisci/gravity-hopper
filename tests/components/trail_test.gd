@@ -2,7 +2,10 @@ extends GdUnitTestSuite
 ## Oyuncu izi (M3-04, architecture.md §9): izin boyu ve süresi ekran yenileme hızından bağımsız
 ## (60 ve 120 Hz'de aynı), ara karede boy sıçramıyor, baş oyuncunun üstünde, ölünce iz toplanıyor.
 ## Hızla uzayan iz (M3-13): süre çarpanı değişince iz sıfırlanmaz, yeni boyuna uzar.
+## Kozmetik iz (M4-08): TrailDef renk geçişini, kalınlığı, parlamayı ve boyu verir; renkli iz
+## sektörün rengini izlemez (saydam parlama rengi dışında); varsayılana dönünce her şey geri gelir.
 
+const TRAILS: TrailCatalog = preload("res://data/trails/trail_catalog.tres")
 ## Fizik adımı başına tırmanış (px) ve çevirmede yan hız (px/adım).
 const CLIMB_PER_TICK: float = 10.0
 const SIDE_PER_TICK: float = 40.0
@@ -98,6 +101,63 @@ func test_trail_fades_to_ambient() -> void:
 	assert_bool(trail.glow_color.is_equal_approx(ambient)).is_true()
 	assert_bool(trail.gradient.get_color(0).is_equal_approx(Neon.STYLE.player_color)).is_true()
 	assert_bool(trail.gradient.get_color(1).is_equal_approx(Color(ambient, 0.0))).is_true()
+
+
+func test_trail_def_sets_colors_width_glow_and_length() -> void:
+	var trail: Trail = _add_trail()
+	var plain_ticks: int = trail.tick_count()
+	var ambient: Color = Color(1.0, 0.6, 0.2)
+	var def: TrailDef = TRAILS.get_def(&"trail_plasma")
+	trail.apply_def(def)
+	trail.set_ambient(ambient)
+	assert_object(trail.trail_def()).is_same(def)
+	var last: int = def.colors.size() - 1
+	assert_int(trail.gradient.get_point_count()).is_equal(def.colors.size())
+	for i: int in def.colors.size():
+		var expected: Color = def.colors[i] if i < last else Color(def.colors[i], 0.0)
+		assert_bool(trail.gradient.get_color(i).is_equal_approx(expected)).is_true()
+		assert_float(trail.gradient.get_offset(i)).is_equal_approx(float(i) / last, 0.0001)
+	assert_bool(trail.glow_color.is_equal_approx(def.glow_color)).is_true()
+	assert_float(trail.width).is_equal_approx(Neon.STYLE.trail_width * def.width_scale, 0.0001)
+	assert_int(trail.tick_count()).is_equal(roundi(plain_ticks * def.length_scale))
+	_assert_halos(trail, def.glow_scale)
+	# Varsayılana dönüş: beyazdan çevre rengine, ilk kalınlık, boy ve parlama.
+	trail.apply_def(null)
+	assert_int(trail.gradient.get_point_count()).is_equal(2)
+	assert_bool(trail.gradient.get_color(1).is_equal_approx(Color(ambient, 0.0))).is_true()
+	assert_bool(trail.glow_color.is_equal_approx(ambient)).is_true()
+	assert_float(trail.width).is_equal(Neon.STYLE.trail_width)
+	assert_int(trail.tick_count()).is_equal(plain_ticks)
+	_assert_halos(trail, 1.0)
+
+
+## Renkli izin renkleri sektörle değişmez; saydam parlama rengi sektörü izler.
+func test_colored_trail_keeps_its_colors_across_sectors() -> void:
+	var trail: Trail = _add_trail()
+	var def: TrailDef = TrailDef.new()
+	def.colors = PackedColorArray([Color.WHITE, Color(0.4, 0.5, 1.0)])
+	trail.apply_def(def)
+	for ambient: Color in [Color(0.3, 0.9, 1.0), Color(0.7, 0.4, 1.0)]:
+		trail.set_ambient(ambient)
+		assert_bool(trail.gradient.get_color(1).is_equal_approx(Color(0.4, 0.5, 1.0, 0.0))) 				.is_true()
+		assert_bool(trail.glow_color.is_equal_approx(ambient)).is_true()
+	# Katalogdaki varsayılan iz tanımı, tanımsızla aynı.
+	trail.apply_def(TRAILS.default_def())
+	assert_bool(trail.gradient.get_color(0).is_equal_approx(Neon.STYLE.player_color)).is_true()
+	assert_bool(trail.gradient.get_color(1).is_equal_approx(Color(0.7, 0.4, 1.0, 0.0))).is_true()
+
+
+## Görünen parlama kopyaları geçerli kalitenin katmanları, kalınlıkları çarpanla.
+func _assert_halos(trail: Trail, scale: float) -> void:
+	var widths: Array[float] = []
+	for child: Node in trail.get_children():
+		var line: Line2D = child as Line2D
+		if line.material != null and line.visible:
+			widths.append(line.width)
+	var layers: Array[Vector2] = Neon.STYLE.layers_for(Neon.quality)
+	assert_int(widths.size()).is_equal(layers.size())
+	for i: int in mini(widths.size(), layers.size()):
+		assert_float(widths[i]).is_equal_approx(layers[i].x * scale, 0.001)
 
 
 func _add_trail() -> Trail:

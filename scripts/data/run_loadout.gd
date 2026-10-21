@@ -3,7 +3,8 @@ extends RefCounted
 ## Turun yükseltme yükü (ADR-066, M4-04): oynanışı etkileyen yükseltmelerin etkileri tur başında
 ## bir kez alınır ve tur boyunca değişmez. Main, Progression.loadout()'tan alıp Run'a ve
 ## GameManager'a verir. Boş yük (yeni nesne) yükseltmesiz turdur: tek başına çalışan sahne,
-## testler, günlük meydan okuma (M7-03). Birimler UpgradeDef'teki gibidir.
+## testler, günlük meydan okuma (M7-03). Birimler UpgradeDef'teki gibidir. Kuşanılan kozmetik iz
+## de yükle gelir (M4-08); oynanışı etkilemez, günlük meydan okumada da kalır.
 
 ## Mıknatıs menzili (m): oyuncunun toplama alanının ötesine eklenir. 0 = mıknatıs yok.
 var magnet_m: float = 0.0
@@ -17,3 +18,5 @@ var shield_regen_m: float = 0.0
 var head_start_m: float = 0.0
 ## İkinci Şans (M4-07): turdaki ücretsiz diriliş hakkı (0 ya da 1).
 var revives: int = 0
+## Kuşanılan kozmetik iz (M4-08). null = varsayılan iz.
+var trail: TrailDef = null
