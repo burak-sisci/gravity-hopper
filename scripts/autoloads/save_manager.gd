@@ -21,6 +21,10 @@ const PASSWORD: String = "gravity-hopper/core/v1"
 ## Godot'nun şifreli dosyalarının ilk dört baytı. Başka bir şeyle başlayan dosya hiç açılmaz
 ## (motor bozuk dosyada hata yazdırır).
 const ENCRYPTED_MAGIC: String = "GDEC"
+## gdUnit komut aracıyla çalışan testler (tools/check.ps1) gerçek kayda dokunmaz: kayıt bu
+## klasöre gider ve her test oturumu boş kayıtla başlar.
+const TEST_RUNNER_SCRIPT: String = "GdUnitCmdTool.gd"
+const TEST_SAVE_DIR: String = "user://test_runs"
 
 ## Kayıt klasörü. Testler geçici bir klasör verir.
 var save_dir: String = "user://"
@@ -28,6 +32,16 @@ var save_dir: String = "user://"
 var encrypted: bool = not OS.is_debug_build()
 ## Son yüklemede kaydın geldiği yer.
 var last_source: Source = Source.NEW
+
+
+func _init() -> void:
+	if not OS.is_debug_build():
+		return
+	for arg: String in OS.get_cmdline_args():
+		if arg.ends_with(TEST_RUNNER_SCRIPT):
+			save_dir = TEST_SAVE_DIR
+			delete_save()
+			return
 
 
 ## Şema 1'in boş kaydı (§11.2). Her yüklemede eksik ya da bozuk alanlar buradan tamamlanır.

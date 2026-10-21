@@ -34,7 +34,7 @@ extends Node2D
 ## Kıl payı yavaş çekimi (M3-12): zincirin ilk halkasında ve çarpanın büyüdüğü halkada
 ## SlowMotion Engine.time_scale'i kısa süre düşürür (müzik de yavaşlar). Ölümde ve tur yarıda
 ## bitince ölçek hemen geri verilir.
-## Rekor çizgisi (M3-14): RecordLine, record_height yüksekliğinde (Main oturum rekorunu verir)
+## Rekor çizgisi (M3-14): RecordLine, record_height yüksekliğinde (Main kalıcı rekoru verir)
 ## parlar; oyuncu yaklaştıkça güçlenir, varınca söner. Rekor yoksa ya da tur rekorun üstünden
 ## başladıysa çizgi yoktur.
 

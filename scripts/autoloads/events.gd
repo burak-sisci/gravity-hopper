@@ -42,6 +42,7 @@ signal resume_requested
 
 # --- Ekonomi ve ayarlar ---
 signal glimmers_changed(total: int)
+signal best_height_changed(meters: int)
 signal upgrade_purchased(id: StringName, level: int)
 signal settings_changed
 

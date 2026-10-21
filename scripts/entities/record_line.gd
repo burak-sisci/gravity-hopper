@@ -6,7 +6,7 @@ extends NeonLine
 ## kez beyaz parlayıp söner ve o turda bir daha görünmez.
 ## Yalnızca görseldir: çarpışması yoktur, oyuncuyu tanımaz. Run yerini place ile verir, oyuncunun
 ## y'sini ve vuruşu her fizik adımında track ile aşağı çağırır. Rekor yoksa görünmez.
-## Şimdilik oturum rekoru (GameManager.best_height_m); kalıcı rekor M4'te.
+## Rekor kalıcıdır (Progression.best_height_m, M4-02; Main her tura verir).
 ## Çizgiye varıldığı adımda yukarı passed yayılır (Run, Events.record_broken'a çevirir; M3-15).
 
 signal passed

@@ -81,7 +81,8 @@ func _ready() -> void:
 				Settings.effect_quality = quality as GameTypes.Quality
 		elif arg.begins_with(RECORD_ARG):
 			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
-			GameManager.best_height_m = int(arg.trim_prefix(RECORD_ARG))
+			# Kalıcı rekordur: tur sonunda (debug) kayda da yazılır.
+			Progression.best_height_m = int(arg.trim_prefix(RECORD_ARG))
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):
@@ -205,8 +206,9 @@ func _connect_event_log() -> void:
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))
 	Events.run_ended.connect(func(result: RunResult) -> void:
-		_log_event("run_ended height=%d cause=%s" % [
-			result.height_m, GameTypes.DeathCause.keys()[result.cause],
+		_log_event("run_ended height=%d cause=%s earned=%d bonus=%d record=%s" % [
+			result.height_m, GameTypes.DeathCause.keys()[result.cause], result.earned,
+			result.sector_bonus, result.new_record,
 		]))
 
 

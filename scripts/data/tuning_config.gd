@@ -94,6 +94,11 @@ const PX_PER_M: float = 50.0
 ## Sarsıntının gürültü hızı: yüksek değer daha sık titrer.
 @export_range(5.0, 40.0, 1.0, "suffix:Hz") var shake_frequency: float = 20.0
 
+@export_group("Ekonomi")
+## Sektör tamamlama bonusu: turda geçilen her sektör için bu × sektör numarası Glimmer
+## (GDD §9.1; S1 ve S2'yi geçen tur 25 + 50 alır).
+@export_range(0, 100, 5, "suffix:Glimmer") var sector_bonus: int = 25
+
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.
 static func to_px(meters: float) -> float:

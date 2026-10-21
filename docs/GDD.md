@@ -102,7 +102,7 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 
 - **Skor = tırmanılan yükseklik (metre).** Tek, anlaşılır, karşılaştırılabilir bir sayı. Arayüzdeki gösterim: `1045 m`.
 - **Rekor çizgisi:** Oyun dünyasında, kişisel rekorun yüksekliğinde parlayan yatay bir çizgi. Oyuncu yaklaştıkça heyecan artar.
-  - **M3-14:** Sarı neon çizgi koridoru duvardan duvara geçer. Uzaktayken ince ve soluk; son 40 m'de kalınlaşıp parlar ve müziğin vuruşunda beyaza çakar. Oyuncu çizgiye varınca beyaz parlayıp söner (rekor kırıldı). Şimdilik oturum rekoru (oyun kapanınca sıfırlanır); kalıcı rekor M4-02'de. İlk turda çizgi yoktur. Kontrol noktasından rekorun üstünde başlanırsa çizgi görünmez. Çizgi tehlikelerin altında çizilir, onları örtmez.
+  - **M3-14:** Sarı neon çizgi koridoru duvardan duvara geçer. Uzaktayken ince ve soluk; son 40 m'de kalınlaşıp parlar ve müziğin vuruşunda beyaza çakar. Oyuncu çizgiye varınca beyaz parlayıp söner (rekor kırıldı). Rekor kalıcıdır (M4-02): oyun kapanıp açılınca çizgi ilk turda yerindedir. İlk turda çizgi yoktur. Kontrol noktasından rekorun üstünde başlanırsa çizgi görünmez. Çizgi tehlikelerin altında çizilir, onları örtmez.
 - **Sonuç ekranı:** "YENİ REKOR!" ya da "Rekora 120 m kaldı!"
 - Kıl payı ve kombolar **skoru değil Glimmer'ı** artırır (skor sade kalsın).
 - Kontrol noktasından başlanan turlarda skor mutlak yükseklikten sayılır (Sektör 3'ten başlayan oyuncu 1750 m'den başlar).

@@ -44,7 +44,7 @@ const NEAR_MISS_FADE: float = 0.3
 
 var _glimmers: int = 0
 var _height_m: int = 0
-## Bu uygulama oturumundaki en iyi yükseklik; kalıcı rekor M4'te Progression'a taşınır.
+## Kalıcı rekor (Events.best_height_changed; M4-02).
 var _best_m: int = 0
 ## Afişte gösterilen sektör (0 = afiş yok).
 var _banner_sector: int = 0
@@ -66,7 +66,7 @@ var _combo_tween: Tween
 func _ready() -> void:
 	Events.run_started.connect(_on_run_started)
 	Events.height_changed.connect(_on_height_changed)
-	Events.run_ended.connect(_on_run_ended)
+	Events.best_height_changed.connect(_on_best_height_changed)
 	Events.sector_entered.connect(_on_sector_entered)
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
@@ -115,8 +115,8 @@ func _on_height_changed(meters: int) -> void:
 	_refresh()
 
 
-func _on_run_ended(result: RunResult) -> void:
-	_best_m = maxi(_best_m, result.height_m)
+func _on_best_height_changed(meters: int) -> void:
+	_best_m = meters
 	_refresh()
 
 

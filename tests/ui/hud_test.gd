@@ -35,21 +35,22 @@ func test_height_follows_events() -> void:
 	assert_bool(_best_label().visible).is_false()
 
 
-func test_best_appears_after_first_run() -> void:
+## Rekor kalıcıdır (M4-02): HUD onu Events.best_height_changed'den alır (Progression her tur
+## başında ve rekor kırılınca duyurur); kısa turun rekoru düşürmemesi progression_test'te.
+func test_best_follows_the_persistent_record() -> void:
 	Events.run_started.emit(1, 1)
-	Events.height_changed.emit(37)
-	Events.run_ended.emit(_result(37))
+	Events.best_height_changed.emit(0)
+	assert_bool(_best_label().visible).is_false()
+	Events.best_height_changed.emit(37)
 	assert_bool(_best_label().visible).is_true()
 	assert_str(_best_label().text).is_equal("BEST 37 m")
 	Events.run_started.emit(2, 1)
 	assert_str(_height_label().text).is_equal("0 m")
-	Events.run_ended.emit(_result(12))
-	assert_str(_best_label().text).override_failure_message(
-			"Daha kısa tur rekoru düşürmemeli").is_equal("BEST 37 m")
+	assert_str(_best_label().text).is_equal("BEST 37 m")
 
 
 func test_language_change_rewrites_text() -> void:
-	Events.run_ended.emit(_result(37))
+	Events.best_height_changed.emit(37)
 	TranslationServer.set_locale("tr")
 	await get_tree().process_frame
 	assert_str(_best_label().text).is_equal("EN İYİ 37 m")
@@ -218,12 +219,6 @@ func _assert_warmed(shown: Dictionary[String, String]) -> void:
 		for c: String in shown[path]:
 			assert_bool(warmed.contains(c)).override_failure_message(
 					"%s: '%s' önceden çizilmiyor" % [path, c]).is_true()
-
-
-func _result(height_m: int) -> RunResult:
-	var result: RunResult = RunResult.new()
-	result.height_m = height_m
-	return result
 
 
 func _height_label() -> Label:

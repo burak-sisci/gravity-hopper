@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Tur döngüsü (M1-09, architecture.md §5.1): ölüm → GameManager sonucu duyurur → Main turu
 ## kısa bir beklemeden sonra yeniden kurar. Telefonda 348–360 ms ölçüldü (M1-12).
-## Oturum rekoru (M3-14): GameManager en iyi yüksekliği tutar, Main yeni tura verir.
+## Rekor (M3-14, M4-02): Progression kalıcı rekoru tutar ve kaydeder, Main yeni tura verir;
+## tur sonu kazancı cüzdana girer. Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 ## Yeniden başlama sınırı: 0,35 sn bekleme (21 kare) + pay. Telefonda ölçülen 360 ms'e karşılık.
@@ -12,14 +13,12 @@ const TEARDOWN_FRAMES: int = 30
 var _main: Node
 var _started_seeds: Array[int] = []
 var _results: Array[RunResult] = []
-var _stored_best: int = 0
 
 
 func before_test() -> void:
 	_started_seeds.clear()
 	_results.clear()
-	_stored_best = GameManager.best_height_m
-	GameManager.best_height_m = 0
+	Progression.reset()
 	Events.run_started.connect(_on_run_started)
 	Events.run_ended.connect(_on_run_ended)
 
@@ -27,7 +26,7 @@ func before_test() -> void:
 func after_test() -> void:
 	Events.run_started.disconnect(_on_run_started)
 	Events.run_ended.disconnect(_on_run_ended)
-	GameManager.best_height_m = _stored_best
+	Progression.reset()
 
 
 func test_main_starts_a_run() -> void:
@@ -70,18 +69,38 @@ func test_result_carries_height_cause_and_seed() -> void:
 	await _frames(TEARDOWN_FRAMES)
 
 
-func test_session_record_reaches_the_next_run() -> void:
+func test_result_carries_earnings_into_the_wallet() -> void:
+	await _start_main()
+	Events.glimmer_collected.emit(4)
+	Events.sector_entered.emit(3)
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	var result: RunResult = _results[0]
+	assert_int(result.start_sector).is_equal(1)
+	assert_int(result.sector_reached).is_equal(3)
+	# S1 ve S2 geçildi: 25 × 1 + 25 × 2.
+	assert_int(result.sector_bonus).is_equal(75)
+	assert_int(result.earned).is_equal(result.glimmers + 75)
+	assert_int(Progression.glimmers).is_equal(result.earned)
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(result.earned)
+	await _frames(TEARDOWN_FRAMES)
+
+
+func test_record_is_saved_and_reaches_the_next_run() -> void:
 	await _start_main()
 	assert_int(_current_run().record_height).is_equal(0)
 	Events.height_changed.emit(37)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
-	assert_int(GameManager.best_height_m).is_equal(37)
+	assert_int(Progression.best_height_m).is_equal(37)
+	assert_bool(_results[0].new_record).is_true()
+	assert_int(SaveManager.load_game()["best_height_m"]).is_equal(37)
 	await _wait_for_runs(2)
 	assert_int(_current_run().record_height).is_equal(37)
 	# Daha alçak bir tur rekoru düşürmez.
 	Events.height_changed.emit(12)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
-	assert_int(GameManager.best_height_m).is_equal(37)
+	assert_int(Progression.best_height_m).is_equal(37)
+	assert_bool(_results[1].new_record).is_false()
+	assert_int(_results[1].best_height_m).is_equal(37)
 	await _wait_for_runs(3)
 	assert_int(_current_run().record_height).is_equal(37)
 

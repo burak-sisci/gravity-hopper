@@ -9,11 +9,9 @@ enum AppState { BOOT, MENU, RUNNING, PAUSED, RESULTS, SHOP }
 
 ## Uygulamanın şu anki durumu.
 var state: AppState = AppState.BOOT
-## Bu uygulama oturumundaki en iyi yükseklik (m; M3-14 rekor çizgisi). Main yeni tura verir.
-## Kalıcı rekor M4'te Progression'a taşınır.
-var best_height_m: int = 0
 
 var _run_seed: int = 0
+var _start_sector: int = 1
 var _height_m: int = 0
 var _sector_reached: int = 1
 var _glimmers: int = 0
@@ -39,13 +37,16 @@ func new_run_seed() -> int:
 
 
 ## Main, yeni turu dünyaya ekledikten sonra çağırır; tur başlamış sayılır ve duyurulur.
+## Kalıcı değerler (cüzdan, rekor) de yeniden duyurulur: arayüz ilk değerlerini böyle alır.
 func begin_run(run_seed: int, start_sector: int) -> void:
 	_run_seed = run_seed
+	_start_sector = start_sector
 	_height_m = 0
 	_sector_reached = start_sector
 	_glimmers = 0
 	_near_misses = 0
 	change_state(AppState.RUNNING)
+	Progression.announce()
 	Events.run_started.emit(run_seed, start_sector)
 
 
@@ -71,12 +72,14 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	if state != AppState.RUNNING:
 		return
 	change_state(AppState.RESULTS)
-	best_height_m = maxi(best_height_m, _height_m)
 	var result: RunResult = RunResult.new()
 	result.height_m = _height_m
 	result.cause = cause
 	result.run_seed = _run_seed
+	result.start_sector = _start_sector
 	result.sector_reached = _sector_reached
 	result.glimmers = _glimmers
 	result.near_misses = _near_misses
+	# Kazanç ve rekor sonuca yazılır, kayıt run_ended'den önce diske iner (§7.3).
+	Progression.finish_run(result)
 	Events.run_ended.emit(result)

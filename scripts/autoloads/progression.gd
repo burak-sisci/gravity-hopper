@@ -1,23 +1,115 @@
 extends Node
-## Kalıcı ilerleme: Glimmer cüzdanı, yükseltme seviyeleri, izler, açılmış sektörler.
+## Kalıcı ilerleme: Glimmer cüzdanı, rekor, en yüksek sektör ve istatistikler; yükseltme seviyeleri
+## ve izler sonraki görevlerde (M4-03, M4-08).
 ##
-## Veriyi SaveManager ile saklar (architecture.md §11). M4-01: açılışta kaydı yükler; ilk açılışta
-## (ya da yalnızca yedek sağlamsa) kaydı hemen yazar. Tur sonu kazancı ve rekor M4-02'de.
+## Veriyi SaveManager ile saklar (architecture.md §11). Açılışta kaydı yükler; ilk açılışta
+## (ya da yalnızca yedek sağlamsa) hemen yazar. Tur sonunda GameManager finish_run'ı çağırır:
+## kazanç hesaplanır, cüzdana ve rekora işlenir, kaydedilir. Uygulama arka plana geçerken ya da
+## kapanırken kaydedilmemiş bir değişiklik varsa o da yazılır.
+
+const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
 
 ## Oyuncunun sahip olduğu Glimmer.
 var glimmers: int = 0
+## Kalıcı rekor (m). Rekor çizgisi ve HUD'un rekor satırı buradan gelir.
+var best_height_m: int = 0
+## Ulaşılan en yüksek sektör (kontrol noktaları, M4-09).
+var highest_sector: int = 1
 
 var _data: Dictionary[String, Variant] = {}
+## Kaydedilmemiş değişiklik var.
+var _dirty: bool = false
 
 
 func _ready() -> void:
+	reload()
+	if SaveManager.last_source != SaveManager.Source.MAIN:
+		save()
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_WM_CLOSE_REQUEST, \
+				NOTIFICATION_WM_GO_BACK_REQUEST:
+			if _dirty:
+				save()
+
+
+## Kaydı yeniden okur (açılış; testlerde uygulamanın yeniden açılması) ve değerleri duyurur.
+func reload() -> void:
 	_data = SaveManager.load_game()
 	glimmers = int(_data["glimmers"])
-	if SaveManager.last_source != SaveManager.Source.MAIN:
-		SaveManager.save_game(_data)
+	best_height_m = int(_data["best_height_m"])
+	highest_sector = int(_data["highest_sector"])
+	_dirty = false
+	_log("loaded glimmers=%d best=%d sector=%d" % [glimmers, best_height_m, highest_sector])
+	announce()
 
 
-## Cüzdana Glimmer ekler ve yeni toplamı duyurur.
+## Kaydı siler ve boş kayıtla baştan başlar (debug "kaydı sıfırla", testler).
+func reset() -> void:
+	SaveManager.delete_save()
+	reload()
+	save()
+
+
+## Kalıcı değerleri duyurur. Arayüz ilk değerlerini buradan alır: GameManager her tur başında
+## çağırır (UI autoload okumaz, yalnızca Events dinler).
+func announce() -> void:
+	Events.glimmers_changed.emit(glimmers)
+	Events.best_height_changed.emit(best_height_m)
+
+
+## Cüzdana Glimmer ekler ve yeni toplamı duyurur. Kayıt bir sonraki kayıt anında yazılır.
 func add_glimmers(amount: int) -> void:
 	glimmers += amount
+	_dirty = true
 	Events.glimmers_changed.emit(glimmers)
+
+
+## Tur sonu (GameManager, run_ended'den önce çağırır): kazancı ve rekor durumunu sonuca yazar;
+## cüzdanı, rekoru, en yüksek sektörü ve istatistikleri günceller, kaydeder.
+func finish_run(result: RunResult) -> void:
+	result.sector_bonus = sector_bonus(result.start_sector, result.sector_reached)
+	result.earned = result.glimmers + result.sector_bonus
+	result.new_record = result.height_m > best_height_m
+	var stats: Dictionary = _data["stats"]
+	stats["runs"] = int(stats["runs"]) + 1
+	stats["total_height_m"] = int(stats["total_height_m"]) + result.height_m
+	stats["near_misses"] = int(stats["near_misses"]) + result.near_misses
+	stats["glimmers_earned"] = int(stats["glimmers_earned"]) + result.earned
+	highest_sector = maxi(highest_sector, result.sector_reached)
+	if result.new_record:
+		best_height_m = result.height_m
+		Events.best_height_changed.emit(best_height_m)
+	result.best_height_m = best_height_m
+	add_glimmers(result.earned)
+	save()
+	_log("run earned=%d bonus=%d wallet=%d best=%d" % [
+		result.earned, result.sector_bonus, glimmers, best_height_m,
+	])
+
+
+## Turda tamamlanan sektörlerin bonusu: start_sector'dan reached'e kadar geçilen her sektör
+## için sector_bonus × sektör numarası (GDD §9.1).
+func sector_bonus(start_sector: int, reached: int) -> int:
+	var total: int = 0
+	for index: int in range(start_sector, reached):
+		total += TUNING.sector_bonus * index
+	return total
+
+
+## Değerleri kayda işler ve yazar.
+func save() -> bool:
+	_data["glimmers"] = glimmers
+	_data["best_height_m"] = best_height_m
+	_data["highest_sector"] = highest_sector
+	var ok: bool = SaveManager.save_game(_data)
+	if ok:
+		_dirty = false
+	return ok
+
+
+func _log(line: String) -> void:
+	if OS.is_debug_build():
+		print("PROGRESS ", line)
