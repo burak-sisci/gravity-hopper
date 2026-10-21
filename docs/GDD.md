@@ -93,10 +93,11 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 - **Ölüm nedenleri:** tehlikeye çarpma, duvar boşluğundan düşme, çöküş duvarına yakalanma.
 - **Kalkan:** Tek bir darbeyi emer. Ardından 1 sn dokunulmazlık gelir ve çöküş duvarı biraz yaklaşır.
 - **Diriliş** (tur başına en fazla 1 ücretsiz + 1 reklamlı):
-  - Yakındaki tehlikeler temizlenir.
-  - Çöküş duvarı geri itilir.
+  - Yakındaki tehlikeler temizlenir: oyuncunun önündeki ≈ 2,5 sn'lik yol ve hemen altı (3 m).
+  - Çöküş duvarı geri itilir (en az 20 m).
   - 2 sn dokunulmazlık verilir.
-  - Müzik kaldığı yerden devam eder.
+  - Müzik kaldığı yerden devam eder: ölümde oyun saati durur, diriliş tam ölünen yerden sürer.
+  - Ücretsiz diriliş İkinci Şans yükseltmesiyle gelir (M4-07). Sonuç ekranı gelene dek ölümden 0,8 sn sonra kendiliğinden olur; M5-03'te düğmeye bağlanır.
 
 ## 8. Puanlama
 

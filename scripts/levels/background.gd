@@ -181,6 +181,11 @@ func stop_speed() -> void:
 	_speed_lines.stop()
 
 
+## Dirilişte hız çizgileri yeniden akar (M4-07).
+func resume_speed() -> void:
+	_speed_lines.resume()
+
+
 ## Ağı geçerli kaliteye göre gösterir (Neon.set_quality çağırır).
 func apply_quality() -> void:
 	_grid.visible = Neon.quality >= Neon.STYLE.grid_min_quality

@@ -1,8 +1,9 @@
 extends GdUnitTestSuite
 ## Kamera sarsıntısı ve ölümde donma (M3-10, architecture.md §9): travma en çok 1, söner;
 ## sarsıntı yalnızca yatayda ve travma² ile sınırlı; gerçek turda ölümden sonra dünya
-## death_freeze boyunca donuyor (vuruş saati, iz), ardından kamera sarsılıyor ve oyuncunun
-## üstünde görünen mesafe değişmiyor; kalkan kırılınca hafif sarsıntı.
+## death_freeze boyunca donuyor (iz; vuruş saati ölü oyuncunun turunda hep durur, M4-07),
+## ardından kamera sarsılıyor ve oyuncunun üstünde görünen mesafe değişmiyor; kalkan kırılınca
+## hafif sarsıntı.
 
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
@@ -63,7 +64,8 @@ func test_death_freezes_world_then_shakes_sideways() -> void:
 		assert_bool(trail.is_processing()).is_false()
 		assert_float(camera.trauma()).is_equal(0.0)
 	await _frames(3)
-	assert_float(conductor.beat_time()).is_greater(beat)
+	# Donma bitti (iz sürüyor, kamera sarsılıyor); ölü oyuncunun turunda saat durur (M4-07).
+	assert_float(conductor.beat_time()).is_equal(beat)
 	assert_bool(trail.is_processing()).is_true()
 	assert_float(camera.trauma()).is_greater(0.0)
 	# Sarsıntı yalnızca yatayda: oyuncunun üstünde görünen mesafe aynı.
@@ -83,14 +85,13 @@ func test_no_freeze_shakes_at_once() -> void:
 	var run: Run = _start(0.0)
 	var player: Player = run.get_node("%Player") as Player
 	var camera: GameCamera = run.get_node("%GameCamera") as GameCamera
-	var conductor: Conductor = run.get_node("%Conductor") as Conductor
+	var trail: Node = player.get_node("Trail")
 	await _frames(30)
 	player.die(GameTypes.DeathCause.HAZARD)
 	await _frames(1)
-	var beat: float = conductor.beat_time()
 	assert_float(camera.trauma()).is_greater(0.0)
 	await _frames(1)
-	assert_float(conductor.beat_time()).is_greater(beat)
+	assert_bool(trail.is_processing()).is_true()
 
 
 func test_shield_break_shakes_lightly_during_play() -> void:

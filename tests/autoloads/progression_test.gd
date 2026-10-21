@@ -229,6 +229,12 @@ func test_head_start_loadout_follows_the_level() -> void:
 		assert_float(Progression.loadout().head_start_m).is_equal(100.0 * level)
 
 
+func test_second_chance_loadout_follows_the_level() -> void:
+	assert_int(Progression.loadout().revives).is_equal(0)
+	Progression.set_upgrade_level(&"second_chance", 1)
+	assert_int(Progression.loadout().revives).is_equal(1)
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

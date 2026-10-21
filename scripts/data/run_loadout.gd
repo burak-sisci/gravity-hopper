@@ -15,3 +15,5 @@ var start_shield: bool = false
 var shield_regen_m: float = 0.0
 ## Başlangıç Sıçraması (M4-06): tur başındaki sıçramanın ek yolu (m). 0 = sıçrama yok.
 var head_start_m: float = 0.0
+## İkinci Şans (M4-07): turdaki ücretsiz diriliş hakkı (0 ya da 1).
+var revives: int = 0

@@ -47,6 +47,8 @@ var _lasers: Array[Laser] = []
 var _glimmers: Array[Glimmer] = []
 ## Vuruşla süzülen veri blokları (M3-05).
 var _blocks: Array[Block] = []
+## Dirilişte temizlenmiş tehlikeler (M4-07); parça havuzdan yeniden gelince geri açılır.
+var _cleared: Array[Area2D] = []
 
 
 func _ready() -> void:
@@ -72,10 +74,15 @@ static func world_position(design: Vector2, world_beat_px: float, half_width: fl
 	return Vector2(design.x * half_width / DESIGN_HALF_WIDTH, design.y * world_beat_px / BEAT_GRID_PX)
 
 
-## Havuzdan yeniden gelen parçayı sıfırlar: Glimmer'lar yeniden etkinleşir (§8.7).
+## Havuzdan yeniden gelen parçayı sıfırlar: Glimmer'lar ve temizlenmiş tehlikeler yeniden
+## etkinleşir (§8.7).
 func reset() -> void:
 	for glimmer: Glimmer in _glimmers:
 		glimmer.reset()
+	for hazard: Area2D in _cleared:
+		hazard.visible = true
+		hazard.set_deferred("monitorable", true)
+	_cleared.clear()
 
 
 ## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere, bloklara ve
@@ -101,6 +108,30 @@ func collect_passed(player_y: float) -> void:
 	for glimmer: Glimmer in _glimmers:
 		if glimmer.global_position.y >= player_y:
 			glimmer.collect()
+
+
+## İkinci Şans (M4-07): dünyadaki y'si upper_y ile lower_y arasında kalan tehlikeleri temizler:
+## gizlenir ve çarpışmaya (darbe, kıl payı) kapanır. Glimmer'lar ve boşluklar kalır.
+## Kaç tehlike temizlendiyse döner.
+func clear_hazards(upper_y: float, lower_y: float) -> int:
+	var count: int = 0
+	for item: Node2D in items():
+		if not _is_hazard(item) or _cleared.has(item):
+			continue
+		var y: float = position.y + item.position.y
+		if y < upper_y or y > lower_y:
+			continue
+		var hazard: Area2D = item as Area2D
+		hazard.visible = false
+		hazard.set_deferred("monitorable", false)
+		_cleared.append(hazard)
+		count += 1
+	return count
+
+
+## Temizlenmiş tehlike mi (testler).
+func is_cleared(item: Node2D) -> bool:
+	return _cleared.has(item)
 
 
 ## Parçanın duvar boşlukları (M2-11).

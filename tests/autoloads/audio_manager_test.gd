@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Müzik çalma (M2-20, architecture.md §8.3): tur başlayınca vuruş saatinin bildirdiği parça
-## çalara konur ve döngüsü loop_start'tan kurulur; oyuncu ölünce durur, yeni turda yeniden kurulur.
+## çalara konur ve döngüsü loop_start'tan kurulur; oyuncu ölünce durur, yeni turda yeniden kurulur;
+## dirilişte kaldığı yerden sürer (M4-07).
 
 const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 
@@ -31,6 +32,22 @@ func test_new_run_sets_the_track_again_and_death_silences() -> void:
 	assert_object(AudioManager.current_track()).is_null()
 	AudioManager.sync_beat_clock(0.0, _track(&"caravan"))
 	assert_str(String(AudioManager.current_track().id)).is_equal("caravan")
+
+
+## Dirilişte (M4-07) müzik aynı parçayla, vuruş saatinden yeniden çalar; ölümde susar.
+func test_revive_resumes_the_music_from_the_beat_clock() -> void:
+	var track: MusicTrack = _track(&"castle")
+	Events.run_started.emit(1, 1)
+	AudioManager.sync_beat_clock(0.0, track)
+	assert_bool(AudioManager.music_playing()).is_true()
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	assert_bool(AudioManager.music_playing()).is_false()
+	AudioManager.sync_beat_clock(2.0, track)
+	assert_bool(AudioManager.music_playing()).is_false()
+	Events.player_revived.emit()
+	AudioManager.sync_beat_clock(2.0, track)
+	assert_bool(AudioManager.music_playing()).is_true()
+	assert_object(AudioManager.current_track()).is_same(track)
 
 
 ## Yavaş çekimde müzik aynı oranda yavaşlar (M3-12, ADR-008).

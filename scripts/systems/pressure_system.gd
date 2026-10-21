@@ -38,6 +38,12 @@ func push(meters: float) -> void:
 		distance_m = minf(distance_m + meters, _max_distance)
 
 
+## Diriliş (M4-07): duvar en az meters uzağa (en çok sınıra) geri itilir; yakalanma sıfırlanır.
+func revive(meters: float) -> void:
+	distance_m = maxf(distance_m, minf(meters, _max_distance))
+	_reached = false
+
+
 ## Duvarı çeker (kalkanla darbe).
 func pull(meters: float) -> void:
 	if _reached:

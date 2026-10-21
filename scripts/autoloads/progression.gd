@@ -142,9 +142,11 @@ func loadout() -> RunLoadout:
 	result.start_shield = upgrade_level(&"shield") > 0
 	result.shield_regen_m = upgrade_value(&"shield")
 	result.head_start_m = upgrade_value(&"head_start")
-	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d head_start=%d" % [result.magnet_m,
-			result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m),
-			roundi(result.head_start_m)])
+	result.revives = roundi(upgrade_value(&"second_chance"))
+	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d head_start=%d revives=%d" % [
+		result.magnet_m, result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m),
+		roundi(result.head_start_m), result.revives,
+	])
 	return result
 
 

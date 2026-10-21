@@ -16,6 +16,10 @@ extends CharacterBody2D
 ## Görsel (M3-04): neon elmas (Visual, NeonShape) ve iz (Trail). İz her fizik adımında konumu
 ## alır; ölünce kayıt sürer, böylece iz çekirdeğe doğru toplanır.
 ## Ölümde kısa donma (M3-10): Run set_held() ile oyuncuyu ve izini bir süre yerinde tutar.
+## İkinci Şans (M4-07): Run revive() ile ölü oyuncuyu kaldığı yerde canlandırır; ardından
+## revive_grace boyunca sıçrama sonrasındaki gibi dokunulmazdır (aynı koruma, aynı yanıp sönme).
+## Düşme denetimi tırmanıştan önce yapılır: düşülen adımda oyuncu tırmanmaz, Run da saati
+## ilerletmez; ikisi vuruş ızgarasında aynı yerde kalır.
 ## Başlangıç Sıçraması (M4-06): Run sıçrama boyunca set_dashing(true) der ve oyuncuyu kendisi
 ## yukarı taşır; oyuncu bu sürede ve bitişteki kısa dokunulmazlıkta darbe almaz, kıl payı saymaz,
 ## koridordan düşmez (duvar çizgisine geri konur). Dokunulmazlıkta çekirdek yanıp söner.
@@ -136,12 +140,15 @@ func _physics_process(delta: float) -> void:
 			_flip()
 		else:
 			_buffer_left -= delta
+	if _coyote_left <= 0.0:
+		_check_fall()
+	if not _alive:
+		_trail.record(position)
+		return
 	# Dikey: tırmanış doğrudan konumla, tam sabit hızda. Engeller vuruş ızgarasına göre
 	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı. Başlangıç Sıçramasının ek
 	# yolunu Run ayrıca verir; tırmanış onun altında sürer.
 	position.y -= TuningConfig.to_px(climb_speed) * delta
-	if _coyote_left <= 0.0:
-		_check_fall()
 	_trail.record(position)
 	_squash.advance(delta)
 	_visual.scale = _squash.visual_scale()
@@ -174,9 +181,24 @@ func set_dashing(dashing: bool, grace: float = 0.0) -> void:
 	_grace_left = grace
 
 
-## Sıçramada ya da bitişindeki dokunulmazlıkta mı.
+## Sıçramada ya da bitişindeki (ya da dirilişten sonraki) dokunulmazlıkta mı.
 func is_protected() -> bool:
 	return _dashing or _grace_left > 0.0
+
+
+## İkinci Şans (Run çağırır, M4-07): ölü oyuncu kaldığı yerde canlanır, grace sn dokunulmazdır.
+## Gizlenen çekirdek ve kalkan halkası geri gelir; koridorun dışına düştüyse duvar çizgisine
+## geri konur. Canlıysa bir şey olmaz.
+func revive(grace: float) -> void:
+	if _alive:
+		return
+	_alive = true
+	_grace_left = grace
+	_visual.visible = true
+	_shield.visible = true
+	velocity = Vector2.ZERO
+	var wall_line: float = TuningConfig.to_px(tuning.corridor_width) * 0.5 - _half_body()
+	position.x = clampf(position.x, -wall_line, wall_line)
 
 
 ## İzin rengini paletin çevre rengine çeker (Run, palet geçişinde çağırır; yalnızca görsel).

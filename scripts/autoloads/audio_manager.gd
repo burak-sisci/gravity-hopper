@@ -11,7 +11,8 @@ extends Node
 ## olacak şekilde hizalanır. Döngü OGG'nin kendisindedir (loop_offset = loop_start) ve tam ölçü
 ## olduğu için döngüde vuruş kaymaz.
 ## Duyulan konum = çalma konumu + son karıştırmadan beri geçen süre − çıkış gecikmesi.
-## Tur başlayınca çalar, oyuncu ölünce durur.
+## Tur başlayınca çalar, oyuncu ölünce durur. Dirilişte (M4-07) saat yeniden açılır; parça,
+## Run'ın ölümde durdurduğu vuruş saatinden, yani kaldığı yerden yeniden konumlanır.
 ##
 ## Efektler (M3-15, ADR-061): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
 ## Havuz sabit sayıda çalardır (SfxBank.voices), oyun açılırken kurulur; tur sırasında düğüm
@@ -109,6 +110,7 @@ func _ready() -> void:
 	_find_lowpass()
 	Events.run_started.connect(_on_run_started)
 	Events.player_died.connect(_on_player_died)
+	Events.player_revived.connect(_on_player_revived)
 	Events.player_flipped.connect(play_sfx.bind(GameTypes.Sfx.FLIP))
 	Events.player_landed.connect(play_sfx.bind(GameTypes.Sfx.LAND))
 	Events.glimmer_collected.connect(_on_glimmer_collected)
@@ -209,6 +211,11 @@ func tension_player() -> AudioStreamPlayer:
 ## Gerilim sesi çalıyor mu (testler ve debug).
 func tension_playing() -> bool:
 	return _tension_on
+
+
+## Müzik vuruş saatine bağlı çalıyor mu (testler).
+func music_playing() -> bool:
+	return _clock_playing
 
 
 ## Sesin duvar yakınlığına yetişmiş değeri (testler ve debug).
@@ -352,6 +359,12 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 	_music.stop()
 	_reset_tension()
 	play_sfx(GameTypes.Sfx.DEATH)
+
+
+## Diriliş: saat yeniden açılır; ilk sync_beat_clock parçayı vuruş saatine konumlar.
+func _on_player_revived() -> void:
+	_clock_active = true
+	_clock_playing = false
 
 
 ## Yalnızca tur sürerken: ölümden sonra kamera sarsılırken bildirilen yakınlık gerilimi açmasın.

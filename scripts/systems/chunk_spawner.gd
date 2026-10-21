@@ -135,6 +135,15 @@ func collect_passed(player_y: float) -> void:
 		chunk.collect_passed(player_y)
 
 
+## İkinci Şans (M4-07): etkin parçalarda y'si upper_y ile lower_y arasındaki tehlikeleri
+## temizler; kaç tane olduğunu döner.
+func clear_hazards(upper_y: float, lower_y: float) -> int:
+	var count: int = 0
+	for chunk: ChunkInfo in _active:
+		count += chunk.clear_hazards(upper_y, lower_y)
+	return count
+
+
 ## Vuruş konumunu etkin parçalara iletir (lazerler, M2-12).
 func set_beat(beat: float) -> void:
 	for chunk: ChunkInfo in _active:

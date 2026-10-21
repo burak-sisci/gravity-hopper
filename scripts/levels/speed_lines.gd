@@ -3,7 +3,8 @@ extends Node2D
 ## Hız çizgileri (M3-13, architecture.md §9, GDD §13): dünyanın ardında, ekranda aşağı akan ince
 ## dikey çizgiler. Dünyadan hızlı düşerek oyuna gerçekte olmayan bir hız katarlar. Tırmanış hızı
 ## arttıkça (NeonStyle.speed_feel) sayıları, boyları, parlaklıkları ve düşüş hızları artar; yeni
-## sektörün değerine speed_feel_rate hızıyla yaklaşır. Ölümde yeniden doğmaz, akarken söner.
+## sektörün değerine speed_feel_rate hızıyla yaklaşır. Ölümde yeniden doğmaz, akarken söner;
+## dirilişte (M4-07) yeniden doğmaya başlar ve aynı sürede belirir.
 ## Yalnızca görseldir: konum ve sapmalar kozmetik rastgelelikle (global randf) seçilir, turun
 ## RNG'sine dokunmaz. Çizgiler kurulurken ayrılan sabit dizilerde durur (en çok
 ## speed_line_count.y); ekranın altından çıkan çizgi üstten yeniden doğar. Hepsi tek dokuyla
@@ -53,6 +54,7 @@ func _process(delta: float) -> void:
 	if _stopped:
 		_fade = move_toward(_fade, 0.0, delta / style.speed_line_fade)
 	else:
+		_fade = move_toward(_fade, 1.0, delta / style.speed_line_fade)
 		_set_active(style.speed_line_amount(_feel, Neon.quality))
 	var speed: float = _climb_px * lerpf(style.speed_line_speed.x, style.speed_line_speed.y, _feel)
 	var bottom: float = get_viewport_rect().size.y
@@ -96,6 +98,16 @@ func set_color(color: Color) -> void:
 ## Ölüm: çizgiler yeniden doğmaz, speed_line_fade içinde söner.
 func stop() -> void:
 	_stopped = true
+
+
+## Diriliş (M4-07): çizgiler yeniden doğar, speed_line_fade içinde belirir.
+func resume() -> void:
+	_stopped = false
+
+
+## Çizgiler ölümden sonra durdu mu (testler).
+func is_stopped() -> bool:
+	return _stopped
 
 
 func active_count() -> int:

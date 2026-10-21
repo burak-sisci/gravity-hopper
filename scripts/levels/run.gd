@@ -46,6 +46,10 @@ extends Node2D
 ## başlar. Ek yol tam vuruş sayısına yuvarlanır ve yumuşak (smoothstep) bir eğriyle verilir;
 ## bitince oyuncu vuruş ızgarasında tam k vuruş öndedir, engeller yine yarım vuruşta geçilir.
 ## Sıçramada oyuncu dokunulmazdır ve geçtiği Glimmer'lar toplanır. Harita değişmez.
+## İkinci Şans (M4-07): ölü oyuncunun turunda saat (Conductor) durur. GameManager dirilişi
+## duyurunca (Events.player_revived) oyuncu kaldığı yerde canlanır: yakındaki tehlikeler
+## temizlenir, çöküş duvarı geri itilir, revive_grace boyunca dokunulmazdır. Saat ölümde durduğu
+## için oyuncu vuruş ızgarasındaki yerindedir; müzik kaldığı yerden sürer (AudioManager).
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -158,6 +162,7 @@ func _ready() -> void:
 		_start_dash(def)
 	_player.landed.connect(_effects.landing_spark)
 	_record_line.passed.connect(Events.record_broken.emit)
+	Events.player_revived.connect(_on_player_revived)
 	_update_view()
 	_update_wall()
 	# Tur ilk karesinden yerinde (M3-10'da bulundu): ara değerleme bütün dünyada sıfırlanır
@@ -177,9 +182,10 @@ func _physics_process(delta: float) -> void:
 	_slow_motion.advance(1.0 / Engine.physics_ticks_per_second)
 	if _frozen(delta):
 		return
-	_conductor.advance(delta)
-	_advance_dash()
+	# Ölü oyuncunun turunda saat durur: diriliş vuruş ızgarasında kaldığı yerden sürer (M4-07).
 	if _player.is_alive():
+		_conductor.advance(delta)
+		_advance_dash()
 		_pressure.advance(delta)
 	if _player.position.y <= _next_boundary_y:
 		_enter_sector(sector + 1)
@@ -310,6 +316,28 @@ func _advance_dash() -> void:
 ## Sıçrama sürüyor mu (testler).
 func is_dashing() -> bool:
 	return _dashing
+
+
+## İkinci Şans (M4-07): ölü oyuncu kaldığı yerde canlanır. Donma sürüyorsa biter; önündeki
+## (sektörün hızıyla revive_clear_time sürede tırmanılacak yol) ve hemen altındaki tehlikeler
+## temizlenir; çöküş duvarı geri itilir; kombo biter, hız çizgileri yeniden akar.
+func _on_player_revived() -> void:
+	if _player.is_alive():
+		return
+	_death_seen = false
+	_freeze_left = 0.0
+	_player.set_held(false)
+	_player.revive(tuning.revive_grace)
+	var y: float = _player.position.y
+	var ahead_px: float = sectors.def_at(sector).climb_px() * tuning.revive_clear_time
+	_chunks.clear_hazards(y - ahead_px, y + TuningConfig.to_px(tuning.revive_clear_behind))
+	_pressure.revive(tuning.revive_wall_distance)
+	_background.resume_speed()
+	if _combo > 0:
+		_combo = 0
+		stats.multiplier = 1
+		Events.combo_ended.emit()
+	_update_wall()
 
 
 ## Kalkan yükseltmesi (M4-05): kırılan kalkan, yenilenme mesafesi tırmanılınca geri gelir.

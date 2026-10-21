@@ -106,6 +106,17 @@ const PX_PER_M: float = 50.0
 ## Sıçrama bitince kısa dokunulmazlık: inilen yerin hemen önündeki tehlike adil olsun.
 @export_range(0.0, 3.0, 0.1, "suffix:sn") var head_start_grace: float = 1.0
 
+@export_group("Diriliş")
+## İkinci Şans dirilişinden sonraki dokunulmazlık (M4-07, GDD §7). Çekirdek yanıp söner.
+@export_range(0.5, 5.0, 0.1, "suffix:sn") var revive_grace: float = 2.0
+## Dirilişte oyuncunun önündeki tehlikeler, sektörün hızıyla bu kadar sürede tırmanılacak yol
+## boyunca temizlenir (2,5 sn: S1'de 30 m, ekranın üst kenarına yakın).
+@export_range(0.0, 5.0, 0.1, "suffix:sn") var revive_clear_time: float = 2.5
+## Oyuncunun bu kadar altındaki tehlikeler de temizlenir (öldüren tehlike oyuncuyla örtüşür).
+@export_range(0.0, 10.0, 0.5, "suffix:m") var revive_clear_behind: float = 3.0
+## Dirilişte çöküş duvarı en az bu uzaklığa geri itilir (en çok wall_max_distance).
+@export_range(5.0, 40.0, 1.0, "suffix:m") var revive_wall_distance: float = 20.0
+
 @export_group("Ekonomi")
 ## Sektör tamamlama bonusu: turda geçilen her sektör için bu × sektör numarası Glimmer
 ## (GDD §9.1; S1 ve S2'yi geçen tur 25 + 50 alır).
