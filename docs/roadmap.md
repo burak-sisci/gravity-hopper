@@ -255,7 +255,7 @@
   *Kabul:* Seviye arttıkça daha uzaktaki Glimmer toplanıyor, harita değişmiyor, tur sırasında düğüm oluşmuyor (test); çarpan testte; Redmi'de çekim görünüyor.
 - [x] **M4-05** 🤖 Kalkan yükseltmesi: 1. seviyede tur kalkanla başlar; 2.–5. seviyede kırılan kalkan 1500 / 1200 / 900 / 600 m sonra yenilenir.
   *Kabul:* Başlangıç kalkanı ve yenilenme mesafesi testte; günlükte `shield_changed`.
-- [ ] **M4-06** 🤖 Başlangıç Sıçraması: tur başında dokunulmaz, hızlı bir sıçrama (100–500 m), yoldaki Glimmer'ları toplar. Bitince oyuncu bir duvara iner ve müziğin vuruşuyla hizalı devam eder.
+- [x] **M4-06** 🤖 Başlangıç Sıçraması: tur başında dokunulmaz, hızlı bir sıçrama (100–500 m), yoldaki Glimmer'ları toplar. Bitince oyuncu bir duvara iner ve müziğin vuruşuyla hizalı devam eder.
   *Kabul:* Sıçrama boyu seviyeyle değişiyor, sıçramada ölüm yok, sonrasında dikenler yine vuruşta geçiliyor, harita aynı (testler); Redmi'de deneme.
 - [ ] **M4-07** 🤖 İkinci Şans ve diriliş (GDD §7): ölümde, hak varsa, yakındaki tehlikeler temizlenir, çöküş duvarı geri itilir, 2 sn dokunulmazlık verilir, müzik sürer; tur başına en çok 1 ücretsiz diriliş. Sonuç ekranı gelene kadar diriliş kendiliğinden olur (M5-03'te düğmeye bağlanır).
   *Kabul:* Dirilişten sonra tur sürüyor, ikinci ölüm turu bitiriyor, tur sırasında düğüm oluşmuyor (test); günlükte `player_revived`.

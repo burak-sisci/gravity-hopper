@@ -221,6 +221,14 @@ func test_shield_loadout_follows_the_level() -> void:
 		assert_float(loadout.shield_regen_m).is_equal(regen[level - 1])
 
 
+## Başlangıç Sıçraması (M4-06, GDD §10): ek yol 100 / 200 / 300 / 400 / 500 m.
+func test_head_start_loadout_follows_the_level() -> void:
+	assert_float(Progression.loadout().head_start_m).is_equal(0.0)
+	for level: int in range(1, 6):
+		Progression.set_upgrade_level(&"head_start", level)
+		assert_float(Progression.loadout().head_start_m).is_equal(100.0 * level)
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

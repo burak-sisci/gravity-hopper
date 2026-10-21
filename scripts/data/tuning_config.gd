@@ -99,6 +99,13 @@ const PX_PER_M: float = 50.0
 ## Sarsıntının gürültü hızı: yüksek değer daha sık titrer.
 @export_range(5.0, 40.0, 1.0, "suffix:Hz") var shake_frequency: float = 20.0
 
+@export_group("Başlangıç Sıçraması")
+## Sıçramanın ortalama hız çarpanı (M4-06): ek yol, normal tırmanışın bu kat hızıyla alınır
+## (8 → 100 m ≈ 1,2 sn, 500 m ≈ 6 sn; doruk hızı ≈ 1,5 katı).
+@export_range(2.0, 20.0, 0.5, "suffix:×") var head_start_speedup: float = 8.0
+## Sıçrama bitince kısa dokunulmazlık: inilen yerin hemen önündeki tehlike adil olsun.
+@export_range(0.0, 3.0, 0.1, "suffix:sn") var head_start_grace: float = 1.0
+
 @export_group("Ekonomi")
 ## Sektör tamamlama bonusu: turda geçilen her sektör için bu × sektör numarası Glimmer
 ## (GDD §9.1; S1 ve S2'yi geçen tur 25 + 50 alır).

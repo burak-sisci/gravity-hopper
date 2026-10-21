@@ -16,6 +16,9 @@ extends CharacterBody2D
 ## Görsel (M3-04): neon elmas (Visual, NeonShape) ve iz (Trail). İz her fizik adımında konumu
 ## alır; ölünce kayıt sürer, böylece iz çekirdeğe doğru toplanır.
 ## Ölümde kısa donma (M3-10): Run set_held() ile oyuncuyu ve izini bir süre yerinde tutar.
+## Başlangıç Sıçraması (M4-06): Run sıçrama boyunca set_dashing(true) der ve oyuncuyu kendisi
+## yukarı taşır; oyuncu bu sürede ve bitişteki kısa dokunulmazlıkta darbe almaz, kıl payı saymaz,
+## koridordan düşmez (duvar çizgisine geri konur). Dokunulmazlıkta çekirdek yanıp söner.
 ## Sıkışma-uzama (M3-11, yalnızca görsel): çevirmede çekirdek yana uzar, duvara inince basılır
 ## (SquashStretch, Visual'ın ölçeği); çarpışma şekilleri değişmez. Duvara iniş yukarı landed ile
 ## bildirilir (Run iniş kıvılcımını çıkarır). Ölüm patlamasında Run hide_core() çağırır.
@@ -29,6 +32,9 @@ signal landed(at: Vector2, side: float)
 
 ## Debug ölümsüzlüğünde görünürlük (oyuncu ölümsüz olduğunu görsün).
 const INVINCIBLE_ALPHA: float = 0.45
+## Sıçrama sonrası dokunulmazlıkta çekirdeğin yanıp sönmesi (sn'de kaç kez) ve sönük hâli.
+const GRACE_BLINK_RATE: float = 8.0
+const GRACE_ALPHA: float = 0.35
 
 ## Ayarlar Run tarafından atanır (aşağı çağrı).
 var tuning: TuningConfig
@@ -49,6 +55,9 @@ var _held: bool = false
 ## Önceki adımda duvara yaslı mıydı (iniş anı: yaslı değilken yaslanmak).
 var _was_on_wall: bool = false
 var _squash: SquashStretch = SquashStretch.new()
+## Başlangıç Sıçraması sürüyor mu ve bitişten sonra kalan dokunulmazlık (sn).
+var _dashing: bool = false
+var _grace_left: float = 0.0
 
 @onready var _body: CollisionShape2D = $Body
 @onready var _hurtbox: Hurtbox = $Hurtbox
@@ -69,6 +78,11 @@ func _ready() -> void:
 	Events.debug_invincibility_changed.connect(_on_debug_invincibility_changed)
 
 
+func _process(_delta: float) -> void:
+	var dim: bool = _grace_left > 0.0 and fmod(_grace_left * GRACE_BLINK_RATE, 1.0) < 0.5
+	_visual.modulate.a = GRACE_ALPHA if dim else 1.0
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if is_tap(event):
 		get_viewport().set_input_as_handled()
@@ -82,6 +96,7 @@ func _physics_process(delta: float) -> void:
 		_trail.record(position)
 		return
 	_shield.tick(delta)
+	_grace_left = maxf(_grace_left - delta, 0.0)
 	# Çarpışma kutusu gövdeden küçüktür; oran her adımda okunur (canlı ayar paneli).
 	var hurt_size: Vector2 = (_body.shape as RectangleShape2D).size * tuning.hurtbox_scale
 	_hurtbox.set_size(hurt_size)
@@ -122,7 +137,8 @@ func _physics_process(delta: float) -> void:
 		else:
 			_buffer_left -= delta
 	# Dikey: tırmanış doğrudan konumla, tam sabit hızda. Engeller vuruş ızgarasına göre
-	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı.
+	# yerleştiği için (architecture.md §8.2) hızda sapma olmamalı. Başlangıç Sıçramasının ek
+	# yolunu Run ayrıca verir; tırmanış onun altında sürer.
 	position.y -= TuningConfig.to_px(climb_speed) * delta
 	if _coyote_left <= 0.0:
 		_check_fall()
@@ -150,6 +166,17 @@ func give_shield() -> void:
 
 func has_shield() -> bool:
 	return _shield.active
+
+
+## Başlangıç Sıçraması (Run çağırır): sürerken dokunulmaz; bitince grace sn daha.
+func set_dashing(dashing: bool, grace: float = 0.0) -> void:
+	_dashing = dashing
+	_grace_left = grace
+
+
+## Sıçramada ya da bitişindeki dokunulmazlıkta mı.
+func is_protected() -> bool:
+	return _dashing or _grace_left > 0.0
 
 
 ## İzin rengini paletin çevre rengine çeker (Run, palet geçişinde çağırır; yalnızca görsel).
@@ -206,7 +233,7 @@ func die(cause: GameTypes.DeathCause) -> void:
 func _on_hurtbox_hit(area: Area2D) -> void:
 	# Değen tehlike, kalkan ya da ölümsüzlükle geçilse de kıl payı sayılmaz.
 	_graze.mark_hit(area)
-	if not _alive or _invincible or _shield.is_in_grace():
+	if not _alive or _invincible or _shield.is_in_grace() or is_protected():
 		return
 	if _shield.active:
 		_shield.consume(tuning.shield_grace)
@@ -219,7 +246,7 @@ func _on_hurtbox_hit(area: Area2D) -> void:
 
 
 func _on_grazed() -> void:
-	if _alive:
+	if _alive and not is_protected():
 		near_missed.emit()
 
 
@@ -254,7 +281,7 @@ func _check_fall() -> void:
 	var edge: float = TuningConfig.to_px(tuning.corridor_width) * 0.5 + half_body
 	if absf(position.x) <= edge:
 		return
-	if _invincible:
+	if _invincible or is_protected():
 		position.x = signf(position.x) * (edge - 2.0 * half_body)
 		velocity.x = 0.0
 		return

@@ -96,6 +96,13 @@ func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
 		glimmer.attract(target, magnet, delta)
 
 
+## Başlangıç Sıçraması (M4-06): oyuncunun geçtiği (y'si oyuncunun altında kalan) Glimmer'lar.
+func collect_passed(player_y: float) -> void:
+	for glimmer: Glimmer in _glimmers:
+		if glimmer.global_position.y >= player_y:
+			glimmer.collect()
+
+
 ## Parçanın duvar boşlukları (M2-11).
 func gaps() -> Array[WallGap]:
 	var result: Array[WallGap] = []

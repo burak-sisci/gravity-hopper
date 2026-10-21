@@ -141,8 +141,10 @@ func loadout() -> RunLoadout:
 	# Kalkan Sv1'in değeri 0'dır (yenilenmez); her seviye turu kalkanla başlatır (M4-05).
 	result.start_shield = upgrade_level(&"shield") > 0
 	result.shield_regen_m = upgrade_value(&"shield")
-	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d" % [result.magnet_m,
-			result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m)])
+	result.head_start_m = upgrade_value(&"head_start")
+	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d head_start=%d" % [result.magnet_m,
+			result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m),
+			roundi(result.head_start_m)])
 	return result
 
 

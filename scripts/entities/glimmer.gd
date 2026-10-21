@@ -9,6 +9,7 @@ extends Area2D
 ## Toplanınca yeri de bildirilir (M3-11): Run orada Glimmer patlamasını çıkarır.
 ## Mıknatıs (M4-04): Run oyuncunun yerini ChunkInfo üstünden aşağı verir (attract); menzile
 ## giren Glimmer yakalanır ve toplanana dek oraya akar. Yerini parçanın yerleşimi geri kurar.
+## Başlangıç Sıçraması (M4-06): oyuncunun geçtiği Glimmer'lar aşağı çağrıyla toplanır (collect).
 
 signal collected(value: int, at: Vector2)
 
@@ -61,6 +62,17 @@ func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
 	global_position = global_position.move_toward(target, _pull_speed * delta)
 
 
+## Toplanır (toplama alanı değince ya da Başlangıç Sıçraması geçerken); ikinci kez sayılmaz.
+func collect() -> void:
+	if _taken:
+		return
+	_taken = true
+	visible = false
+	# Fizik bildirimi sırasında şekil değiştirilemez; bir sonraki adımda kapanır.
+	_shape.set_deferred("disabled", true)
+	collected.emit(value, global_position)
+
+
 func is_taken() -> bool:
 	return _taken
 
@@ -70,10 +82,4 @@ func is_pulled() -> bool:
 
 
 func _on_area_entered(_area: Area2D) -> void:
-	if _taken:
-		return
-	_taken = true
-	visible = false
-	# Fizik bildirimi sırasında şekil değiştirilemez; bir sonraki adımda kapanır.
-	_shape.set_deferred("disabled", true)
-	collected.emit(value, global_position)
+	collect()

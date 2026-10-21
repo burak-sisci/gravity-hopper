@@ -42,6 +42,10 @@ extends Node2D
 ## iletir (Magnet); menzile giren Glimmer oyuncuya akar. Harita değişmez.
 ## Kalkan yükseltmesi (M4-05): yükte varsa oyuncu tura kalkanla başlar; yenilenme mesafesi
 ## varsa kırılan kalkan, kırıldığı yerden o kadar tırmanılınca yeniden takılır.
+## Başlangıç Sıçraması (M4-06): yükte varsa tur, oyuncunun normal tırmanışının üstüne ek bir yolla
+## başlar. Ek yol tam vuruş sayısına yuvarlanır ve yumuşak (smoothstep) bir eğriyle verilir;
+## bitince oyuncu vuruş ızgarasında tam k vuruş öndedir, engeller yine yarım vuruşta geçilir.
+## Sıçramada oyuncu dokunulmazdır ve geçtiği Glimmer'lar toplanır. Harita değişmez.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -97,6 +101,11 @@ var _magnet: Magnet = null
 ## Kırılan kalkan bekleniyor mu ve oyuncu hangi y'ye varınca yeniden takılır (M4-05).
 var _shield_due: bool = false
 var _shield_due_y: float = 0.0
+## Başlangıç Sıçraması (M4-06): sürüyor mu, ek yol (px), süre (sn) ve verilmiş oran (0–1).
+var _dashing: bool = false
+var _dash_px: float = 0.0
+var _dash_time: float = 0.0
+var _dash_progress: float = 0.0
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -145,6 +154,8 @@ func _ready() -> void:
 	_player.shield_broken.connect(_on_shield_broken)
 	if loadout.start_shield:
 		_player.give_shield()
+	if loadout.head_start_m > 0.0:
+		_start_dash(def)
 	_player.landed.connect(_effects.landing_spark)
 	_record_line.passed.connect(Events.record_broken.emit)
 	_update_view()
@@ -167,6 +178,7 @@ func _physics_process(delta: float) -> void:
 	if _frozen(delta):
 		return
 	_conductor.advance(delta)
+	_advance_dash()
 	if _player.is_alive():
 		_pressure.advance(delta)
 	if _player.position.y <= _next_boundary_y:
@@ -253,6 +265,51 @@ func _on_shield_broken() -> void:
 	if loadout.shield_regen_m > 0.0:
 		_shield_due = true
 		_shield_due_y = _player.position.y - TuningConfig.to_px(loadout.shield_regen_m)
+
+
+## Başlangıç Sıçraması (M4-06). Ek yol tam vuruş sayısıdır (k vuruşluk tırmanış): sıçramadan
+## sonra oyuncunun yeri, turun başından t + k vuruş tırmanmış gibidir; ızgara kaymaz. Sıçrama
+## başlangıç sektöründe biter (toplam yol = ek yol × çarpan / (çarpan − 1)); sığmazsa kısalır.
+func _start_dash(def: SectorDef) -> void:
+	var speedup: float = tuning.head_start_speedup
+	var beat_px: float = def.climb_px() * _conductor.beat_length()
+	var beats: int = roundi(TuningConfig.to_px(loadout.head_start_m) / beat_px)
+	var room_px: float = _player.position.y - _next_boundary_y
+	if is_finite(room_px):
+		beats = mini(beats, floori(room_px * (speedup - 1.0) / speedup / beat_px) - 1)
+	if beats <= 0:
+		return
+	_dashing = true
+	_dash_px = beats * beat_px
+	_dash_time = beats * _conductor.beat_length() / (speedup - 1.0)
+	_dash_progress = 0.0
+	_player.set_dashing(true)
+	_background.set_speed(Neon.STYLE.speed_feel_max_speed, false)
+
+
+## Sıçramanın bu adımdaki payı: oyuncuyu ek yolun eğrisine göre yukarı taşır, geçtiği Glimmer'ları
+## toplatır. Süre turun saatinden (run_time) okunur; bitişte ek yolun tamamı verilmiştir.
+## Başlangıç ilk adımda duyurulur: run_started'dan (Main, Run ağaca girince) sonra.
+func _advance_dash() -> void:
+	if not _dashing:
+		return
+	if _dash_progress == 0.0:
+		Events.head_start_changed.emit(true)
+	var t: float = minf(_conductor.run_time / _dash_time, 1.0)
+	var progress: float = smoothstep(0.0, 1.0, t)
+	_player.position.y -= (progress - _dash_progress) * _dash_px
+	_dash_progress = progress
+	_chunks.collect_passed(_player.position.y)
+	if t >= 1.0:
+		_dashing = false
+		_player.set_dashing(false, tuning.head_start_grace)
+		_background.set_speed(sectors.def_at(sector).climb_speed, false)
+		Events.head_start_changed.emit(false)
+
+
+## Sıçrama sürüyor mu (testler).
+func is_dashing() -> bool:
+	return _dashing
 
 
 ## Kalkan yükseltmesi (M4-05): kırılan kalkan, yenilenme mesafesi tırmanılınca geri gelir.

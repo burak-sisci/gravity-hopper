@@ -129,6 +129,12 @@ func attract(target: Vector2, magnet: Magnet, delta: float) -> void:
 		chunk.attract(target, magnet, delta)
 
 
+## Başlangıç Sıçraması (M4-06): oyuncunun geçtiği Glimmer'ları toplatır.
+func collect_passed(player_y: float) -> void:
+	for chunk: ChunkInfo in _active:
+		chunk.collect_passed(player_y)
+
+
 ## Vuruş konumunu etkin parçalara iletir (lazerler, M2-12).
 func set_beat(beat: float) -> void:
 	for chunk: ChunkInfo in _active:

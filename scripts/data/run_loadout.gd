@@ -13,3 +13,5 @@ var glimmer_boost: float = 0.0
 var start_shield: bool = false
 ## Kırılan kalkanın yeniden gelmesi için tırmanılacak yol (m; Sv2–5). 0 = yenilenmez.
 var shield_regen_m: float = 0.0
+## Başlangıç Sıçraması (M4-06): tur başındaki sıçramanın ek yolu (m). 0 = sıçrama yok.
+var head_start_m: float = 0.0

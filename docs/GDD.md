@@ -139,7 +139,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 | --- | --- | --- | --- |
 | **Mıknatıs** | Glimmer çekim menzili, toplama alanının ötesine: 90 / 130 / 170 / 210 / 250 px (1,8–5 m). Menzile giren Glimmer hızlanarak oyuncuya akar | 5 | 100 · 200 · 400 · 800 · 1600 |
 | **Kalkan** | Sv1: tura kalkanla başla. Sv2–5: kırılan kalkan, kırıldığı yerden 1500 / 1200 / 900 / 600 m tırmanınca yenilenir | 5 | 150 · 300 · 600 · 1200 · 2400 |
-| **Başlangıç Sıçraması** | Tur başında dokunulmaz sıçrama, yoldaki Glimmer'ları toplar: 100 / 200 / 300 / 400 / 500 m | 5 | 120 · 240 · 480 · 960 · 1920 |
+| **Başlangıç Sıçraması** | Tur başında dokunulmaz sıçrama, yoldaki Glimmer'ları toplar: 100 / 200 / 300 / 400 / 500 m (ek yol müziğin vuruşuna yuvarlanır; inişte 1 sn dokunulmazlık) | 5 | 120 · 240 · 480 · 960 · 1920 |
 | **Glimmer Çarpanı** | Tur sonu kazancı (toplanan Glimmer + sektör bonusu) +%10 / +%20 / … / +%50, en yakın tam sayıya yuvarlanır | 5 | 200 · 400 · 800 · 1600 · 3200 |
 | **İkinci Şans** | Her turda bir kez ücretsiz diriliş | 1 | 5000 |
 

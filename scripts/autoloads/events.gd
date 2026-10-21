@@ -20,6 +20,7 @@ signal player_revived
 signal player_flipped
 signal player_landed
 signal shield_changed(active: bool)
+signal head_start_changed(active: bool)
 
 # --- İlerleme ---
 signal height_changed(meters: int)

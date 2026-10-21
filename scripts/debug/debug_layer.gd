@@ -42,6 +42,8 @@ var _aspect_index: int = 0
 var _invincible: bool = false
 ## Oyuncunun bulunduğu sektör (run_started ve sector_entered'dan izlenir).
 var _sector: int = 1
+## Son duyurulan yükseklik (m; olay günlüğü için).
+var _height: int = 0
 
 @onready var _tuning_panel: Control = %TuningPanel
 @onready var _progress_panel: ProgressPanel = %ProgressPanel
@@ -226,6 +228,12 @@ func _connect_event_log() -> void:
 		_log_event("near_miss combo=%d x%d" % [combo, multiplier]))
 	Events.shield_changed.connect(func(active: bool) -> void:
 		_log_event("shield_changed active=%s" % active))
+	Events.head_start_changed.connect(func(active: bool) -> void:
+		# Bitişte yükseklik de (başlangıçta henüz yeni turun yüksekliği duyurulmamıştır).
+		_log_event("head_start_changed active=%s%s" % [
+			active, "" if active else " height=%d" % _height,
+		]))
+	Events.height_changed.connect(func(meters: int) -> void: _height = meters)
 	Events.combo_ended.connect(_log_event.bind("combo_ended"))
 	Events.chunk_placed.connect(func(chunk_id: StringName, difficulty: int, sector: int) -> void:
 		_log_event("chunk_placed id=%s difficulty=%d sector=%d" % [chunk_id, difficulty, sector]))
