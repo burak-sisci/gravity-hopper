@@ -141,7 +141,8 @@ func is_alive() -> bool:
 	return _alive
 
 
-## Kalkan takar (yükseltme M4'te; şimdilik debug, Events.debug_shield_requested).
+## Kalkan takar: Run tur başında ve yenilenmede (Kalkan yükseltmesi, M4-05), debug
+## Events.debug_shield_requested ile.
 func give_shield() -> void:
 	if _alive:
 		_shield.give()

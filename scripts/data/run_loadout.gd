@@ -9,3 +9,7 @@ extends RefCounted
 var magnet_m: float = 0.0
 ## Glimmer Çarpanı: tur sonu kazancına eklenen oran (0,1 = +%10).
 var glimmer_boost: float = 0.0
+## Kalkan yükseltmesi (M4-05): tur kalkanla başlar (Sv1 ve üstü).
+var start_shield: bool = false
+## Kırılan kalkanın yeniden gelmesi için tırmanılacak yol (m; Sv2–5). 0 = yenilenmez.
+var shield_regen_m: float = 0.0

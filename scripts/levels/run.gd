@@ -40,6 +40,8 @@ extends Node2D
 ## Yükseltmeler (M4-04, ADR-066): Main tur başında yükü (RunLoadout) verir; tur boyunca
 ## değişmez. Mıknatıs varsa Run her adımda oyuncunun yerini ChunkSpawner üstünden Glimmer'lara
 ## iletir (Magnet); menzile giren Glimmer oyuncuya akar. Harita değişmez.
+## Kalkan yükseltmesi (M4-05): yükte varsa oyuncu tura kalkanla başlar; yenilenme mesafesi
+## varsa kırılan kalkan, kırıldığı yerden o kadar tırmanılınca yeniden takılır.
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -92,6 +94,9 @@ var _freeze_left: float = 0.0
 var _slow_motion: SlowMotion = SlowMotion.new()
 ## Mıknatıs yükseltmesi (yükte yoksa null).
 var _magnet: Magnet = null
+## Kırılan kalkan bekleniyor mu ve oyuncu hangi y'ye varınca yeniden takılır (M4-05).
+var _shield_due: bool = false
+var _shield_due_y: float = 0.0
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -138,6 +143,8 @@ func _ready() -> void:
 	_pressure.setup(tuning.wall_start_distance, tuning.wall_max_distance, def.wall_creep)
 	_pressure.wall_reached.connect(_player.die.bind(GameTypes.DeathCause.WALL))
 	_player.shield_broken.connect(_on_shield_broken)
+	if loadout.start_shield:
+		_player.give_shield()
 	_player.landed.connect(_effects.landing_spark)
 	_record_line.passed.connect(Events.record_broken.emit)
 	_update_view()
@@ -167,6 +174,7 @@ func _physics_process(delta: float) -> void:
 	_update_view()
 	if _magnet != null and _player.is_alive():
 		_chunks.attract(_player.global_position, _magnet, delta)
+	_regen_shield()
 	_advance_wave(delta)
 	# Lazerler vuruşla yanıp söner (M2-12); yeni yerleşen parçalar da aynı adımda güncellenir.
 	# Duvarlar, arka plan ağı ve çöküş duvarının glitch'i vuruşta nabız atar (M3-03, M3-07,
@@ -242,6 +250,16 @@ func _update_wall() -> void:
 func _on_shield_broken() -> void:
 	_pressure.pull(tuning.shield_pull)
 	_camera.add_trauma(tuning.shield_trauma)
+	if loadout.shield_regen_m > 0.0:
+		_shield_due = true
+		_shield_due_y = _player.position.y - TuningConfig.to_px(loadout.shield_regen_m)
+
+
+## Kalkan yükseltmesi (M4-05): kırılan kalkan, yenilenme mesafesi tırmanılınca geri gelir.
+func _regen_shield() -> void:
+	if _shield_due and _player.is_alive() and _player.position.y <= _shield_due_y:
+		_shield_due = false
+		_player.give_shield()
 
 
 func _on_glimmer_collected(value: int, at: Vector2) -> void:

@@ -207,6 +207,20 @@ func test_loadout_follows_levels_and_is_fixed_for_the_run() -> void:
 	assert_int(Progression.upgrade_level(&"laser_eyes")).is_equal(0)
 
 
+## Kalkan yükseltmesi (M4-05, GDD §10): her seviye turu kalkanla başlatır; Sv1 yenilenmez,
+## Sv2–5 kırılan kalkan 1500 / 1200 / 900 / 600 m sonra gelir.
+func test_shield_loadout_follows_the_level() -> void:
+	var none: RunLoadout = Progression.loadout()
+	assert_bool(none.start_shield).is_false()
+	assert_float(none.shield_regen_m).is_equal(0.0)
+	var regen: Array[float] = [0.0, 1500.0, 1200.0, 900.0, 600.0]
+	for level: int in range(1, 6):
+		Progression.set_upgrade_level(&"shield", level)
+		var loadout: RunLoadout = Progression.loadout()
+		assert_bool(loadout.start_shield).is_true()
+		assert_float(loadout.shield_regen_m).is_equal(regen[level - 1])
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

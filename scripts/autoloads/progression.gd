@@ -138,7 +138,11 @@ func loadout() -> RunLoadout:
 	var result: RunLoadout = RunLoadout.new()
 	result.magnet_m = upgrade_value(&"magnet")
 	result.glimmer_boost = upgrade_value(&"glimmer_boost")
-	_log("loadout magnet=%.1f boost=%.1f" % [result.magnet_m, result.glimmer_boost])
+	# Kalkan Sv1'in değeri 0'dır (yenilenmez); her seviye turu kalkanla başlatır (M4-05).
+	result.start_shield = upgrade_level(&"shield") > 0
+	result.shield_regen_m = upgrade_value(&"shield")
+	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d" % [result.magnet_m,
+			result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m)])
 	return result
 
 

@@ -36,7 +36,7 @@ func _process(_delta: float) -> void:
 		_ring.visible = fmod(_grace_left * BLINK_RATE, 1.0) < 0.5
 
 
-## Kalkan takar (yükseltme M4'te; şimdilik debug).
+## Kalkan takar (takılıysa bir şey olmaz).
 func give() -> void:
 	if active:
 		return
