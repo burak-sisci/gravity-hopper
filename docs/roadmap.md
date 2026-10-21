@@ -242,7 +242,7 @@
 
 **Kayıt ve cüzdan**
 
-- [ ] **M4-01** 🤖 `SaveManager`: şema 1 (`architecture.md` §11.2), yayın yapısında şifreli, debug yapısında düz JSON; atomik yazma (`.tmp` → geri okuma → `.bak` → `.dat`), yükleme sırası (`.dat` → `.bak` → yeni kayıt), sürüm geçişi zinciri, eksik alanların varsayılanla tamamlanması.
+- [x] **M4-01** 🤖 `SaveManager`: şema 1 (`architecture.md` §11.2), yayın yapısında şifreli, debug yapısında düz JSON; atomik yazma (`.tmp` → geri okuma → `.bak` → `.dat`), yükleme sırası (`.dat` → `.bak` → yeni kayıt), sürüm geçişi zinciri, eksik alanların varsayılanla tamamlanması.
   *Kabul:* Testler: yazıp okuma; bozuk `.dat`'ta `.bak`'tan, ikisi de bozuksa yeni kayıtla açılış; yarıda kalan `.tmp` eski kaydı bozmuyor; şifreli dosya düz metin değil; eski sürümlü kayıt yükseltiliyor. Redmi'de kayıt dosyası oluşuyor.
 - [ ] **M4-02** 🤖 `Progression` ve kalıcı rekor: cüzdan, rekor, en yüksek sektör ve istatistikler kayıttan yüklenir. Tur sonunda kazanç hesaplanır (toplanan Glimmer + sektör tamamlama bonusu 25 × sektör numarası) ve kaydedilir; uygulama arka plana geçince ve kapanırken de kaydedilir. Oturum rekoru (`GameManager.best_height_m`) kalkar: rekor çizgisi ve HUD'un rekor satırı kalıcı rekordan gelir.
   *Kabul:* Kazanç hesabı ve kayıt testte. Redmi'de oyun kapatılıp açılınca rekor çizgisi ilk turda yerinde, cüzdan korunuyor (günlük).

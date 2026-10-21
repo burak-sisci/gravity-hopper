@@ -38,10 +38,12 @@ func test_faster_sector_more_longer_faster_lines() -> void:
 	assert_int(slow.active_count()).is_equal(Neon.STYLE.speed_line_count.x)
 	assert_int(fast.active_count()).is_equal(12)
 	assert_float(_mean_length(fast)).is_greater(_mean_length(slow))
-	# Düşüş: tırmanış hızının 1,6 katı (± sapma) ve hızlı sektörde daha hızlı.
-	var start_y: float = slow.head_y(0)
+	# Düşüş: tırmanış hızının 1,6 katı (± sapma) ve hızlı sektörde daha hızlı. En üstteki çizgi
+	# ölçülür: konumlar rastgele, alttaki bir çizgi 10 karede ekrandan çıkıp yeniden doğabilir.
+	var top: int = _topmost(slow)
+	var start_y: float = slow.head_y(top)
 	_advance(slow, 10)
-	var fall: float = slow.head_y(0) - start_y
+	var fall: float = slow.head_y(top) - start_y
 	var expected: float = TuningConfig.to_px(12.0) * Neon.STYLE.speed_line_speed.x * 10.0 * STEP
 	var jitter: float = Neon.STYLE.speed_line_jitter
 	assert_float(fall).is_between(expected * (1.0 - jitter) - 0.01, expected * (1.0 + jitter) + 0.01)
@@ -108,6 +110,14 @@ func _add_lines() -> SpeedLines:
 func _advance(lines: SpeedLines, frames: int) -> void:
 	for i: int in frames:
 		lines._process(STEP)
+
+
+func _topmost(lines: SpeedLines) -> int:
+	var top: int = 0
+	for i: int in lines.active_count():
+		if lines.head_y(i) < lines.head_y(top):
+			top = i
+	return top
 
 
 func _mean_length(lines: SpeedLines) -> float:
