@@ -155,11 +155,12 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
   - M4-08: Ayaz 300, Ametist 600, Altın 1000, Plazma 1800, Kuyruklu Yıldız 3000. Fiyat arttıkça iz kalınlaşır ve uzar; pahalı izlerde renk geçişi üç durakludur.
   - Satın almak kuşandırmaz; kuşanılan iz sonraki turda görünür. Varsayılan iz (Neon) sektörün rengini izler, ötekiler her sektörde kendi rengindedir.
   - Renkler tehlike kırmızısından ve Glimmer yeşilinden uzak durur.
+  - Her iz bir bakışta tanınır (kullanıcı geri bildirimi, 2026-10-22): izlerin başı ayrı renk ailesindedir: Ayaz buz beyazı, Ametist koyu mor, Altın limon sarısı, Plazma pembe → mor, Kuyruklu Yıldız mavi, Kıl Payı koyu turuncu, Büyük Depo camgöbeği → mor → pembe. Neon (varsayılan) sektör renginin pastel hâlidir, ötekiler doygundur; böylece hiçbir iz bir sektörün Neon iziyle karışmaz. Yeni sektör paleti de bu ayrımı korur (test).
 - **Başarımla açılanlar** (satın alınamaz, statü göstergesi):
   - "Büyük Depolama Birimi'ne ulaş"
   - "Toplam 500 kıl payı"
   - "7 gün üst üste günlük meydan okuma" (M7-03)
-  - M4-08: Kıl Payı izi (turuncu-altın) 500. kıl payının yapıldığı turun sonunda, Büyük Depo izi (camgöbeği → mor → pembe, en kalın ve en uzun) Büyük Depoya varınca açılır.
+  - M4-08: Kıl Payı izi (koyu turuncu) 500. kıl payının yapıldığı turun sonunda, Büyük Depo izi (camgöbeği → mor → pembe, en kalın ve en uzun) Büyük Depoya varınca açılır.
 - Oyuncunun kendi rengi (**beyaz çekirdek**) değişmez. Kozmetik olan yalnızca izdir; böylece okunabilirlik bozulmaz.
 
 ## 12. Sektörler ve ilerleme hissi

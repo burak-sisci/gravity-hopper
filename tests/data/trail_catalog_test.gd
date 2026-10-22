@@ -3,8 +3,11 @@ extends GdUnitTestSuite
 ## kayıttaki "trail_default"); 4–6 satın alınan iz 300–3000 Glimmer arasında, artan fiyatla;
 ## başarım izleri (Büyük Depo, toplam 500 kıl payı) satılmaz. Renkler (geçişin ara tonları ve
 ## parlama dahil) tehlike kırmızısından ve Glimmer yeşilinden uzak; adlar TR/EN çevrili.
+## İzler birbirinden ve her sektörde varsayılan Neon izden gözle ayırt edilir (OKLab farkı,
+## ADR-075): yeni iz ya da sektör eklenince renkler yine çakışmasın.
 
 const TRAILS: TrailCatalog = preload("res://data/trails/trail_catalog.tres")
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 ## Sektör paletleriyle aynı ton kuralı (sector_catalog_test).
 const MIN_HUE_DISTANCE: float = 30.0 / 360.0
 const MIN_SATURATION: float = 0.2
@@ -13,6 +16,24 @@ const GRADIENT_SAMPLES: int = 16
 const MIN_PRICE: int = 300
 const MAX_PRICE: int = 3000
 const NEAR_MISS_GOAL: int = 500
+## İki iz arasında en az görünüş farkı (OKLab; gözün ayırdığı en küçük fark ~0.02). Kullanıcının
+## "çok yakın" bulduğu eski Ayaz ~ Kuyruklu Yıldız 0.13, Altın ~ Kıl Payı 0.17 idi.
+const MIN_TRAIL_DIFFERENCE: float = 0.25
+## İzle aynı sektördeki varsayılan Neon iz arasında en az fark (eski Ametist ~ S2 Neon 0.05 idi).
+const MIN_NEON_DIFFERENCE: float = 0.15
+## Görünüş farkında renk geçişinden alınan örnek sayısı.
+const LOOK_SAMPLES: int = 32
+## Doğrusal sRGB → LMS ve küp kökü alınmış LMS → OKLab matrislerinin satırları (Björn Ottosson).
+const TO_LMS: Array[Vector3] = [
+	Vector3(0.4122214708, 0.5363325363, 0.0514459929),
+	Vector3(0.2119034982, 0.6806995451, 0.1073969566),
+	Vector3(0.0883024619, 0.2817188376, 0.6299787005),
+]
+const TO_LAB: Array[Vector3] = [
+	Vector3(0.2104542553, 0.7936177850, -0.0040720468),
+	Vector3(1.9779984951, -2.4285922050, 0.4505937099),
+	Vector3(0.0259040371, 0.7827717662, -0.8086757660),
+]
 
 
 func test_default_trail_comes_first_and_matches_the_save() -> void:
@@ -94,6 +115,39 @@ func test_hue_rule_catches_red_and_green() -> void:
 	assert_bool(_hues_apart(Color(1.0, 0.82, 0.35), Neon.STYLE.hazard_color)).is_true()
 
 
+func test_trails_look_different_in_every_sector() -> void:
+	# Sektör numaraları 1'den başlar.
+	for sector: int in range(1, SECTORS.count() + 1):
+		var ambient: Color = SECTORS.def_at(sector).palette.ambient
+		var trails: Array[Trail] = []
+		for def: TrailDef in TRAILS.trails:
+			trails.append(_trail(def, ambient))
+		for i: int in trails.size():
+			for j: int in range(i + 1, trails.size()):
+				var neon: bool = TRAILS.trails[i].follows_ambient() \
+						or TRAILS.trails[j].follows_ambient()
+				var difference: float = _difference(trails[i], trails[j])
+				assert_float(difference).override_failure_message(
+						"sektör %d: %s ~ %s farkı %.3f" % [
+							sector, TRAILS.trails[i].id, TRAILS.trails[j].id, difference,
+						]).is_greater_equal(MIN_NEON_DIFFERENCE if neon else MIN_TRAIL_DIFFERENCE)
+
+
+## Ölçü, kullanıcının "çok yakın" bulduğu eski renkleri yakalar; aynı iz kendisinden farksızdır.
+func test_difference_catches_the_old_close_pairs() -> void:
+	var ambient: Color = SECTORS.def_at(1).palette.ambient
+	var frost: Trail = _trail(_def([Color(0.55, 0.82, 1.0)], Color(0.35, 0.7, 1.0)), ambient)
+	var comet: Trail = _trail(_def([Color(0.45, 0.95, 1.0), Color(0.45, 0.5, 1.0)],
+			Color(0.4, 0.8, 1.0)), ambient)
+	var gold: Trail = _trail(_def([Color(1.0, 0.82, 0.35)], Color(1.0, 0.7, 0.2)), ambient)
+	var close_call: Trail = _trail(_def([Color(1.0, 0.68, 0.2), Color(1.0, 0.85, 0.4)],
+			Color(1.0, 0.55, 0.1)), ambient)
+	assert_float(_difference(frost, comet)).is_less(MIN_TRAIL_DIFFERENCE)
+	assert_float(_difference(gold, close_call)).is_less(MIN_TRAIL_DIFFERENCE)
+	assert_float(_difference(frost, gold)).is_greater_equal(MIN_TRAIL_DIFFERENCE)
+	assert_float(_difference(gold, gold)).is_equal_approx(0.0, 0.0001)
+
+
 func test_names_are_translated() -> void:
 	var locale: String = TranslationServer.get_locale()
 	for def: TrailDef in TRAILS.trails:
@@ -122,3 +176,46 @@ func _hues_apart(color: Color, fixed: Color) -> bool:
 		return true
 	var distance: float = absf(color.h - fixed.h)
 	return minf(distance, 1.0 - distance) >= MIN_HUE_DISTANCE
+
+
+## Sektör renginde, verilen izi kuşanmış iz düğümü (renk geçişi ve parlama Trail'in kendisinden).
+func _trail(def: TrailDef, ambient: Color) -> Trail:
+	var trail: Trail = auto_free(Trail.new()) as Trail
+	trail.apply_def(def)
+	trail.set_ambient(ambient)
+	return trail
+
+
+## Beyaz başla başlayan renkli iz tanımı.
+func _def(colors: Array[Color], glow: Color) -> TrailDef:
+	var def: TrailDef = TrailDef.new()
+	def.colors = PackedColorArray([Color.WHITE] + colors)
+	def.glow_color = glow
+	return def
+
+
+## İki izin görünüş farkı: renk geçişinin aynı yerlerindeki OKLab farklarının, ikisinin de görünür
+## olduğu ölçüde (saydamlık) ağırlıklı ortalaması + parlama renklerinin OKLab farkı.
+func _difference(a: Trail, b: Trail) -> float:
+	var total: float = 0.0
+	var weight: float = 0.0
+	for step: int in LOOK_SAMPLES:
+		var offset: float = (step + 0.5) / LOOK_SAMPLES
+		var color_a: Color = a.gradient.sample(offset)
+		var color_b: Color = b.gradient.sample(offset)
+		var visible: float = minf(color_a.a, color_b.a)
+		total += _oklab(color_a).distance_to(_oklab(color_b)) * visible
+		weight += visible
+	return total / weight + _oklab(a.glow_color).distance_to(_oklab(b.glow_color))
+
+
+## sRGB rengin OKLab karşılığı (L, a, b): eşit uzaklıkların gözde eşit fark gibi göründüğü uzay.
+func _oklab(color: Color) -> Vector3:
+	var linear: Color = color.srgb_to_linear()
+	var rgb: Vector3 = Vector3(linear.r, linear.g, linear.b)
+	var lms: Vector3 = Vector3(TO_LMS[0].dot(rgb), TO_LMS[1].dot(rgb), TO_LMS[2].dot(rgb))
+	var root: Vector3 = Vector3(
+			pow(maxf(lms.x, 0.0), 1.0 / 3.0),
+			pow(maxf(lms.y, 0.0), 1.0 / 3.0),
+			pow(maxf(lms.z, 0.0), 1.0 / 3.0))
+	return Vector3(TO_LAB[0].dot(root), TO_LAB[1].dot(root), TO_LAB[2].dot(root))

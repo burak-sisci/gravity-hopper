@@ -8,5 +8,5 @@ id = &"trail_frost"
 name_key = "TRAIL_FROST"
 unlock = 1
 cost = 300
-colors = PackedColorArray(1, 1, 1, 1, 0.55, 0.82, 1, 1)
-glow_color = Color(0.35, 0.7, 1, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.9, 0.95, 1, 1, 0.82, 0.9, 1, 1, 0.7, 0.8, 1, 1)
+glow_color = Color(0.8, 0.88, 1, 1)
