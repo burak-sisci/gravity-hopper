@@ -76,8 +76,8 @@ Karakter iki dikey duvar arasındaki bir koridorda **yukarı** tırmanır ve her
 | **Duvar boşluğu** | Duvarda açıklık; tutunduğun duvar biterse koridordan düşersin. | S2 |
 | **Veri bloğu** | Koridorun ortasında süzülen blok; geçiş yolunu keser. | S2 |
 | **Lazer kapısı** | Vuruşa göre açılıp kapanan yatay lazer: duvardan uzanan ışın her vuruşta yanar, yarım vuruşta söner. İki duvardan kısa ışınlar ortada bir açıklık bırakır; oradan ancak tam zamanlanmış bir çevirmeyle, havadayken geçilir. Yarım vuruşta yanan ışın aldatıcıdır: geçerken kapalıdır. Sönükken ince bir ray kalır; yanmadan hemen önce ray kalınlaşıp parlar (uyarı ışıması). | S3 |
-| **Dönen şekil** | Vuruş temposunda dönen köşeli engel. | S4 |
-| **Hareketli blok** | Duvarlar arasında ritimle gidip gelen blok. | S4 |
+| **Dönen şekil** | Koridorun ortasında vuruş temposunda dönen, uçları sivri kırmızı çubuk. Her vuruşun ilk yarısında durur, ikinci yarısında çeyrek tur döner ve tam vuruşta yeni yerine oturur. Ortasında beyazımsı bir çekirdek çizgisi vardır. | S4 |
+| **Hareketli blok** | Duvarlar arasında ritimle gidip gelen veri bloğu: her vuruşta bir duvara varır, durmadan geri döner. Gideceği yol sönük kırmızı bir bantla görünür. | S4 |
 
 **Şekil dili (erişilebilirlik):**
 

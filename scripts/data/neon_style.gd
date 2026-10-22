@@ -105,6 +105,15 @@ extends Resource
 ## Veri satırlarının saydamlığı.
 @export_range(0.0, 1.0, 0.05) var block_row_alpha: float = 0.55
 
+@export_group("Hareketli tehlikeler")
+## Dönen çubuğun beyaza çekilmiş çekirdek çizgisinin kalınlığı (çubuk kalınlığına oranla).
+@export_range(0.0, 1.0, 0.05) var rotor_core_ratio: float = 0.3
+## Dönen çubuğun çekirdeğinin tehlike kırmızısından beyaza çekilme oranı.
+@export_range(0.0, 1.0, 0.05) var rotor_core_whiten: float = 0.6
+## Hareketli bloğun yolunu gösteren şeridin saydamlığı (lazer rayından ayrı dursun diye ince
+## çizgi değil, blok boyunda soluk bir bant).
+@export_range(0.0, 0.5, 0.01) var mover_lane_alpha: float = 0.1
+
 @export_group("Lazer")
 ## Yanık ışının sivrilen ucunun çarpışma kutusunun ucundan taşan boyu (görüntü kutudan büyük
 ## kalır, oyuncunun aleyhine olmaz).

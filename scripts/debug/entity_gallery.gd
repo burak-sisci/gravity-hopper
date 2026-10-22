@@ -1,6 +1,7 @@
 extends Node2D
-## Varlık galerisi (M3-05): oyunun tehlike ve toplanabilir sahneleri (diken, blok, lazer,
-## Glimmer) ve oyuncu (M3-06) S1 renkleriyle yan yana, vuruşla canlı. Yalnızca debug amaçlıdır,
+## Varlık galerisi (M3-05): oyunun tehlike ve toplanabilir sahneleri (diken, blok, hareketli blok,
+## lazer, dönen şekil, Glimmer) ve oyuncu (M3-06) S1 renkleriyle yan yana, vuruşla canlı (M4-10'da
+## hareketli tehlikeler eklendi). Yalnızca debug amaçlıdır,
 ## oyuncu görmez; görsel işleri rastgele parça beklemeden incelemek ve ekran görüntüsü almak
 ## içindir.
 ## PC'de: <godot> --path . res://scenes/debug/entity_gallery.tscn
@@ -10,6 +11,8 @@ const SECTOR: SectorDef = preload("res://data/sectors/sector_01.tres")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const BLOCK_SCENE: PackedScene = preload("res://scenes/entities/block.tscn")
 const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
+const MOVING_BLOCK_SCENE: PackedScene = preload("res://scenes/entities/moving_block.tscn")
+const ROTOR_SCENE: PackedScene = preload("res://scenes/entities/rotor.tscn")
 const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
 const PLAYER_SCENE: PackedScene = preload("res://scenes/entities/player.tscn")
 
@@ -21,12 +24,14 @@ const WALL_INSET: float = 90.0
 ## Galerinin vuruş hızı (S1 tempo aralığında).
 const BPM: float = 128.0
 const SECONDS_PER_MINUTE: float = 60.0
-const SPIKE_ROW_Y: float = 380.0
-const SPIKE_STEP_Y: float = 160.0
-const BLOCK_ROW_Y: float = 760.0
-const LASER_ROW_Y: float = 1100.0
-const LASER_STEP_Y: float = 200.0
-const GLIMMER_ROW_Y: float = 1560.0
+const SPIKE_ROW_Y: float = 300.0
+const SPIKE_STEP_Y: float = 140.0
+const BLOCK_ROW_Y: float = 600.0
+const MOVING_BLOCK_ROW_Y: float = 790.0
+const LASER_ROW_Y: float = 950.0
+const LASER_STEP_Y: float = 150.0
+const ROTOR_ROW_Y: float = 1330.0
+const GLIMMER_ROW_Y: float = 1600.0
 const GLIMMER_STEP_X: float = 150.0
 const GLIMMER_COUNT: int = 3
 ## Oyuncu sol duvarda (çekirdeğin duvardan uzaklığı oyundaki gibi).
@@ -35,6 +40,7 @@ const PLAYER_POSITION: Vector2 = Vector2(120.0, 1760.0)
 var _beat: float = 0.0
 var _lasers: Array[Laser] = []
 var _blocks: Array[Block] = []
+var _movers: Array[MovingHazard] = []
 var _glimmers: Array[Glimmer] = []
 
 
@@ -56,6 +62,10 @@ func _ready() -> void:
 		_add_item(SPIKE_SCENE, Vector2(WALL_INSET, y), false)
 		_add_item(SPIKE_SCENE, Vector2(right, y), true)
 	_blocks.append(_add_item(BLOCK_SCENE, Vector2(VIEW_WIDTH * 0.5, BLOCK_ROW_Y), false) as Block)
+	var center: float = VIEW_WIDTH * 0.5
+	_movers.append(_add_item(MOVING_BLOCK_SCENE, Vector2(center, MOVING_BLOCK_ROW_Y), false)
+			as MovingHazard)
+	_movers.append(_add_item(ROTOR_SCENE, Vector2(center, ROTOR_ROW_Y), false) as MovingHazard)
 	var left_laser: Laser = _add_item(LASER_SCENE, Vector2(WALL_INSET, LASER_ROW_Y), false) as Laser
 	var right_laser: Laser = _add_item(
 			LASER_SCENE, Vector2(right, LASER_ROW_Y + LASER_STEP_Y), true) as Laser
@@ -77,6 +87,8 @@ func _physics_process(delta: float) -> void:
 		laser.set_beat(_beat)
 	for block: Block in _blocks:
 		block.set_beat(_beat)
+	for mover: MovingHazard in _movers:
+		mover.set_beat(_beat)
 	for glimmer: Glimmer in _glimmers:
 		glimmer.set_beat(_beat)
 

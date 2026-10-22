@@ -11,7 +11,11 @@ extends Area2D
 
 
 func _ready() -> void:
-	var size: Vector2 = (_shape.shape as RectangleShape2D).size
+	add_data_rows(_visual, (_shape.shape as RectangleShape2D).size)
+
+
+## Bloğun boyuna göre veri satırlarını görüntüye ekler (hareketli blok da kullanır, M4-10).
+static func add_data_rows(visual: Node2D, size: Vector2) -> void:
 	var style: NeonStyle = Neon.STYLE
 	var left: float = size.x * (style.block_row_inset - 0.5)
 	var inner_width: float = size.x * (1.0 - 2.0 * style.block_row_inset)
@@ -21,7 +25,7 @@ func _ready() -> void:
 		line.default_color = Color(style.hazard_color, style.block_row_alpha)
 		var y: float = row.x * size.y
 		line.points = PackedVector2Array([Vector2(left, y), Vector2(left + inner_width * row.y, y)])
-		_visual.add_child(line)
+		visual.add_child(line)
 
 
 ## Vuruş konumuna (tempo ızgarasının başından beri geçen vuruş) göre görüntüyü süzdürür.

@@ -1,13 +1,17 @@
 extends GdUnitTestSuite
 ## Parça doğrulayıcısı (M2-05, architecture.md §8.2): adil parçayı geçirir, çözülemeyeni,
 ## fazla sıkışığı ve kenara taşanı yakalar; kamera kuralı ve sektör kapsamı. Tek sektör denemeleri
-## M2-20 öncesindeki sektör tempolarıyla (S1 100, S2 110, S3 120 BPM) yapılır.
+## M2-20 öncesindeki sektör tempolarıyla (S1 100, S2 110, S3 120 BPM) yapılır. Hareketli tehlikeler
+## (M4-10): duvara varan blok ve koridoru kesen çubuk yakalanıyor, gerçek şekilleriyle deneniyor,
+## fazla hızlı hareket yakalanıyor.
 
 const SAMPLE_SCENE: PackedScene = preload("res://scenes/levels/chunks/spike_zigzag_01.tscn")
 const UNSOLVABLE_SCENE: PackedScene = preload("res://tools/fixtures/chunk_unsolvable.tscn")
 const SPIKE_SCENE: PackedScene = preload("res://scenes/entities/spike.tscn")
 const LASER_SCENE: PackedScene = preload("res://scenes/entities/laser.tscn")
 const GLIMMER_SCENE: PackedScene = preload("res://scenes/entities/glimmer.tscn")
+const ROTOR_SCENE: PackedScene = preload("res://scenes/entities/rotor.tscn")
+const MOVING_BLOCK_SCENE: PackedScene = preload("res://scenes/entities/moving_block.tscn")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
@@ -154,6 +158,111 @@ func test_every_sector_needs_a_chunk() -> void:
 	var chunks: Array[ChunkInfo] = [early]
 	var errors: PackedStringArray = _validator.coverage_errors(chunks)
 	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
+
+
+func test_moving_block_arriving_at_the_wall_is_caught() -> void:
+	# Sol duvar 2.–6. vuruş dikenli: oyuncu sağ duvarda kalmalı. Duvardan duvara giden blok 3.
+	# vuruşta sağ duvara varıyor; oyuncu tam o anda bloğun hizasında, geçilemez. Ters evrede blok
+	# 3. vuruşta sol duvarda (dikenlerin önünde), oyuncu sağda güvenle geçer. İki parçanın tek farkı
+	# bloğun evresi. İleti son kalan yolların çarptığını söyler: bloktan kaçmak için sola geçen yol
+	# dikene çarpar.
+	var trapped: ChunkInfo = _chunk(8, _left_wall(200, 600))
+	_add_moving_block(trapped, -300, true)
+	var errors: PackedStringArray = _validator.sector_errors(trapped, 3, 120.0)
+	assert_array(errors).is_not_empty()
+	if not errors.is_empty():
+		assert_str(errors[0]).contains("geçilemiyor")
+	var clear: ChunkInfo = _chunk(8, _left_wall(200, 600))
+	_add_moving_block(clear, -300, false)
+	assert_array(_validator.sector_errors(clear, 3, 120.0)).is_empty()
+
+
+func test_rotor_across_the_corridor_is_caught() -> void:
+	# 850 px'lik çubuk iki duvardaki oyuncuya da uzanır. 3. vuruşta yatay duruyorsa (başlangıç 90°,
+	# vuruşta 90°) o hizadan hiçbir yoldan geçilemez; dikey duruyorsa oyuncu duvarda kalarak geçer.
+	var blocked: ChunkInfo = _chunk(8, [])
+	_add_rotor(blocked, -300, 850.0, 90.0)
+	var errors: PackedStringArray = _validator.sector_errors(blocked, 3, 120.0)
+	assert_array(errors).is_not_empty()
+	if not errors.is_empty():
+		assert_str(errors[0]).contains("geçilemiyor").contains("Rotor")
+	var open: ChunkInfo = _chunk(8, [])
+	_add_rotor(open, -300, 850.0, 0.0)
+	assert_array(_validator.sector_errors(open, 3, 120.0)).is_empty()
+
+
+func test_moving_hazards_are_tried_on_their_real_shape() -> void:
+	# 45° eğik çubuğun kutusu oyuncuya değiyor ama kendisi değmiyor: kutuya çevirmek temkinli olurdu.
+	var bar: PackedVector2Array = Transform2D(PI * 0.25, Vector2.ZERO) * PackedVector2Array([
+		Vector2(-150, -20), Vector2(150, -20), Vector2(150, 20), Vector2(-150, 20),
+	])
+	var bounds: Rect2 = Rect2(bar[0], Vector2.ZERO)
+	for point: Vector2 in bar:
+		bounds = bounds.expand(point)
+	var corner_box: Rect2 = Rect2(Vector2(70, -110), Vector2(40, 40))
+	assert_bool(corner_box.intersects(bounds)).is_true()
+	assert_bool(ChunkValidator.Simulation.rect_hits_polygon(corner_box, bar, bounds)).is_false()
+	var center_box: Rect2 = Rect2(Vector2(-20, -20), Vector2(40, 40))
+	assert_bool(ChunkValidator.Simulation.rect_hits_polygon(center_box, bar, bounds)).is_true()
+	# Değmek kesişmek sayılmaz (Rect2.intersects gibi).
+	var square: PackedVector2Array = PackedVector2Array([
+		Vector2(0, 0), Vector2(10, 0), Vector2(10, 10), Vector2(0, 10),
+	])
+	var touching: Rect2 = Rect2(Vector2(10, 0), Vector2(5, 5))
+	assert_bool(ChunkValidator.Simulation.rect_hits_polygon(
+			touching, square, Rect2(0, 0, 10, 10))).is_false()
+
+
+func test_too_fast_motion_is_caught() -> void:
+	# 600 px'lik çubuk yarım vuruşta 180° dönüyor: 120 BPM'de ucu bir adımda oyuncunun içinden
+	# atlayacak kadar yol alır (≈ 94 px > 40 + 42 px).
+	var chunk: ChunkInfo = _chunk(8, [])
+	var rotor: Rotor = _add_rotor(chunk, -400, 600.0, 0.0)
+	rotor.turn_degrees = 180.0
+	var errors: PackedStringArray = _validator.sector_errors(chunk, 3, 120.0)
+	assert_int(errors.size()).is_equal(1)
+	if not errors.is_empty():
+		assert_str(errors[0]).contains("Rotor").contains("çok hızlı")
+	rotor.turn_degrees = 90.0
+	assert_array(_validator.sector_errors(chunk, 3, 120.0)).is_empty()
+
+
+func test_moving_hazards_need_their_sector() -> void:
+	# Dönen şekil ve hareketli blok S4'ten önce izinli değil (SectorDef.allowed_hazards, M4-11).
+	var chunk: ChunkInfo = _chunk(8, [])
+	chunk.min_sector = 3
+	_add_rotor(chunk, -300, 300.0, 0.0)
+	_add_moving_block(chunk, -600, true)
+	var errors: Array = Array(_validator.chunk_errors(chunk))
+	assert_array(errors).contains(["S3: 'rotor' bu sektörde izinli değil"])
+	assert_array(errors).contains(["S3: 'moving_block' bu sektörde izinli değil"])
+
+
+func _add_moving_block(chunk: ChunkInfo, y: float, starts_left: bool) -> MovingBlock:
+	var block: MovingBlock = MOVING_BLOCK_SCENE.instantiate() as MovingBlock
+	block.name = "MovingBlock%d" % chunk.get_child_count()
+	block.position = Vector2(0, y)
+	block.starts_left = starts_left
+	chunk.add_child(block)
+	return block
+
+
+func _add_rotor(chunk: ChunkInfo, y: float, length: float, start: float) -> Rotor:
+	var rotor: Rotor = ROTOR_SCENE.instantiate() as Rotor
+	rotor.name = "Rotor%d" % chunk.get_child_count()
+	rotor.position = Vector2(0, y)
+	rotor.length = length
+	rotor.start_degrees = start
+	chunk.add_child(rotor)
+	return rotor
+
+
+## Sol duvarı from'dan to'ya (tasarım y, aşağıdan yukarı) yarım vuruşta bir dikenle kapatır.
+func _left_wall(from: int, to: int) -> Array[Vector3]:
+	var spikes: Array[Vector3] = []
+	for y: int in range(from, to + 1, 50):
+		spikes.append(Vector3(LEFT, -y, 1))
+	return spikes
 
 
 func _add_glimmer(chunk: ChunkInfo, x: float, y: float) -> void:

@@ -20,6 +20,11 @@ extends RefCounted
 ## Duvar boşluğu (M2-11): gövde tamamen boşluğun içindeyken o duvarda (ya da oraya inerken)
 ## bulunmak düşmek sayılır. Coyote süresi tanınmaz; doğrulama oyundan biraz daha sıkıdır.
 ##
+## Hareketli tehlikeler (M4-10): dönen şekil ve hareketli blok her karede, oyuncunun vuruş
+## konumundaki duruşuyla (MovingHazard.polygon_at, oyundaki set_beat ile aynı hesap) denenir.
+## Kutuya çevrilmezler: eğik çubuğun kutusu çok temkinli olurdu; gövde kutusu ile dışbükey çokgen
+## ayırıcı eksen yöntemiyle kesiştirilir.
+##
 ## Parça her giriş durumundan geçilebilmeli: iki duvarda yeni inmiş olarak ve önceki parçadan
 ## kalan yarım geçişlerin her anında. Böylece parçalar hangi sırayla gelirse gelsin birleşim
 ## yeri de adil kalır. Tehlikeler kutu (AABB) olarak alınır; bu, birkaç piksel temkinlidir.
@@ -122,6 +127,12 @@ func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArr
 	var lasers: Array[Laser] = []
 	var gaps: Array[Vector3] = []
 	var gap_names: Array[String] = []
+	var movers: Array[MovingHazard] = []
+	## Her hareketli tehlikeyi dünyaya yerleştiren dönüşüm ve taradığı alan.
+	var mover_xforms: Array[Transform2D] = []
+	var mover_reaches: Array[Rect2] = []
+	var mover_names: Array[String] = []
+	var x_scale: float = half_width / ChunkInfo.DESIGN_HALF_WIDTH
 	var errors: PackedStringArray = PackedStringArray()
 	var top: float = -chunk.height_px(beat)
 	var body_half_h: float = _body_size.y * 0.5
@@ -129,6 +140,15 @@ func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArr
 		var world: Vector2 = ChunkInfo.world_position(chunk.design_position(item), beat, half_width)
 		var item_beat: float = -chunk.design_position(item).y / ChunkInfo.BEAT_GRID_PX
 		var label: String = "%s (%s. vuruş)" % [item.name, String.num(item_beat, 1).replace(".", ",")]
+		if item is MovingHazard:
+			var xform: Transform2D = Transform2D(item.rotation, item.scale, item.skew, world)
+			var reach: Rect2 = xform * (item as MovingHazard).swept_rect(x_scale)
+			if reach.position.y < top or reach.end.y > 0.0:
+				errors.append("%s parçanın sınırından taşıyor" % item.name)
+			movers.append(item as MovingHazard)
+			mover_xforms.append(xform)
+			mover_reaches.append(reach)
+			mover_names.append(label)
 		if item is WallGap:
 			# Gövde tamamen boşluktayken duvar yoktur: bölge her iki uçtan gövdenin yarısı kadar dar.
 			var gap: WallGap = item as WallGap
@@ -142,9 +162,11 @@ func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArr
 			hazards.append(rect)
 			hazard_names.append(label)
 			lasers.append(item as Laser)
+	for i: int in movers.size():
+		errors.append_array(_speed_errors(movers[i], mover_names[i], bpm, x_scale))
 	if not errors.is_empty():
 		return errors
-	if hazards.is_empty() and gaps.is_empty():
+	if hazards.is_empty() and gaps.is_empty() and movers.is_empty():
 		# Tehlikesiz parçada Glimmer riskli yolda olamaz.
 		for item: Node2D in chunk.items():
 			if item is Glimmer:
@@ -154,13 +176,15 @@ func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArr
 			def.climb_px(), top, _tuning)
 	sim.set_gaps(gaps)
 	sim.set_lasers(lasers, beat)
-	# Simulation sıra numarasıyla okur: önce tehlike kutuları, sonra boşluklar.
-	var names: Array[String] = hazard_names + gap_names
+	sim.set_movers(movers, mover_xforms, x_scale)
+	# Simulation sıra numarasıyla okur: önce tehlike kutuları, sonra hareketliler, sonra boşluklar.
+	var names: Array[String] = hazard_names + mover_names + gap_names
 	var failure: String = sim.first_failure(names)
 	if not failure.is_empty():
 		errors.append(failure)
 		return errors
-	errors.append_array(_glimmer_errors(chunk, sim, beat, half_width, hazards, gaps))
+	errors.append_array(_glimmer_errors(chunk, sim, beat, half_width, hazards + mover_reaches,
+			gaps))
 	return errors
 
 
@@ -185,6 +209,33 @@ func _glimmer_errors(chunk: ChunkInfo, sim: Simulation, beat: float, half_width:
 	return errors
 
 
+## Hareketli tehlike bir fizik adımında, kendi kalınlığı + oyuncu çarpışma kutusunun dar kenarı
+## kadar yer değiştirmemeli: yoksa iki adım arasında oyuncunun içinden geçip değmeyebilir (oyun da
+## doğrulayıcı da kare kare bakar). Hareket her vuruşta yinelendiği için iki vuruş denenir.
+func _speed_errors(mover: MovingHazard, label: String, bpm: float,
+		x_scale: float) -> PackedStringArray:
+	var errors: PackedStringArray = PackedStringArray()
+	var rest: PackedVector2Array = mover.rest_polygon()
+	var box: Rect2 = Rect2(rest[0], Vector2.ZERO)
+	for point: Vector2 in rest:
+		box = box.expand(point)
+	var hurt: Vector2 = _hurt_half() * 2.0
+	var limit: float = minf(box.size.x, box.size.y) + minf(hurt.x, hurt.y)
+	var beat_step: float = PHYSICS_DT * bpm / ChunkInfo.SECONDS_PER_MINUTE
+	var worst: float = 0.0
+	var before: PackedVector2Array = mover.polygon_at(0.0, x_scale)
+	for step: int in range(1, ceili(2.0 / beat_step) + 1):
+		var after: PackedVector2Array = mover.polygon_at(step * beat_step, x_scale)
+		for i: int in after.size():
+			worst = maxf(worst, before[i].distance_to(after[i]))
+		before = after
+	if worst >= limit:
+		errors.append("%s çok hızlı: bir adımda %s px (en çok %s)" % [
+			label, String.num(worst, 0), String.num(limit, 0),
+		])
+	return errors
+
+
 static func _glimmer_radius(glimmer: Glimmer) -> float:
 	var shape: CollisionShape2D = glimmer.get_node_or_null("Shape") as CollisionShape2D
 	if shape != null and shape.shape is CircleShape2D:
@@ -200,7 +251,8 @@ func _hurt_half() -> Vector2:
 func _hazard_rects(item: Node2D, world: Vector2) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	var area: CollisionObject2D = item as CollisionObject2D
-	if area == null or not (area.collision_layer & HAZARD_LAYER):
+	# Hareketli tehlikeler kutuya çevrilmez; her karede duruşlarıyla denenir.
+	if area == null or not (area.collision_layer & HAZARD_LAYER) or item is MovingHazard:
 		return rects
 	var item_xform: Transform2D = Transform2D(item.rotation, item.scale, item.skew, world)
 	if item is Laser:
@@ -247,6 +299,14 @@ class Simulation:
 	## Her tehlike kutusunun lazeri (null = sürekli) ve dünyadaki vuruş boyu.
 	var _lasers: Array[Laser] = []
 	var _beat_px: float = 1.0
+	## Hareketli tehlikeler (M4-10), onları dünyaya yerleştiren dönüşümler ve koridor ölçeği.
+	var _movers: Array[MovingHazard] = []
+	var _mover_xforms: Array[Transform2D] = []
+	var _x_scale: float = 1.0
+	## Hareketlilerin son hesaplanan karedeki dünya çokgenleri ve kutuları (kare başına bir kez).
+	var _posed_frame: int = -1
+	var _mover_shapes: Array[PackedVector2Array] = []
+	var _mover_bounds: Array[Rect2] = []
 	var _hurt_half: Vector2
 	var _wall_x: float
 	var _step_y: float
@@ -287,6 +347,14 @@ class Simulation:
 	func set_lasers(lasers: Array[Laser], beat_px: float) -> void:
 		_lasers = lasers
 		_beat_px = beat_px
+
+	func set_movers(movers: Array[MovingHazard], xforms: Array[Transform2D], x_scale: float) -> void:
+		_movers = movers
+		_mover_xforms = xforms
+		_x_scale = x_scale
+		_mover_shapes.resize(movers.size())
+		_mover_bounds.resize(movers.size())
+		_posed_frame = -1
 
 	## Güvenli olmayan ilk giriş durumunun açıklaması; hepsi güvenliyse boş.
 	func first_failure(names: Array[String]) -> String:
@@ -352,8 +420,8 @@ class Simulation:
 	func _y_of(frame: int) -> float:
 		return _start_y - frame * _step_y
 
-	## Durumun bu karede değdiği tehlikelerin sıra numaraları; duvar boşlukları tehlikelerden sonra
-	## numaralanır ve yalnızca o duvarda (duvar durumunda) olana dokunur.
+	## Durumun bu karede değdiği tehlikelerin sıra numaraları: önce tehlike kutuları, sonra
+	## hareketliler, en son duvar boşlukları (yalnızca o duvarda, duvar durumunda olana dokunur).
 	func _hits(frame: int, state: int) -> Array[int]:
 		var y: float = _y_of(frame)
 		var body: Rect2 = Rect2(Vector2(_x_of(state), y) - _hurt_half, _hurt_half * 2.0)
@@ -365,12 +433,59 @@ class Simulation:
 				continue
 			if body.intersects(_hazards[i]):
 				result.append(i)
+		_pose_movers(frame, beat)
+		for i: int in _movers.size():
+			if rect_hits_polygon(body, _mover_shapes[i], _mover_bounds[i]):
+				result.append(_hazards.size() + i)
 		if state < _wall_count():
 			var side: float = 1.0 if _side(state) == 1 else -1.0
+			var first_gap: int = _hazards.size() + _movers.size()
 			for i: int in _gaps.size():
 				if _gaps[i].x == side and y > _gaps[i].y and y < _gaps[i].z:
-					result.append(_hazards.size() + i)
+					result.append(first_gap + i)
 		return result
+
+	## Hareketlileri bu karenin vuruş konumundaki duruşlarına koyar (dünyada; kare başına bir kez).
+	func _pose_movers(frame: int, beat: float) -> void:
+		if frame == _posed_frame:
+			return
+		_posed_frame = frame
+		for i: int in _movers.size():
+			var shape: PackedVector2Array = _mover_xforms[i] * _movers[i].polygon_at(beat, _x_scale)
+			var bounds: Rect2 = Rect2(shape[0], Vector2.ZERO)
+			for point: Vector2 in shape:
+				bounds = bounds.expand(point)
+			_mover_shapes[i] = shape
+			_mover_bounds[i] = bounds
+
+	## Kutu ile dışbükey çokgen kesişiyor mu (ayırıcı eksen yöntemi: kutunun eksenleri sınır
+	## kutusuyla, sonra çokgenin kenar dikmeleri). Değmek kesişmek sayılmaz (Rect2.intersects gibi).
+	static func rect_hits_polygon(rect: Rect2, polygon: PackedVector2Array, bounds: Rect2) -> bool:
+		if not rect.intersects(bounds):
+			return false
+		var corners: PackedVector2Array = PackedVector2Array([
+			rect.position, Vector2(rect.end.x, rect.position.y), rect.end,
+			Vector2(rect.position.x, rect.end.y),
+		])
+		var count: int = polygon.size()
+		for i: int in count:
+			var edge: Vector2 = polygon[(i + 1) % count] - polygon[i]
+			var axis: Vector2 = Vector2(-edge.y, edge.x)
+			var shape_span: Vector2 = span(polygon, axis)
+			var rect_span: Vector2 = span(corners, axis)
+			if shape_span.y <= rect_span.x or rect_span.y <= shape_span.x:
+				return false
+		return true
+
+	## Noktaların eksen üzerindeki izdüşüm aralığı (x en küçük, y en büyük).
+	static func span(points: PackedVector2Array, axis: Vector2) -> Vector2:
+		var low: float = INF
+		var high: float = -INF
+		for point: Vector2 in points:
+			var at: float = point.dot(axis)
+			low = minf(low, at)
+			high = maxf(high, at)
+		return Vector2(low, high)
 
 	## Sondan başa: safe[s] = bu karede s'de canlıyken parçanın sonuna sağ çıkılabilir mi?
 	func _safe_at_start() -> PackedByteArray:

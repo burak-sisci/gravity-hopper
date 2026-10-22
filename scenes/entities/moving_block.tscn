@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/moving_block.gd" id="1_moving_block"]
+[ext_resource type="Script" path="res://scripts/components/neon_shape.gd" id="2_neon_shape"]
+
+[node name="MovingBlock" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_moving_block")
+move_beats = 1.0
+
+[node name="Lane" type="Polygon2D" parent="."]
+
+[node name="Shape" type="CollisionPolygon2D" parent="."]
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("2_neon_shape")
+tone = 1
+fill_alpha = 0.3
+glow = 1
+sharp = true

@@ -47,6 +47,8 @@ var _lasers: Array[Laser] = []
 var _glimmers: Array[Glimmer] = []
 ## Vuruşla süzülen veri blokları (M3-05).
 var _blocks: Array[Block] = []
+## Vuruşla dönen ve kayan tehlikeler (M4-10).
+var _movers: Array[MovingHazard] = []
 ## Dirilişte temizlenmiş tehlikeler (M4-07); parça havuzdan yeniden gelince geri açılır.
 var _cleared: Array[Area2D] = []
 
@@ -58,6 +60,8 @@ func _ready() -> void:
 			_lasers.append(item as Laser)
 		elif item is Block:
 			_blocks.append(item as Block)
+		elif item is MovingHazard:
+			_movers.append(item as MovingHazard)
 		elif item is Glimmer:
 			var glimmer: Glimmer = item as Glimmer
 			_glimmers.append(glimmer)
@@ -85,14 +89,16 @@ func reset() -> void:
 	_cleared.clear()
 
 
-## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere, bloklara ve
-## Glimmer'lara iletir.
+## Vuruş konumunu (tempo ızgarasının başından beri geçen vuruş) lazerlere, bloklara, hareketli
+## tehlikelere ve Glimmer'lara iletir.
 ## Parça tam vuruşta başladığı için evreleri parçanın yerinden bağımsızdır.
 func set_beat(beat: float) -> void:
 	for laser: Laser in _lasers:
 		laser.set_beat(beat)
 	for block: Block in _blocks:
 		block.set_beat(beat)
+	for mover: MovingHazard in _movers:
+		mover.set_beat(beat)
 	for glimmer: Glimmer in _glimmers:
 		glimmer.set_beat(beat)
 
@@ -194,9 +200,12 @@ func top_y() -> float:
 
 
 ## Tasarım konumlarını dünyaya ölçekler. Tekrar çağrılabilir (havuzdan gelen parça, yeni sektör).
-## Konumlar _ready'de alındığı için parça ağaçta olmalı.
+## Konumlar _ready'de alındığı için parça ağaçta olmalı. Hareketli tehlikelerin yatay yolu da
+## koridor genişliğiyle ölçeklenir (M4-10).
 func layout(world_beat_px: float, half_width: float) -> void:
 	laid_out_beat_px = world_beat_px
+	for mover: MovingHazard in _movers:
+		mover.x_scale = half_width / DESIGN_HALF_WIDTH
 	for item: Node2D in _design_positions:
 		item.position = world_position(_design_positions[item], world_beat_px, half_width)
 
@@ -218,6 +227,8 @@ func design_errors() -> PackedStringArray:
 			errors.append("%s: x=%s 1 m adımına oturmuyor ya da koridor dışında" % [item.name, at.x])
 		if item is WallGap:
 			errors.append_array(_gap_errors(item as WallGap, at, top))
+		elif item is MovingHazard:
+			errors.append_array(_mover_errors(item as MovingHazard, at))
 		# Duvardaki tehlike koridora bakar: sol duvarda scale.x > 0, sağ duvarda < 0.
 		elif item is Glimmer:
 			pass
@@ -237,6 +248,18 @@ func _gap_errors(gap: WallGap, at: Vector2, top: float) -> PackedStringArray:
 		errors.append("%s: boşluk boyu %s yarım vuruşun katı değil" % [gap.name, gap.length])
 	if at.y - gap.length < top:
 		errors.append("%s: boşluk parçanın üstünden taşıyor" % gap.name)
+	return errors
+
+
+## Hareketli tehlikenin taradığı alan koridorun içinde kalır (tasarımda, M4-10).
+static func _mover_errors(mover: MovingHazard, at: Vector2) -> PackedStringArray:
+	var errors: PackedStringArray = PackedStringArray()
+	var xform: Transform2D = Transform2D(mover.rotation, mover.scale, mover.skew, at)
+	var reach: Rect2 = xform * mover.swept_rect(1.0)
+	if reach.position.x < -DESIGN_HALF_WIDTH - 0.01 or reach.end.x > DESIGN_HALF_WIDTH + 0.01:
+		errors.append("%s: hareketi koridordan taşıyor (x %s … %s)" % [
+			mover.name, reach.position.x, reach.end.x,
+		])
 	return errors
 
 
