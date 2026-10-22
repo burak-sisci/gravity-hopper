@@ -23,17 +23,6 @@ const MIN_TRAIL_DIFFERENCE: float = 0.25
 const MIN_NEON_DIFFERENCE: float = 0.15
 ## Görünüş farkında renk geçişinden alınan örnek sayısı.
 const LOOK_SAMPLES: int = 32
-## Doğrusal sRGB → LMS ve küp kökü alınmış LMS → OKLab matrislerinin satırları (Björn Ottosson).
-const TO_LMS: Array[Vector3] = [
-	Vector3(0.4122214708, 0.5363325363, 0.0514459929),
-	Vector3(0.2119034982, 0.6806995451, 0.1073969566),
-	Vector3(0.0883024619, 0.2817188376, 0.6299787005),
-]
-const TO_LAB: Array[Vector3] = [
-	Vector3(0.2104542553, 0.7936177850, -0.0040720468),
-	Vector3(1.9779984951, -2.4285922050, 0.4505937099),
-	Vector3(0.0259040371, 0.7827717662, -0.8086757660),
-]
 
 
 func test_default_trail_comes_first_and_matches_the_save() -> void:
@@ -204,18 +193,7 @@ func _difference(a: Trail, b: Trail) -> float:
 		var color_a: Color = a.gradient.sample(offset)
 		var color_b: Color = b.gradient.sample(offset)
 		var visible: float = minf(color_a.a, color_b.a)
-		total += _oklab(color_a).distance_to(_oklab(color_b)) * visible
+		total += ColorMetrics.difference(color_a, color_b) * visible
 		weight += visible
-	return total / weight + _oklab(a.glow_color).distance_to(_oklab(b.glow_color))
+	return total / weight + ColorMetrics.difference(a.glow_color, b.glow_color)
 
-
-## sRGB rengin OKLab karşılığı (L, a, b): eşit uzaklıkların gözde eşit fark gibi göründüğü uzay.
-func _oklab(color: Color) -> Vector3:
-	var linear: Color = color.srgb_to_linear()
-	var rgb: Vector3 = Vector3(linear.r, linear.g, linear.b)
-	var lms: Vector3 = Vector3(TO_LMS[0].dot(rgb), TO_LMS[1].dot(rgb), TO_LMS[2].dot(rgb))
-	var root: Vector3 = Vector3(
-			pow(maxf(lms.x, 0.0), 1.0 / 3.0),
-			pow(maxf(lms.y, 0.0), 1.0 / 3.0),
-			pow(maxf(lms.z, 0.0), 1.0 / 3.0))
-	return Vector3(TO_LAB[0].dot(root), TO_LAB[1].dot(root), TO_LAB[2].dot(root))

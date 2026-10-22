@@ -271,7 +271,7 @@
 
 - [x] **M4-10** 🤖 Yeni tehlikeler: dönen şekil (vuruş temposunda dönen köşeli engel) ve hareketli blok (duvarlar arasında ritimle gidip gelen). Görüntü çarpışmayla aynı adımda; parça doğrulayıcısı hareketli tehlikeleri vuruş vuruş dener.
   *Kabul:* Görüntü ve çarpışma her 120 Hz adımında aynı (test); doğrulayıcı geçilemeyen hareketli deseni yakalıyor (test); varlık galerisinde Redmi ekran görüntüsü.
-- [ ] **M4-11** 🤖 S4 ÇEKİRDEK: `SectorDef` (18 m/sn, 1750 m, duvar sürünmesi 0,675 m/sn), eflatun palet (renk kuralına uygun, rekor sarısından ayrı), yeni tehlikeli desen parçaları, zorluk aralığı.
+- [x] **M4-11** 🤖 S4 ÇEKİRDEK: `SectorDef` (18 m/sn, 1750 m, duvar sürünmesi 0,675 m/sn), eflatun palet (renk kuralına uygun, rekor sarısından ayrı), yeni tehlikeli desen parçaları, zorluk aralığı.
   *Kabul:* Doğrulayıcı her tempoda geçiyor; S3 → S4 geçişi testte; Redmi'de S4 ekran görüntüsü ve kare süresi.
 - [ ] **M4-12** 🤖 S5 BOZULMA: `SectorDef` (20 m/sn, 2500 m, 0,8 m/sn), beyaz + glitch paleti (renk kayması yalnızca kendi alanında, kaliteye bağlı), bütün tehlikeleri karıştıran yoğun desenler.
   *Kabul:* Doğrulayıcı geçiyor; Redmi'de S5'te yüksek kalitede kare süresi ≤ 10 ms.

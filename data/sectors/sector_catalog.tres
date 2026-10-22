@@ -4,7 +4,8 @@
 [ext_resource type="Resource" path="res://data/sectors/sector_01.tres" id="2_s1"]
 [ext_resource type="Resource" path="res://data/sectors/sector_02.tres" id="3_s2"]
 [ext_resource type="Resource" path="res://data/sectors/sector_03.tres" id="4_s3"]
+[ext_resource type="Resource" path="res://data/sectors/sector_04.tres" id="5_s4"]
 
 [resource]
 script = ExtResource("1_catalog")
-sectors = Array[SectorDef]([ExtResource("2_s1"), ExtResource("3_s2"), ExtResource("4_s3")])
+sectors = Array[SectorDef]([ExtResource("2_s1"), ExtResource("3_s2"), ExtResource("4_s3"), ExtResource("5_s4")])

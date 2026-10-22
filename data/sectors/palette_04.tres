@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SectorPalette" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/sector_palette.gd" id="1_palette"]
+
+[resource]
+script = ExtResource("1_palette")
+ambient = Color(1, 0.2, 0.95, 1)
+accent = Color(1, 0.75, 0.97, 1)
+background = Color(0.09, 0.02, 0.08, 1)

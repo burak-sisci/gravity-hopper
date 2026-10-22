@@ -4,6 +4,7 @@ extends GdUnitTestSuite
 ## Testler genel durumu (zaman ölçeği, çarpışma çizimi, ölümsüzlük) geri bırakır.
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const SETTLE_FRAMES: int = 40
 ## DBG düğmesinin ortası (debug_layer.tscn: 16,12 – 156,84).
 const DEBUG_BUTTON_CENTER: Vector2 = Vector2(86, 48)
@@ -117,14 +118,19 @@ func test_key_5_starts_next_sector() -> void:
 	var on_started: Callable = func(_seed: int, start_sector: int) -> void:
 		sectors.append(start_sector)
 	Events.run_started.connect(on_started)
-	_push_key(KEY_5)
 	_push_key(KEY_KP_5)
-	# Son sektörden sonra (S3) aynı sektör yeniden başlar.
-	_push_key(KEY_5)
+	var last: int = SECTORS.count()
+	for i: int in last - 1:
+		_push_key(KEY_5)
 	Events.run_started.disconnect(on_started)
-	assert_array(sectors).is_equal([2, 3, 3])
+	# Her basış sonraki sektörü başlatır; son sektörden sonra aynı sektör yeniden başlar.
+	var expected: Array[int] = []
+	for sector: int in range(2, last + 1):
+		expected.append(sector)
+	expected.append(last)
+	assert_array(sectors).is_equal(expected)
 	await _frames(1)
-	assert_int((_main.get_node("%World").get_child(0) as Run).sector).is_equal(3)
+	assert_int((_main.get_node("%World").get_child(0) as Run).sector).is_equal(last)
 
 
 func test_key_9_cycles_quality_for_the_session() -> void:

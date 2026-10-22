@@ -8,11 +8,12 @@ extends Resource
 @export var name_key: StringName = &""
 ## Tırmanış hızı.
 @export_range(4.0, 30.0, 0.5, "suffix:m/sn") var climb_speed: float = 12.0
-## Sektörün boyu. Katalogdaki son sektör bitmez (S4–S5 M4-07'de gelir).
+## Sektörün boyu. Katalogdaki son sektör bitmez (S5 M4-12'de gelir).
 @export_range(50.0, 5000.0, 10.0, "suffix:m") var length: float = 750.0
 ## Çöküş duvarının oyuncuya göre sürünme hızı (GDD §14: S1 0,3 → S5 0,8 m/sn).
 @export_range(0.0, 3.0, 0.025, "suffix:m/sn") var wall_creep: float = 0.3
-## Görülebilecek tehlike türleri (spike, gap, block, laser). Parçalarla denetimi M2-11'de başlar.
+## Görülebilecek tehlike türleri (spike, gap, block, laser, rotor, moving_block). Parçalarla
+## denetimi M2-11'de başlar.
 @export var allowed_hazards: Array[StringName] = [&"spike"]
 ## Sektör içi zorluk eğrisinin başı ve sonu (desen parçası zorluğu 1–10, M2-10).
 @export_range(1, 10) var min_difficulty: int = 1

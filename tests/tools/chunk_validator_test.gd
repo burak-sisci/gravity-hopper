@@ -38,8 +38,8 @@ func test_both_walls_blocked_is_caught() -> void:
 	# İki duvar bir vuruş boyunca dikenli: tek geçiş bu kadar uzun havada kalamaz.
 	var chunk: ChunkInfo = auto_free(UNSOLVABLE_SCENE.instantiate()) as ChunkInfo
 	var errors: PackedStringArray = _validator.chunk_errors(chunk)
-	# Katalogdaki her sektörde (S1–S3) ve her müzik temposunda geçilemez.
-	assert_int(errors.size()).is_equal(3 * MUSIC.tempos().size())
+	# Katalogdaki her sektörde ve her müzik temposunda geçilemez.
+	assert_int(errors.size()).is_equal(SECTORS.count() * MUSIC.tempos().size())
 	assert_str(errors[0]).starts_with("S1").contains("geçilemiyor").contains("Spike")
 
 
@@ -147,8 +147,9 @@ func test_view_rule_uses_lookahead() -> void:
 	short_view.lookahead = 15.0
 	var errors: PackedStringArray = ChunkValidator.new(
 			short_view, ChunkValidator.player_body_size(), SECTORS, MUSIC).view_errors()
-	# 15 m ileri görüş: S1'de 1,20 sn yeter, S2'de 1,03 sn ve S3'te 0,90 sn yetmez.
-	assert_int(errors.size()).is_equal(2)
+	# 15 m ileri görüş: S1'de 1,20 sn yeter; S2'den itibaren (S2 1,03 sn, S3 0,90 sn, S4 0,80 sn)
+	# hiçbir sektörde yetmez.
+	assert_int(errors.size()).is_equal(SECTORS.count() - 1)
 	assert_str(errors[0]).starts_with("S2")
 
 
@@ -157,7 +158,10 @@ func test_every_sector_needs_a_chunk() -> void:
 	early.max_sector = 2
 	var chunks: Array[ChunkInfo] = [early]
 	var errors: PackedStringArray = _validator.coverage_errors(chunks)
-	assert_array(Array(errors)).contains_exactly(["S3 için parça yok"])
+	var expected: Array[String] = []
+	for sector: int in range(3, SECTORS.count() + 1):
+		expected.append("S%d için parça yok" % sector)
+	assert_array(Array(errors)).contains_exactly(expected)
 
 
 func test_moving_block_arriving_at_the_wall_is_caught() -> void:

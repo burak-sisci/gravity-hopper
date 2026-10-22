@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+[ext_resource type="PackedScene" path="res://scenes/entities/moving_block.tscn" id="11_moving_block"]
+
+[node name="MovingBlockLane01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 6
+min_sector = 4
+length_beats = 10
+
+[node name="MovingBlock3" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -300)
+
+[node name="SpikeLeft4_5" parent="." instance=ExtResource("2_spike")]
+position = Vector2(-450, -450)
+
+[node name="MovingBlock6" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -600)
+
+[node name="SpikeRight7_5" parent="." instance=ExtResource("2_spike")]
+position = Vector2(450, -750)
+scale = Vector2(-1, 1)
+
+[node name="MovingBlock9" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -900)

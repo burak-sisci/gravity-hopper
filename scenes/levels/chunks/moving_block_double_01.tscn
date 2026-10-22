@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/moving_block.tscn" id="11_moving_block"]
+
+[node name="MovingBlockDouble01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 5
+min_sector = 4
+length_beats = 8
+
+[node name="MovingBlock2_5" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -250)
+
+[node name="MovingBlock4" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -400)
+
+[node name="MovingBlock5_5" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -550)
+
+[node name="MovingBlock7" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -700)

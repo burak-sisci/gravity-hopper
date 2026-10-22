@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Sektör ilerleyişi (M2-08, architecture.md §8.2–8.3): hız basamağı, Events.sector_entered ve
 ## her sektörde dikenlerin müziğin yarım vuruş anında geçmesi. Tempo turun parçasından gelir ve
-## sektör geçişinde değişmez (M2-20). Gerçek S1–S3'ün hızı, kısa boylarla (150 m) denenir.
+## sektör geçişinde değişmez (M2-20). Gerçek sektörlerin hızı, kısa boylarla (150 m) denenir;
+## tur S1'den son sektöre tırmanır ve orada LAST_SECTOR_TIME daha oynanır.
 
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
@@ -9,6 +10,8 @@ const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 const SHORT_LENGTH: float = 150.0
 const DT: float = 1.0 / 60.0
+## Son sektöre girildikten sonra oynanan süre (sn): nefes alma (2,5 sn) + birkaç parça.
+const LAST_SECTOR_TIME: float = 10.0
 
 var _entered: Array[int] = []
 
@@ -31,15 +34,19 @@ func test_spikes_stay_on_music_beat_at_slowest_tempo() -> void:
 	await _check_sectors_on_beat(&"pagoda")
 
 
-## Tur tek parçayla (verilen id) S1'den S3'e tırmanır: her sektörde adım sabit, tempo tur boyunca
-## parçanınki ve her diken, turun başından sayılan müzik ızgarasında yarım vuruş anında geçer.
+## Tur tek parçayla (verilen id) S1'den son sektöre tırmanır: her sektörde adım sabit, tempo tur
+## boyunca parçanınki ve her diken, turun başından sayılan müzik ızgarasında yarım vuruş anında
+## geçer.
 func _check_sectors_on_beat(track_id: StringName) -> void:
 	var run: Run = _start(1, track_id)
 	var player: Node2D = run.get_node("%Player") as Node2D
 	var conductor: Conductor = run.get_node("%Conductor") as Conductor
 	var spawner: ChunkSpawner = run.get_node("%ChunkSpawner") as ChunkSpawner
 	var speeds: Dictionary[int, float] = {}
-	var passes: Dictionary[int, int] = {1: 0, 2: 0, 3: 0}
+	var last: int = SECTORS.count()
+	var passes: Dictionary[int, int] = {}
+	for sector: int in range(1, last + 1):
+		passes[sector] = 0
 	var entered_at: Dictionary[int, float] = {1: 0.0}
 	var corridor: Corridor = run.get_node("%Corridor") as Corridor
 	# Tur başında palet anında gelir (M3-02).
@@ -56,7 +63,7 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	await _frames(2)
 	var previous_y: float = player.position.y
 	var previous_sector: int = run.sector
-	for frame: int in 2100:
+	for frame: int in ceili((_last_sector_entry() + LAST_SECTOR_TIME) / DT):
 		await get_tree().physics_frame
 		var step: float = previous_y - player.position.y
 		if run.sector != previous_sector:
@@ -94,8 +101,8 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 							"S%d: %s yarım vuruştan %.4f sn uzak" % [run.sector, item.name, off]
 					).is_less_equal(DT + 0.0001)
 		previous_y = player.position.y
-	assert_array(_entered).is_equal([2, 3])
-	for sector: int in [1, 2, 3]:
+	assert_array(_entered).is_equal(range(2, last + 1))
+	for sector: int in range(1, last + 1):
 		assert_float(speeds.get(sector, 0.0)).override_failure_message(
 				"S%d adım hızı" % sector).is_equal_approx(
 				SECTORS.def_at(sector).climb_px() * DT, 0.001)
@@ -107,8 +114,8 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	assert_float(conductor.beat_time()).is_equal_approx(conductor.run_time, 0.000001)
 	# Renkler paletten (M3-02): S2'ye girişte dalga yeni başlıyor (duvarlar hâlâ S1 renginde,
 	# ekranın temizleme rengi S2'ninki; eskisini dalganın üstü örter). Dalga wave_time sürer;
-	# ortasında üstteki duvarlar eski, alttakiler yeni renkte. S3'e çok önce girildi, dalga
-	# bitti: duvarlar ve arka plan S3 paletinde.
+	# ortasında üstteki duvarlar eski, alttakiler yeni renkte. Son sektöre çok önce girildi,
+	# dalga bitti: duvarlar ve arka plan son sektörün paletinde.
 	assert_float(_channel_gap(ambient_on_entry, _palette(1).ambient)).is_less(0.05)
 	assert_float(_channel_gap(ambient_on_entry, _palette(2).ambient)).is_greater(0.1)
 	assert_bool(wave_on_entry).is_true()
@@ -119,9 +126,9 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	assert_bool(Color(top.y, top.z, top.w).is_equal_approx(_palette(1).ambient)).is_true()
 	assert_bool(Color(bottom.y, bottom.z, bottom.w).is_equal_approx(_palette(2).ambient)).is_true()
 	assert_bool(background.is_wave_active()).is_false()
-	assert_bool(corridor.ambient().is_equal_approx(_palette(3).ambient)).is_true()
+	assert_bool(corridor.ambient().is_equal_approx(_palette(last).ambient)).is_true()
 	var clear: Color = RenderingServer.get_default_clear_color()
-	assert_bool(clear.is_equal_approx(_palette(3).background)).is_true()
+	assert_bool(clear.is_equal_approx(_palette(last).background)).is_true()
 
 
 func test_start_sector_sets_height_and_speed() -> void:
@@ -163,6 +170,14 @@ func _start(sector: int, track_id: StringName = &"") -> Run:
 	add_child(run)
 	Events.debug_invincibility_changed.emit(true)
 	return run
+
+
+## S1'den başlayan turun son sektöre girdiği an (sn).
+func _last_sector_entry() -> float:
+	var result: float = 0.0
+	for sector: int in range(1, SECTORS.count()):
+		result += SHORT_LENGTH / SECTORS.def_at(sector).climb_speed
+	return result
 
 
 ## İki renk arasındaki en büyük kanal farkı.

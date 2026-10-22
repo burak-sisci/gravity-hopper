@@ -95,7 +95,7 @@ func test_chunks_outside_sector_are_not_chosen() -> void:
 
 
 func test_chunks_stop_at_sector_boundary() -> void:
-	# Kısa sektörler: S1 ve S2 100'er m. Parça sınırı aşmaz. Tempo tur boyunca aynı (100 BPM);
+	# Kısa sektörler: hepsi 100'er m. Parça sınırı aşmaz. Tempo tur boyunca aynı (100 BPM);
 	# S2'nin parçaları, oyuncunun oraya turun başından sayılan tam vuruşlarda varacağı yerdedir.
 	var sectors: SectorCatalog = _short_sectors(100.0)
 	var spawner: ChunkSpawner = auto_free(ChunkSpawner.new()) as ChunkSpawner
@@ -103,7 +103,7 @@ func test_chunks_stop_at_sector_boundary() -> void:
 	add_child(spawner)
 	spawner.setup(RunRng.new(5), _tuning(), sectors, 1, 0.0, TEMPO)
 	_scroll(spawner, 0.0, SCROLL_PX, VIEW_HEIGHT)
-	assert_int(spawner.placement_sector()).is_equal(3)
+	assert_int(spawner.placement_sector()).is_equal(SECTORS.count())
 	var s1_end: float = -TuningConfig.to_px(100.0)
 	var s2_end: float = -TuningConfig.to_px(200.0)
 	var s2_px: float = sectors.def_at(2).climb_px()
@@ -126,13 +126,19 @@ func test_chunks_stop_at_sector_boundary() -> void:
 			assert_float(beats).is_equal_approx(roundf(beats), 0.0001)
 	assert_bool(started_s2).is_true()
 	# Hiçbir parça bir sınırın iki yanına taşmaz (üst kenar, parçanın kendi boyundan).
+	var edges: Array[float] = []
+	for index: int in range(1, sectors.count()):
+		edges.append(-TuningConfig.to_px(100.0 * index))
 	var lengths: Dictionary[StringName, int] = _library_lengths()
 	for i: int in spawner.placed_bottoms.size():
 		var bottom: float = spawner.placed_bottoms[i]
-		var sector: int = 1 if bottom > s1_end + 0.01 else (2 if bottom > s2_end + 0.01 else 3)
+		var sector: int = 1
+		for edge: float in edges:
+			if bottom <= edge + 0.01:
+				sector += 1
 		var beat: float = sectors.def_at(sector).beat_px(TEMPO)
 		var top: float = bottom - lengths[spawner.placed_names[i]] * beat
-		for edge: float in [s1_end, s2_end]:
+		for edge: float in edges:
 			assert_bool(bottom > edge + 0.01 and top < edge - 0.01).is_false()
 
 

@@ -2,8 +2,9 @@ extends GdUnitTestSuite
 ## Belirlenimcilik (M2-17, architecture.md §8.2): harita yalnızca tohum + başlangıç sektörüne
 ## bağlıdır. Aynı tohumla kurulan iki gerçek tur, oyuncu hiç dokunmasa da sık sık dokunsa da
 ## (yol, Glimmer, kıl payı ve çöküş duvarı değişir) aynı parça dizisini ve konumlarını verir.
-## Sektörler kısaltılır (150 m) ki 35 sn'de sınırlar geçilsin; bu süre en yavaş parçada da
-## (90 BPM, M3-21) her başlangıç sektöründe yeterince parça yerleştirir. Ekran boyundan bağımsızlık
+## Sektörler kısaltılır (150 m) ki S1'den başlayan tur bütün sınırları geçsin; son sektörde
+## LAST_SECTOR_TIME daha oynanır. Bu süre en yavaş parçada da (90 BPM, M3-21) her başlangıç
+## sektöründe yeterince parça yerleştirir. Ekran boyundan bağımsızlık
 ## tests/systems/chunk_spawner_test.gd'de.
 ## Kıl payı yavaş çekimi (M3-12) oyun zamanını yavaşlatır: turlar aynı oyun zamanı kadar oynanır
 ## ve yerleşen parçaların ortak başı karşılaştırılır (son adımın farkı bir parça ekleyebilir).
@@ -11,9 +12,10 @@ extends GdUnitTestSuite
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
-## Bir turun oynandığı oyun zamanı (sn) ve güvenlik için kare sınırı.
-const PLAY_TIME: float = 35.0
-const MAX_FRAMES: int = 3000
+## Son sektöre girildikten sonra oynanan oyun zamanı (sn): nefes alma + birkaç parça.
+const LAST_SECTOR_TIME: float = 12.0
+## Güvenlik için kare sınırı, oyun zamanının bu katı (yavaş çekim kare ekler).
+const FRAME_LIMIT_FACTOR: float = 1.5
 ## Dokunan oyuncu bu kadar karede bir dokunur.
 const TAP_EVERY: int = 23
 const SHORT_LENGTH: float = 150.0
@@ -24,9 +26,11 @@ func after_test() -> void:
 	Engine.time_scale = 1.0
 
 
-func test_same_seed_same_map_whatever_the_player_does() -> void:
+# Her sektörden iki tur × ~45 sn oyun zamanı gdUnit'in 5 dk'lık sınırını aşar (sınır oyun
+# zamanıyla sayılır; gerçek süre birkaç saniye): sınır 15 dk.
+func test_same_seed_same_map_whatever_the_player_does(_timeout: int = 900000) -> void:
 	var slowed: int = 0
-	for sector: int in [1, 2, 3]:
+	for sector: int in range(1, SECTORS.count() + 1):
 		var idle: Array = await _play(424242, sector, false)
 		var busy: Array = await _play(424242, sector, true)
 		assert_int((idle[0] as Array).size()).override_failure_message(
@@ -44,8 +48,8 @@ func test_same_seed_same_map_whatever_the_player_does() -> void:
 func test_sector_boundaries_are_crossed_identically() -> void:
 	var idle: Array = await _play(77, 1, false)
 	var busy: Array = await _play(77, 1, true)
-	assert_array(idle[3] as Array).is_equal([2, 3])
-	assert_array(busy[3] as Array).is_equal([2, 3])
+	assert_array(idle[3] as Array).is_equal(range(2, SECTORS.count() + 1))
+	assert_array(busy[3] as Array).is_equal(range(2, SECTORS.count() + 1))
 	_assert_same_start(busy[1] as Array, idle[1] as Array, "Parça konumları")
 
 
@@ -86,9 +90,11 @@ func _play(run_seed: int, sector: int, taps: bool) -> Array:
 	add_child(run)
 	Events.debug_invincibility_changed.emit(true)
 	var conductor: Conductor = run.get_node("%Conductor") as Conductor
+	var play_time: float = _play_time()
+	var max_frames: int = ceili(play_time * Engine.physics_ticks_per_second * FRAME_LIMIT_FACTOR)
 	var slow_frames: int = 0
 	var frame: int = 0
-	while conductor.run_time < PLAY_TIME and frame < MAX_FRAMES:
+	while conductor.run_time < play_time and frame < max_frames:
 		if taps and frame % TAP_EVERY == 0:
 			var touch := InputEventScreenTouch.new()
 			touch.pressed = true
@@ -107,4 +113,13 @@ func _play(run_seed: int, sector: int, taps: bool) -> Array:
 	]
 	remove_child(run)
 	run.free()
+	return result
+
+
+## Turun oynandığı oyun zamanı (sn): S1'den başlayan tur son sektöre girer, orada
+## LAST_SECTOR_TIME daha tırmanır.
+func _play_time() -> float:
+	var result: float = LAST_SECTOR_TIME
+	for sector: int in range(1, SECTORS.count()):
+		result += SHORT_LENGTH / SECTORS.def_at(sector).climb_speed
 	return result

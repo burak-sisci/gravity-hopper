@@ -186,8 +186,11 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 | S1 | 0 · 0,85 · 1 | 0,75 · 0,97 · 1 | 0,02 · 0,04 · 0,1 |
 | S2 | 0,58 · 0,3 · 1 | 0,85 · 0,75 · 1 | 0,06 · 0,03 · 0,12 |
 | S3 | 1 · 0,6 · 0,12 | 1 · 0,85 · 0,6 | 0,09 · 0,05 · 0,02 |
+| S4 | 1 · 0,2 · 0,95 | 1 · 0,75 · 0,97 | 0,09 · 0,02 · 0,08 |
 
 S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı doygunlukta seçilir; çevre rengi sarı rekor çizgisinden de ayırt edilmeli.
+
+**S4 eflatunu (M4-11, ölçülerek seçildi):** Renk kuralı M4-11'den beri gözle görülen fark ölçüsüyle (OKLab) de denetlenir; eşikler onaylı paletlerden alındı. Eflatun tehlike kırmızısından 0,23 uzak (onaylı S3 turuncusu 0,195), rekor sarısından 0,50 (kötü bulunan eski kehribar 0,14 idi), renk körlüğü benzetimlerinde kırmızıdan ≥ 0,1. Mor (S2) ile eflatun komşu tonlar: aralarındaki fark 0,20'de kalıyor. İki sektör hiç yan yana gelmediği için bu kabul edildi (yan yana gelen sektörler ≥ 0,25).
 
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 
@@ -207,7 +210,7 @@ S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı 
 ## 13. Hız ve zorluk
 
 - **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (90 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
-- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
+- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5, S4: 3→6; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
   2. Engel sıklığı
