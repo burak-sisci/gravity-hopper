@@ -51,6 +51,7 @@ func default_data() -> Dictionary[String, Variant]:
 		"glimmers": 0,
 		"best_height_m": 0,
 		"highest_sector": 1,
+		"start_sector": 1,
 		"great_storage_reached": false,
 		"upgrades": {
 			"magnet": 0, "shield": 0, "head_start": 0, "glimmer_boost": 0, "second_chance": 0,

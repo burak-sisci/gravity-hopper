@@ -2,6 +2,7 @@ extends GdUnitTestSuite
 ## Debug İlerleme sayfası (M4-03, architecture.md §13): cüzdanı, seviyeleri ve fiyatları
 ## gösterir; satın alma düğmesi cüzdan yetmezse kapalı; +1000 Glimmer ve kaydı sıfırlama
 ## kayda iner. İzler sayfası (M4-08): satın alma, kuşanma ve başarım izini debug için açma.
+## Kontrol noktası (M4-09): başlangıç sektörü yalnızca açık sektörler arasında döner.
 ## Testler geçici kayıtla çalışır.
 
 var _panel: ProgressPanel
@@ -90,6 +91,23 @@ func test_trail_page_buys_equips_and_grants() -> void:
 	_panel.page_button().pressed.emit()
 	assert_bool(_panel.showing_trails()).is_false()
 	assert_str(_panel.page_button().text).is_equal("İzler ›")
+
+
+func test_start_sector_cycles_through_unlocked_sectors() -> void:
+	assert_str(_panel.sector_label().text).is_equal("Başlangıç: S1  · açık 1 sektör")
+	assert_bool(_panel.sector_button().disabled).is_true()
+	Events.sector_entered.emit(2)
+	Events.sector_entered.emit(3)
+	assert_str(_panel.sector_label().text).is_equal("Başlangıç: S1  · açık 3 sektör")
+	assert_bool(_panel.sector_button().disabled).is_false()
+	var picked: Array[int] = []
+	for i: int in 3:
+		_panel.sector_button().pressed.emit()
+		picked.append(Progression.start_sector)
+	assert_array(picked).is_equal([2, 3, 1])
+	_panel.sector_button().pressed.emit()
+	assert_str(_panel.sector_label().text).is_equal("Başlangıç: S2  · açık 3 sektör")
+	assert_int(SaveManager.load_game()["start_sector"]).is_equal(2)
 
 
 func _press(text: String) -> void:

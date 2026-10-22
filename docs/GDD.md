@@ -199,6 +199,7 @@ S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı 
 **Kontrol noktaları:**
 
 - Ulaşılan her sektörün başlangıcı açılır. Tur başlarken hangi sektörden başlanacağı seçilebilir.
+  - M4-09: Sektör, oyuncu sınırını geçtiği anda açılır (tur o sırada bitse ya da uygulama kapansa da kaybolmaz). Açılmak seçmek değildir; başlangıç sektörünü oyuncu seçer, seçim saklanır. Seçim şimdilik debug İlerleme sayfasında, menüde M5-02'de. Skor mutlak yükseklikten sayılır.
 - Bu sayede Sektör 4'e ulaşmak için her seferinde 5000 m tırmanmak gerekmez.
 
 **Final ve sonrası:** Büyük Depolama Birimi'ne varış, oyunun "hikâye sonu"dur: kısa bir varış anı ve özel bir iz. Ardından Taşma modu sonsuza kadar devam eder.

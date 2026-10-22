@@ -47,6 +47,8 @@ signal best_height_changed(meters: int)
 signal upgrade_purchased(id: StringName, level: int)
 signal trail_unlocked(id: StringName)
 signal trail_equipped(id: StringName)
+signal sector_unlocked(index: int)
+signal start_sector_selected(index: int)
 signal settings_changed
 
 # --- Debug (yalnızca debug katmanı yayar; yayın sürümünde hiç yayılmaz) ---

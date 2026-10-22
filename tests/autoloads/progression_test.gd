@@ -123,7 +123,7 @@ func test_buying_an_upgrade_spends_and_saves() -> void:
 	assert_int(Progression.upgrade_level(&"magnet")).is_equal(1)
 	assert_int(Progression.glimmers).is_equal(0)
 	assert_int(Progression.upgrade_cost(&"magnet")).is_equal(200)
-	assert_float(Progression.upgrade_value(&"magnet")).is_equal_approx(1.8, 0.0001)
+	assert_float(Progression.loadout().magnet_m).is_equal_approx(1.8, 0.0001)
 	assert_array(purchases).is_equal(["magnet:1"])
 	assert_int(_wallets.back()).is_equal(0)
 	var saved: Dictionary[String, Variant] = SaveManager.load_game()
@@ -142,11 +142,11 @@ func test_top_level_cannot_be_bought_again() -> void:
 		assert_bool(Progression.buy_upgrade(&"shield")).is_true()
 	assert_bool(Progression.buy_upgrade(&"shield")).is_false()
 	assert_int(Progression.glimmers).is_equal(15000 - 4650)
-	assert_float(Progression.upgrade_value(&"shield")).is_equal(600.0)
+	assert_float(Progression.loadout().shield_regen_m).is_equal(600.0)
 	# Bilinmeyen yükseltme alınamaz.
 	assert_bool(Progression.buy_upgrade(&"laser_eyes")).is_false()
 	assert_int(Progression.upgrade_cost(&"laser_eyes")).is_equal(-1)
-	assert_float(Progression.upgrade_value(&"laser_eyes")).is_equal(0.0)
+	assert_int(Progression.upgrade_level(&"laser_eyes")).is_equal(0)
 
 
 func test_bought_levels_survive_a_restart() -> void:

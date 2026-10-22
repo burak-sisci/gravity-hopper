@@ -6,19 +6,19 @@ extends Node
 ## Desen parçası havuzları (ChunkPools) turlar arasında burada korunur; her tura verilir (M3-10).
 ## Her tura Progression'ın kalıcı rekoru verilir; Run rekor çizgisini oraya koyar (M3-14, M4-02).
 ## Yükseltmelerin etkileri tur başında tek bir yük olarak Run'a ve GameManager'a verilir (M4-04).
+## Tur, Progression'da seçilen kontrol noktasından başlar (M4-09).
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
 ## M1 geçici akışı: ölümden bu kadar sonra tur kendiliğinden yeniden başlar.
 ## M5'te sonuç ekranı ve "Tekrar" düğmesi (Events.retry_requested) bunun yerini alır.
 const AUTO_RESTART_DELAY: float = 0.35
-## Oyun açılınca ilk tur S1'den başlar. Sektör seçimi (M5) ve debug 5 tuşu
-## Events.start_requested ile başka bir sektörden başlatır.
-const START_SECTOR: int = 1
 
 var _run: Run
-## Yeniden başlama (ölüm, Tekrar) son seçilen sektörden olur (kontrol noktası).
-var _start_sector: int = START_SECTOR
+## Yeni turların başladığı sektör: açılışta seçili kontrol noktası (Progression.start_sector);
+## seçim değişince sonraki turdan geçerli. Debug 5 tuşu ve --start= Events.start_requested ile
+## kilide bakmadan başka bir sektörden hemen başlatır. Ölüm ve Tekrar'dan sonra da aynı sektör.
+var _start_sector: int
 
 @onready var _world: Node2D = %World
 @onready var _chunk_pools: ChunkPools = %ChunkPools
@@ -33,6 +33,8 @@ func _ready() -> void:
 	Events.run_ended.connect(_on_run_ended)
 	Events.retry_requested.connect(_start_run)
 	Events.start_requested.connect(_on_start_requested)
+	Events.start_sector_selected.connect(_on_start_sector_selected)
+	_start_sector = Progression.start_sector
 	_start_run()
 
 
@@ -63,6 +65,11 @@ func _apply_quality() -> void:
 func _on_start_requested(sector: int) -> void:
 	_start_sector = sector
 	_start_run()
+
+
+## Süren tur bozulmaz; seçim sonraki turdan geçerli.
+func _on_start_sector_selected(sector: int) -> void:
+	_start_sector = sector
 
 
 func _on_run_ended(_result: RunResult) -> void:

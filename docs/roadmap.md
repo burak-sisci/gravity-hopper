@@ -264,7 +264,7 @@
 
 - [x] **M4-08** 🤖 Kozmetik izler: `TrailDef` (`data/trails/`; renk geçişi, kalınlık, parlama). 4–6 satın alınan iz (300–3000 Glimmer) ve başarım izleri (Büyük Depolama Birimi, toplam 500 kıl payı; 7 günlük seri M7-03'te). Satın alma ve kuşanma; çekirdek beyaz kalır.
   *Kabul:* Satın alma, kuşanma ve başarımla açılma testte; kuşanılan iz turda görünüyor (Redmi ekran görüntüsü, iki iz).
-- [ ] **M4-09** 🤖 Sektör kontrol noktaları: ulaşılan her sektörün başı açılır ve kaydedilir. Tur seçilen açık sektörden başlar (seçim şimdilik İlerleme sayfasında, menüde M5-02); skor mutlak yükseklikten sayılır.
+- [x] **M4-09** 🤖 Sektör kontrol noktaları: ulaşılan her sektörün başı açılır ve kaydedilir. Tur seçilen açık sektörden başlar (seçim şimdilik İlerleme sayfasında, menüde M5-02); skor mutlak yükseklikten sayılır.
   *Kabul:* S2'ye varınca S2 açılıyor, kilitli sektör seçilemiyor, seçim uygulama yeniden açılınca duruyor (test).
 
 **İçerik: S4, S5 ve final**

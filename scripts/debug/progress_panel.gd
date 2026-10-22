@@ -4,6 +4,8 @@ extends PanelContainer
 ## yükseltme satın alma, +1000 Glimmer ve kaydı sıfırlama. Mağaza (M5) gelene dek yükseltmeler
 ## buradan denenir. Progression'ı servis olarak çağırır, değişince Events'ten yenilenir.
 ## İzler (M4-08): ikinci sayfada satın alma ve kuşanma; başarım izi debug için bedelsiz açılır.
+## Kontrol noktası (M4-09): iki sayfada da başlangıç sektörü açık sektörler arasında döndürülür;
+## seçim sonraki turdan geçerli.
 ## Yalnızca geliştirici görür; metinler tr() ile değil doğrudan yazılır (yükseltme ve iz adları
 ## hariç).
 
@@ -20,6 +22,7 @@ const SEPARATION: int = 12
 const SUMMARY_COLOR: Color = Color(0.7, 0.9, 0.7)
 const UPGRADES_PAGE_TEXT: String = "Yükseltmeler ›"
 const TRAILS_PAGE_TEXT: String = "İzler ›"
+const SECTOR_BUTTON_TEXT: String = "Sonraki ›"
 
 var _summary: Label
 var _levels: Dictionary[StringName, Label] = {}
@@ -29,6 +32,8 @@ var _trail_buttons: Dictionary[StringName, Button] = {}
 var _upgrade_page: VBoxContainer
 var _trail_page: VBoxContainer
 var _page_button: Button
+var _sector_label: Label
+var _sector_button: Button
 
 
 func _ready() -> void:
@@ -38,6 +43,8 @@ func _ready() -> void:
 	Events.upgrade_purchased.connect(_on_upgrade_purchased)
 	Events.trail_unlocked.connect(_on_trail_changed)
 	Events.trail_equipped.connect(_on_trail_changed)
+	Events.sector_unlocked.connect(_on_sector_changed)
+	Events.start_sector_selected.connect(_on_sector_changed)
 	visibility_changed.connect(_refresh)
 	_refresh()
 
@@ -73,6 +80,15 @@ func showing_trails() -> bool:
 	return _trail_page.visible
 
 
+## Başlangıç sektörünü açık sektörler arasında sonrakine geçirir (sonuncudan S1'e).
+func sector_button() -> Button:
+	return _sector_button
+
+
+func sector_label() -> Label:
+	return _sector_label
+
+
 func _on_value_changed(_value: int) -> void:
 	_refresh()
 
@@ -82,6 +98,10 @@ func _on_upgrade_purchased(_id: StringName, _level: int) -> void:
 
 
 func _on_trail_changed(_id: StringName) -> void:
+	_refresh()
+
+
+func _on_sector_changed(_index: int) -> void:
 	_refresh()
 
 
@@ -98,6 +118,10 @@ func _on_trail_pressed(id: StringName) -> void:
 	else:
 		Progression.grant_trail(id)
 		Progression.save()
+
+
+func _on_sector_pressed() -> void:
+	Progression.select_start_sector(Progression.start_sector % Progression.highest_sector + 1)
 
 
 func _on_page_pressed() -> void:
@@ -126,6 +150,10 @@ func _refresh() -> void:
 	_summary.text = "Cüzdan %d Glimmer · rekor %d m · en yüksek sektör %d" % [
 		Progression.glimmers, Progression.best_height_m, Progression.highest_sector,
 	]
+	_sector_label.text = "Başlangıç: S%d  · açık %d sektör" % [
+		Progression.start_sector, Progression.highest_sector,
+	]
+	_sector_button.disabled = Progression.highest_sector <= 1
 	for def: UpgradeDef in UPGRADES.upgrades:
 		var level: int = Progression.upgrade_level(def.id)
 		var cost: int = Progression.upgrade_cost(def.id)
@@ -176,6 +204,10 @@ func _build() -> void:
 	_summary = _make_label("", FONT_SIZE, SUMMARY_COLOR)
 	_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_summary)
+	var sector_row: HBoxContainer = _make_row(box, _on_sector_pressed)
+	_sector_label = sector_row.get_child(0) as Label
+	_sector_button = sector_row.get_child(1) as Button
+	_sector_button.text = SECTOR_BUTTON_TEXT
 	_upgrade_page = _make_page(box)
 	for def: UpgradeDef in UPGRADES.upgrades:
 		var row: HBoxContainer = _make_row(_upgrade_page, _on_buy_pressed.bind(def.id))

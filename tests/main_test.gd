@@ -2,7 +2,8 @@ extends GdUnitTestSuite
 ## Tur döngüsü (M1-09, architecture.md §5.1): ölüm → GameManager sonucu duyurur → Main turu
 ## kısa bir beklemeden sonra yeniden kurar. Telefonda 348–360 ms ölçüldü (M1-12).
 ## Rekor (M3-14, M4-02): Progression kalıcı rekoru tutar ve kaydeder, Main yeni tura verir;
-## tur sonu kazancı cüzdana girer. Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
+## tur sonu kazancı cüzdana girer. Kontrol noktası (M4-09): tur seçili sektörden başlar.
+## Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 ## Yeniden başlama sınırı: 0,35 sn bekleme (21 kare) + pay. Telefonda ölçülen 360 ms'e karşılık.
@@ -12,11 +13,13 @@ const TEARDOWN_FRAMES: int = 30
 
 var _main: Node
 var _started_seeds: Array[int] = []
+var _started_sectors: Array[int] = []
 var _results: Array[RunResult] = []
 
 
 func before_test() -> void:
 	_started_seeds.clear()
+	_started_sectors.clear()
 	_results.clear()
 	Progression.reset()
 	Events.run_started.connect(_on_run_started)
@@ -113,6 +116,22 @@ func test_retry_request_starts_new_run_at_once() -> void:
 	assert_int(_world().get_child_count()).is_equal(1)
 
 
+## İlk tur seçili kontrol noktasından başlar; seçim değişince süren tur bozulmaz, sonraki tur
+## yeni seçimden başlar.
+func test_runs_start_from_the_selected_checkpoint() -> void:
+	Events.sector_entered.emit(3)
+	Progression.select_start_sector(2)
+	await _start_main()
+	assert_array(_started_sectors).is_equal([2])
+	assert_int(_current_run().start_sector).is_equal(2)
+	Progression.select_start_sector(3)
+	assert_array(_started_sectors).is_equal([2])
+	Events.retry_requested.emit()
+	assert_array(_started_sectors).is_equal([2, 3])
+	await get_tree().process_frame
+	assert_int(_current_run().start_sector).is_equal(3)
+
+
 func test_settings_change_sets_neon_quality() -> void:
 	var stored: GameTypes.Quality = Settings.effect_quality
 	await _start_main()
@@ -147,8 +166,9 @@ func _wait_for_runs(count: int) -> void:
 	assert_int(_started_seeds.size()).is_equal(count)
 
 
-func _on_run_started(run_seed: int, _start_sector: int) -> void:
+func _on_run_started(run_seed: int, start_sector: int) -> void:
 	_started_seeds.append(run_seed)
+	_started_sectors.append(start_sector)
 
 
 func _on_run_ended(result: RunResult) -> void:

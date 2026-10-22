@@ -3,6 +3,8 @@ extends Node
 ## (satın alma M4-03). Tur başında yükseltmelerin etkileri tek bir yük olarak verilir (loadout,
 ## M4-04). Kozmetik izler (M4-08): satın alma, kuşanma ve başarımla açılma; kuşanılan iz yükle
 ## tura gider. Başarım izleri tur sonunda (toplam kıl payı) ve Büyük Depoya varınca açılır.
+## Kontrol noktaları (M4-09): varılan her sektörün başı tur sırasında açılır (sector_entered);
+## yeni tur seçilen açık sektörden başlar (start_sector, kayıtta).
 ##
 ## Veriyi SaveManager ile saklar (architecture.md §11). Açılışta kaydı yükler; ilk açılışta
 ## (ya da yalnızca yedek sağlamsa) hemen yazar. Tur sonunda GameManager finish_run'ı çağırır:
@@ -16,8 +18,11 @@ const TRAILS: TrailCatalog = preload("res://data/trails/trail_catalog.tres")
 var glimmers: int = 0
 ## Kalıcı rekor (m). Rekor çizgisi ve HUD'un rekor satırı buradan gelir.
 var best_height_m: int = 0
-## Ulaşılan en yüksek sektör (kontrol noktaları, M4-09).
+## Ulaşılan en yüksek sektör: 1'den buna kadar her sektörün başı kontrol noktası olarak açık.
 var highest_sector: int = 1
+## Seçilen kontrol noktası: Main yeni turu bu sektörden başlatır (M4-09). Her zaman açık bir
+## sektördür; yalnızca select_start_sector değiştirir.
+var start_sector: int = 1
 
 var _data: Dictionary[String, Variant] = {}
 ## Kaydedilmemiş değişiklik var.
@@ -28,6 +33,7 @@ func _ready() -> void:
 	reload()
 	if SaveManager.last_source != SaveManager.Source.MAIN:
 		save()
+	Events.sector_entered.connect(_reach_sector)
 
 
 func _notification(what: int) -> void:
@@ -43,9 +49,12 @@ func reload() -> void:
 	_data = SaveManager.load_game()
 	glimmers = int(_data["glimmers"])
 	best_height_m = int(_data["best_height_m"])
-	highest_sector = int(_data["highest_sector"])
+	highest_sector = maxi(int(_data["highest_sector"]), 1)
+	start_sector = clampi(int(_data["start_sector"]), 1, highest_sector)
 	_dirty = false
-	_log("loaded glimmers=%d best=%d sector=%d" % [glimmers, best_height_m, highest_sector])
+	_log("loaded glimmers=%d best=%d sector=%d start=%d" % [
+		glimmers, best_height_m, highest_sector, start_sector,
+	])
 	announce()
 
 
@@ -83,7 +92,7 @@ func finish_run(result: RunResult) -> void:
 	stats["total_height_m"] = int(stats["total_height_m"]) + result.height_m
 	stats["near_misses"] = int(stats["near_misses"]) + result.near_misses
 	stats["glimmers_earned"] = int(stats["glimmers_earned"]) + result.earned
-	highest_sector = maxi(highest_sector, result.sector_reached)
+	_reach_sector(result.sector_reached)
 	if result.new_record:
 		best_height_m = result.height_m
 		Events.best_height_changed.emit(best_height_m)
@@ -100,12 +109,6 @@ func finish_run(result: RunResult) -> void:
 func upgrade_level(id: StringName) -> int:
 	var levels: Dictionary = _data["upgrades"]
 	return int(levels.get(String(id), 0))
-
-
-## Yükseltmenin şu anki etkisi (UpgradeDef.values; alınmamışsa 0).
-func upgrade_value(id: StringName) -> float:
-	var def: UpgradeDef = UPGRADES.get_def(id)
-	return def.value_at(upgrade_level(id)) if def != null else 0.0
 
 
 ## Sonraki seviyenin fiyatı; en üst seviyedeyse ya da yükseltme bilinmiyorsa -1.
@@ -139,13 +142,13 @@ func buy_upgrade(id: StringName) -> bool:
 ## tur başında alır; tur boyunca değişmez (tur sırasında alınan seviye sonraki turda geçerli).
 func loadout() -> RunLoadout:
 	var result: RunLoadout = RunLoadout.new()
-	result.magnet_m = upgrade_value(&"magnet")
-	result.glimmer_boost = upgrade_value(&"glimmer_boost")
+	result.magnet_m = _upgrade_value(&"magnet")
+	result.glimmer_boost = _upgrade_value(&"glimmer_boost")
 	# Kalkan Sv1'in değeri 0'dır (yenilenmez); her seviye turu kalkanla başlatır (M4-05).
 	result.start_shield = upgrade_level(&"shield") > 0
-	result.shield_regen_m = upgrade_value(&"shield")
-	result.head_start_m = upgrade_value(&"head_start")
-	result.revives = roundi(upgrade_value(&"second_chance"))
+	result.shield_regen_m = _upgrade_value(&"shield")
+	result.head_start_m = _upgrade_value(&"head_start")
+	result.revives = roundi(_upgrade_value(&"second_chance"))
 	result.trail = TRAILS.get_def(equipped_trail())
 	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d head_start=%d revives=%d trail=%s" % [
 		result.magnet_m, result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m),
@@ -212,6 +215,18 @@ func grant_trail(id: StringName) -> void:
 	Events.trail_unlocked.emit(id)
 
 
+## Kontrol noktası seçer (İlerleme sayfası; menüde M5-02): yeni turlar bu sektörden başlar.
+## Kilitli (henüz varılmamış) sektör seçilemez (false). Seçim hemen kaydedilir ve duyurulur.
+func select_start_sector(index: int) -> bool:
+	if index < 1 or index > highest_sector:
+		return false
+	start_sector = index
+	save()
+	Events.start_sector_selected.emit(index)
+	_log("start sector %d" % index)
+	return true
+
+
 ## Büyük Depolama Birimi'ne varıldı (tur akışı M4-13'te çağırır; şimdilik debug ve testler):
 ## kayda işlenir, başarım izi açılır, kaydedilir.
 func mark_great_storage_reached() -> void:
@@ -235,10 +250,28 @@ func save() -> bool:
 	_data["glimmers"] = glimmers
 	_data["best_height_m"] = best_height_m
 	_data["highest_sector"] = highest_sector
+	_data["start_sector"] = start_sector
 	var ok: bool = SaveManager.save_game(_data)
 	if ok:
 		_dirty = false
 	return ok
+
+
+## Yükseltmenin şu anki etkisi (UpgradeDef.values; alınmamışsa 0).
+func _upgrade_value(id: StringName) -> float:
+	var def: UpgradeDef = UPGRADES.get_def(id)
+	return def.value_at(upgrade_level(id)) if def != null else 0.0
+
+
+## Sektöre varıldı (tur sırasında sector_entered, tur sonunda sonuç): ilk kez varılmışsa başı
+## kontrol noktası olarak açılır ve duyurulur. Kayıt sonraki kayıt anında (tur sonu, arka plan).
+func _reach_sector(index: int) -> void:
+	if index <= highest_sector:
+		return
+	highest_sector = index
+	_dirty = true
+	Events.sector_unlocked.emit(index)
+	_log("sector unlocked %d" % index)
 
 
 ## Başarım izlerinden koşulu sağlananları açar ve duyurur (GDD §11). Kayıt çağıranın işi.
