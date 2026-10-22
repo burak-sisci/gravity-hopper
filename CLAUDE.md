@@ -20,8 +20,8 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 ## Kullanıcıyla çalışma
 
 - Kullanıcıyla **Türkçe** konuş. Kullanıcı ilk kez mobil oyun yapıyor; teknik terimleri kısaca açıkla.
-- Rol dağılımı: Claude geliştirir. Kullanıcı her aşamayı oyuncu gözüyle test eder ve kararları verir.
-- Her görev **oynanabilir** bir sonuçla biter. Teslim ederken kullanıcıya neyi, nasıl test edeceğini 2–4 maddeyle söyle.
+- Rol dağılımı: Claude geliştirir ve ölçülebilen her şeyi kendisi ölçerek doğrular (ADR-076, `measurable-verification` becerisi). Kullanıcı yalnızca ölçülemeyeni (his, eğlence, zevk) oyuncu gözüyle dener ve kararları verir; elle test en aza iner.
+- Her görev **oynanabilir** bir sonuçla biter. Teslimde neyin ölçülerek doğrulandığı sayılarıyla söylenir; kullanıcıya yalnızca ölçülemeyen maddeler (en fazla 2–4) denettirilir.
 - **İki mesai türü** (kullanıcı kararı, ADR-045). Kullanıcı mesainin türünü başta söyler; söylemezse standart sayılır. Tür `state.json` → `session`'a yazılır. İkisinde de 🤖 görevler arasında onay beklenmez (ADR-025); her 🤖 görev bitince kısa bir not bırakılır ve sıradaki 🤖 göreve geçilir.
   - **Standart mesai:** Kullanıcı ekran başında ya da yakınında; birlikte çalışılır. İlk iş `state.json` → `standard_queue`'daki (otonom mesailerden kalan) işlerdir. 🤝 / 👤 görevde, bekleyen bir kararda, kilometre taşı kapısında ya da beklenmedik bir tasarım sorusunda durulur ve kullanıcı beklenir.
   - **Otonom mesai:** Claude baştan sona tek başına çalışır, kullanıcı başka işlerle ilgilenir. Yalnızca 🤖 görevler yapılır. 🤝 / 👤 görevler ve karar bekleyen görevler atlanıp `standard_queue`'ya yazılır, sıradaki 🤖 göreve geçilir. Küçük, geri alınabilir bir tasarım sorusunda makul bir varsayım seçilir ve kuyruğa "gözden geçir" notu düşülür; büyük soru `pending_user_decisions`'a yazılır, görev atlanır. Kilometre taşı kapısı geçilmez (.clauderules §9). Yapılabilecek 🤖 görev kalmayınca ya da kullanıcı durdurunca mesai biter.
@@ -42,7 +42,7 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 
 1. Bildirim gönder: kaç görev bitti, kuyrukta ne bekliyor (kısa).
 2. `last_session`'a mesaiyi özetle: biten görevler, atlananlar (`standard_queue`), seçilen varsayımlar.
-3. Kullanıcı dönünce: biten işlerin birleşik test listesi (2–4 madde) ve kuyruktaki işler.
+3. Kullanıcı dönünce: ölçülerek doğrulananların kısa özeti, yalnızca ölçülemeyenlerin birleşik test listesi (en fazla 2–4 madde) ve kuyruktaki işler.
 
 ### Her görev bittiğinde (commit'ten önce)
 

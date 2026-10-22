@@ -78,6 +78,7 @@
 - Aynı anda tek bir roadmap görevi üzerinde çalışılır. Görev kimliği (`M1-03`) her commit mesajının başında yer alır.
 - **Kilometre taşı kapısı:** Kullanıcı oynayıp onaylamadan bir sonraki aşamaya geçilmez.
 - **"Bitti" için kanıt şarttır, iddia yetmez:** `tools/check.ps1` `TEMİZ` döner (sahne denetimi, `gdlint` ve testler dahil; ekransız mod uyarıları göstermez, başka yolla "uyarısız" denmez); düzenleme kancasının bildirdiği `gdlint` hataları hemen düzeltilir; oynanış ya da görsel değişiklikte ekran görüntüsü / kare dizisi ve varsa test sonucu sunulur.
+- **Önce ölç (ADR-076):** Gözle ya da kulakla yapılacak bir kontrol (renk ayrımı, kontrast, yerleşim, dokunma hedefi, ses yüksekliği, ritim, zorluk, ekonomi) önce metriğe çevrilir ve kalıcı teste bağlanır (`measurable-verification` becerisi; renkte OKLab). Kullanıcının "kötü" dediği örnek eşiğin altında kalır; test bilerek bozularak denenir.
 - Kullanıcı editörde bir sahneyi açık tutuyorsa, o `.tscn` dışarıdan değiştirilmeden önce kaydedip kapatması istenir; değişiklikten sonra editörde yeniden yüklemesi söylenir.
 - Proje asla bozuk halde bırakılmaz; her görev bir commit ile kapanır.
 - Yeni autoload, yeni klasör ya da mimari değişiklik öncesinde `docs/architecture.md` güncellenir.
