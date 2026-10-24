@@ -25,6 +25,7 @@ signal head_start_changed(active: bool)
 # --- İlerleme ---
 signal height_changed(meters: int)
 signal sector_entered(index: int)
+signal great_storage_reached
 signal chunk_placed(chunk_id: StringName, difficulty: int, sector: int)
 signal glimmer_collected(value: int)
 signal record_broken

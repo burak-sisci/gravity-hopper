@@ -122,6 +122,9 @@ func test_great_storage_unlocks_its_trail() -> void:
 	Progression.mark_great_storage_reached()
 	assert_bool(Progression.owns_trail(GREAT_STORAGE)).is_true()
 	assert_array(_unlocked).is_equal([GREAT_STORAGE])
+	# Varış tur sırasındadır: dosya hemen yazılmaz, tur sonunda yazılır.
+	assert_bool(SaveManager.load_game()["great_storage_reached"]).is_false()
+	Progression.finish_run(_result(0))
 	var saved: Dictionary = SaveManager.load_game()
 	assert_bool(saved["great_storage_reached"]).is_true()
 	assert_array((saved["trails"] as Dictionary)["owned"]).contains([String(GREAT_STORAGE)])

@@ -20,6 +20,9 @@ extends Control
 ## satırı rekor çizgisinin sarısında, Glimmer sayacı ve kombo Glimmer yeşilinde.
 ## Yazıların gösterebileceği bütün harfler açılışta ve dil değişince önceden çizilir
 ## (NeonLabel.warm_glyphs, M3-19): tur sırasında ilk kez çizilen harf takılma yapmasın.
+## Final (M4-13): Büyük Depolama Birimi'ne varınca (Events.great_storage_reached) sektör afişinin
+## yerine, aynı dalga zamanlamasıyla "BÜYÜK DEPOLAMA BİRİMİ" afişi oyuncu renginde gelir ve
+## FINALE_BANNER_TIME görünür.
 
 ## Sayılarda görünebilecek rakamlar (önceden çizilir).
 const DIGITS: String = "0123456789"
@@ -28,6 +31,8 @@ const VIGNETTE_MAX_ALPHA: float = 1.0
 ## Afişin ekranda kaldığı süre ve sönme süresi (sn).
 const BANNER_TIME: float = 2.0
 const BANNER_FADE: float = 0.4
+## Final afişinin ekranda kaldığı süre (sn).
+const FINALE_BANNER_TIME: float = 3.5
 ## Dalga afişe varınca afişin başladığı büyüklük ve yerine oturma süresi (sn).
 const BANNER_POP_SCALE: float = 1.25
 const BANNER_POP_TIME: float = 0.25
@@ -48,6 +53,8 @@ var _height_m: int = 0
 var _best_m: int = 0
 ## Afişte gösterilen sektör (0 = afiş yok).
 var _banner_sector: int = 0
+## Afiş final afişi mi (sektör adı yerine Büyük Depolama Birimi).
+var _banner_finale: bool = false
 var _banner_tween: Tween
 ## Gösterilen Glimmer çarpanı (1 = kombo göstergesi gizli).
 var _multiplier: int = 1
@@ -68,6 +75,7 @@ func _ready() -> void:
 	Events.height_changed.connect(_on_height_changed)
 	Events.best_height_changed.connect(_on_best_height_changed)
 	Events.sector_entered.connect(_on_sector_entered)
+	Events.great_storage_reached.connect(_on_great_storage_reached)
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
 	Events.near_miss.connect(_on_near_miss)
@@ -154,13 +162,24 @@ func _pop(label: Label, previous: Tween, from_scale: float) -> Tween:
 
 ## Sektör geçişi: afiş, renk dalgası afişin hizasına varınca gelir.
 func _on_sector_entered(index: int) -> void:
+	_show_banner(index, _wave_delay())
+
+
+## Final: aynı sektörün afişi final afişine döner (sector_entered'dan hemen sonra gelir).
+func _on_great_storage_reached() -> void:
+	_show_banner(maxi(_banner_sector, 1), _wave_delay(), true)
+
+
+## Renk dalgasının afişin hizasına varma süresi (sn).
+func _wave_delay() -> float:
 	var center: float = _sector_banner.get_global_rect().get_center().y
-	_show_banner(index, Neon.STYLE.wave_reach_time(center / get_viewport_rect().size.y))
+	return Neon.STYLE.wave_reach_time(center / get_viewport_rect().size.y)
 
 
-## Afişi delay sn sonra gösterir (0 ise hemen, büyümesiz).
-func _show_banner(index: int, delay: float = 0.0) -> void:
+## Afişi delay sn sonra gösterir (0 ise hemen, büyümesiz). finale: sektör adı yerine final afişi.
+func _show_banner(index: int, delay: float = 0.0, finale: bool = false) -> void:
 	_banner_sector = index
+	_banner_finale = finale
 	_refresh()
 	if _banner_tween != null:
 		_banner_tween.kill()
@@ -176,7 +195,7 @@ func _show_banner(index: int, delay: float = 0.0) -> void:
 				.set_trans(Tween.TRANS_CUBIC)
 		_banner_tween.parallel().tween_property(_sector_banner, "modulate:a", 1.0,
 				BANNER_POP_TIME).from(0.0)
-	_banner_tween.tween_interval(BANNER_TIME)
+	_banner_tween.tween_interval(FINALE_BANNER_TIME if finale else BANNER_TIME)
 	_banner_tween.tween_property(_sector_banner, "modulate:a", 0.0, BANNER_FADE)
 	_banner_tween.tween_callback(_hide_banner)
 
@@ -201,6 +220,7 @@ func _hide_banner() -> void:
 	if _banner_tween != null:
 		_banner_tween.kill()
 	_banner_sector = 0
+	_banner_finale = false
 	_sector_banner.visible = false
 
 
@@ -211,7 +231,7 @@ func _warm_glyphs() -> void:
 	_glimmer_label.warm_glyphs = tr("HUD_GLIMMERS") % 0 + DIGITS
 	_near_miss_label.warm_glyphs = tr("HUD_NEAR_MISS")
 	_combo_label.warm_glyphs = tr("HUD_COMBO") % 0 + DIGITS
-	var banners: String = DIGITS
+	var banners: String = DIGITS + tr("HUD_FINALE")
 	if sectors != null:
 		for index: int in range(1, sectors.count() + 1):
 			banners += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
@@ -226,7 +246,10 @@ func _refresh() -> void:
 	_near_miss_label.text = tr("HUD_NEAR_MISS")
 	_combo_label.text = tr("HUD_COMBO") % _multiplier
 	_combo_label.visible = _multiplier > 1
-	if _banner_sector > 0 and sectors != null:
+	if _banner_finale:
+		_sector_banner.text = tr("HUD_FINALE")
+		_sector_banner.color = Neon.STYLE.player_color
+	elif _banner_sector > 0 and sectors != null:
 		var def: SectorDef = sectors.def_at(_banner_sector)
 		_sector_banner.text = tr("HUD_SECTOR") % [_banner_sector, tr(def.name_key)]
 		_sector_banner.color = def.palette.accent

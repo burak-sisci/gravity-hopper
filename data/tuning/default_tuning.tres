@@ -34,6 +34,7 @@ no_repeat_count = 3
 death_freeze = 0.1
 death_trauma = 0.8
 shield_trauma = 0.5
+finale_trauma = 0.4
 shake_offset = 1.0
 shake_decay = 1.5
 shake_frequency = 20.0

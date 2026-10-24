@@ -15,7 +15,7 @@ func test_sample_chunk_values_are_read() -> void:
 	var chunk: ChunkInfo = _load(SAMPLE_PATH)
 	assert_int(chunk.difficulty).is_equal(2)
 	assert_int(chunk.min_sector).is_equal(1)
-	assert_int(chunk.max_sector).is_equal(5)
+	assert_int(chunk.max_sector).is_equal(6)
 	assert_int(chunk.length_beats).is_equal(8)
 	assert_array(chunk.tags).contains_exactly([&"zigzag"])
 	# Üç diken ve bir Glimmer (M2-13).

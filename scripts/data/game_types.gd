@@ -28,7 +28,8 @@ enum NeonTone {
 	RECORD, ## Rekor sarısı (M3-18: HUD'un rekor satırı)
 }
 
-## Ses efekti olayları (M3-15, architecture.md §8.8). Sıra tools/sfx_prep.py'deki SOUNDS ile aynı.
+## Ses efekti olayları (M3-15, architecture.md §8.8). Sıra tools/sfx_prep.py'deki SOUNDS (Kenney),
+## ardından tools/sfx_synth.py'deki SYNTH (özgün) ile aynı.
 enum Sfx {
 	FLIP, ## Çevirme (her dokunuş)
 	LAND, ## Duvara tutunma
@@ -39,6 +40,7 @@ enum Sfx {
 	DEATH, ## Ölüm
 	SECTOR, ## Yeni sektöre geçiş
 	RECORD, ## Oturum rekoru kırıldı (rekor çizgisine varıldı)
+	FINALE, ## Büyük Depolama Birimi'ne varış (M4-13; özgün ses)
 }
 
 ## Kozmetik izin nasıl açıldığı (M4-08, GDD §11). Yedi günlük seri başarımı M7-03'te eklenir.

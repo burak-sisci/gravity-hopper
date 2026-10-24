@@ -34,6 +34,7 @@ func _ready() -> void:
 	if SaveManager.last_source != SaveManager.Source.MAIN:
 		save()
 	Events.sector_entered.connect(_reach_sector)
+	Events.great_storage_reached.connect(mark_great_storage_reached)
 
 
 func _notification(what: int) -> void:
@@ -227,12 +228,15 @@ func select_start_sector(index: int) -> bool:
 	return true
 
 
-## Büyük Depolama Birimi'ne varıldı (tur akışı M4-13'te çağırır; şimdilik debug ve testler):
-## kayda işlenir, başarım izi açılır, kaydedilir.
+## Büyük Depolama Birimi'ne varıldı (Events.great_storage_reached, M4-13; testler doğrudan da
+## çağırır): kayda işlenir, başarım izi açılır. Tur sırasında yazılmaz (finalin karesinde dosya
+## yazımı Redmi'de ≈ 10 ms); kayıt sonraki kayıt anında (tur sonu, arka plan), sektörler gibi.
 func mark_great_storage_reached() -> void:
+	if bool(_data["great_storage_reached"]):
+		return
 	_data["great_storage_reached"] = true
 	_unlock_trails()
-	save()
+	_dirty = true
 
 
 ## Yükseltmenin seviyesini doğrudan koyar (debug `--upgrade=` argümanı, testler); 0 ile en üst

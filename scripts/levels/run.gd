@@ -51,6 +51,13 @@ extends Node2D
 ## duyurunca (Events.player_revived) oyuncu kaldığı yerde canlanır: yakındaki tehlikeler
 ## temizlenir, çöküş duvarı geri itilir, revive_grace boyunca dokunulmazdır. Saat ölümde durduğu
 ## için oyuncu vuruş ızgarasındaki yerindedir; müzik kaldığı yerden sürer (AudioManager).
+## Büyük Depolama Birimi (M4-13): finale sektörüne (Taşma) girilen adımda final anı oynar:
+## sector_entered'dan hemen sonra Events.great_storage_reached yayılır, oyuncunun yerinde bütün
+## paletlerin renkleriyle bir patlama çıkar ve kamera hafifçe sarsılır. Sınır turda bir kez geçilir;
+## tur Taşma'dan başlarsa final oynamaz.
+## Döngüsel palet (M4-13): sektörün palet döngüsü varsa palet, sektörün başından her
+## palette_cycle_length'te sıradakine renk dalgasıyla geçer (yalnızca görsel; hız, zorluk ve
+## sektör değişmez).
 
 ## Duvar yakınlığı bundan az değişince yeniden yayılmaz (HUD vinyeti için yeterli çözünürlük).
 const PROXIMITY_STEP: float = 0.01
@@ -111,6 +118,10 @@ var _dashing: bool = false
 var _dash_px: float = 0.0
 var _dash_time: float = 0.0
 var _dash_progress: float = 0.0
+## Döngüsel palet: gösterilen adım ve oyuncunun sıradaki palete geçeceği dünya y'si (döngü
+## yoksa -INF).
+var _palette_step: int = 0
+var _next_palette_y: float = -INF
 
 @onready var _background: Background = %Background
 @onready var _conductor: Conductor = %Conductor
@@ -142,6 +153,7 @@ func _ready() -> void:
 	if track != null:
 		_conductor.set_tempo(track.bpm, 0.0)
 	_next_boundary_y = _boundary_y(sector)
+	_start_palette_cycle(def, _start_y)
 	_camera.follow(_player.position.y, TuningConfig.to_px(tuning.lookahead))
 	_background.reset_scroll(_camera.position.y)
 	_player.set_trail(loadout.trail)
@@ -191,6 +203,8 @@ func _physics_process(delta: float) -> void:
 		_pressure.advance(delta)
 	if _player.position.y <= _next_boundary_y:
 		_enter_sector(sector + 1)
+	if _player.position.y <= _next_palette_y:
+		_next_cycle_palette()
 	_update_view()
 	if _magnet != null and _player.is_alive():
 		_chunks.attract(_player.global_position, _magnet, delta)
@@ -206,6 +220,7 @@ func _physics_process(delta: float) -> void:
 	_collapse_wall.set_beat(beat)
 	_record_line.track(_player.position.y, beat)
 	_background.set_scroll(_camera.position.y)
+	_effects.track_finale(_player.global_position)
 	_update_wall()
 	if _combo > 0 and _conductor.run_time - _last_graze_time > tuning.combo_window:
 		_combo = 0
@@ -227,10 +242,46 @@ func _enter_sector(next: int) -> void:
 	sector = next
 	_player.climb_speed = def.climb_speed
 	_pressure.creep = def.wall_creep
+	_start_palette_cycle(def, _next_boundary_y)
 	_next_boundary_y = _boundary_y(next)
 	_show_palette(def.palette, false)
 	_show_speed(def.climb_speed, false)
 	Events.sector_entered.emit(next)
+	if def.finale:
+		_play_finale()
+
+
+## Büyük Depolama Birimi'ne varış: bütün paletlerin renkleriyle patlama, hafif sarsıntı ve duyuru
+## (HUD afişi, AudioManager sesi, Progression başarım izi).
+func _play_finale() -> void:
+	var colors: Array[Color] = []
+	for palette: SectorPalette in sectors.palettes():
+		colors.append(palette.ambient)
+	_effects.finale_burst(_player.global_position, colors)
+	_camera.add_trauma(tuning.finale_trauma)
+	Events.great_storage_reached.emit()
+
+
+## Sektörün palet döngüsünü başından kurar (döngü yoksa kapalı). sector_start_y: sektörün başladığı
+## dünya y'si.
+func _start_palette_cycle(def: SectorDef, sector_start_y: float) -> void:
+	_palette_step = 0
+	_next_palette_y = -INF
+	if def.cycles_palette():
+		_next_palette_y = sector_start_y - TuningConfig.to_px(def.palette_cycle_length)
+
+
+## Döngünün sıradaki paleti renk dalgasıyla gelir.
+func _next_cycle_palette() -> void:
+	var def: SectorDef = sectors.def_at(sector)
+	_palette_step += 1
+	_next_palette_y -= TuningConfig.to_px(def.palette_cycle_length)
+	_show_palette(def.palette_at(_palette_step), false)
+
+
+## Döngüsel palette gösterilen adım (testler).
+func palette_step() -> int:
+	return _palette_step
 
 
 ## Kıl payı: pencere içindeyse kombo uzar, değilse yeni zincir başlar. Glimmer çarpanı

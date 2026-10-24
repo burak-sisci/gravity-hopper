@@ -17,6 +17,7 @@ extends Node
 ## Efektler (M3-15, ADR-061): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
 ## Havuz sabit sayıda çalardır (SfxBank.voices), oyun açılırken kurulur; tur sırasında düğüm
 ## oluşturulmaz. Boş çalar yoksa bitmesine en az kalan kesilir. Çalarlar SFX yolundadır.
+## Final (M4-13): Büyük Depolama Birimi'nde final sesi aynı karedeki sektör sesini susturur.
 ## Efektler gerçek zamanda çalar: Engine.time_scale'i izlemez (yavaş çekimde ses yavaşlamaz;
 ## kural yalnızca müziğin vuruş senkronu için, .clauderules §5).
 ##
@@ -119,6 +120,7 @@ func _ready() -> void:
 	Events.shield_changed.connect(_on_shield_changed)
 	Events.sector_entered.connect(_on_sector_entered)
 	Events.record_broken.connect(play_sfx.bind(GameTypes.Sfx.RECORD))
+	Events.great_storage_reached.connect(_on_great_storage_reached)
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
 
 
@@ -397,6 +399,24 @@ func _on_shield_changed(active: bool) -> void:
 
 func _on_sector_entered(_index: int) -> void:
 	play_sfx(GameTypes.Sfx.SECTOR)
+
+
+## Final sesi, aynı karede başlayan sektör sesinin yerini alır (iki büyük an üst üste binmesin).
+func _on_great_storage_reached() -> void:
+	_stop_sfx(GameTypes.Sfx.SECTOR)
+	play_sfx(GameTypes.Sfx.FINALE)
+
+
+## Olayın sesini çalan çalarları susturur ve boşaltır.
+func _stop_sfx(event: GameTypes.Sfx) -> void:
+	var sound: SfxSound = sfx_bank.sound_for(event) if sfx_bank != null else null
+	if sound == null:
+		return
+	for i: int in _voices.size():
+		if _voices[i].stream == sound.stream:
+			_voices[i].stop()
+			_voices[i].stream = null
+			_voice_ends[i] = 0.0
 
 
 ## Debug build'de birkaç ölçüde bir senkron raporu (S-03 ölçümü).

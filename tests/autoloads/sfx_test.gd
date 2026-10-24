@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## Ses efektleri (M3-15, architecture.md §8.8): her olayın atıflı bir sesi var; Events'teki olay
 ## doğru sesi çalar; aynı karedeki efektler ayrı çalarlarda çalar; havuz dolunca bitmesine en az
-## kalan kesilir ve düğüm sayısı değişmez; efektler Engine.time_scale'i izlemez.
+## kalan kesilir ve düğüm sayısı değişmez; efektler Engine.time_scale'i izlemez. Final sesi
+## (M4-13) aynı karedeki sektör sesinin yerini alır.
 ##
 ## Çalarların doluluğunu ölçmek için testler sesleri uzun, birbirinden ayırt edilir sessiz
 ## WAV'lardan kurulu bir bankayla değiştirir (önceki testlerin kısa sesleri bunlardan önce biter).
@@ -28,6 +29,8 @@ func after_test() -> void:
 	Engine.time_scale = 1.0
 	for voice: AudioStreamPlayer in AudioManager.sfx_voices():
 		voice.stop()
+	# Final olayı Progression'a da gider (başarım izi); kayıt temiz kalsın.
+	Progression.reset()
 
 
 func test_every_event_has_a_credited_sound() -> void:
@@ -55,6 +58,7 @@ func test_events_play_their_sound() -> void:
 		[GameTypes.Sfx.SHIELD_BREAK, Events.shield_changed.emit.bind(false)],
 		[GameTypes.Sfx.SECTOR, Events.sector_entered.emit.bind(2)],
 		[GameTypes.Sfx.RECORD, Events.record_broken.emit],
+		[GameTypes.Sfx.FINALE, Events.great_storage_reached.emit],
 		[GameTypes.Sfx.DEATH, Events.player_died.emit.bind(GameTypes.DeathCause.HAZARD)],
 	]
 	for case: Array in cases:
@@ -70,6 +74,17 @@ func test_shield_gain_is_silent() -> void:
 	var count: int = AudioManager.sfx_count(GameTypes.Sfx.SHIELD_BREAK)
 	Events.shield_changed.emit(true)
 	assert_int(AudioManager.sfx_count(GameTypes.Sfx.SHIELD_BREAK)).is_equal(count)
+
+
+## Büyük Depolama Birimi: sektör sesi aynı karede başlar, final sesi onu susturup yerini alır.
+func test_finale_replaces_the_sector_sound() -> void:
+	Events.run_started.emit(1, 5)
+	Events.sector_entered.emit(6)
+	assert_object(_voice_with(_streams[GameTypes.Sfx.SECTOR])).is_not_null()
+	Events.great_storage_reached.emit()
+	assert_object(_voice_with(_streams[GameTypes.Sfx.SECTOR])).is_null()
+	assert_object(_voice_with(_streams[GameTypes.Sfx.FINALE])).is_not_null()
+	assert_int(AudioManager.last_sfx().event).is_equal(GameTypes.Sfx.FINALE)
 
 
 ## Kombo eşiği sesi yalnızca çarpan büyüdüğü kıl payında; zincir bitince sayaç baştan.

@@ -85,6 +85,9 @@ extends Resource
 @export var glimmer_burst: BurstStyle
 ## Ölüm patlaması: çekirdek dağılır (ölüm donmasının sonunda).
 @export var death_burst: BurstStyle
+## Final patlaması (M4-13): Büyük Depolama Birimi'ne varışta her yayıcı bir sektörün renginde;
+## parçacıklar oyuncuyla birlikte taşınır, ekranın genişliğine yayılır.
+@export var finale_burst: BurstStyle
 
 @export_group("Tehlikeler")
 ## Sivri köşeli kenar çizgisinde köşe sivriliğinin sınırı (Line2D.sharp_limit).

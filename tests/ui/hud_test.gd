@@ -1,7 +1,8 @@
 extends GdUnitTestSuite
 ## HUD (M1-10, architecture.md §12): yalnızca Events'i dinler; metinler çeviri anahtarlarından
 ## gelir ve dil değişince yenilenir. Neon yazılar (M3-18) dokunuş yutmaz; gösterebilecekleri
-## harfleri önceden çizer (M3-19).
+## harfleri önceden çizer (M3-19). Final (M4-13): Büyük Depolama Birimi afişi; bütün afişler iki
+## dilde kutularına sığar.
 
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
@@ -10,6 +11,8 @@ const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
 const SETTLE_FRAMES: int = 40
 ## Dokunuştan önce oyuncunun duvara varmasını en çok bu kadar adım bekle.
 const WALL_WAIT_FRAMES: int = 120
+## Afiş en çok bu kadar satıra kırılabilir (64 px yazı, 160 px kutu).
+const MAX_BANNER_LINES: int = 2
 
 var _hud: Control
 var _locale: String
@@ -121,6 +124,67 @@ func test_banner_on_start_from_later_sector() -> void:
 	assert_bool(_banner().visible).is_false()
 
 
+## Final (M4-13): Büyük Depolama Birimi'nde aynı karedeki sektör afişi final afişine döner; iki
+## dilde, oyuncu renginde ve sektör afişinden uzun görünür.
+func test_finale_banner_replaces_the_sector_banner() -> void:
+	Events.run_started.emit(1, 5)
+	Events.sector_entered.emit(6)
+	Events.great_storage_reached.emit()
+	assert_bool(_banner().visible).is_false()
+	var waited: int = 0
+	while not _banner().visible and waited < 120:
+		await get_tree().process_frame
+		waited += 1
+	assert_float(waited / 60.0).is_less_equal(Neon.STYLE.wave_time + 0.1)
+	assert_str(_banner().text).is_equal("THE GREAT STORAGE")
+	assert_that((_banner() as NeonLabel).color).is_equal(Neon.STYLE.player_color)
+	TranslationServer.set_locale("tr")
+	await get_tree().process_frame
+	assert_str(_banner().text).is_equal("BÜYÜK DEPOLAMA BİRİMİ")
+	# Sektör afişinin söndüğü an (0,25 + 2 + 0,4 sn = 159 kare) geçti, final afişi sürüyor;
+	# 0,25 + 3,5 + 0,4 sn = 249 karede söner.
+	for i: int in 170:
+		await get_tree().process_frame
+	assert_bool(_banner().visible).is_true()
+	assert_str(_banner().text).is_equal("BÜYÜK DEPOLAMA BİRİMİ")
+	for i: int in 90:
+		await get_tree().process_frame
+	assert_bool(_banner().visible).is_false()
+
+
+## Çeviri sığar (ölçülür, M4-13): her sektör afişi ve final afişi iki dilde de gerçek fontla en
+## çok MAX_BANNER_LINES satır; bütün satırlar görünür ve afiş ekranın içinde. Ölçü oyunun taban
+## boyutunda: "expand" uyarlamasında mantıksal genişlik hiçbir ekranda bundan dar olmaz.
+func test_every_banner_fits_in_both_languages() -> void:
+	var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
+	viewport.size = Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
+			ProjectSettings.get_setting("display/window/size/viewport_height"))
+	add_child(viewport)
+	var hud: Control = HUD_SCENE.instantiate() as Control
+	viewport.add_child(hud)
+	var banner: Label = hud.get_node("%SectorBanner") as Label
+	var sectors: SectorCatalog = (hud as Object).get("sectors") as SectorCatalog
+	var screen: Rect2 = Rect2(Vector2.ZERO, viewport.size)
+	for locale: String in ["en", "tr"]:
+		TranslationServer.set_locale(locale)
+		var texts: Array[String] = [tr("HUD_FINALE")]
+		for index: int in range(1, sectors.count() + 1):
+			texts.append(tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)])
+		for text: String in texts:
+			banner.text = text
+			banner.visible = true
+			await get_tree().process_frame
+			var lines: int = banner.get_line_count()
+			var rect: Rect2 = banner.get_global_rect()
+			assert_int(lines).override_failure_message("%s: '%s' %d satır" % [
+				locale, text, lines]).is_less_equal(MAX_BANNER_LINES)
+			assert_int(banner.get_visible_line_count()).is_equal(lines)
+			# Yazı kutusunu büyütmedi (64 px'te iki satır 160 px'lik kutuya sığar).
+			assert_float(rect.size.y).is_less_equal(banner.offset_bottom - banner.offset_top)
+			assert_bool(screen.encloses(rect)).override_failure_message("%s: '%s' ekran dışı %s" % [
+				locale, text, rect]).is_true()
+
+
 ## Kıl payı yazısı ve kombo göstergesi (M3-12): iki dilde; yazı söner, gösterge zincirle biter.
 func test_near_miss_text_and_combo() -> void:
 	Events.run_started.emit(1, 1)
@@ -189,7 +253,7 @@ func test_taps_on_labels_flip_player() -> void:
 
 
 ## Isıtma (M3-19): her yazı geçerli dilde gösterebileceği bütün harfleri önceden çizer; afiş
-## bütün sektörlerin adlarını.
+## bütün sektörlerin adlarını ve final yazısını.
 func test_labels_warm_every_glyph_they_can_show() -> void:
 	var sectors: SectorCatalog = (_hud as Object).get("sectors") as SectorCatalog
 	var shown: Dictionary[String, String] = {
@@ -202,11 +266,12 @@ func test_labels_warm_every_glyph_they_can_show() -> void:
 	}
 	for index: int in range(1, sectors.count() + 1):
 		shown["%SectorBanner"] += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
+	shown["%SectorBanner"] += tr("HUD_FINALE")
 	_assert_warmed(shown)
 	TranslationServer.set_locale("tr")
 	shown["%BestLabel"] = tr("HUD_BEST") % 1234567890
 	shown["%NearMissLabel"] = tr("HUD_NEAR_MISS")
-	shown["%SectorBanner"] = ""
+	shown["%SectorBanner"] = tr("HUD_FINALE")
 	for index: int in range(1, sectors.count() + 1):
 		shown["%SectorBanner"] += tr("HUD_SECTOR") % [index, tr(sectors.def_at(index).name_key)]
 	assert_str(shown["%NearMissLabel"]).is_not_equal("NEAR MISS!")

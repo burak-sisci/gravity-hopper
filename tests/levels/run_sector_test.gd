@@ -12,6 +12,9 @@ const SHORT_LENGTH: float = 150.0
 const DT: float = 1.0 / 60.0
 ## Son sektöre girildikten sonra oynanan süre (sn): nefes alma (2,5 sn) + birkaç parça.
 const LAST_SECTOR_TIME: float = 10.0
+## Adım hızı payı (px): konumlar 32 bit; son sektöre ~37 500 px'te girilir, orada konumun
+## çözünürlüğü 2^-8 = 0,0039 px ve iki konumun farkı bu kadar şaşabilir (S6'da 0,0013 ölçüldü).
+const STEP_TOLERANCE: float = 0.004
 
 var _entered: Array[int] = []
 
@@ -105,7 +108,7 @@ func _check_sectors_on_beat(track_id: StringName) -> void:
 	for sector: int in range(1, last + 1):
 		assert_float(speeds.get(sector, 0.0)).override_failure_message(
 				"S%d adım hızı" % sector).is_equal_approx(
-				SECTORS.def_at(sector).climb_px() * DT, 0.001)
+				SECTORS.def_at(sector).climb_px() * DT, STEP_TOLERANCE)
 		assert_int(passes[sector]).override_failure_message(
 				"S%d'de diken geçişi yok" % sector).is_greater(0)
 	# Tempo tur boyunca parçanın temposu; ızgara sektör geçişinde yeniden başlamaz.

@@ -1,7 +1,10 @@
 extends GdUnitTestSuite
 ## Parçacık patlamaları (M3-11, architecture.md §9): yayıcılar baştan kurulur ve halkayla yeniden
 ## kullanılır (düğüm oluşmaz), patlama verilen yerde ve yönde çıkar, düşük kalitede parçacık
-## azalır, çevre rengi yalnızca kıvılcımı boyar.
+## azalır, çevre rengi yalnızca kıvılcımı boyar. Final patlaması (M4-13) bütün yayıcılarını verilen
+## renklerde aynı anda patlatır ve oyuncuyla taşınır.
+
+const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 
 var _quality: GameTypes.Quality
 
@@ -56,7 +59,9 @@ func test_low_quality_has_fewer_particles() -> void:
 	for i: int in high.size():
 		assert_int(low[i]).is_less(high[i])
 		assert_int(low[i]).is_greater_equal(1)
-	assert_int(effects.get_child_count()).is_equal(high.size())
+	for emitter: CPUParticles2D in effects.finale_emitters():
+		assert_int(emitter.amount).is_less(Neon.STYLE.finale_burst.amount)
+	assert_int(effects.get_child_count()).is_equal(high.size() + Effects.FINALE_EMITTERS)
 
 
 func test_ambient_colors_only_the_sparks() -> void:
@@ -69,6 +74,33 @@ func test_ambient_colors_only_the_sparks() -> void:
 			Neon.STYLE.glimmer_color)
 	assert_that(emitters[emitters.size() - 1].color_ramp.colors[1]).is_equal(
 			Neon.STYLE.player_color)
+
+
+## Final: her yayıcı bir sektör renginde, hepsi aynı anda ve aynı yerde; parçacıklar yayıcının
+## koordinatında (oyuncuyla taşınır); çevre rengi final renklerini değiştirmez; düğüm oluşmaz.
+func test_finale_bursts_in_every_color_and_follows_the_player() -> void:
+	var effects: Effects = _add_effects()
+	var count: int = effects.get_child_count()
+	var finale: Array[CPUParticles2D] = effects.finale_emitters()
+	assert_int(finale.size()).is_equal(Effects.FINALE_EMITTERS)
+	var colors: Array[Color] = []
+	for palette: SectorPalette in SECTORS.palettes():
+		colors.append(palette.ambient)
+	effects.finale_burst(Vector2(0.0, -5000.0), colors)
+	for i: int in finale.size():
+		assert_bool(finale[i].emitting).is_true()
+		assert_bool(finale[i].local_coords).is_true()
+		assert_vector(finale[i].global_position).is_equal(Vector2(0.0, -5000.0))
+		assert_that(finale[i].color_ramp.colors[1]).is_equal(colors[i % colors.size()])
+	effects.set_ambient(Color(0.9, 0.4, 1.0))
+	assert_that(finale[0].color_ramp.colors[1]).is_equal(colors[0])
+	effects.track_finale(Vector2(30.0, -5600.0))
+	for emitter: CPUParticles2D in finale:
+		assert_vector(emitter.global_position).is_equal(Vector2(30.0, -5600.0))
+	# Diğer halkalar yerinde; düğüm sayısı değişmedi.
+	for emitter: CPUParticles2D in effects.emitters():
+		assert_bool(emitter.emitting).is_false()
+	assert_int(effects.get_child_count()).is_equal(count)
 
 
 func _add_effects() -> Effects:

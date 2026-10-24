@@ -38,6 +38,18 @@ func sector_at(height_m: float) -> int:
 	return sectors.size()
 
 
+## Katalogda görünebilen paletler, ilk görüldükleri sırayla ve birer kez (döngüsel paletler dahil;
+## Taşma önceki sektörlerin paletlerini yeniden kullanır, M4-13).
+func palettes() -> Array[SectorPalette]:
+	var result: Array[SectorPalette] = []
+	for def: SectorDef in sectors:
+		for step: int in def.palette_cycle.size() + 1:
+			var palette: SectorPalette = def.palette_at(step)
+			if palette != null and not result.has(palette):
+				result.append(palette)
+	return result
+
+
 ## Verilen tempoda bütün sektörler içinde en kısa vuruş boyu (px); havuzlar en kötü duruma göre
 ## kurulur.
 func min_beat_px(bpm: float) -> float:

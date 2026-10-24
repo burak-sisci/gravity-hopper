@@ -275,7 +275,7 @@
   *Kabul:* Doğrulayıcı her tempoda geçiyor; S3 → S4 geçişi testte; Redmi'de S4 ekran görüntüsü ve kare süresi.
 - [x] **M4-12** 🤖 S5 BOZULMA: `SectorDef` (20 m/sn, 2500 m, 0,8 m/sn), beyaz + glitch paleti (renk kayması yalnızca kendi alanında, kaliteye bağlı), bütün tehlikeleri karıştıran yoğun desenler.
   *Kabul:* Doğrulayıcı geçiyor; Redmi'de S5'te yüksek kalitede kare süresi ≤ 10 ms.
-- [ ] **M4-13** 🤖 Büyük Depolama Birimi ve Taşma: 7500 m'de final anı (afiş, renk patlaması, ses; başarım izi açılır), ardından sonsuz Taşma modu (22 m/sn tavan, döngüsel palet, önceki sektörlerin desenlerinden remiks).
+- [x] **M4-13** 🤖 Büyük Depolama Birimi ve Taşma: 7500 m'de final anı (afiş, renk patlaması, ses; başarım izi açılır), ardından sonsuz Taşma modu (22 m/sn tavan, döngüsel palet, önceki sektörlerin desenlerinden remiks).
   *Kabul:* Final 7500 m'de bir kez oynuyor ve başarım izi açılıyor; Taşma'da hız tavanı ve ≥ 1,2 sn görüş kuralı tutuyor (test); Redmi'de ölümsüz turla final anının görüntüsü.
 
 **Denge ve kapanış**

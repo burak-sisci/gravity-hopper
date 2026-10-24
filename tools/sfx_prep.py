@@ -14,7 +14,9 @@ Kenney ses paketlerinden (CC0, ADR-042) seçilen efektleri oyuna hazırlar:
      müziğin ortanca düzeyine göre TENSION_DB'ye çekilir ve data/audio/tension_mix.tres'teki
      volume_db satırına yazılır (dosyanın diğer değerleri elle ayarlanır).
 
-Olay sırası GameTypes.Sfx ile aynıdır (enum değeri = SOUNDS'taki sıra).
+Olay sırası GameTypes.Sfx ile aynıdır (enum değeri = SOUNDS'taki sıra). Özgün sesler (M4-13)
+SOUNDS'tan sonra gelir ve tools/sfx_synth.py'nin işidir. Bu araç bankayı baştan yazdığı için
+ondan sonra sfx_synth.py yeniden çalıştırılır.
 
 Kullanım (proje dışındaki geliştirme ortamı; numpy 2.5.4, soundfile 0.14.0):
   python tools/sfx_prep.py <kaynak klasörü>

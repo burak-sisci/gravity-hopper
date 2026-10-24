@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SectorDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/sector_def.gd" id="1_sector"]
+[ext_resource type="Resource" path="res://data/sectors/palette_01.tres" id="2_p1"]
+[ext_resource type="Resource" path="res://data/sectors/palette_02.tres" id="3_p2"]
+[ext_resource type="Resource" path="res://data/sectors/palette_03.tres" id="4_p3"]
+[ext_resource type="Resource" path="res://data/sectors/palette_04.tres" id="5_p4"]
+[ext_resource type="Resource" path="res://data/sectors/palette_05.tres" id="6_p5"]
+
+[resource]
+script = ExtResource("1_sector")
+name_key = &"SECTOR_6_NAME"
+climb_speed = 22.0
+wall_creep = 0.8
+length = 2500.0
+allowed_hazards = Array[StringName]([&"spike", &"gap", &"block", &"laser", &"rotor", &"moving_block"])
+min_difficulty = 4
+max_difficulty = 7
+palette = ExtResource("3_p2")
+palette_cycle = Array[SectorPalette]([ExtResource("4_p3"), ExtResource("2_p1"), ExtResource("5_p4"), ExtResource("6_p5")])
+palette_cycle_length = 500.0
+finale = true

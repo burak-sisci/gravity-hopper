@@ -173,7 +173,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 | S4 | ÇEKİRDEK / KERNEL | Eflatun | 18 m/sn | 1750 m | 5000 m | Dönen şekil, hareketli blok |
 | S5 | BOZULMA / CORRUPTION | Gümüş, beyaz vurgu + glitch | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
 | ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | 7500 m | Final anı + başarım izi |
-| ∞ | TAŞMA / OVERFLOW | Döngüsel | 22 m/sn (tavan) | Sonsuz | — | Remiks desenler |
+| S6 ∞ | TAŞMA / OVERFLOW | Döngüsel: S2 → S3 → S1 → S4 → S5, 500 m'de bir | 22 m/sn (tavan) | Sonsuz | — | Önceki sektörlerin bütün desenleri, en zor uçta |
 
 **Tempo (kullanıcı kararı, 2026-10-13, ADR-040):** Sektörlerin kendi temposu yok. Her tur, üç müzik parçasından birini rastgele çalar ve turun temposu o parçanınkidir (90–120 BPM; M3-21, ADR-065). Tempo tur boyunca değişmez; müzik sektör geçişinde kesilmez.
 
@@ -195,6 +195,14 @@ S4 ve S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla seçildi
 
 **S5 bozulması (M4-12, ölçülerek seçildi; varsayım, kullanıcı kararı bekliyor):** Çevre rengi gümüş, vurgu beyaz (nabız, afiş ve renk dalgası beyaz). Parlak beyaz çevre rengi iki onaylı kurala takıldı: saf beyaz sarı rekor çizgisine fazla yakın (0,185; kural ≥ 0,2), maviye çekilmiş beyaz ise S5'te varsayılan Neon izini Ayaz izinin aynısı yapıyor (0,054; kural ≥ 0,15). Glitch yalnızca arka planda: vuruşla yanıp sönen ince bantlar (camgöbeği ve eflatun) ve yüksek kalitede ağ çizgilerinin renk kayması. Orta kalitede yalnızca bantlar, düşükte glitch yok. Tehlikelere, oyuncuya ve HUD'a dokunmaz; renk dalgasında yalnızca S5'in tarafında görünür. Bandın üstünde de tehlike okunur (kontrast ≥ 4,5, testte).
 
+**Büyük Depolama Birimi ve Taşma (M4-13; varsayım, kullanıcı denemesi bekliyor):**
+
+- **Varış anı (7500 m):** S5'ten Taşma'ya geçilen adımda oynar. Sektör afişinin yerine "BÜYÜK DEPOLAMA BİRİMİ" afişi beyaz (oyuncu rengi) gelir ve 3,5 sn kalır (sektör afişi 2 sn). Oyuncunun çevresinde bütün sektörlerin renklerinde büyük bir parçacık patlaması çıkar ve oyuncuyla birlikte yükselir; kamera hafifçe sarsılır. Özel bir ses çalar ve aynı anda başlayan sektör sesinin yerini alır. Büyük Depo izi açılır (§11).
+- **Final sesi:** Projenin özgün sesi, kodla üretildi (`tools/sfx_synth.py`; örnek ses yok). Alçak bir vuruş, açık beşlilerle (D–A) yükselen bir arpej, yavaş açılan bir akor ve seyrelen pırıltılar; 3 sn. Üçlü yok: majör/minör renk vermez, D'deki iki parçayla çakışmaz. Ses düzeyi öteki büyük anların kuralıyla ölçülerek ayarlandı: telefon bandında müziğin 6 dB üstü.
+- **Final bir kez oynar:** yalnızca S5'ten tırmanarak varınca. Taşma da kontrol noktasıdır; oradan başlayan turda final yoktur.
+- **Taşma:** Hız 22 m/sn'de, çöküş duvarının sürünmesi 0,8 m/sn'de (tavan) kalır. Zorluk ilk 2500 m'de 4'ten 7'ye çıkar, sonra en zor uçta kalır. Bütün tehlikeler ve önceki sektörlerin bütün desenleri gelir; 39 desenin hepsi 22 m/sn'de doğrulayıcıdan geçti.
+- **Döngüsel palet:** Taşma S2'nin mor paletiyle başlar; her 500 m'de bir renk dalgasıyla sıradakine geçer: S2 → S3 → S1 → S4 → S5 → yeniden S2. S5'in rengindeyken bozulma glitch'i de gelir. Sıra ölçülerek seçildi: art arda gelen iki palet arasındaki en küçük OKLab farkı 0,284 (yan yana gelen renkler için kural ≥ 0,25). Taşma'yı S1 ile başlatmak S5'ten geçişi 0,157'de bırakıyordu; dalga zor fark edilirdi.
+
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 
 1. Engeller durur; kısa bir boş koridor gelir.
@@ -208,12 +216,12 @@ S4 ve S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla seçildi
   - M4-09: Sektör, oyuncu sınırını geçtiği anda açılır (tur o sırada bitse ya da uygulama kapansa da kaybolmaz). Açılmak seçmek değildir; başlangıç sektörünü oyuncu seçer, seçim saklanır. Seçim şimdilik debug İlerleme sayfasında, menüde M5-02'de. Skor mutlak yükseklikten sayılır.
 - Bu sayede Sektör 4'e ulaşmak için her seferinde 5000 m tırmanmak gerekmez.
 
-**Final ve sonrası:** Büyük Depolama Birimi'ne varış, oyunun "hikâye sonu"dur: kısa bir varış anı ve özel bir iz. Ardından Taşma modu sonsuza kadar devam eder.
+**Final ve sonrası:** Büyük Depolama Birimi'ne varış, oyunun "hikâye sonu"dur: kısa bir varış anı ve özel bir iz. Ardından Taşma modu sonsuza kadar devam eder (ayrıntılar yukarıda, M4-13).
 
 ## 13. Hız ve zorluk
 
 - **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (90 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
-- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5, S4: 3→6, S5: 4→7; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
+- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5, S4: 3→6, S5: 4→7, Taşma: 4→7 ilk 2500 m'de, sonra 7; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
   2. Engel sıklığı
@@ -251,7 +259,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | Olay | Etki (başlangıç) |
 | --- | --- |
-| Zamanla sürünme | S1: 0,3 m/sn → S5: 0,8 m/sn |
+| Zamanla sürünme | S1: 0,3 m/sn → S5: 0,8 m/sn (Taşma'da da 0,8) |
 | Glimmer toplamak | +1 m (duvarı iter) |
 | Kıl payı geçiş | +3 m |
 | Kalkanla darbe almak | −8 m (duvarı çeker) |

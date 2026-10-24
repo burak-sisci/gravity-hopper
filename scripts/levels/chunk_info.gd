@@ -28,9 +28,10 @@ const SECONDS_PER_MINUTE: float = 60.0
 ## Zorluk (1 kolay – 10 en zor). Seçimde sektör içi hedef zorluğa göre ağırlık verilir (M2-10).
 @export_range(1, 10) var difficulty: int = 1
 ## Parçanın çıkabileceği ilk sektör.
-@export_range(1, 5) var min_sector: int = 1
-## Parçanın çıkabileceği son sektör.
-@export_range(1, 5) var max_sector: int = 5
+@export_range(1, 6) var min_sector: int = 1
+## Parçanın çıkabileceği son sektör. Varsayılan son sektör (Taşma, M4-13): Taşma önceki
+## sektörlerin parçalarını karıştırır.
+@export_range(1, 6) var max_sector: int = 6
 ## Parçanın boyu (vuruş). Tasarımda 0 ile -length_beats × 100 px arası.
 @export_range(1, 64) var length_beats: int = 8
 ## Seçim etiketleri (ör. intro, breather). Tehlike türü etiketlenmez; çocuklardan okunur.
