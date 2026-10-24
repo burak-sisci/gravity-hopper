@@ -21,6 +21,12 @@ extends CanvasLayer
 ##
 ## Hız çizgileri (M3-13): SpeedLines ağın üstünde, dünyanın ardında aşağı akar; Run tırmanış
 ## hızını set_speed ile verir, ölümde stop_speed çağırır.
+##
+## Bozulma (M4-12, ADR-080): paletin glitch gücü varsa (S5) ağın üstünde vuruşa bağlı kısa
+## bantlar belirir: yarı saydam renk bandı ve (yüksek kalitede) bandın içinde ağ çizgilerinin iki
+## renkli, yana kaymış kopyaları (renk kayması). Yalnızca o paletin gösterildiği alanda çizilir
+## (renk dalgasında önün altı ya da üstü); dünyanın ardındaki katmanda olduğu için tehlikelere,
+## oyuncuya ve HUD'a dokunmaz. Seçim adım sırasından (kozmetik; turun RNG'sine dokunmaz).
 
 ## Parlayan düğümlerin seçimi bu kadar vuruşta bir tekrarlanır.
 const FLASH_CYCLE: int = 1024
@@ -28,6 +34,8 @@ const FLASH_CYCLE: int = 1024
 const FLASH_HALO_RATIO: float = 4.0
 ## Nabız renk oranında çevre renginin kanal tabanı (sıfıra bölmeyi önler; Corridor'daki gibi).
 const MIN_CHANNEL: float = 0.05
+## Bozulma özetinde adımın temiz geçip geçmediğini seçen tuz (bant sıraları 0'dan başlar).
+const GLITCH_CLEAN_SALT: int = -1
 
 var _prev_scroll: float = 0.0
 var _scroll: float = 0.0
@@ -50,6 +58,10 @@ var _wash_color: Color = Color.BLACK
 var _wave_ambient: Color = Color.WHITE
 var _wave_accent: Color = Color.WHITE
 var _wave_pulse_tint: Color = Color.WHITE
+## Bozulmanın gücü: geçerli palet ve dalgadaki yeni palet (0 = yok). Adım: vuruş × adım sayısı.
+var _glitch: float = 0.0
+var _wave_glitch: float = 0.0
+var _glitch_step: int = 0
 
 @onready var _wash: Node2D = %Wash
 @onready var _grid: Node2D = %Grid
@@ -60,6 +72,7 @@ var _wave_pulse_tint: Color = Color.WHITE
 @onready var _wave_near: Node2D = %WaveNear
 @onready var _flash: Node2D = %Flash
 @onready var _crest: Node2D = %Crest
+@onready var _glitch_layer: Node2D = %Glitch
 @onready var _speed_lines: SpeedLines = %SpeedLines
 
 
@@ -78,6 +91,7 @@ func _ready() -> void:
 	_flash.draw.connect(_draw_flash)
 	_wash.draw.connect(_draw_wash)
 	_crest.draw.connect(_draw_crest)
+	_glitch_layer.draw.connect(_draw_glitch)
 	_crest.material = Neon.additive_material()
 	get_viewport().size_changed.connect(_on_view_resized)
 	_on_view_resized()
@@ -116,22 +130,33 @@ func set_beat(beat: float) -> void:
 	if index != _flash_beat:
 		_flash_beat = index
 		_flash.queue_redraw()
+	var steps: float = beat * Neon.STYLE.glitch_steps_per_beat
+	_glitch_layer.modulate.a = 1.0 if fposmod(steps, 1.0) < Neon.STYLE.glitch_on else 0.0
+	if floori(steps) != _glitch_step:
+		_glitch_step = floori(steps)
+		_glitch_layer.queue_redraw()
 
 
-## Ağın rengi sektörün çevre rengi; nabız ve parlayan düğümler vurgu rengi.
-func set_colors(ambient: Color, accent: Color) -> void:
+## Ağın rengi sektörün çevre rengi; nabız ve parlayan düğümler vurgu rengi. glitch: paletin
+## bozulma gücü (M4-12).
+func set_colors(ambient: Color, accent: Color, glitch: float = 0.0) -> void:
 	_far.self_modulate = ambient
 	_near.self_modulate = ambient
 	_speed_lines.set_color(ambient)
 	_accent = accent
 	_flash.queue_redraw()
 	_pulse_tint = _pulse_tint_for(ambient, accent)
+	_glitch = glitch
+	apply_quality()
+	_glitch_layer.queue_redraw()
 
 
 ## Renk dalgasını başlatır: from_background dalganın üstünde kalan eski arka plan rengi; yeni
-## renkler dalganın altındaki ağa uygulanır. Ön ekranın altından başlar.
-func start_wave(from_background: Color, to_ambient: Color, to_accent: Color) -> void:
+## renkler (ve bozulma gücü) dalganın altındaki ağa uygulanır. Ön ekranın altından başlar.
+func start_wave(from_background: Color, to_ambient: Color, to_accent: Color,
+		to_glitch: float = 0.0) -> void:
 	_wave_active = true
+	_wave_glitch = to_glitch
 	_prev_wave = 0.0
 	_wave = 0.0
 	_wash_color = from_background
@@ -190,6 +215,8 @@ func resume_speed() -> void:
 func apply_quality() -> void:
 	_grid.visible = Neon.quality >= Neon.STYLE.grid_min_quality
 	_flash.visible = _grid.visible
+	var glitch: float = maxf(_glitch, _wave_glitch if _wave_active else 0.0)
+	_glitch_layer.visible = glitch > 0.0 and Neon.quality >= Neon.STYLE.glitch_min_quality
 	_far.visible = Neon.quality >= Neon.STYLE.grid_far_min_quality
 	_wave_grid.visible = _wave_active and _grid.visible
 	_wave_far.visible = _far.visible
@@ -220,6 +247,42 @@ static func flash_nodes(beat_index: int, first_row: int, columns: int, rows: int
 	return lit
 
 
+## Bozulma adımının bantları (ekranda, güç 1'de): (üst y, boy, yana kayma, renk sırası 0/1).
+## Adım temiz geçerse (glitch_chance dışında) boş. Seçim adım sırasına bağlıdır (kozmetik).
+static func glitch_slices(step: int, view_height: float) -> Array[Vector4]:
+	var style: NeonStyle = Neon.STYLE
+	var slices: Array[Vector4] = []
+	if _hash01(step, GLITCH_CLEAN_SALT, 0) >= style.glitch_chance:
+		return slices
+	for i: int in style.glitch_bands:
+		var height: float = lerpf(style.glitch_band_height.x, style.glitch_band_height.y,
+				_hash01(step, i, 1))
+		var top: float = _hash01(step, i, 2) * maxf(view_height - height, 0.0)
+		var shift: float = (_hash01(step, i, 3) * 2.0 - 1.0) * style.glitch_split
+		slices.append(Vector4(top, height, shift, 0.0 if _hash01(step, i, 4) < 0.5 else 1.0))
+	return slices
+
+
+## Bu adımda çizilecek bantlar: her bant yalnızca gücü olan paletin alanında (dalgada önün üstü
+## eski, altı yeni palet) ve o alana kırpılmış. Güç bant sayısını azaltır.
+func glitch_bands() -> Array[Vector4]:
+	var regions: Array[Vector3] = [Vector3(-INF, _front, _glitch)]
+	if _wave_active:
+		regions.append(Vector3(_front, INF, _wave_glitch))
+	var bands: Array[Vector4] = []
+	var slices: Array[Vector4] = glitch_slices(_glitch_step, _view.y)
+	for i: int in slices.size():
+		var slice: Vector4 = slices[i]
+		for region: Vector3 in regions:
+			if i >= ceili(Neon.STYLE.glitch_bands * region.z):
+				continue
+			var top: float = maxf(slice.x, region.x)
+			var bottom: float = minf(slice.x + slice.y, region.y)
+			if bottom > top:
+				bands.append(Vector4(top, bottom - top, slice.z, slice.w))
+	return bands
+
+
 ## 0–1 arası tamsayı özeti (aynı girdiye her cihazda aynı sonuç).
 static func _hash01(a: int, b: int, c: int) -> float:
 	var h: int = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791)
@@ -245,13 +308,13 @@ func _show_scroll(camera_y: float) -> void:
 ## Dalganın önünü yerine koyar; önün iki yanı her kare yeniden çizilir.
 func _show_wave(progress: float) -> void:
 	_front = Neon.STYLE.wave_front(progress, 0.0, _view.y)
-	for item: Node2D in [_wash, _crest, _far, _near, _wave_far, _wave_near, _flash]:
+	for item: Node2D in [_wash, _crest, _far, _near, _wave_far, _wave_near, _flash, _glitch_layer]:
 		item.queue_redraw()
 
 
 func _on_view_resized() -> void:
 	_view = get_viewport().get_visible_rect().size
-	for item: Node2D in [_far, _near, _wave_far, _wave_near, _flash]:
+	for item: Node2D in [_far, _near, _wave_far, _wave_near, _flash, _glitch_layer]:
 		item.queue_redraw()
 
 
@@ -307,6 +370,31 @@ func _draw_flash() -> void:
 		var tint: Color = wave_color if at.y + _flash.position.y >= _front else color
 		_flash.draw_texture_rect(Neon.blob_texture(), Rect2(at - halo * 0.5, halo), false, tint)
 		_flash.draw_circle(at, radius, tint, true, -1.0, true)
+
+
+## Bozulma bantları: yarı saydam renk bandı, üst kenarında ince tarama çizgisi; yüksek kalitede
+## bandın içinde yakın katmanın dikey çizgileri iki renkte, zıt yönlere kaymış (renk kayması).
+func _draw_glitch() -> void:
+	var style: NeonStyle = Neon.STYLE
+	var colors: Array[Color] = [style.glitch_color_a, style.glitch_color_b]
+	var split: bool = Neon.quality >= style.glitch_split_min_quality
+	var columns: Array[float] = _column_xs(style.grid_near_cell)
+	for band: Vector4 in glitch_bands():
+		var color: Color = colors[int(band.w)]
+		var bottom: float = band.x + band.y
+		_glitch_layer.draw_rect(Rect2(0.0, band.x, _view.x, band.y),
+				Color(color, style.glitch_band_alpha))
+		_glitch_layer.draw_line(Vector2(0.0, band.x), Vector2(_view.x, band.x),
+				Color(color, style.glitch_line_alpha), style.glitch_line_width)
+		if not split:
+			continue
+		for side: int in 2:
+			var shift: float = band.z if side == 0 else -band.z
+			var lines: PackedVector2Array = PackedVector2Array()
+			for x: float in columns:
+				lines.append_array([Vector2(x + shift, band.x), Vector2(x + shift, bottom)])
+			_glitch_layer.draw_multiline(lines, Color(colors[(int(band.w) + side) % 2],
+					style.glitch_line_alpha), style.glitch_line_width)
 
 
 ## Dalganın üstünde eski arka plan rengi (altında ekranın temizleme rengi, yani yeni renk).

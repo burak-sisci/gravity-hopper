@@ -2,7 +2,8 @@ extends GdUnitTestSuite
 ## Arka plan veri ağı (M3-07, architecture.md §9): dünyanın ardında, dokunuşu yutmaz; kaliteye
 ## göre katmanlar (düşükte düz renk); paralaks kayma ve satır sarılması; vuruşta nabız ve
 ## parlayan düğümler; sektör renkleri. Renk dalgası (M3-08): önün üstü eski, altı yeni renkte,
-## ön alttan üste yürür; düşük kalitede düz renk ve çizgi.
+## ön alttan üste yürür; düşük kalitede düz renk ve çizgi. Bozulma (M4-12): yalnızca bozulmalı
+## paletin alanında, orta ve yüksek kalitede, bozulma adımlarında yanıp söner.
 
 const BACKGROUND_SCENE: PackedScene = preload("res://scenes/levels/background.tscn")
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -175,6 +176,86 @@ func test_wave_at_low_quality_is_flat_color_and_line() -> void:
 	assert_bool(_node(background, "%WaveFar").visible).is_false()
 
 
+func test_glitch_shows_only_with_glitch_palette_and_quality() -> void:
+	Neon.set_quality(GameTypes.Quality.HIGH, get_tree())
+	var background: Background = _make()
+	var glitch: Node2D = _node(background, "%Glitch")
+	background.set_colors(Color.CYAN, Color.WHITE)
+	assert_bool(glitch.visible).is_false()
+	background.set_colors(Color.WHITE, Color.WHITE, 1.0)
+	assert_bool(glitch.visible).is_true()
+	Neon.set_quality(GameTypes.Quality.MEDIUM, get_tree())
+	assert_bool(glitch.visible).is_true()
+	# Düşük kalitede bozulma yok (düz renk zemin).
+	Neon.set_quality(GameTypes.Quality.LOW, get_tree())
+	assert_bool(glitch.visible).is_false()
+
+
+func test_glitch_blinks_on_the_beat_grid() -> void:
+	var background: Background = _make()
+	var glitch: Node2D = _node(background, "%Glitch")
+	var style: NeonStyle = Neon.STYLE
+	var step: float = 1.0 / style.glitch_steps_per_beat
+	background.set_beat(4.0)
+	assert_float(glitch.modulate.a).is_equal(1.0)
+	background.set_beat(4.0 + step * (style.glitch_on + 0.01))
+	assert_float(glitch.modulate.a).is_equal(0.0)
+	background.set_beat(4.0 + step)
+	assert_float(glitch.modulate.a).is_equal(1.0)
+
+
+func test_glitch_slices_are_stable_and_inside_the_view() -> void:
+	var style: NeonStyle = Neon.STYLE
+	var view_height: float = 2000.0
+	var steps: int = 400
+	var glitched: int = 0
+	var previous: Array[Vector4] = []
+	var changes: int = 0
+	for step: int in steps:
+		var slices: Array[Vector4] = Background.glitch_slices(step, view_height)
+		assert_array(slices).is_equal(Background.glitch_slices(step, view_height))
+		if slices.is_empty():
+			continue
+		glitched += 1
+		if slices != previous:
+			changes += 1
+		previous = slices
+		assert_int(slices.size()).is_equal(style.glitch_bands)
+		for slice: Vector4 in slices:
+			assert_float(slice.y).is_between(style.glitch_band_height.x, style.glitch_band_height.y)
+			assert_float(slice.x).is_between(0.0, view_height - slice.y)
+			assert_float(absf(slice.z)).is_less_equal(style.glitch_split)
+			assert_bool(slice.w == 0.0 or slice.w == 1.0).is_true()
+	# Oran: adımların kabaca glitch_chance kadarı bozuk geçer; her bozuk adımda desen değişir.
+	var ratio: float = float(glitched) / steps
+	assert_float(ratio).is_between(style.glitch_chance * 0.8, style.glitch_chance * 1.2)
+	assert_int(changes).is_equal(glitched)
+
+
+func test_glitch_stays_in_its_own_palette_area_during_wave() -> void:
+	Neon.set_quality(GameTypes.Quality.HIGH, get_tree())
+	var background: Background = _make()
+	var glitch: Node2D = _node(background, "%Glitch")
+	# Bozulmasız sektörden bozulmalıya: bantlar yalnızca önün altında (yeni palet).
+	background.set_colors(Color.MAGENTA, Color.WHITE)
+	background.start_wave(Color.BLACK, Color.WHITE, Color.WHITE, 1.0)
+	assert_bool(glitch.visible).is_true()
+	var below: Vector2i = await _bands_around_front(background)
+	assert_int(below.x).override_failure_message("önün üstünde bant").is_equal(0)
+	assert_int(below.y).is_greater(0)
+	# Bozulmalıdan bozulmasıza: bantlar yalnızca önün üstünde (eski palet).
+	background.end_wave()
+	background.set_colors(Color.WHITE, Color.WHITE, 1.0)
+	background.start_wave(Color.BLACK, Color.CYAN, Color.WHITE)
+	var above: Vector2i = await _bands_around_front(background)
+	assert_int(above.x).is_greater(0)
+	assert_int(above.y).override_failure_message("önün altında bant").is_equal(0)
+	background.end_wave()
+	background.set_colors(Color.CYAN, Color.WHITE)
+	assert_bool(glitch.visible).is_false()
+	assert_array(background.glitch_bands()).is_empty()
+
+
 func _make() -> Background:
 	var background: Background = auto_free(BACKGROUND_SCENE.instantiate()) as Background
 	add_child(background)
@@ -195,3 +276,23 @@ func _moved(climb: float, parallax: float, cell: float) -> float:
 func _pattern_y(camera_y: float, parallax: float, cell: float) -> float:
 	return Background.layer_offset(camera_y, parallax, cell) \
 			+ Background.layer_row(camera_y, parallax, cell) * cell
+
+
+## Dalgayı yarıya getirir ve 40 bozulma adımı boyunca bantları sayar: (önün üstünde, altında).
+## Ön üstünde ya da altında kalan bant, öne kırpılmış olmalı.
+func _bands_around_front(background: Background) -> Vector2i:
+	background.set_wave(0.5)
+	background.set_wave(0.5)
+	await get_tree().process_frame
+	var front: float = background.wave_front()
+	var counts: Vector2i = Vector2i.ZERO
+	for step: int in 40:
+		background.set_beat(float(step) / Neon.STYLE.glitch_steps_per_beat)
+		for band: Vector4 in background.glitch_bands():
+			if band.x + band.y <= front + 0.001:
+				counts.x += 1
+			elif band.x >= front - 0.001:
+				counts.y += 1
+			else:
+				counts += Vector2i(100, 100)
+	return counts

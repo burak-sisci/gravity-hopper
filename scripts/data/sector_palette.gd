@@ -11,3 +11,6 @@ extends Resource
 @export var accent: Color = Color(0.75, 0.97, 1.0)
 ## Arka plan: neonun parlayabilmesi için koyu.
 @export var background: Color = Color(0.02, 0.04, 0.1)
+## Bozulma (M4-12): arka plandaki renk kaymasının gücü (0 = yok, 1 = S5). Yalnızca arka plan
+## ağında ve bu paletin gösterildiği alanda; kaliteye bağlı (NeonStyle → Bozulma).
+@export_range(0.0, 1.0, 0.05) var glitch: float = 0.0

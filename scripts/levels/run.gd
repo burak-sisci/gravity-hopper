@@ -428,12 +428,12 @@ func _show_palette(palette: SectorPalette, instant: bool) -> void:
 	if _wave_palette != null:
 		_finish_wave()
 	if instant:
-		_apply_colors(palette.ambient, palette.accent, palette.background)
+		_apply_colors(palette)
 		return
 	_wave_palette = palette
 	_wave_elapsed = 0.0
 	# Ekranın temizleme rengi hemen yenisi; eskisi dalganın üstünü örter (Background).
-	_background.start_wave(_background_color, palette.ambient, palette.accent)
+	_background.start_wave(_background_color, palette.ambient, palette.accent, palette.glitch)
 	RenderingServer.set_default_clear_color(palette.background)
 	_advance_wave(0.0)
 
@@ -459,15 +459,15 @@ func _finish_wave() -> void:
 	var palette: SectorPalette = _wave_palette
 	_wave_palette = null
 	_background.end_wave()
-	_apply_colors(palette.ambient, palette.accent, palette.background)
+	_apply_colors(palette)
 
 
-func _apply_colors(ambient: Color, accent: Color, background: Color) -> void:
-	_ambient = ambient
-	_accent = accent
-	_background_color = background
-	_corridor.set_colors(ambient, accent)
-	_background.set_colors(ambient, accent)
-	_player.set_ambient(ambient)
-	_effects.set_ambient(ambient)
-	RenderingServer.set_default_clear_color(background)
+func _apply_colors(palette: SectorPalette) -> void:
+	_ambient = palette.ambient
+	_accent = palette.accent
+	_background_color = palette.background
+	_corridor.set_colors(_ambient, _accent)
+	_background.set_colors(_ambient, _accent, palette.glitch)
+	_player.set_ambient(_ambient)
+	_effects.set_ambient(_ambient)
+	RenderingServer.set_default_clear_color(_background_color)

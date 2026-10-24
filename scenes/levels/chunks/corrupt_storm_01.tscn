@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
+[ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
+[ext_resource type="PackedScene" path="res://scenes/entities/laser.tscn" id="4_laser"]
+[ext_resource type="PackedScene" path="res://scenes/entities/glimmer.tscn" id="9_glimmer"]
+[ext_resource type="PackedScene" path="res://scenes/entities/rotor.tscn" id="10_rotor"]
+[ext_resource type="PackedScene" path="res://scenes/entities/moving_block.tscn" id="11_moving_block"]
+[ext_resource type="Script" path="res://scripts/levels/wall_gap.gd" id="12_gap"]
+
+[node name="CorruptStorm01" type="Node2D"]
+script = ExtResource("1_info")
+difficulty = 7
+min_sector = 5
+length_beats = 10
+
+[node name="SpikeLeft2" parent="." instance=ExtResource("2_spike")]
+position = Vector2(-450, -200)
+
+[node name="LaserRight3_5" parent="." instance=ExtResource("4_laser")]
+position = Vector2(450, -350)
+scale = Vector2(-1, 1)
+length = 450.0
+
+[node name="Rotor5" parent="." instance=ExtResource("10_rotor")]
+position = Vector2(0, -500)
+
+[node name="GapLeft6_5" type="Node2D" parent="."]
+position = Vector2(-450, -650)
+script = ExtResource("12_gap")
+length = 100.0
+
+[node name="MovingBlock8" parent="." instance=ExtResource("11_moving_block")]
+position = Vector2(0, -800)
+
+[node name="LaserLeft9" parent="." instance=ExtResource("4_laser")]
+position = Vector2(-450, -900)
+length = 450.0
+on_phase = 0.5
+
+[node name="GlimmerMid2_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(0, -250)

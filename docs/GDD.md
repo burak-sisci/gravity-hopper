@@ -171,7 +171,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 | S2 | VERİ AKIŞI / DATA STREAM | Mor | 14 m/sn | 1000 m | 1750 m | Boşluk, veri bloğu |
 | S3 | GÜVENLİK DUVARI / FIREWALL | Turuncu | 16 m/sn | 1500 m | 3250 m | Lazer kapısı |
 | S4 | ÇEKİRDEK / KERNEL | Eflatun | 18 m/sn | 1750 m | 5000 m | Dönen şekil, hareketli blok |
-| S5 | BOZULMA / CORRUPTION | Beyaz + glitch | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
+| S5 | BOZULMA / CORRUPTION | Gümüş, beyaz vurgu + glitch | 20 m/sn | 2500 m | 7500 m | Hepsi, yoğun |
 | ★ | **BÜYÜK DEPOLAMA BİRİMİ / THE GREAT STORAGE** | — | — | — | 7500 m | Final anı + başarım izi |
 | ∞ | TAŞMA / OVERFLOW | Döngüsel | 22 m/sn (tavan) | Sonsuz | — | Remiks desenler |
 
@@ -187,10 +187,13 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 | S2 | 0,58 · 0,3 · 1 | 0,85 · 0,75 · 1 | 0,06 · 0,03 · 0,12 |
 | S3 | 1 · 0,6 · 0,12 | 1 · 0,85 · 0,6 | 0,09 · 0,05 · 0,02 |
 | S4 | 1 · 0,2 · 0,95 | 1 · 0,75 · 0,97 | 0,09 · 0,02 · 0,08 |
+| S5 | 0,74 · 0,7 · 0,74 | 0,97 · 0,98 · 1 | 0,04 · 0,04 · 0,06 |
 
-S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı doygunlukta seçilir; çevre rengi sarı rekor çizgisinden de ayırt edilmeli.
+S4 ve S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla seçildi; çevre rengi sarı rekor çizgisinden de ayırt edilir.
 
 **S4 eflatunu (M4-11, ölçülerek seçildi):** Renk kuralı M4-11'den beri gözle görülen fark ölçüsüyle (OKLab) de denetlenir; eşikler onaylı paletlerden alındı. Eflatun tehlike kırmızısından 0,23 uzak (onaylı S3 turuncusu 0,195), rekor sarısından 0,50 (kötü bulunan eski kehribar 0,14 idi), renk körlüğü benzetimlerinde kırmızıdan ≥ 0,1. Mor (S2) ile eflatun komşu tonlar: aralarındaki fark 0,20'de kalıyor. İki sektör hiç yan yana gelmediği için bu kabul edildi (yan yana gelen sektörler ≥ 0,25).
+
+**S5 bozulması (M4-12, ölçülerek seçildi; varsayım, kullanıcı kararı bekliyor):** Çevre rengi gümüş, vurgu beyaz (nabız, afiş ve renk dalgası beyaz). Parlak beyaz çevre rengi iki onaylı kurala takıldı: saf beyaz sarı rekor çizgisine fazla yakın (0,185; kural ≥ 0,2), maviye çekilmiş beyaz ise S5'te varsayılan Neon izini Ayaz izinin aynısı yapıyor (0,054; kural ≥ 0,15). Glitch yalnızca arka planda: vuruşla yanıp sönen ince bantlar (camgöbeği ve eflatun) ve yüksek kalitede ağ çizgilerinin renk kayması. Orta kalitede yalnızca bantlar, düşükte glitch yok. Tehlikelere, oyuncuya ve HUD'a dokunmaz; renk dalgasında yalnızca S5'in tarafında görünür. Bandın üstünde de tehlike okunur (kontrast ≥ 4,5, testte).
 
 **Sektör geçişi ("nefes alma" anı, 2–3 sn):**
 
@@ -210,7 +213,7 @@ S4–S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla ve aynı 
 ## 13. Hız ve zorluk
 
 - **Hız sektörle artar.** Sektörün içinde sabittir; zorluk sektör içinde **desenlerle** artar. Tempo turun müzik parçasından gelir: yavaş parçalı turlarda (90 BPM) engeller seyrek, hızlı parçalı turlarda (120 BPM) sık gelir (ADR-040).
-- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5, S4: 3→6; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
+- **Sektör içi eğri (M2-10):** Her sektörün bir zorluk aralığı vardır (S1: 1→3, S2: 2→4, S3: 2→5, S4: 3→6, S5: 4→7; ilk değerler). Sektör boyunca seçilen desenler bu aralığın başından sonuna doğru zorlaşır; aynı desen art arda (son 3 desen içinde) tekrar gelmez.
 - **Zorluğun kolları:**
   1. Hız (yalnızca sektör geçişinde)
   2. Engel sıklığı

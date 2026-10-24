@@ -311,7 +311,7 @@ func _advance_wave(delta: float) -> void:
 		var from: SectorPalette = SECTORS.def_at(_wave_sector).palette
 		_wave_sector = wrapi(_wave_sector + 1, 1, SECTORS.count() + 1)
 		var to: SectorPalette = SECTORS.def_at(_wave_sector).palette
-		_background.start_wave(from.background, to.ambient, to.accent)
+		_background.start_wave(from.background, to.ambient, to.accent, to.glitch)
 		RenderingServer.set_default_clear_color(to.background)
 		_wave_elapsed = 0.0
 	_wave_elapsed += delta
@@ -320,7 +320,7 @@ func _advance_wave(delta: float) -> void:
 	if progress >= 1.0:
 		var palette: SectorPalette = SECTORS.def_at(_wave_sector).palette
 		_background.end_wave()
-		_background.set_colors(palette.ambient, palette.accent)
+		_background.set_colors(palette.ambient, palette.accent, palette.glitch)
 		_wave_elapsed = 0.0
 
 

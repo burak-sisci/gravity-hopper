@@ -197,6 +197,35 @@ extends Resource
 ## Işık bandının göründüğü en düşük kalite; altında yalnızca çizgi.
 @export var wave_glow_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
 
+@export_group("Bozulma (S5)")
+## Arka plan bozulmasının (renk bantları; M4-12) göründüğü en düşük kalite. Yalnızca paletin
+## glitch gücü olan sektörde (SectorPalette.glitch).
+@export var glitch_min_quality: GameTypes.Quality = GameTypes.Quality.MEDIUM
+## Bantlarda ağ çizgilerinin renk kaymasının (iki renkli, yana kaymış kopyalar) göründüğü en
+## düşük kalite.
+@export var glitch_split_min_quality: GameTypes.Quality = GameTypes.Quality.HIGH
+## Renk kaymasının iki rengi: önceki sektörlerin camgöbeği ve eflatunu (bozulan veri). Tehlike
+## kırmızısından ve Glimmer yeşilinden ayrı (test).
+@export var glitch_color_a: Color = Color(0.0, 0.85, 1.0)
+@export var glitch_color_b: Color = Color(1.0, 0.2, 0.95)
+## Desenin vuruş başına kaç kez değiştiği.
+@export_range(1, 8) var glitch_steps_per_beat: int = 2
+## Bir adımın bozuk olma olasılığı; gerisi temiz geçer.
+@export_range(0.0, 1.0, 0.05) var glitch_chance: float = 0.6
+## Bozuk adımda bantların göründüğü süre (adımın kesri, adımın başından).
+@export_range(0.05, 1.0, 0.05) var glitch_on: float = 0.5
+## Bir adımdaki bant sayısı (güç 1'de; güçle azalır).
+@export_range(1, 12) var glitch_bands: int = 3
+## Bandın boyu: en az (x), en çok (y).
+@export var glitch_band_height: Vector2 = Vector2(16.0, 90.0)
+## Bant dolgusunun saydamlığı; tehlikeler bandın üstünde de okunur kalır (kontrast testi).
+@export_range(0.0, 0.5, 0.01) var glitch_band_alpha: float = 0.1
+## Bantta ağ çizgisi kopyalarının en çok yana kayması.
+@export_range(0.0, 60.0, 1.0, "suffix:px") var glitch_split: float = 14.0
+## Kopya çizgilerin saydamlığı ve kalınlığı.
+@export_range(0.0, 1.0, 0.05) var glitch_line_alpha: float = 0.5
+@export_range(0.5, 8.0, 0.5, "suffix:px") var glitch_line_width: float = 2.5
+
 @export_group("Çöküş duvarı")
 ## Duvarın içinin rengi (opak: altında kalan her şey silinmiş görünür; M3-09). Kenarı tehlike
 ## kırmızısında.

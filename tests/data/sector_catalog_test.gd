@@ -1,9 +1,11 @@
 extends GdUnitTestSuite
-## Sektör kataloğu (M2-08, GDD §12): S1–S4 değerleri, başlangıç ve bitiş yükseklikleri.
+## Sektör kataloğu (M2-08, GDD §12): S1–S5 değerleri, başlangıç ve bitiş yükseklikleri.
 ## Paletler (M3-02): her sektörün paleti var, çevre ve vurgu rengi kırmızı ya da yeşil değil.
 ## M4-11: renk kuralı ölçülür (ADR-076): çevre rengi tehlike kırmızısından, Glimmer yeşilinden ve
 ## rekor sarısından OKLab farkıyla, renk körlüğü benzetiminde de kırmızıdan ayrılır; tehlike
 ## kırmızısı zeminde okunur; komşu sektörler renk dalgasında ayrılır. Eşikler onaylı paletlerden.
+## M4-12: S5'in bozulma bantları tehlikeyi okunmaz kılmaz (renkler anlam renklerinden uzak,
+## bandın üstünde de kontrast yeterli).
 
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
 ## Bir rengin tehlike kırmızısına ya da Glimmer yeşiline en az bu kadar uzak tonda olması
@@ -27,13 +29,17 @@ const MIN_HAZARD_CONTRAST: float = 5.0
 ## Komşu olmayanlar (S2 moru ~ S4 eflatunu 0,20) yalnızca aynı ailenin değişkeni kadar ayrılır.
 const MIN_NEIGHBOR_DIFFERENCE: float = 0.25
 const MIN_SECTOR_DIFFERENCE: float = 0.15
+## Bozulma bandının üstünde tehlike kırmızısının kontrastı. Bant kısa süreli ve ekranın küçük
+## bir kısmı; WCAG AA normal metin eşiği yeter (zemindeki 5'in altında kalabilir).
+const MIN_BAND_CONTRAST: float = 4.5
 
 
 func test_values_match_design() -> void:
-	assert_int(SECTORS.count()).is_equal(4)
+	assert_int(SECTORS.count()).is_equal(5)
 	# Hız (m/sn) ve boy (m). Tempo sektörde değil, turun müzik parçasında (M2-20).
 	var expected: Array[Vector2] = [
 		Vector2(12, 750), Vector2(14, 1000), Vector2(16, 1500), Vector2(18, 1750),
+		Vector2(20, 2500),
 	]
 	for i: int in expected.size():
 		var def: SectorDef = SECTORS.def_at(i + 1)
@@ -43,10 +49,19 @@ func test_values_match_design() -> void:
 		assert_int(def.min_difficulty).is_less_equal(def.max_difficulty)
 	# Çöküş duvarının sürünmesi GDD §14 (S1 0,3 → S5 0,8).
 	assert_float(SECTORS.def_at(4).wall_creep).is_equal_approx(0.675, 0.0001)
-	# Dönen şekil ve hareketli blok S4'te gelir (GDD §6).
+	assert_float(SECTORS.def_at(5).wall_creep).is_equal_approx(0.8, 0.0001)
+	# Dönen şekil ve hareketli blok S4'te gelir (GDD §6); S5 bütün tehlikeleri karıştırır.
 	for hazard: StringName in [&"rotor", &"moving_block"]:
 		assert_bool(SECTORS.def_at(3).allowed_hazards.has(hazard)).is_false()
 		assert_bool(SECTORS.def_at(4).allowed_hazards.has(hazard)).is_true()
+	for hazard: StringName in [&"spike", &"gap", &"block", &"laser", &"rotor", &"moving_block"]:
+		assert_bool(SECTORS.def_at(5).allowed_hazards.has(hazard)).is_true()
+	# Zorluk sektörle artar: her sektörün aralığı öncekinden aşağı inmez.
+	for i: int in range(2, SECTORS.count() + 1):
+		assert_int(SECTORS.def_at(i).min_difficulty).is_greater_equal(
+				SECTORS.def_at(i - 1).min_difficulty)
+		assert_int(SECTORS.def_at(i).max_difficulty).is_greater_equal(
+				SECTORS.def_at(i - 1).max_difficulty)
 
 
 func test_heights_chain() -> void:
@@ -54,16 +69,20 @@ func test_heights_chain() -> void:
 	assert_float(SECTORS.start_height(2)).is_equal(750.0)
 	assert_float(SECTORS.start_height(3)).is_equal(1750.0)
 	assert_float(SECTORS.end_height(2)).is_equal(1750.0)
-	# GDD §12: S3 3250 m'de biter, S4 5000 m'de (son sektör bitmez; S5 M4-12'de).
+	# GDD §12: S3 3250 m'de, S4 5000 m'de biter; S5 (son sektör) bitmez (Taşma M4-13'te).
 	assert_float(SECTORS.end_height(3)).is_equal(3250.0)
 	assert_float(SECTORS.start_height(4)).is_equal(3250.0)
-	assert_float(SECTORS.end_height(4)).is_equal(INF)
+	assert_float(SECTORS.end_height(4)).is_equal(5000.0)
+	assert_float(SECTORS.start_height(5)).is_equal(5000.0)
+	assert_float(SECTORS.end_height(5)).is_equal(INF)
 	assert_int(SECTORS.sector_at(0.0)).is_equal(1)
 	assert_int(SECTORS.sector_at(749.9)).is_equal(1)
 	assert_int(SECTORS.sector_at(750.0)).is_equal(2)
 	assert_int(SECTORS.sector_at(3249.9)).is_equal(3)
 	assert_int(SECTORS.sector_at(3250.0)).is_equal(4)
-	assert_int(SECTORS.sector_at(99999.0)).is_equal(4)
+	assert_int(SECTORS.sector_at(4999.9)).is_equal(4)
+	assert_int(SECTORS.sector_at(5000.0)).is_equal(5)
+	assert_int(SECTORS.sector_at(99999.0)).is_equal(5)
 
 
 func test_palettes_avoid_hazard_and_glimmer_colors() -> void:
@@ -120,6 +139,41 @@ func test_sectors_are_apart_from_each_other() -> void:
 				i + 1, j + 1, gap, least]).is_greater_equal(least)
 
 
+func test_only_s5_glitches() -> void:
+	for i: int in SECTORS.count():
+		var glitch: float = SECTORS.def_at(i + 1).palette.glitch
+		if i + 1 == 5:
+			assert_float(glitch).is_greater(0.0)
+		else:
+			assert_float(glitch).override_failure_message("S%d bozuluyor" % (i + 1)).is_equal(0.0)
+
+
+## Bozulma bantlarının renkleri (camgöbeği, eflatun) tehlike kırmızısına ve Glimmer yeşiline
+## karışmaz (renk körlüğünde de); bant bozulan sektörün zeminine karışınca tehlike yine okunur.
+func test_glitch_keeps_hazards_readable() -> void:
+	var style: NeonStyle = Neon.STYLE
+	var red: Color = style.hazard_color
+	for color: Color in [style.glitch_color_a, style.glitch_color_b]:
+		for meaning: Color in [red, style.glimmer_color]:
+			var gap: float = ColorMetrics.difference(color, meaning)
+			assert_float(gap).override_failure_message("bozulma %s ~ %s: OKLab %.3f" % [
+				color, meaning, gap]).is_greater_equal(MIN_MEANING_DIFFERENCE)
+		for kind: ColorMetrics.Cvd in ColorMetrics.Cvd.values():
+			var seen: float = ColorMetrics.cvd_difference(color, red, kind)
+			assert_float(seen).override_failure_message("bozulma %s ~ kırmızı (%s): %.3f" % [
+				color, ColorMetrics.Cvd.keys()[kind], seen]).is_greater_equal(
+					MIN_CVD_HAZARD_DIFFERENCE)
+		for i: int in SECTORS.count():
+			var palette: SectorPalette = SECTORS.def_at(i + 1).palette
+			if palette.glitch <= 0.0:
+				continue
+			# Bant zemine glitch_band_alpha saydamlıkla karışır (sRGB'de, ekrandaki gibi).
+			var band: Color = palette.background.lerp(color, style.glitch_band_alpha)
+			var contrast: float = ColorMetrics.contrast_ratio(red, band)
+			assert_float(contrast).override_failure_message("S%d bozulma bandında (%s) %.2f" % [
+				i + 1, color, contrast]).is_greater_equal(MIN_BAND_CONTRAST)
+
+
 func test_hue_rule_catches_red_and_green() -> void:
 	assert_bool(_hues_apart(Color(0.95, 0.3, 0.25), Neon.STYLE.hazard_color)).is_false()
 	assert_bool(_hues_apart(Color(0.4, 0.9, 0.35), Neon.STYLE.glimmer_color)).is_false()
@@ -158,9 +212,11 @@ func test_names_are_translated() -> void:
 	TranslationServer.set_locale("tr")
 	assert_str(tr(SECTORS.def_at(2).name_key)).is_equal("VERİ AKIŞI")
 	assert_str(tr(SECTORS.def_at(4).name_key)).is_equal("ÇEKİRDEK")
+	assert_str(tr(SECTORS.def_at(5).name_key)).is_equal("BOZULMA")
 	TranslationServer.set_locale("en")
 	assert_str(tr(SECTORS.def_at(2).name_key)).is_equal("DATA STREAM")
 	assert_str(tr(SECTORS.def_at(4).name_key)).is_equal("KERNEL")
+	assert_str(tr(SECTORS.def_at(5).name_key)).is_equal("CORRUPTION")
 	TranslationServer.set_locale(locale)
 
 
@@ -170,6 +226,8 @@ func test_beat_sizes() -> void:
 	assert_float(SECTORS.def_at(3).beat_px(120.0)).is_equal_approx(400.0, 0.001)
 	# S4 90 BPM: 900 px/sn × 0,667 sn = 600 px.
 	assert_float(SECTORS.def_at(4).beat_px(90.0)).is_equal_approx(600.0, 0.001)
+	# S5 120 BPM: 1000 px/sn × 0,5 sn = 500 px.
+	assert_float(SECTORS.def_at(5).beat_px(120.0)).is_equal_approx(500.0, 0.001)
 	# En kısa vuruş en yavaş sektörde: 120 BPM'de S1 600 px/sn × 0,5 sn.
 	assert_float(SECTORS.min_beat_px(120.0)).is_equal_approx(300.0, 0.001)
 
