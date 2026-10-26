@@ -142,14 +142,10 @@ func buy_upgrade(id: StringName) -> bool:
 ## Turun yükseltme yükü (ADR-066): oynanışı etkileyen yükseltmelerin şu anki etkileri. Main her
 ## tur başında alır; tur boyunca değişmez (tur sırasında alınan seviye sonraki turda geçerli).
 func loadout() -> RunLoadout:
-	var result: RunLoadout = RunLoadout.new()
-	result.magnet_m = _upgrade_value(&"magnet")
-	result.glimmer_boost = _upgrade_value(&"glimmer_boost")
-	# Kalkan Sv1'in değeri 0'dır (yenilenmez); her seviye turu kalkanla başlatır (M4-05).
-	result.start_shield = upgrade_level(&"shield") > 0
-	result.shield_regen_m = _upgrade_value(&"shield")
-	result.head_start_m = _upgrade_value(&"head_start")
-	result.revives = roundi(_upgrade_value(&"second_chance"))
+	var levels: Dictionary[StringName, int] = {}
+	for id: StringName in UPGRADES.ids():
+		levels[id] = upgrade_level(id)
+	var result: RunLoadout = RunLoadout.from_levels(UPGRADES, levels)
 	result.trail = TRAILS.get_def(equipped_trail())
 	_log("loadout magnet=%.1f boost=%.1f shield=%s regen=%d head_start=%d revives=%d trail=%s" % [
 		result.magnet_m, result.glimmer_boost, result.start_shield, roundi(result.shield_regen_m),
@@ -259,12 +255,6 @@ func save() -> bool:
 	if ok:
 		_dirty = false
 	return ok
-
-
-## Yükseltmenin şu anki etkisi (UpgradeDef.values; alınmamışsa 0).
-func _upgrade_value(id: StringName) -> float:
-	var def: UpgradeDef = UPGRADES.get_def(id)
-	return def.value_at(upgrade_level(id)) if def != null else 0.0
 
 
 ## Sektöre varıldı (tur sırasında sector_entered, tur sonunda sonuç): ilk kez varılmışsa başı

@@ -401,7 +401,7 @@ func _regen_shield() -> void:
 
 
 func _on_glimmer_collected(value: int, at: Vector2) -> void:
-	Events.glimmer_collected.emit(stats.add_glimmer(value))
+	Events.glimmer_collected.emit(stats.add_glimmer(value * tuning.glimmer_value))
 	_pressure.push(tuning.glimmer_push)
 	_effects.glimmer_burst(at)
 

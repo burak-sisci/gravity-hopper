@@ -120,9 +120,12 @@ const PX_PER_M: float = 50.0
 @export_range(5.0, 40.0, 1.0, "suffix:m") var revive_wall_distance: float = 20.0
 
 @export_group("Ekonomi")
+## Bir Glimmer parçacığının değeri (GDD §9.1, M4-14): toplanan Glimmer'ın kendi değeri
+## (Glimmer.value, normalde 1) bununla çarpılır, sonra kombo çarpanıyla.
+@export_range(1, 50, 1, "suffix:Glimmer") var glimmer_value: int = 1
 ## Sektör tamamlama bonusu: turda geçilen her sektör için bu × sektör numarası Glimmer
 ## (GDD §9.1; S1 ve S2'yi geçen tur 25 + 50 alır).
-@export_range(0, 100, 5, "suffix:Glimmer") var sector_bonus: int = 25
+@export_range(0, 500, 5, "suffix:Glimmer") var sector_bonus: int = 25
 
 
 ## Metreyi (ya da m/sn, m/sn²) piksele çevirir.
