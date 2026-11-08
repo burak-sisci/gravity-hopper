@@ -80,9 +80,10 @@ func test_result_carries_earnings_into_the_wallet() -> void:
 	var result: RunResult = _results[0]
 	assert_int(result.start_sector).is_equal(1)
 	assert_int(result.sector_reached).is_equal(3)
-	# S1 ve S2 geçildi: 25 × 1 + 25 × 2.
-	assert_int(result.sector_bonus).is_equal(75)
-	assert_int(result.earned).is_equal(result.glimmers + 75)
+	# S1 ve S2 geçildi: sector_bonus × (1 + 2).
+	var bonus: int = Earnings.tuning.sector_bonus * (1 + 2)
+	assert_int(result.sector_bonus).is_equal(bonus)
+	assert_int(result.earned).is_equal(result.glimmers + bonus)
 	assert_int(Progression.glimmers).is_equal(result.earned)
 	assert_int(SaveManager.load_game()["glimmers"]).is_equal(result.earned)
 	await _frames(TEARDOWN_FRAMES)

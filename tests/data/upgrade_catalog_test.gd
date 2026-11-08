@@ -6,7 +6,7 @@ extends GdUnitTestSuite
 const CATALOG: UpgradeCatalog = preload("res://data/upgrades/upgrade_catalog.tres")
 ## GDD §10 tablosu: fiyatlar ve etkiler (Mıknatıs 90–250 px = 1,8–5 m; Kalkan Sv1 yenilenmez).
 const EXPECTED_COSTS: Dictionary[StringName, Array] = {
-	&"magnet": [100, 200, 400, 800, 1600],
+	&"magnet": [60, 120, 240, 480, 960],
 	&"shield": [150, 300, 600, 1200, 2400],
 	&"head_start": [120, 240, 480, 960, 1920],
 	&"glimmer_boost": [200, 400, 800, 1600, 3200],

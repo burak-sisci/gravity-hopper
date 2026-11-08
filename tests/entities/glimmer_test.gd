@@ -38,11 +38,13 @@ func test_collected_on_the_way_and_counted_in_result() -> void:
 	for frame: int in 400:
 		await get_tree().physics_frame
 	assert_int(_values.size()).is_greater_equal(2)
-	assert_array(_values).contains_same([1, 1])
-	assert_int(run.stats.glimmers).is_equal(_values.size())
+	# Her Glimmer'ın değeri 1 × ayardaki Glimmer değeri (M4-14).
+	var value: int = run.tuning.glimmer_value
+	assert_array(_values).contains_same([value, value])
+	assert_int(run.stats.glimmers).is_equal(_values.size() * value)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 	assert_int(_results.size()).is_equal(1)
-	assert_int(_results[0].glimmers).is_equal(_values.size())
+	assert_int(_results[0].glimmers).is_equal(_values.size() * value)
 
 
 func test_reset_brings_glimmer_back() -> void:

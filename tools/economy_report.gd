@@ -21,7 +21,7 @@ func run(root: Node, args: PackedStringArray) -> int:
 	var seeds: int = DEFAULT_SEEDS
 	# Benzetim Earnings'in ayar kaynağını kullanır (aynı nesne): "ya şöyle olsaydı" denemeleri
 	# ikisinde birden, yalnızca bellekte değişir, dosyaya yazılmaz.
-	var tuning: TuningConfig = Earnings.TUNING
+	var tuning: TuningConfig = Earnings.tuning
 	for arg: String in args:
 		var value: int = arg.get_slice("=", 1).to_int()
 		if arg.begins_with("--players="):

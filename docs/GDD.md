@@ -114,9 +114,9 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 
 | Kaynak | Değer (başlangıç) |
 | --- | --- |
-| Glimmer parçacığı | 1 (kombo çarpanıyla artar) |
+| Glimmer parçacığı | 10 (kombo çarpanıyla artar; M4-14 benzetimiyle) |
 | Kombo çarpanı | Zincirde 3 kıl payı → ×2, 6 kıl payı → ×3 |
-| Sektör tamamlama bonusu | 25 × sektör numarası |
+| Sektör tamamlama bonusu | 10 × sektör numarası (M4-14) |
 | Glimmer Çarpanı yükseltmesi | +%10 / seviye |
 | Ödüllü reklam (M7) | Tur sonu kazancı ×2 |
 
@@ -131,6 +131,7 @@ Yükseltmeler (§10) ve kozmetik izler (§11).
 - İlk yükseltme **2.–3. turda** alınabilmeli.
 - Tüm yükseltmeleri tamamlamak düzenli oynayan biri için **yaklaşık 2 hafta** sürmeli (toplam ≈ 22.000 Glimmer).
 - Tur başına ortalama kazanç başta 30–60, orta aşamada 100–200 Glimmer.
+- **Ölçülen (M4-14, ekonomi benzetimi, architecture.md §13.1):** düzenli oyuncu (günde 20 dk) ilk yükseltmeyi 3. turda alır; tur başı kazanç 1. gün 38, 6.–8. gün 122; bütün yükseltmeler 14 günde. Hedefler kalıcı testte; fiyat ya da değer değişince tempo yeniden ölçülür.
 
 ## 10. Kalıcı yükseltmeler
 
@@ -138,7 +139,7 @@ Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upg
 
 | Yükseltme | Etki | Seviye | Maliyetler (başlangıç) |
 | --- | --- | --- | --- |
-| **Mıknatıs** | Glimmer çekim menzili, toplama alanının ötesine: 90 / 130 / 170 / 210 / 250 px (1,8–5 m). Menzile giren Glimmer hızlanarak oyuncuya akar | 5 | 100 · 200 · 400 · 800 · 1600 |
+| **Mıknatıs** | Glimmer çekim menzili, toplama alanının ötesine: 90 / 130 / 170 / 210 / 250 px (1,8–5 m). Menzile giren Glimmer hızlanarak oyuncuya akar | 5 | 60 · 120 · 240 · 480 · 960 (M4-14: ilk yükseltme 3. turda) |
 | **Kalkan** | Sv1: tura kalkanla başla. Sv2–5: kırılan kalkan, kırıldığı yerden 1500 / 1200 / 900 / 600 m tırmanınca yenilenir | 5 | 150 · 300 · 600 · 1200 · 2400 |
 | **Başlangıç Sıçraması** | Tur başında dokunulmaz sıçrama, yoldaki Glimmer'ları toplar: 100 / 200 / 300 / 400 / 500 m (ek yol müziğin vuruşuna yuvarlanır; inişte 1 sn dokunulmazlık) | 5 | 120 · 240 · 480 · 960 · 1920 |
 | **Glimmer Çarpanı** | Tur sonu kazancı (toplanan Glimmer + sektör bonusu) +%10 / +%20 / … / +%50, en yakın tam sayıya yuvarlanır | 5 | 200 · 400 · 800 · 1600 · 3200 |

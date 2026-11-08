@@ -44,4 +44,5 @@ revive_grace = 2.0
 revive_clear_time = 2.5
 revive_clear_behind = 3.0
 revive_wall_distance = 20.0
-sector_bonus = 25
+sector_bonus = 10
+glimmer_value = 10

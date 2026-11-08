@@ -280,7 +280,7 @@
 
 **Denge ve kapanış**
 
-- [ ] **M4-14** 🤖 Ekonomi simülasyonu (`tools/`): beceri profillerine göre tur kazançları → "kaç turda ne alınır?". Değerler GDD §9.3 hedeflerine çekilir: ilk yükseltme 2.–3. turda, hepsi yaklaşık 2 haftada (≈ 22.000 Glimmer).
+- [x] **M4-14** 🤖 Ekonomi simülasyonu (`tools/`): beceri profillerine göre tur kazançları → "kaç turda ne alınır?". Değerler GDD §9.3 hedeflerine çekilir: ilk yükseltme 2.–3. turda, hepsi yaklaşık 2 haftada (≈ 22.000 Glimmer).
   *Kabul:* Simülasyon tablosu `architecture.md`'de, hedefler tutuyor; değişen değerler GDD'de.
 - [ ] **M4-15** 🤝 Oyun testi ("bir tur daha" döngüsü, İlerleme sayfası, S4–S5, final) + Planlama Gözden Geçirmesi → 🚪
 

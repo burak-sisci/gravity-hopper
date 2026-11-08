@@ -2,13 +2,22 @@ extends GdUnitTestSuite
 ## Kalıcı ilerleme (M4-02, architecture.md §11): tur sonu kazancı (toplanan Glimmer + sektör
 ## bonusu), rekor, en yüksek sektör ve istatistikler kayda iner; uygulama yeniden açılınca geri
 ## gelir; arka plana geçişte kaydedilmemiş değişiklik yazılır. Testler geçici kayıtla çalışır
-## (SaveManager.TEST_SAVE_DIR) ve her test boş kayıtla başlar.
+## (SaveManager.TEST_SAVE_DIR) ve her test boş kayıtla başlar. Sektör bonusu testte sabittir
+## (TEST_SECTOR_BONUS): testler cüzdan mantığını sınar; oyunun bonus değeri ekonomi benzetimiyle
+## seçilir (M4-14) ve değişince bu testler bozulmaz.
+
+## Testteki sektör bonusu (sektör numarasıyla çarpılır): S1 ve S2'yi geçen tur 25 + 50 alır.
+const TEST_SECTOR_BONUS: int = 25
 
 var _wallets: Array[int] = []
 var _records: Array[int] = []
+var _game_tuning: TuningConfig
 
 
 func before_test() -> void:
+	_game_tuning = Earnings.tuning
+	Earnings.tuning = _game_tuning.duplicate() as TuningConfig
+	Earnings.tuning.sector_bonus = TEST_SECTOR_BONUS
 	Progression.reset()
 	_wallets.clear()
 	_records.clear()
@@ -20,6 +29,7 @@ func after_test() -> void:
 	Events.glimmers_changed.disconnect(_on_glimmers_changed)
 	Events.best_height_changed.disconnect(_on_best_height_changed)
 	Progression.reset()
+	Earnings.tuning = _game_tuning
 
 
 func test_sector_bonus_counts_completed_sectors() -> void:
@@ -114,15 +124,17 @@ func test_buying_an_upgrade_spends_and_saves() -> void:
 	var on_purchase: Callable = func(id: StringName, level: int) -> void:
 		purchases.append("%s:%d" % [id, level])
 	Events.upgrade_purchased.connect(on_purchase)
+	# Fiyatlar veriden (M4-14 benzetimiyle seçilir); ikinci seviye ilkinin iki katı (GDD §10).
+	var cost: int = Progression.upgrade_cost(&"magnet")
 	assert_bool(Progression.buy_upgrade(&"magnet")).is_false()
-	Progression.add_glimmers(99)
+	Progression.add_glimmers(cost - 1)
 	assert_bool(Progression.can_buy(&"magnet")).is_false()
 	assert_bool(Progression.buy_upgrade(&"magnet")).is_false()
 	Progression.add_glimmers(1)
 	assert_bool(Progression.buy_upgrade(&"magnet")).is_true()
 	assert_int(Progression.upgrade_level(&"magnet")).is_equal(1)
 	assert_int(Progression.glimmers).is_equal(0)
-	assert_int(Progression.upgrade_cost(&"magnet")).is_equal(200)
+	assert_int(Progression.upgrade_cost(&"magnet")).is_equal(cost * 2)
 	assert_float(Progression.loadout().magnet_m).is_equal_approx(1.8, 0.0001)
 	assert_array(purchases).is_equal(["magnet:1"])
 	assert_int(_wallets.back()).is_equal(0)

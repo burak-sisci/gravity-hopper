@@ -25,7 +25,8 @@ func after_test() -> void:
 func test_shows_wallet_levels_and_prices() -> void:
 	assert_str(_panel.summary_label().text).contains("Cüzdan 0 Glimmer")
 	assert_str(_panel.level_label(&"magnet").text).is_equal("MAGNET  0/5")
-	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al 100")
+	var cost: int = Progression.upgrade_cost(&"magnet")
+	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al %d" % cost)
 	assert_bool(_panel.buy_button(&"magnet").disabled).is_true()
 	assert_str(_panel.level_label(&"second_chance").text).is_equal("SECOND CHANCE  0/1")
 
@@ -35,11 +36,12 @@ func test_gift_then_buy_updates_the_page_and_the_save() -> void:
 	assert_int(Progression.glimmers).is_equal(1000)
 	assert_int(SaveManager.load_game()["glimmers"]).is_equal(1000)
 	assert_bool(_panel.buy_button(&"magnet").disabled).is_false()
+	var cost: int = Progression.upgrade_cost(&"magnet")
 	_panel.buy_button(&"magnet").pressed.emit()
 	assert_int(Progression.upgrade_level(&"magnet")).is_equal(1)
 	assert_str(_panel.level_label(&"magnet").text).is_equal("MAGNET  1/5")
-	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al 200")
-	assert_str(_panel.summary_label().text).contains("Cüzdan 900 Glimmer")
+	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al %d" % (cost * 2))
+	assert_str(_panel.summary_label().text).contains("Cüzdan %d Glimmer" % (1000 - cost))
 	# İkinci Şans 5000: cüzdan yetmiyor.
 	assert_bool(_panel.buy_button(&"second_chance").disabled).is_true()
 	for i: int in 5:

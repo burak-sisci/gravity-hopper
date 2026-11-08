@@ -4,7 +4,9 @@ extends RefCounted
 ## Durum tutmaz: Progression.finish_run ve ekonomi benzetimi (M4-14) aynı formülü kullanır.
 ## Autoload'a bağlı değildir; ekransız araç betikleri sınıfı adıyla derler.
 
-const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
+## Formüllerin ayar kaynağı. static var (const değil): ekonomi benzetimi "ya şöyle olsaydı"
+## denemesinde yalnızca bellekte değiştirir; const olunca derleyici alanı sabitliyordu.
+static var tuning: TuningConfig = preload("res://data/tuning/default_tuning.tres")
 
 
 ## Glimmer Çarpanının tur sonu kazancına eklediği (GDD §9.1: +%10 / seviye), en yakın tam sayıya
@@ -18,5 +20,5 @@ static func boost_bonus(base: int, boost: float) -> int:
 static func sector_bonus(start_sector: int, reached: int) -> int:
 	var total: int = 0
 	for index: int in range(start_sector, reached):
-		total += TUNING.sector_bonus * index
+		total += tuning.sector_bonus * index
 	return total

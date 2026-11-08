@@ -13,6 +13,12 @@ const SETTLE_FRAMES: int = 40
 const WALL_WAIT_FRAMES: int = 120
 ## Afiş en çok bu kadar satıra kırılabilir (64 px yazı, 160 px kutu).
 const MAX_BANNER_LINES: int = 2
+## Sayaçların sığma ölçüsündeki en kötü değerler (M4-14): Glimmer değeri 10 olunca tur sayacı dört
+## basamağa çıkar (benzetimde en iyi turlar binlerde); bir basamak pay. Yükseklik tavanı ≈ 12.000 m.
+const WORST_GLIMMERS: int = 99999
+const WORST_HEIGHT_M: int = 99999
+## Üst satırdaki yükseklik ve Glimmer yazıları arasında kalması gereken en az boşluk (px).
+const MIN_COUNTER_GAP: float = 24.0
 
 var _hud: Control
 var _locale: String
@@ -185,6 +191,35 @@ func test_every_banner_fits_in_both_languages() -> void:
 				locale, text, rect]).is_true()
 
 
+## Sayaçlar sığar (ölçülür, M4-14): en kötü yükseklik ve Glimmer sayısı iki dilde gerçek fontla
+## kendi kutusuna sığar; aynı satırdaki iki yazı (solda yükseklik, sağda sağa yaslı Glimmer)
+## arasında MIN_COUNTER_GAP kalır. Ölçü oyunun taban genişliğinde (en dar mantıksal ekran).
+func test_counters_fit_at_worst_values() -> void:
+	var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
+	viewport.size = Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
+			ProjectSettings.get_setting("display/window/size/viewport_height"))
+	add_child(viewport)
+	var hud: Control = HUD_SCENE.instantiate() as Control
+	viewport.add_child(hud)
+	await get_tree().process_frame
+	var height: Label = hud.get_node("%HeightLabel") as Label
+	var glimmer: Label = hud.get_node("%GlimmerLabel") as Label
+	# Kutular yazı değişmeden önce: taşan yazı etiketi büyütür, ölçüyü gizlerdi.
+	var height_box: Rect2 = height.get_global_rect()
+	var glimmer_box: Rect2 = glimmer.get_global_rect()
+	for locale: String in ["en", "tr"]:
+		TranslationServer.set_locale(locale)
+		var height_width: float = _text_width(height, tr("HUD_HEIGHT") % WORST_HEIGHT_M)
+		var glimmer_width: float = _text_width(glimmer, tr("HUD_GLIMMERS") % WORST_GLIMMERS)
+		assert_float(height_width).override_failure_message("%s: yükseklik %.0f px > kutu %.0f" % [
+			locale, height_width, height_box.size.x]).is_less_equal(height_box.size.x)
+		assert_float(glimmer_width).override_failure_message("%s: Glimmer %.0f px > kutu %.0f" % [
+			locale, glimmer_width, glimmer_box.size.x]).is_less_equal(glimmer_box.size.x)
+		var gap: float = (glimmer_box.end.x - glimmer_width) - (height_box.position.x + height_width)
+		assert_float(gap).override_failure_message("%s: sayaçlar arası %.0f px < %.0f" % [
+			locale, gap, MIN_COUNTER_GAP]).is_greater_equal(MIN_COUNTER_GAP)
+
+
 ## Kıl payı yazısı ve kombo göstergesi (M3-12): iki dilde; yazı söner, gösterge zincirle biter.
 func test_near_miss_text_and_combo() -> void:
 	Events.run_started.emit(1, 1)
@@ -292,6 +327,13 @@ func _height_label() -> Label:
 
 func _best_label() -> Label:
 	return _hud.get_node("%BestLabel") as Label
+
+
+## Yazının etikette kapladığı genişlik (px): motorun kendi yerleşim ölçüsü (NeonLabel'ın
+## LabelSettings fontu, boyutu ve kenar çizgisi dahil).
+func _text_width(label: Label, text: String) -> float:
+	label.text = text
+	return label.get_minimum_size().x
 
 
 func _glimmer_label() -> Label:
