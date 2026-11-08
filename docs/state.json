@@ -7,22 +7,21 @@
 
   "current": {
     "milestone": "M4",
-    "task": "M4-15",
-    "task_title": "Oyun testi (\"bir tur daha\" döngüsü, İlerleme sayfası, S4–S5, final) + Planlama Gözden Geçirmesi → 🚪",
-    "owner": "user+claude",
-    "status": "awaiting_user",
-    "note": "M4-14 bitti (2026-11-08, otonom). M4-15 (🤝) kilometre taşı kapısı: kullanıcı oynayıp onaylamadan M5'e geçilmez. Standart mesaide önce standard_queue (ekonomi gözden geçirmesi), sonra M4-15 oyun testi ve Planlama Gözden Geçirmesi."
+    "task": "M4-16",
+    "task_title": "Glimmer yoğunluğu: parçalara riskli yollarda Glimmer dizileri, her biri +1; tempo benzetimle yeniden",
+    "owner": "claude",
+    "status": "in_progress",
+    "note": "Kullanıcı kararı (2026-11-08): 'Glimmer çok seyrek, önerini kabul ediyorum, parçalara (özellikle riskli yollara) Glimmer ekle'; yoğunluk seçimi 'çok sık, her biri +1'. Kullanıcı aynı mesajda M4-15'i onayladı ve otonom mesaiye devam dedi. Plan: tools/place_glimmers.gd (adaylar sol/orta/sağ şeritte yarım vuruşta; ChunkValidator ile adil + riskli olanlar; tehlike çizimine binenler atılır; tehlikeye en yakın olanlar hedef sayıya kadar), sonra benzetimle yoğunluk ve sector_bonus ayarı, glimmer_value 1. Sonra M4 Planlama Gözden Geçirmesi (M4-15'in ikinci yarısı) ve M5."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
     "started": "2026-11-08",
-    "note": "Otonom mesai 2026-11-08: M4-14 bitti; M4-15 (🤝) kilometre taşı kapısında durdu (yapılabilecek 🤖 görev kalmadı)."
+    "note": "Otonom mesai 2026-11-08: M4-14 bitti, M4-15 kapısında durdu. Kullanıcı döndü: Glimmer yoğunluğu kararı (M4-16, çok sık, +1), M4-15 onayı, \"otonom mesaiye devam et\"."
   },
 
   "standard_queue": [
-    {"task": "M4-14", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir (ADR-082 itirazı, ADR-083): Glimmer seyrek. Değerler GDD §9.3'e Glimmer'ı çoğaltarak değil değerini 10 yaparak çekildi (varsayım).", "resume": "Kullanıcıya sayılarla sorulur: S1'de 100 m'de 0,81 parçacık (≈ 10 sn'de bir), S2–S4 0,26–0,31 (GDD §9.1 'yoğunluk üstte artar' tutmuyor). Seçenek A (şimdiki): değer 10, parçalar aynı. Seçenek B: parçalara Glimmer eklenir (riskli yollara), değer düşürülür; benzetim ve hedef testi yeniden çalıştırılır. Öneri: B; toplama sık olunca 'bir tur daha' hissi ve risk ödülü güçlenir, ama parça işi (39 parça) M4-15 denemesinden sonra karar verilsin."},
     {"task": "M4-14", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir: oyuncu profili varsayımları ve sektör bonusunun küçülmesi.", "resume": "Düzenli oyuncu varsayımı: günde 20 dk, ≈ 14 tur; ilk tur ≈ 320 m (≈ 25 sn); 7. günde en iyi ≈ 4600 m. Kullanıcı M4-15'te kendi turlarıyla karşılaştırır (gerçek ilk turları kısa / uzun mu?). Sektör bonusu 25 → 10 × sektör oldu (S1'i geçmek 10 Glimmer ≈ bir parçacık): tur sonu ekranında (M5) bonus küçük görünebilir; istenirse bonus artırılıp Glimmer değeri azaltılır, hedef testi bunu ölçer."},
     {"task": "M5-02", "owner": "claude", "added": "2026-11-08", "reason": "Not (benzetimden): kontrol noktası seçiminin tempoya etkisi.", "resume": "Yeni değerlerle 'hep en yüksek sektörden' başlayan düzenli oyuncu da 13 günde bitiriyor (tur başı 1. gün 20, orta 80; günde 28 kısa tur); 'hep S1'den' 15 gün. Menüde varsayılan seçim için büyük risk kalmadı; yine de en iyi kazanç en yüksekte değil (architecture §13.1)."},
     {"task": "test", "owner": "claude", "added": "2026-11-08", "reason": "Teknik not: tests/ui/hud_test.gd tek başına çalıştırılınca 5 zamanlama hatası veriyor (afiş süresi 1,42 / 1,67 sn > 1,3; M4-14'ten önce de aynı). Tam kontrolde geçiyor.", "resume": "İlk karelerdeki gecikmeye (gölgelendirici derleme) bağlı görünüyor; testler kare sayısı yerine zamanla ölçecek ya da ısınma karesi bekleyecek biçimde sağlamlaştırılır. Acil değil."}
@@ -34,14 +33,14 @@
     { "id": "M1", "title": "Çekirdek his (gri kutular)",   "status": "done",        "user_approved": true, "approved_on": "2026-10-13", "note": "Kapı M2-19 ile birleşti (ADR-028); M1-13 ertelendi" },
     { "id": "M2", "title": "Sonsuz ve adil",               "status": "done",        "user_approved": true, "approved_on": "2026-10-13" },
     { "id": "M3", "title": "Görsel ve işitsel kimlik",     "status": "done",        "user_approved": true, "approved_on": "2026-10-21" },
-    { "id": "M4", "title": "Meta döngü",                   "status": "in_progress", "user_approved": false, "note": "15 atomik görev (ADR-066)" },
+    { "id": "M4", "title": "Meta döngü",                   "status": "done",        "user_approved": true, "approved_on": "2026-11-08", "note": "15 atomik görev (ADR-066); kapıda M4-16 (Glimmer yoğunluğu) eklendi" },
     { "id": "M5", "title": "Arayüz ve akış",               "status": "not_started", "user_approved": false },
     { "id": "M6", "title": "Cihaz uyumu ve performans",    "status": "not_started", "user_approved": false },
     { "id": "M7", "title": "Sosyal katman ve gelir",       "status": "not_started", "user_approved": false },
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
 
-  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12", "M0-13", "M1-01", "M1-02", "M1-03", "M1-04", "M1-05", "M1-06", "M1-07", "M1-08", "M1-09", "M1-10", "M1-11", "M1-12", "M1-14", "M1-15", "M1-16", "M2-01", "M2-02", "M2-03", "M2-04", "M2-05", "M2-06", "M2-07", "M2-08", "M2-09", "M2-10", "M2-11", "M2-12", "M2-13", "M2-14", "M2-15", "M2-16", "M2-17", "M2-18", "M2-20", "P-04", "M2-19", "M3-01", "M3-02", "M3-03", "M3-04", "M3-05", "M3-06", "M3-07", "M3-08", "M3-09", "M3-10", "M3-11", "M3-12", "M3-13", "M3-14", "M3-17", "M1-13", "M3-15", "M3-18", "M3-19", "M3-16", "M3-21", "M3-20", "M4-01", "M4-02", "M4-03", "M4-04", "M4-05", "M4-06", "M4-07", "M4-08", "M4-09", "M4-10", "M4-11", "M4-12", "M4-13", "M4-14"],
+  "completed_tasks": ["P-01", "P-02", "P-03", "M0-03", "P-05", "M0-01", "M0-02", "M0-04", "M0-05", "M0-06", "M0-07", "M0-08", "M0-09", "M0-10", "M0-11", "M0-12", "M0-13", "M1-01", "M1-02", "M1-03", "M1-04", "M1-05", "M1-06", "M1-07", "M1-08", "M1-09", "M1-10", "M1-11", "M1-12", "M1-14", "M1-15", "M1-16", "M2-01", "M2-02", "M2-03", "M2-04", "M2-05", "M2-06", "M2-07", "M2-08", "M2-09", "M2-10", "M2-11", "M2-12", "M2-13", "M2-14", "M2-15", "M2-16", "M2-17", "M2-18", "M2-20", "P-04", "M2-19", "M3-01", "M3-02", "M3-03", "M3-04", "M3-05", "M3-06", "M3-07", "M3-08", "M3-09", "M3-10", "M3-11", "M3-12", "M3-13", "M3-14", "M3-17", "M1-13", "M3-15", "M3-18", "M3-19", "M3-16", "M3-21", "M3-20", "M4-01", "M4-02", "M4-03", "M4-04", "M4-05", "M4-06", "M4-07", "M4-08", "M4-09", "M4-10", "M4-11", "M4-12", "M4-13", "M4-14", "M4-15"],
 
   "blockers": [],
 
