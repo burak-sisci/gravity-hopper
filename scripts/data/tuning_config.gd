@@ -121,9 +121,9 @@ const PX_PER_M: float = 50.0
 
 @export_group("Ekonomi")
 ## Bir Glimmer parçacığının değeri (GDD §9.1, M4-14): toplanan Glimmer'ın kendi değeri
-## (Glimmer.value, normalde 1) bununla çarpılır, sonra kombo çarpanıyla. 10: ekonomi benzetimiyle
-## GDD §9.3 tempo hedeflerine çekildi (M4-14, architecture.md §13.1).
-@export_range(1, 50, 1, "suffix:Glimmer") var glimmer_value: int = 10
+## (Glimmer.value, normalde 1) bununla çarpılır, sonra kombo çarpanıyla. 1 (M4-16): Glimmer'lar
+## sık ve her biri +1 sayar (kullanıcı kararı); M4-14'te seyrekken 10'du (architecture.md §13.1).
+@export_range(1, 50, 1, "suffix:Glimmer") var glimmer_value: int = 1
 ## Sektör tamamlama bonusu: turda geçilen her sektör için bu × sektör numarası Glimmer
 ## (GDD §9.1; S1 ve S2'yi geçen tur 10 + 20 alır; M4-14 benzetimiyle seçildi).
 @export_range(0, 500, 5, "suffix:Glimmer") var sector_bonus: int = 10

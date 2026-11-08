@@ -42,9 +42,9 @@ func test_gift_then_buy_updates_the_page_and_the_save() -> void:
 	assert_str(_panel.level_label(&"magnet").text).is_equal("MAGNET  1/5")
 	assert_str(_panel.buy_button(&"magnet").text).is_equal("Al %d" % (cost * 2))
 	assert_str(_panel.summary_label().text).contains("Cüzdan %d Glimmer" % (1000 - cost))
-	# İkinci Şans 5000: cüzdan yetmiyor.
+	# İkinci Şans (en pahalısı): cüzdan yetmiyor; yetene dek hediye edilir.
 	assert_bool(_panel.buy_button(&"second_chance").disabled).is_true()
-	for i: int in 5:
+	while Progression.glimmers < Progression.upgrade_cost(&"second_chance"):
 		_press("+1000 Glimmer")
 	_panel.buy_button(&"second_chance").pressed.emit()
 	assert_str(_panel.buy_button(&"second_chance").text).is_equal("En üst")

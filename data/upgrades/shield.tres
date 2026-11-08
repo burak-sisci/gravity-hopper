@@ -7,6 +7,6 @@ script = ExtResource("1_def")
 id = &"shield"
 name_key = "UPGRADE_SHIELD"
 desc_key = "UPGRADE_SHIELD_DESC"
-costs = Array[int]([150, 300, 600, 1200, 2400])
+costs = Array[int]([180, 360, 720, 1440, 2880])
 values = Array[float]([0.0, 1500.0, 1200.0, 900.0, 600.0])
 unit = "m"

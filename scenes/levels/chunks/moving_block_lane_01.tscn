@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/levels/chunk_info.gd" id="1_info"]
 [ext_resource type="PackedScene" path="res://scenes/entities/spike.tscn" id="2_spike"]
 [ext_resource type="PackedScene" path="res://scenes/entities/moving_block.tscn" id="11_moving_block"]
+[ext_resource type="PackedScene" path="res://scenes/entities/glimmer.tscn" id="9_glimmer"]
 
 [node name="MovingBlockLane01" type="Node2D"]
 script = ExtResource("1_info")
@@ -25,3 +26,24 @@ scale = Vector2(-1, 1)
 
 [node name="MovingBlock9" parent="." instance=ExtResource("11_moving_block")]
 position = Vector2(0, -900)
+
+[node name="GlimmerLL2_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -250)
+
+[node name="GlimmerLL3_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -350)
+
+[node name="GlimmerLL4" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -400)
+
+[node name="GlimmerL4_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-200, -450)
+
+[node name="GlimmerRR5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(400, -500)
+
+[node name="GlimmerRR5_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(400, -550)
+
+[node name="GlimmerR7_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(200, -750)

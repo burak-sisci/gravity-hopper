@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://scenes/entities/rotor.tscn" id="10_rotor"]
 [ext_resource type="PackedScene" path="res://scenes/entities/moving_block.tscn" id="11_moving_block"]
 [ext_resource type="Script" path="res://scripts/levels/wall_gap.gd" id="12_gap"]
+[ext_resource type="PackedScene" path="res://scenes/entities/glimmer.tscn" id="9_glimmer"]
 
 [node name="CorruptLane01" type="Node2D"]
 script = ExtResource("1_info")
@@ -32,3 +33,24 @@ start_degrees = 90.0
 
 [node name="SpikeLeft9_5" parent="." instance=ExtResource("2_spike")]
 position = Vector2(-450, -950)
+
+[node name="GlimmerLL1_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -150)
+
+[node name="GlimmerRR2_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(400, -250)
+
+[node name="GlimmerRR3_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(400, -350)
+
+[node name="GlimmerRR5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(400, -500)
+
+[node name="GlimmerL5_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-200, -550)
+
+[node name="GlimmerLL8" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-400, -800)
+
+[node name="GlimmerL9_5" parent="." instance=ExtResource("9_glimmer")]
+position = Vector2(-200, -950)

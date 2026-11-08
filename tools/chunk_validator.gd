@@ -11,7 +11,8 @@ extends RefCounted
 ##
 ## Glimmer (M2-13): her Glimmer adil bir yolda toplanabilmeli (girişten sona güvenli bir yol,
 ## toplama alanı Glimmer'a değiyor) ve riskli yolda olmalı: bir tehlikeye ya da boşluğa dikeyde
-## en fazla bir vuruş uzakta.
+## en fazla bir vuruş uzakta. M4-16: Glimmer tehlike çizimine binmez; nabızla büyümüş dairesi
+## her tehlike kutusundan (hareketlilerde taradığı alandan) en az GLIMMER_CLEARANCE_MARGIN uzakta.
 ##
 ## Lazer (M2-12): ışın yalnızca açık olduğu karelerde tehlikedir. Açık olup olmadığı oyundaki
 ## kuralla (Laser.is_on_at) oyuncunun parça içindeki vuruş konumundan hesaplanır; parçalar tam
@@ -35,6 +36,9 @@ const MIN_WARNING_TIME: float = 1.2
 ## Başlangıç değeri; M2-18 oyun testinde gözden geçirilir.
 const REACTION_MARGIN: float = 0.2
 const PHYSICS_DT: float = 1.0 / 60.0
+## Glimmer'ın nabızla büyümüş dairesi ile tehlike kutusu arasındaki en küçük boşluk (px, M4-16):
+## neon çizginin kalınlığı ve halesi payı.
+const GLIMMER_CLEARANCE_MARGIN: float = 8.0
 ## Tehlike fizik katmanı (project.godot → layer_names: hazard = 3. katman).
 const HAZARD_LAYER: int = 4
 const PLAYER_SCENE_PATH: String = "res://scenes/entities/player.tscn"
@@ -45,6 +49,9 @@ var _body_size: Vector2
 var _sectors: SectorCatalog
 ## Turlarda çalabilecek tempolar (müzik kataloğundan).
 var _tempos: Array[float] = []
+## sector_errors'ın son kurduğu, girişleri güvenli kare kare deneme (pickup_path için; parça
+## adil değilse null).
+var _last_sim: Simulation = null
 
 
 func _init(tuning: TuningConfig, body_size: Vector2, sectors: SectorCatalog,
@@ -118,6 +125,7 @@ func chunk_errors(chunk: ChunkInfo) -> PackedStringArray:
 
 ## Parçanın tek bir sektör hızında ve tempodaki sorunları.
 func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArray:
+	_last_sim = null
 	var def: SectorDef = _sectors.def_at(sector)
 	var beat: float = def.beat_px(bpm)
 	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
@@ -183,9 +191,32 @@ func sector_errors(chunk: ChunkInfo, sector: int, bpm: float) -> PackedStringArr
 	if not failure.is_empty():
 		errors.append(failure)
 		return errors
+	_last_sim = sim
 	errors.append_array(_glimmer_errors(chunk, sim, beat, half_width, hazards + mover_reaches,
 			gaps))
 	return errors
+
+
+## Glimmer yerleştirme aracı için (M4-16): verilen sektör ve tempoda, adil yollardan parçanın
+## Glimmer'larının en çoğunu toplayan yolun topladıkları. Parça adil değilse boş.
+func pickup_path(chunk: ChunkInfo, sector: int, bpm: float) -> Array[Glimmer]:
+	var result: Array[Glimmer] = []
+	sector_errors(chunk, sector, bpm)
+	if _last_sim == null:
+		return result
+	var beat: float = _sectors.def_at(sector).beat_px(bpm)
+	var half_width: float = TuningConfig.to_px(_tuning.corridor_width) * 0.5
+	var glimmers: Array[Glimmer] = []
+	var points: Array[Vector2] = []
+	var radius: float = 0.0
+	for item: Node2D in chunk.items():
+		if item is Glimmer:
+			glimmers.append(item as Glimmer)
+			points.append(ChunkInfo.world_position(chunk.design_position(item), beat, half_width))
+			radius = TuningConfig.to_px(_tuning.pickup_radius) + _glimmer_radius(item as Glimmer)
+	for index: int in _last_sim.best_pickups(points, radius):
+		result.append(glimmers[index])
+	return result
 
 
 ## Glimmer kuralları: adil bir yolda toplanabilir ve bir vuruş yakınında tehlike var.
@@ -206,6 +237,14 @@ func _glimmer_errors(chunk: ChunkInfo, sim: Simulation, beat: float, half_width:
 			near = near or (at.y > zone.y - beat and at.y < zone.z + beat)
 		if not near:
 			errors.append("%s riskli yolda değil: bir vuruş içinde tehlike yok" % item.name)
+		var clearance: float = glimmer_clearance(item as Glimmer)
+		for rect: Rect2 in hazards:
+			var gap: float = distance_to_rect(at, rect)
+			if gap < clearance:
+				errors.append("%s tehlike çizimine biniyor: %s px (en az %s)" % [
+					item.name, String.num(gap, 0), String.num(clearance, 0),
+				])
+				break
 	return errors
 
 
@@ -234,6 +273,20 @@ func _speed_errors(mover: MovingHazard, label: String, bpm: float,
 			label, String.num(worst, 0), String.num(limit, 0),
 		])
 	return errors
+
+
+## Glimmer'ın merkezi ile tehlike kutusu arasında olması gereken en küçük uzaklık (px, M4-16):
+## nabızla büyümüş daire (Glimmer.set_beat ile aynı ölçek) + çizgi payı.
+static func glimmer_clearance(glimmer: Glimmer) -> float:
+	var pulsed: float = _glimmer_radius(glimmer) * (1.0 + Neon.STYLE.glimmer_pulse_scale)
+	return pulsed + GLIMMER_CLEARANCE_MARGIN
+
+
+## Noktanın kutuya uzaklığı (içindeyse 0).
+static func distance_to_rect(point: Vector2, rect: Rect2) -> float:
+	var dx: float = maxf(maxf(rect.position.x - point.x, point.x - rect.end.x), 0.0)
+	var dy: float = maxf(maxf(rect.position.y - point.y, point.y - rect.end.y), 0.0)
+	return Vector2(dx, dy).length()
 
 
 static func _glimmer_radius(glimmer: Glimmer) -> float:
@@ -316,6 +369,9 @@ class Simulation:
 	var _dwell: int
 	## Her karenin "buradan sona sağ çıkılır" tablosu (Glimmer toplanabilirliği için saklanır).
 	var _safe_by_frame: Array[PackedByteArray] = []
+	## Her karede girişten güvenli yollarla varılan durumlar (ilk collectible'da bir kez kurulur;
+	## M4-16: parça başına onlarca Glimmer için yol yeniden taranmaz).
+	var _reach_by_frame: Array[PackedByteArray] = []
 	## Geçiş kare sayısı ve her karedeki x (sağa doğru; sola doğru için ters işaret).
 	var _transit: PackedFloat32Array = PackedFloat32Array()
 
@@ -514,17 +570,88 @@ class Simulation:
 	## Girişten sona güvenli bir yolda, oyuncunun merkezi center'a radius kadar yaklaşıyor mu?
 	## first_failure'dan sonra çağrılır (güvenli tablo kurulmuş olmalı).
 	func collectible(center: Vector2, radius: float) -> bool:
+		if _reach_by_frame.is_empty():
+			_build_reach()
+		var count: int = _state_count()
+		for frame: int in range(0, _frames + 1):
+			var y: float = _y_of(frame)
+			if absf(y - center.y) > radius:
+				continue
+			var current: PackedByteArray = _reach_by_frame[frame]
+			for state: int in count:
+				if current[state] == 1 and Vector2(_x_of(state), y).distance_to(center) <= radius:
+					return true
+		return false
+
+	## Bir duvara yeni inmiş girişten sona güvenli yollar arasında en çok noktayı toplayanın
+	## topladığı noktaların sırası. Her nokta y'sine en yakın karede, toplama yarıçapı içinde
+	## sayılır (geriye doğru dinamik programlama). first_failure'dan sonra çağrılır.
+	func best_pickups(points: Array[Vector2], radius: float) -> PackedInt32Array:
+		var count: int = _state_count()
+		var at_frame: Dictionary[int, PackedInt32Array] = {}
+		for i: int in points.size():
+			var frame: int = clampi(roundi((_start_y - points[i].y) / _step_y), 0, _frames)
+			var list: PackedInt32Array = at_frame.get(frame, PackedInt32Array())
+			list.append(i)
+			at_frame[frame] = list
+		var best: Array[PackedInt32Array] = []
+		var follow: Array[PackedInt32Array] = []
+		best.resize(_frames + 1)
+		follow.resize(_frames + 1)
+		for frame: int in range(_frames, -1, -1):
+			var score: PackedInt32Array = PackedInt32Array()
+			var step: PackedInt32Array = PackedInt32Array()
+			score.resize(count)
+			score.fill(-1)
+			step.resize(count)
+			step.fill(-1)
+			var safe: PackedByteArray = _safe_by_frame[frame]
+			for state: int in count:
+				if safe[state] == 0:
+					continue
+				var gain: int = _gain(at_frame.get(frame, PackedInt32Array()), points, radius,
+						Vector2(_x_of(state), _y_of(frame)))
+				if frame == _frames:
+					score[state] = gain
+					continue
+				for next: int in _next_states(state):
+					if best[frame + 1][next] > score[state] - gain:
+						score[state] = gain + best[frame + 1][next]
+						step[state] = next
+			best[frame] = score
+			follow[frame] = step
+		var state: int = _wall_state(0, 0)
+		if best[0][_wall_state(1, 0)] > best[0][state]:
+			state = _wall_state(1, 0)
+		var picked: PackedInt32Array = PackedInt32Array()
+		for frame: int in range(0, _frames + 1):
+			if state < 0:
+				break
+			var at: Vector2 = Vector2(_x_of(state), _y_of(frame))
+			for i: int in at_frame.get(frame, PackedInt32Array()):
+				if at.distance_to(points[i]) <= radius:
+					picked.append(i)
+			state = follow[frame][state]
+		return picked
+
+	func _gain(indices: PackedInt32Array, points: Array[Vector2], radius: float,
+			at: Vector2) -> int:
+		var gain: int = 0
+		for i: int in indices:
+			if at.distance_to(points[i]) <= radius:
+				gain += 1
+		return gain
+
+	## Girişten ileri: her karede güvenli yollarla varılabilen durumlar.
+	func _build_reach() -> void:
 		var count: int = _state_count()
 		var current: PackedByteArray = PackedByteArray()
 		current.resize(count)
 		for state: int in _entry_states():
 			current[state] = _safe_by_frame[0][state]
+		_reach_by_frame.resize(_frames + 1)
 		for frame: int in range(0, _frames + 1):
-			var y: float = _y_of(frame)
-			if absf(y - center.y) <= radius:
-				for state: int in count:
-					if current[state] == 1 and Vector2(_x_of(state), y).distance_to(center) <= radius:
-						return true
+			_reach_by_frame[frame] = current
 			if frame == _frames:
 				break
 			var next_frame: PackedByteArray = PackedByteArray()
@@ -537,9 +664,7 @@ class Simulation:
 					if safe_next[next] == 1:
 						next_frame[next] = 1
 			current = next_frame
-		return false
 
-	## Girişten ileriye: tüm yolların tükendiği karede neye çarpıldığını anlatır.
 	func _explain(entry: int, names: Array[String]) -> String:
 		var alive: Array[int] = [entry]
 		var hit_names: Array[String] = []

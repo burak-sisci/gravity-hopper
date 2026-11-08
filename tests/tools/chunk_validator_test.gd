@@ -126,7 +126,8 @@ func test_laser_needs_its_sector() -> void:
 func test_glimmer_rules() -> void:
 	# Üç dikenle çevrili Glimmer'a dokunmadan yaklaşılamaz (toplama yarıçapı 75 px geniş: tek
 	# dikenin yanındaki Glimmer geçiş sırasında sıyırarak alınabilir). Tehlikeden uzak Glimmer
-	# riskli yolda değil; sağ duvardaki, dikenle aynı vuruştaki Glimmer ikisini de geçer.
+	# riskli yolda değil; sağ duvardaki, dikenle aynı vuruştaki Glimmer ikisini de geçer. Dikenlerin
+	# üstündeki Glimmer çizime de biniyor (M4-16).
 	var chunk: ChunkInfo = _chunk(8, [
 		Vector3(LEFT, -250, 1), Vector3(LEFT, -300, 1), Vector3(LEFT, -350, 1),
 	])
@@ -134,11 +135,37 @@ func test_glimmer_rules() -> void:
 	_add_glimmer(chunk, 400, -750)
 	_add_glimmer(chunk, 400, -300)
 	var errors: PackedStringArray = _validator.sector_errors(chunk, 1, 100.0)
-	assert_int(errors.size()).is_equal(2)
-	if errors.size() < 2:
-		return
-	assert_str(errors[0]).contains("Glimmer3").contains("toplanamıyor")
-	assert_str(errors[1]).contains("Glimmer4").contains("riskli yolda değil")
+	assert_int(errors.size()).is_equal(3)
+	if errors.size() == 3:
+		assert_str(errors[0]).contains("Glimmer3").contains("toplanamıyor")
+		assert_str(errors[1]).contains("Glimmer3").contains("tehlike çizimine biniyor")
+		assert_str(errors[2]).contains("Glimmer4").contains("riskli yolda değil")
+	# M4-16: Glimmer'ın nabızla büyümüş dairesi (18 × 1,25 = 22,5 px) + 8 px pay = en az 31 px
+	# tehlike kutusundan uzak. Sol duvardaki diken x = −450…−390: x = −350'deki Glimmer 40 px uzakta
+	# (geçer), −400'deki dikenin içinde (düşer). pickup_path de burada sınanır.
+	var near: ChunkInfo = _chunk(8, [Vector3(LEFT, -300, 1)])
+	_add_glimmer(near, -400, -300)
+	var near_errors: PackedStringArray = _validator.sector_errors(near, 1, 100.0)
+	assert_array(Array(near_errors).filter(func(m: String) -> bool:
+		return m.contains("çizimine biniyor"))).has_size(1)
+	var clear: ChunkInfo = _chunk(8, [Vector3(LEFT, -300, 1)])
+	_add_glimmer(clear, -350, -300)
+	assert_array(_validator.sector_errors(clear, 1, 100.0)).is_empty()
+	var glimmer: Glimmer = auto_free(GLIMMER_SCENE.instantiate()) as Glimmer
+	assert_float(ChunkValidator.glimmer_clearance(glimmer)).is_equal_approx(30.5, 0.01)
+	var box: Rect2 = Rect2(0.0, 0.0, 10.0, 10.0)
+	assert_float(ChunkValidator.distance_to_rect(Vector2(5.0, 5.0), box)).is_equal(0.0)
+	assert_float(ChunkValidator.distance_to_rect(Vector2(13.0, 14.0), box)).is_equal_approx(5.0, 0.001)
+	# Yerleştirme aracının dizisi: en çok Glimmer'ı toplayan adil yol hepsini toplar, ikisi aynı
+	# yükseklikte karşı duvarlardaysa yalnızca birini.
+	var line: ChunkInfo = _chunk(8, [Vector3(LEFT, -300, 1)])
+	_add_glimmer(line, 400, -250)
+	_add_glimmer(line, 400, -300)
+	_add_glimmer(line, 400, -350)
+	assert_int(_validator.pickup_path(line, 1, 100.0).size()).is_equal(3)
+	_add_glimmer(line, -400, -600)
+	_add_glimmer(line, 400, -600)
+	assert_int(_validator.pickup_path(line, 1, 100.0).size()).is_equal(4)
 
 
 func test_view_rule_uses_lookahead() -> void:

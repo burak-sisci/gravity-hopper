@@ -18,8 +18,8 @@ const FIRST_UPGRADE_RUNS: Vector2 = Vector2(2.0, 3.0)
 const EARLY_EARNED: Vector2 = Vector2(30.0, 60.0)
 const MID_EARNED: Vector2 = Vector2(100.0, 200.0)
 const ALL_UPGRADES_DAYS: Vector2 = Vector2(12.0, 16.0)
-## Yükseltmelerin toplamı "≈ 22.000" (± %10).
-const TOTAL_COST: Vector2i = Vector2i(19800, 24200)
+## Yükseltmelerin toplamı "≈ 26.000" (± %10; GDD §9.3, M4-16).
+const TOTAL_COST: Vector2i = Vector2i(23400, 28600)
 
 
 func test_regular_player_meets_the_pace_targets() -> void:
@@ -35,7 +35,7 @@ func test_regular_player_meets_the_pace_targets() -> void:
 		summary.finished, PLAYERS]).is_equal(PLAYERS)
 
 
-func test_upgrade_total_is_about_22000() -> void:
+func test_upgrade_total_is_about_26000() -> void:
 	var model: EconomyModel = EconomyModel.new(LIBRARY, SECTORS, MUSIC, Earnings.tuning, UPGRADES)
 	assert_int(model.total_upgrade_cost()).is_between(TOTAL_COST.x, TOTAL_COST.y)
 

@@ -146,14 +146,18 @@ func test_buying_an_upgrade_spends_and_saves() -> void:
 
 func test_top_level_cannot_be_bought_again() -> void:
 	Progression.add_glimmers(20000)
+	var revive_cost: int = Progression.upgrade_cost(&"second_chance")
 	assert_bool(Progression.buy_upgrade(&"second_chance")).is_true()
 	assert_int(Progression.upgrade_cost(&"second_chance")).is_equal(-1)
 	assert_bool(Progression.buy_upgrade(&"second_chance")).is_false()
-	assert_int(Progression.glimmers).is_equal(15000)
+	var after_revive: int = 20000 - revive_cost
+	assert_int(Progression.glimmers).is_equal(after_revive)
+	var shield_total: int = 0
 	for i: int in 5:
+		shield_total += Progression.upgrade_cost(&"shield")
 		assert_bool(Progression.buy_upgrade(&"shield")).is_true()
 	assert_bool(Progression.buy_upgrade(&"shield")).is_false()
-	assert_int(Progression.glimmers).is_equal(15000 - 4650)
+	assert_int(Progression.glimmers).is_equal(after_revive - shield_total)
 	assert_float(Progression.loadout().shield_regen_m).is_equal(600.0)
 	# Bilinmeyen yükseltme alınamaz.
 	assert_bool(Progression.buy_upgrade(&"laser_eyes")).is_false()
@@ -163,10 +167,11 @@ func test_top_level_cannot_be_bought_again() -> void:
 
 func test_bought_levels_survive_a_restart() -> void:
 	Progression.add_glimmers(300)
+	var cost: int = Progression.upgrade_cost(&"head_start")
 	Progression.buy_upgrade(&"head_start")
 	Progression.reload()
 	assert_int(Progression.upgrade_level(&"head_start")).is_equal(1)
-	assert_int(Progression.glimmers).is_equal(180)
+	assert_int(Progression.glimmers).is_equal(300 - cost)
 	assert_int(Progression.upgrade_level(&"magnet")).is_equal(0)
 
 
