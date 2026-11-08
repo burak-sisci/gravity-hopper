@@ -322,9 +322,9 @@
 
 - [ ] **M7-01** 🤖 Gradle derlemesi + Android derleme şablonu
 - [ ] **M7-02** 🤖 Play Games Services: giriş, liderlik tablosu, başarımlar (S-05)
-- [ ] **M7-03** 🤖 Günlük meydan okuma (D-04)
+- [ ] **M7-03** 🤖 Günlük meydan okuma (D-04: sınırsız deneme, en iyi sonuç sayılır)
 - [ ] **M7-04** 🤖 Paylaşım kartı (görüntü üretimi + Android paylaşım)
-- [ ] **M7-05** 🤖 AdMob ödüllü reklamlar: diriliş, 2× Glimmer (D-03)
+- [ ] **M7-05** 🤖 AdMob ödüllü reklamlar: diriliş, 2× Glimmer, reklam serisi (D-03: zorunlu reklam yok; seri formülü GDD §21, ADR-084). Benzetime reklam izleyen oyuncu eklenir; tempo testi onu da ölçer
 - [ ] **M7-06** 🤖 KVKK / GDPR onay akışı (UMP)
 - [ ] **M7-07** 🤝 Gizlilik politikası sayfası (GitHub Pages)
 - [ ] **M7-08** 🤝 Bulut kaydı ve analitik kararı (isteğe bağlı)

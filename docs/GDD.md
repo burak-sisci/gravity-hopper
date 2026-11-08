@@ -119,6 +119,7 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
 | Sektör tamamlama bonusu | 10 × sektör numarası (M4-14) |
 | Glimmer Çarpanı yükseltmesi | +%10 / seviye |
 | Ödüllü reklam (M7) | Tur sonu kazancı ×2 |
+| Reklam serisi (M7, D-03) | n. reklam: T × 2^(min(n, 5) − 1); T = son 5 turun ortalama kazancının %5'i (en az 2). Günde en çok 10 reklam; §21 |
 
 Glimmer yoğunluğu üst sektörlerde artar ve **riskli yollara** yerleştirilir: cesaret ödüllendirilir.
 
@@ -292,7 +293,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - Her gün herkes **aynı haritayı** oynar (tohum = UTC tarihi).
 - Oynanışı etkileyen yükseltmeler kapalı; herkes S1'den başlar.
 - Sonuç, tek dokunuşla paylaşılabilen bir **skor kartına** dönüşür (yükseklik, tarih, kıl payı sayısı, küçük harita izi).
-- Deneme hakkı: açık karar D-04 (önerim: sınırsız deneme, en iyi sonuç sayılır).
+- Deneme hakkı **sınırsız**; günün en iyi sonucu sayılır (kullanıcı kararı 2026-11-08, D-04).
 
 ## 18. İlk açılış deneyimi (FTUE)
 
@@ -328,8 +329,15 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 ## 21. Gelir modeli (M7)
 
-- **Ödüllü reklam, yalnızca oyuncu isterse:** diriliş (tur başına 1) ve tur sonu Glimmer ×2.
-- **Zorunlu geçiş reklamı:** açık karar D-03 (önerim: yok ya da çok seyrek).
+- **Ödüllü reklam, yalnızca oyuncu isterse:** diriliş (tur başına 1), tur sonu Glimmer ×2 ve reklam serisi.
+- **Zorunlu geçiş (interstitial) reklamı yok** (kullanıcı kararı 2026-11-08, D-03). Oyuncu reklamı yalnızca ek ödül istediğinde izler.
+- **Reklam serisi** (kullanıcı kararı 2026-11-08, D-03; formül Claude'un, ADR-084):
+  - Oyuncu "ödül için reklam izle" der. Her reklamdan sonra "bir tane daha" sunulur; her reklam bir öncekinin **iki katı** verir.
+  - n. reklamın ödülü: `T × 2^(min(n, 5) − 1)`. Taban `T` = son 5 turun ortalama kazancının %5'i, yuvarlanır, en az 2. Böylece ödül oyuncunun ilerlemesiyle birlikte büyür ve hiçbir aşamada önemsizleşmez.
+  - Örnek: 1. gün (tur ≈ 35) T = 2 → 2 · 4 · 8 · 16 · 32, sonra her reklam 32. Orta aşama (tur ≈ 140) T = 7 → 7 · 14 · 28 · 56 · 112, sonra 112.
+  - **Seri bozulur:** oyuncu reklam ekranından çıkınca, tur başlatınca ya da uygulama arka plana geçince bir sonraki seri 1. adımdan başlar. Reklam ağı reklam veremezse (dolum yok) seri bozulmaz.
+  - **Sınır:** katlama 5. reklamda durur; günde en çok 10 seri reklamı. Bir günün en çok kazancı 111 × T ≈ 5,5 turluk kazanç (düzenli oyuncunun günlük kazancının ≈ %30'u). Neden (ölçülen): sınırsız ikiye katlamada 14 reklam (≈ 7 dk) 32.766 Glimmer verir; yükseltmelerin hepsi 26.220.
+  - Değerler `TuningConfig`'e konur; M7-05'te ekonomi benzetimine "reklam izleyen oyuncu" eklenir ve tempo testi onu da ölçer.
 - **Kazanmak için ödeme (pay-to-win) yok.** Olası ileri adım: kozmetik iz paketleri.
 
 ## 22. Viral özellikler (özet)
@@ -344,6 +352,4 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
-| D-03 | Zorunlu geçiş reklamı olacak mı? | M7 |
-| D-04 | Günlük meydan okumada deneme hakkı | M7 |
 | — | Tüm sayısal değerler (hız, uzunluk, maliyet, basınç) | M1–M4, ayar paneliyle |
