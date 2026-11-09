@@ -226,6 +226,10 @@ func _cycle_fps() -> void:
 func _connect_event_log() -> void:
 	Events.player_flipped.connect(_log_event.bind("player_flipped"))
 	Events.player_revived.connect(_log_event.bind("player_revived"))
+	Events.retry_requested.connect(_log_event.bind("retry_requested"))
+	Events.revive_requested.connect(_log_event.bind("revive_requested"))
+	Events.revive_offered.connect(func(height_m: int) -> void:
+		_log_event("revive_offered height=%d" % height_m))
 	Events.app_state_changed.connect(func(state: GameTypes.AppState) -> void:
 		_log_event("app_state_changed state=%s" % GameTypes.AppState.keys()[state]))
 	Events.player_died.connect(func(cause: GameTypes.DeathCause) -> void:

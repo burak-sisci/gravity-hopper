@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
-## İkinci Şans turda (M4-07, architecture.md §7.3): hak varsa ölüm turu bitirmez, GameManager kısa
-## bir bekleyişten sonra dirilişi duyurur ve oyuncu kaldığı yerde canlanır. Ölümde saat durur:
+## İkinci Şans turda (M4-07, M5-03, architecture.md §7.3): hak varsa ölüm turu bitirmez, GameManager
+## dirilişi teklif eder; Dirilt (revive_requested) gelince oyuncu kaldığı yerde canlanır, o ana dek
+## kendiliğinden diriliş olmaz. Ölümde saat durur:
 ## oyuncu ile vuruş ızgarası ölümde de dirilişten sonra da aynı yerdedir (müzik kaldığı yerden).
 ## Yakındaki tehlikeler temizlenir, çöküş duvarı geri itilir, dokunulmazlık gelir; ikinci ölüm
 ## turu bitirir; tur sırasında düğüm oluşmaz. Dokunuşsuz oyuncu, GameManager gerçek.
@@ -13,6 +14,8 @@ const MAX_FRAMES: int = 1800
 const SETTLE_FRAMES: int = 20
 ## Oyuncunun yeri ile vuruş saatinin tırmanışı arasındaki izinli fark (px; kayan nokta birikimi).
 const SYNC_TOLERANCE: float = 0.05
+## Teklif açıkken beklenen kare sayısı: bu sürede saat, oyuncu ve tur donuk kalmalı.
+const OFFER_WAIT_FRAMES: int = 40
 
 var _run: Run
 var _player: Player
@@ -69,7 +72,8 @@ func test_revive_continues_the_run_and_the_second_death_ends_it() -> void:
 	# İkinci ölüm turu bitirir; yeni diriliş yok.
 	await _until(func() -> bool: return _deaths.size() == 2)
 	assert_int(_results.size()).is_equal(1)
-	await _frames(_delay_frames() + 10)
+	assert_bool(GameManager.is_revive_offered()).is_false()
+	await _frames(OFFER_WAIT_FRAMES)
 	assert_int(_revived).is_equal(1)
 	assert_int(_results.size()).is_equal(1)
 	assert_int(_results[0].height_m).is_greater(death_height)
@@ -122,7 +126,7 @@ func test_without_a_revive_the_first_death_ends_the_run() -> void:
 	_start(0, null)
 	await _until(func() -> bool: return not _deaths.is_empty())
 	assert_int(_results.size()).is_equal(1)
-	await _frames(_delay_frames() + 10)
+	await _frames(OFFER_WAIT_FRAMES)
 	assert_int(_revived).is_equal(0)
 	assert_bool(_player.is_alive()).is_false()
 	_free_run()
@@ -154,19 +158,18 @@ func _assert_on_grid() -> void:
 			"tırmanış %.2f px, saate göre %.2f px" % [climbed, expected]).is_less(SYNC_TOLERANCE)
 
 
-## Diriliş gelene dek bekler; bu sürede saat ve oyuncu yerinde durur. Bekleyiş anında değildir.
+## Teklif açıkken bir süre bekler (saat ve oyuncu yerinde, diriliş yok), sonra Dirilt'e basar.
 func _until_revived() -> void:
+	assert_bool(GameManager.is_revive_offered()).is_true()
 	var time: float = _conductor().run_time
 	var y: float = _player.position.y
-	var waited: int = 0
-	while _revived == 0 and waited < MAX_FRAMES:
+	for i: int in OFFER_WAIT_FRAMES:
 		await get_tree().physics_frame
-		waited += 1
-		if _revived == 0:
-			assert_float(_conductor().run_time).is_equal(time)
-			assert_float(_player.position.y).is_equal(y)
+		assert_float(_conductor().run_time).is_equal(time)
+		assert_float(_player.position.y).is_equal(y)
+	assert_int(_revived).is_equal(0)
+	Events.revive_requested.emit()
 	assert_int(_revived).is_equal(1)
-	assert_int(waited).is_greater_equal(_delay_frames() - 2)
 	assert_array(_results).is_empty()
 
 
@@ -195,10 +198,6 @@ func _check_cleared(death_y: float) -> int:
 
 func _height() -> int:
 	return floori((_start_y - _player.position.y) / TuningConfig.PX_PER_M)
-
-
-func _delay_frames() -> int:
-	return roundi(GameManager.AUTO_REVIVE_DELAY * Engine.physics_ticks_per_second)
 
 
 ## 8 vuruşluk parça; sol duvarda 1. vuruştan 5. vuruşa boşluk (player_fall_test'teki gibi).

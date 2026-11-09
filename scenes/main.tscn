@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/systems/chunk_pools.gd" id="2_pools"]
 [ext_resource type="PackedScene" path="res://scenes/ui/main_menu.tscn" id="3_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/results_screen.tscn" id="4_results"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
@@ -22,6 +23,10 @@ layer = 10
 
 [node name="Hud" parent="UI" instance=ExtResource("1_hud")]
 unique_name_in_owner = true
+
+[node name="ResultsScreen" parent="UI" instance=ExtResource("4_results")]
+unique_name_in_owner = true
+visible = false
 
 [node name="MainMenu" parent="UI" instance=ExtResource("3_menu")]
 unique_name_in_owner = true

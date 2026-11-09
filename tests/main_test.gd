@@ -1,14 +1,14 @@
 extends GdUnitTestSuite
-## Tur döngüsü (M1-09, architecture.md §5.1): ölüm → GameManager sonucu duyurur → Main turu
-## kısa bir beklemeden sonra yeniden kurar. Telefonda 348–360 ms ölçüldü (M1-12).
+## Tur döngüsü (M1-09, M5-03, architecture.md §5.1): ölüm → GameManager sonucu duyurur → sonuç
+## ekranı açılır, tur kendiliğinden yeniden başlamaz → Tekrar yeni turu hemen kurar.
 ## Rekor (M3-14, M4-02): Progression kalıcı rekoru tutar ve kaydeder, Main yeni tura verir;
 ## tur sonu kazancı cüzdana girer. Kontrol noktası (M4-09): tur seçili sektörden başlar.
 ## Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
-## Yeniden başlama sınırı: 0,35 sn bekleme (21 kare) + pay. Telefonda ölçülen 360 ms'e karşılık.
-const MAX_RESTART_FRAMES: int = 30
-## Main'in yeniden başlama zamanlayıcısı askıdayken sahne silinmesin diye beklenen süre.
+## Ölümden sonra kendiliğinden yeni tur gelmediği gözlenen süre (eski akış 0,35 sn = 21 kare).
+const NO_RESTART_FRAMES: int = 40
+## Sahne silinmeden önce beklenen kare (sonuç ekranının tween'i, ertelenmiş çağrılar).
 const TEARDOWN_FRAMES: int = 30
 
 var _main: Node
@@ -54,19 +54,24 @@ func test_main_starts_a_run() -> void:
 	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
 
 
-func test_death_restarts_run_quickly() -> void:
+## Ölüm sonuç ekranını açar (HUD açık kalır, menü kapalı), ölü tur arkada kalır, yeni tur gelmez;
+## Tekrar aynı karede yeni turu kurar ve sonuç ekranını kapatır.
+func test_death_shows_results_and_retry_starts_a_new_run() -> void:
 	await _start_main()
+	var results: Control = _main.get_node("%ResultsScreen") as Control
+	assert_bool(results.visible).is_false()
 	var first_run: Node = _world().get_child(0)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 	assert_int(GameManager.state).is_equal(GameTypes.AppState.RESULTS)
-	var frames: int = 0
-	while _started_seeds.size() < 2 and frames < MAX_RESTART_FRAMES + 10:
-		await get_tree().process_frame
-		frames += 1
+	assert_bool(results.visible).is_true()
+	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_false()
+	await _frames(NO_RESTART_FRAMES)
+	assert_int(_started_seeds.size()).is_equal(1)
+	assert_object(_world().get_child(0)).is_same(first_run)
+	Events.retry_requested.emit()
 	assert_int(_started_seeds.size()).is_equal(2)
-	if _started_seeds.size() < 2:
-		return
-	assert_int(frames).is_less_equal(MAX_RESTART_FRAMES)
+	assert_bool(results.visible).is_false()
+	await get_tree().process_frame
 	assert_int(_started_seeds[1]).is_not_equal(_started_seeds[0])
 	assert_int(_world().get_child_count()).is_equal(1)
 	assert_object(_world().get_child(0)).is_not_same(first_run)
@@ -111,7 +116,7 @@ func test_record_is_saved_and_reaches_the_next_run() -> void:
 	assert_int(Progression.best_height_m).is_equal(37)
 	assert_bool(_results[0].new_record).is_true()
 	assert_int(SaveManager.load_game()["best_height_m"]).is_equal(37)
-	await _wait_for_runs(2)
+	await _retry(2)
 	assert_int(_current_run().record_height).is_equal(37)
 	# Daha alçak bir tur rekoru düşürmez.
 	Events.height_changed.emit(12)
@@ -119,7 +124,7 @@ func test_record_is_saved_and_reaches_the_next_run() -> void:
 	assert_int(Progression.best_height_m).is_equal(37)
 	assert_bool(_results[1].new_record).is_false()
 	assert_int(_results[1].best_height_m).is_equal(37)
-	await _wait_for_runs(3)
+	await _retry(3)
 	assert_int(_current_run().record_height).is_equal(37)
 
 
@@ -156,7 +161,7 @@ func test_menu_removes_the_run_and_play_starts_one() -> void:
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 	Events.menu_requested.emit()
 	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
-	await _frames(MAX_RESTART_FRAMES + 10)
+	await _frames(NO_RESTART_FRAMES)
 	assert_int(_world().get_child_count()).is_equal(0)
 	assert_int(_started_seeds.size()).is_equal(1)
 	Events.play_requested.emit()
@@ -198,13 +203,11 @@ func _current_run() -> Run:
 	return _world().get_child(_world().get_child_count() - 1) as Run
 
 
-## Ölümden sonraki yeniden başlamayı bekler (en çok MAX_RESTART_FRAMES + pay).
-func _wait_for_runs(count: int) -> void:
-	var frames: int = 0
-	while _started_seeds.size() < count and frames < MAX_RESTART_FRAMES + 10:
-		await get_tree().process_frame
-		frames += 1
+## Sonuç ekranından Tekrar: yeni tur hemen kurulur (count. tur).
+func _retry(count: int) -> void:
+	Events.retry_requested.emit()
 	assert_int(_started_seeds.size()).is_equal(count)
+	await get_tree().process_frame
 
 
 func _on_run_started(run_seed: int, start_sector: int) -> void:

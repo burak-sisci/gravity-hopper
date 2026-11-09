@@ -5,10 +5,11 @@ extends Node
 ## Events ile duyurur. Sahnedeki işi (eski turu kaldırıp yenisini kurmak) kök sahne Main yapar;
 ## autoload'lar sahne düğümlerine erişmez (.clauderules §3).
 ##
-## İkinci Şans (M4-07, GDD §7): yükte diriliş hakkı varsa ölüm turu bitirmez; hak harcanır ve
-## kısa bir süre sonra Events.player_revived duyurulur (Run oyuncuyu canlandırır). Hak yoksa ya
-## da harcandıysa ölüm turu bitirir. Sonuç ekranı gelene kadar diriliş kendiliğinden olur;
-## M5-03'te düğmeye (Events.revive_requested → revive()) bağlanır.
+## İkinci Şans (M4-07, M5-03, GDD §7): yükte diriliş hakkı varsa ölüm turu bitirmez; hak harcanır,
+## durum RESULTS olur ve Events.revive_offered duyurulur (sonuç ekranı teklifi gösterir).
+## revive_requested → oyuncu kaldığı yerde canlanır (Events.player_revived, durum RUNNING);
+## revive_declined → tur biter. Teklif açıkken yeni tur ya da menü istenirse tur önce biter
+## (kazanç kaybolmaz). Hak yoksa ölüm turu hemen bitirir.
 
 ## Durum makinesi (M5-01, architecture.md §5.1): her durumdan gidilebilecek durumlar. Burada
 ## olmayan geçiş reddedilir (debug günlüğüne "STATE rejected" yazılır). Yeni tur her durumdan
@@ -26,10 +27,6 @@ const TRANSITIONS: Dictionary[GameTypes.AppState, Array] = {
 	GameTypes.AppState.SHOP: [GameTypes.AppState.MENU, GameTypes.AppState.RUNNING],
 }
 
-## M4-07 geçici akışı: ölümden bu kadar sonra, hak varsa, diriliş kendiliğinden olur (ölüm
-## donması ve patlaması görünsün). M5-03'te sonuç ekranındaki düğme bunun yerini alır.
-const AUTO_REVIVE_DELAY: float = 0.8
-
 ## Uygulamanın şu anki durumu.
 var state: GameTypes.AppState = GameTypes.AppState.BOOT
 
@@ -44,8 +41,8 @@ var _glimmer_boost: float = 0.0
 ## Turda kalan diriliş hakkı ve bekleyen diriliş (M4-07).
 var _revives_left: int = 0
 var _revive_pending: bool = false
-## Her turda artar: önceki turun bekleyen dirilişi yeni turda olmasın.
-var _run_serial: int = 0
+## Teklif açıkken turu bitirecek ölüm nedeni.
+var _death_cause: GameTypes.DeathCause = GameTypes.DeathCause.HAZARD
 
 
 func _ready() -> void:
@@ -55,6 +52,8 @@ func _ready() -> void:
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.near_miss.connect(_on_near_miss)
 	Events.menu_requested.connect(_on_menu_requested)
+	Events.revive_requested.connect(revive)
+	Events.revive_declined.connect(_on_revive_declined)
 
 
 ## İzinliyse durumu değiştirir ve Events.app_state_changed duyurur; değilse durum aynı kalır.
@@ -85,7 +84,6 @@ func launch_state() -> GameTypes.AppState:
 func reset() -> void:
 	state = GameTypes.AppState.BOOT
 	_revive_pending = false
-	_run_serial += 1
 
 
 ## Yeni turun tohumu. Günlük meydan okumada (M7-03) tohum tarihten gelir.
@@ -97,11 +95,10 @@ func new_run_seed() -> int:
 ## Kalıcı değerler (cüzdan, rekor) de yeniden duyurulur: arayüz ilk değerlerini böyle alır.
 ## Yük (M4-04) turun yükseltmeleridir; Glimmer Çarpanı tur sonu kazancına uygulanır.
 func begin_run(run_seed: int, start_sector: int, loadout: RunLoadout = null) -> void:
+	_close_offer()
 	_run_seed = run_seed
 	_glimmer_boost = loadout.glimmer_boost if loadout != null else 0.0
 	_revives_left = loadout.revives if loadout != null else 0
-	_revive_pending = false
-	_run_serial += 1
 	_start_sector = start_sector
 	_height_m = 0
 	_sector_reached = start_sector
@@ -112,13 +109,19 @@ func begin_run(run_seed: int, start_sector: int, loadout: RunLoadout = null) -> 
 	Events.run_started.emit(run_seed, start_sector)
 
 
-## Bekleyen dirilişi yapar: Events.player_revived duyurulur, tur sürer. Bekleyen yoksa ya da
-## tur sürmüyorsa bir şey olmaz.
+## Teklif edilen dirilişi yapar (sonuç ekranındaki Dirilt): durum RUNNING olur,
+## Events.player_revived duyurulur, tur sürer. Teklif yoksa bir şey olmaz.
 func revive() -> void:
-	if not _revive_pending or state != GameTypes.AppState.RUNNING:
+	if not _revive_pending or state != GameTypes.AppState.RESULTS:
 		return
 	_revive_pending = false
+	change_state(GameTypes.AppState.RUNNING)
 	Events.player_revived.emit()
+
+
+## Diriliş teklifi açık mı (testler ve sonuç ekranı).
+func is_revive_offered() -> bool:
+	return _revive_pending
 
 
 ## Turda kalan diriliş hakkı (testler).
@@ -147,15 +150,21 @@ func _on_sector_entered(index: int) -> void:
 func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	if state != GameTypes.AppState.RUNNING or _revive_pending:
 		return
+	_death_cause = cause
+	change_state(GameTypes.AppState.RESULTS)
 	if _revives_left > 0:
 		_revives_left -= 1
 		_revive_pending = true
-		_revive_later(_run_serial)
+		Events.revive_offered.emit(_height_m)
 		return
-	change_state(GameTypes.AppState.RESULTS)
+	_end_run()
+
+
+## Turu bitirir: sonuç kurulur, kazanç ve rekor kaydedilir, Events.run_ended duyurulur.
+func _end_run() -> void:
 	var result: RunResult = RunResult.new()
 	result.height_m = _height_m
-	result.cause = cause
+	result.cause = _death_cause
 	result.run_seed = _run_seed
 	result.start_sector = _start_sector
 	result.sector_reached = _sector_reached
@@ -168,16 +177,21 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 
 
 ## Menü isteği: turdan çıkılır (sonuç ekranından ya da duraklatmadan). İzinsizse bir şey olmaz.
-## Bekleyen diriliş iptal olur.
+## Diriliş teklifi açıksa tur önce biter.
 func _on_menu_requested() -> void:
-	if change_state(GameTypes.AppState.MENU):
-		_revive_pending = false
-		_run_serial += 1
+	if can_change_to(GameTypes.AppState.MENU):
+		_close_offer()
+		change_state(GameTypes.AppState.MENU)
 
 
-## Geçici akış (M5-03'e dek): diriliş AUTO_REVIVE_DELAY sonra kendiliğinden. Arada yeni tur
-## başladıysa (serial değişti) bir şey olmaz.
-func _revive_later(serial: int) -> void:
-	await get_tree().create_timer(AUTO_REVIVE_DELAY).timeout
-	if serial == _run_serial:
-		revive()
+func _on_revive_declined() -> void:
+	if state == GameTypes.AppState.RESULTS:
+		_close_offer()
+
+
+## Açık diriliş teklifi varsa turu bitirir (Vazgeç, yeni tur ya da menü).
+func _close_offer() -> void:
+	if not _revive_pending:
+		return
+	_revive_pending = false
+	_end_run()

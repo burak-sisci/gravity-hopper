@@ -9,12 +9,11 @@ extends Node
 ## Tur, Progression'da seçilen kontrol noktasından başlar (M4-09).
 ## Durum makinesi (M5-01): açılışta GameManager.launch_state()'e göre menü ya da tur; menü
 ## durumunda tur kaldırılır, Events.play_requested ile seçili kontrol noktasından tur kurulur.
+## Sonuç ekranı (M5-03) durum RESULTS iken açıktır; tur kendiliğinden yeniden başlamaz, Tekrar
+## (Events.retry_requested) yeni turu kurar. Ölü tur ekranın arkasında donmuş kalır.
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
-## M1 geçici akışı: ölümden bu kadar sonra tur kendiliğinden yeniden başlar.
-## M5'te sonuç ekranı ve "Tekrar" düğmesi (Events.retry_requested) bunun yerini alır.
-const AUTO_RESTART_DELAY: float = 0.35
 
 var _run: Run
 ## Yeni turların başladığı sektör: açılışta seçili kontrol noktası (Progression.start_sector);
@@ -27,6 +26,7 @@ var _start_sector: int
 @onready var _debug: CanvasLayer = %Debug
 @onready var _hud: Control = %Hud
 @onready var _menu: MainMenu = %MainMenu
+@onready var _results: ResultsScreen = %ResultsScreen
 
 
 func _ready() -> void:
@@ -34,7 +34,6 @@ func _ready() -> void:
 		_debug.add_child((load(DEBUG_LAYER_PATH) as PackedScene).instantiate())
 	_apply_quality()
 	Events.settings_changed.connect(_apply_quality)
-	Events.run_ended.connect(_on_run_ended)
 	Events.retry_requested.connect(_start_run)
 	Events.start_requested.connect(_on_start_requested)
 	Events.start_sector_selected.connect(_on_start_sector_selected)
@@ -79,22 +78,20 @@ func _on_start_sector_selected(sector: int) -> void:
 	_start_sector = sector
 
 
-## Menüde tur kalmaz: dünya boşalır, menü açılır, HUD gizlenir (M5-02).
+## Menüde tur kalmaz: dünya boşalır, menü açılır, HUD gizlenir (M5-02). Sonuç durumunda sonuç
+## ekranı açılır (M5-03); başka durumda kapanır.
 func _on_app_state_changed(state: GameTypes.AppState) -> void:
 	var in_menu: bool = state == GameTypes.AppState.MENU
 	_hud.visible = not in_menu
+	if state == GameTypes.AppState.RESULTS:
+		_results.open()
+	else:
+		_results.visible = false
 	if in_menu:
 		_remove_run()
 		_menu.open()
 	else:
 		_menu.visible = false
-
-
-## Geçici akış (M5-03'e dek): bekleme sırasında menüye ya da yeni tura geçildiyse bir şey olmaz.
-func _on_run_ended(_result: RunResult) -> void:
-	await get_tree().create_timer(AUTO_RESTART_DELAY).timeout
-	if GameManager.state == GameTypes.AppState.RESULTS:
-		_start_run()
 
 
 func _remove_run() -> void:

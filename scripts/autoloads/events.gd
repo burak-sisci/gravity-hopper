@@ -20,6 +20,8 @@ signal app_state_changed(state: GameTypes.AppState)
 # --- Oyuncu ---
 signal player_died(cause: GameTypes.DeathCause)
 signal player_revived
+## Ölümde İkinci Şans hakkı var: sonuç ekranı dirilişi teklif eder (M5-03).
+signal revive_offered(height_m: int)
 signal player_flipped
 signal player_landed
 signal shield_changed(active: bool)
@@ -43,6 +45,8 @@ signal start_requested(sector: int)
 signal play_requested
 signal retry_requested
 signal revive_requested
+## Diriliş teklifi geri çevrildi: tur biter (M5-03).
+signal revive_declined
 signal menu_requested
 signal pause_requested
 signal resume_requested
