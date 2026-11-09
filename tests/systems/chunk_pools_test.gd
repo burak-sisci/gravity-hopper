@@ -39,8 +39,10 @@ func test_next_run_borrows_the_same_chunk_nodes() -> void:
 
 
 func test_main_lends_pools_and_keeps_draw_order() -> void:
+	GameManager.reset()
 	var main: Node = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(main)
+	Events.play_requested.emit()
 	await _frames(5)
 	var pools: ChunkPools = main.get_node("%ChunkPools") as ChunkPools
 	var run: Run = main.get_node("%World").get_child(0) as Run

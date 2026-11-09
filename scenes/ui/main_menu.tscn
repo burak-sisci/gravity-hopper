@@ -1,0 +1,127 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="2_sectors"]
+[ext_resource type="Script" path="res://scripts/components/neon_label.gd" id="3_neon_label"]
+[ext_resource type="Script" path="res://scripts/ui/neon_button.gd" id="4_neon_button"]
+
+[node name="MainMenu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+sectors = ExtResource("2_sectors")
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.02, 0.05, 1)
+
+[node name="Wallet" type="Label" parent="."]
+unique_name_in_owner = true
+auto_translate_mode = 2
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -540.0
+offset_top = 110.0
+offset_right = -40.0
+offset_bottom = 180.0
+grow_horizontal = 0
+horizontal_alignment = 2
+script = ExtResource("3_neon_label")
+tone = 2
+font_size = 48
+
+[node name="Column" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -440.0
+offset_top = -740.0
+offset_right = 440.0
+offset_bottom = 760.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="Title" type="Label" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 300)
+auto_translate_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 120
+
+[node name="TitleGap" type="Control" parent="Column"]
+custom_minimum_size = Vector2(0, 40)
+mouse_filter = 2
+
+[node name="SectorRow" type="HBoxContainer" parent="Column"]
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="PrevButton" type="Button" parent="Column/SectorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 150)
+auto_translate_mode = 2
+text = "<"
+script = ExtResource("4_neon_button")
+font_size = 72
+
+[node name="SectorLabel" type="Label" parent="Column/SectorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(532, 150)
+auto_translate_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+font_size = 44
+
+[node name="NextButton" type="Button" parent="Column/SectorRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 150)
+auto_translate_mode = 2
+text = ">"
+script = ExtResource("4_neon_button")
+font_size = 72
+
+[node name="PlayButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(880, 200)
+text = "MENU_PLAY"
+script = ExtResource("4_neon_button")
+font_size = 84
+
+[node name="PlayGap" type="Control" parent="Column"]
+custom_minimum_size = Vector2(0, 20)
+mouse_filter = 2
+
+[node name="UpgradesButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(880, 150)
+disabled = true
+text = "MENU_UPGRADES"
+script = ExtResource("4_neon_button")
+
+[node name="TrailsButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(880, 150)
+disabled = true
+text = "MENU_TRAILS"
+script = ExtResource("4_neon_button")
+
+[node name="SettingsButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(880, 150)
+disabled = true
+text = "MENU_SETTINGS"
+script = ExtResource("4_neon_button")

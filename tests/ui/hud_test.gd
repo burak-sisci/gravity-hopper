@@ -262,8 +262,10 @@ func test_hud_controls_ignore_mouse() -> void:
 
 ## Oyunun içinde: görünür her yazının ortasına dokunuş oyuncuyu çevirir (telefondaki gibi).
 func test_taps_on_labels_flip_player() -> void:
+	GameManager.reset()
 	var main: Node = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(main)
+	Events.play_requested.emit()
 	Events.debug_invincibility_changed.emit(true)
 	await _physics_frames(SETTLE_FRAMES)
 	var player: Player = main.get_node("%World").get_child(0).get_node("Player") as Player

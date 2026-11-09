@@ -54,8 +54,10 @@ func test_default_trail_follows_the_sector_color() -> void:
 func test_main_gives_the_equipped_trail_to_the_next_run() -> void:
 	Progression.grant_trail(GOLD)
 	Progression.equip_trail(GOLD)
+	GameManager.reset()
 	var main: Node = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(main)
+	Events.play_requested.emit()
 	await _frames(2)
 	var run: Run = main.get_node("%World").get_child(0) as Run
 	assert_object(run.loadout.trail).is_same(TRAILS.get_def(GOLD))

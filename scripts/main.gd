@@ -25,6 +25,8 @@ var _start_sector: int
 @onready var _world: Node2D = %World
 @onready var _chunk_pools: ChunkPools = %ChunkPools
 @onready var _debug: CanvasLayer = %Debug
+@onready var _hud: Control = %Hud
+@onready var _menu: MainMenu = %MainMenu
 
 
 func _ready() -> void:
@@ -77,10 +79,15 @@ func _on_start_sector_selected(sector: int) -> void:
 	_start_sector = sector
 
 
-## Menüde tur kalmaz: dünya boşalır (ana menünün arka planı M5-02'de).
+## Menüde tur kalmaz: dünya boşalır, menü açılır, HUD gizlenir (M5-02).
 func _on_app_state_changed(state: GameTypes.AppState) -> void:
-	if state == GameTypes.AppState.MENU:
+	var in_menu: bool = state == GameTypes.AppState.MENU
+	_hud.visible = not in_menu
+	if in_menu:
 		_remove_run()
+		_menu.open()
+	else:
+		_menu.visible = false
 
 
 ## Geçici akış (M5-03'e dek): bekleme sırasında menüye ya da yeni tura geçildiyse bir şey olmaz.

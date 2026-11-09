@@ -32,6 +32,20 @@ func after_test() -> void:
 	Progression.reset()
 
 
+## Açılış ana menüden (M5-02): tur yok, menü açık, HUD gizli; Başla turu kurar.
+func test_main_opens_the_menu_first() -> void:
+	_open_main()
+	await _frames(2)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	assert_int(_world().get_child_count()).is_equal(0)
+	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_true()
+	assert_bool((_main.get_node("%Hud") as Control).visible).is_false()
+	Events.play_requested.emit()
+	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_false()
+	assert_bool((_main.get_node("%Hud") as Control).visible).is_true()
+	await _frames(TEARDOWN_FRAMES)
+
+
 func test_main_starts_a_run() -> void:
 	await _start_main()
 	assert_int(_started_seeds.size()).is_equal(1)
@@ -163,10 +177,17 @@ func test_settings_change_sets_neon_quality() -> void:
 	Neon.quality = GameTypes.Quality.HIGH
 
 
+## Açılış menüden (M5-02); testler Başla ile tura girer.
 func _start_main() -> void:
+	_open_main()
+	Events.play_requested.emit()
+	await _frames(5)
+
+
+func _open_main() -> void:
+	GameManager.reset()
 	_main = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(_main)
-	await _frames(5)
 
 
 func _world() -> Node2D:

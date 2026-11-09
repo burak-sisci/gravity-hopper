@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/main.gd" id="0_main"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/systems/chunk_pools.gd" id="2_pools"]
+[ext_resource type="PackedScene" path="res://scenes/ui/main_menu.tscn" id="3_menu"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
@@ -20,6 +21,11 @@ unique_name_in_owner = true
 layer = 10
 
 [node name="Hud" parent="UI" instance=ExtResource("1_hud")]
+unique_name_in_owner = true
+
+[node name="MainMenu" parent="UI" instance=ExtResource("3_menu")]
+unique_name_in_owner = true
+visible = false
 
 [node name="Debug" type="CanvasLayer" parent="."]
 unique_name_in_owner = true

@@ -322,7 +322,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | --- | --- |
 | **HUD** | Sol üst: yükseklik (m). Üst orta: sektör adı (geçişte büyür). Sağ üst: duraklat, altında Glimmer sayısı. Oyuncunun hemen altında "KIL PAYI!" yazısı ve kombo (×2 / ×3). Kenarlarda duvar vinyeti. **Neon yazılar (M3-18):** açık çekirdek, renkli kenar ve yumuşak parlama. Yükseklik, kıl payı ve sektör afişi sektörün vurgu renginde (yeni sektörde renk dalgasıyla değişir), rekor satırı rekor çizgisinin sarısında, Glimmer ve kombo Glimmer yeşilinde. Düşük kalitede parlama yok. |
 | **Sonuç** | Yükseklik, rekor durumu, kazanılan Glimmer. Büyük "Tekrar" düğmesi; "Diriliş (reklam)", "Yükseltmeler". |
-| **Ana menü** | Başla (sektör seçimi), Günlük, Yükseltmeler, İzler, Ayarlar |
+| **Ana menü** | Başla (sektör seçimi: açık kontrol noktaları arasında oklarla), Günlük (M7-03), Yükseltmeler, İzler, Ayarlar; sağ üstte cüzdan. Neon düğmeler (koyu dolgu, renkli kenar, yumuşak parlama). M5-02 |
 | **Yükseltmeler / İzler** | Kartlar: mevcut seviye, sonraki etki, maliyet |
 | **Ayarlar** | Müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında (lisanslar) |
 

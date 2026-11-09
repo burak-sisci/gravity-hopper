@@ -15,8 +15,10 @@ var _main: Node
 
 
 func before_test() -> void:
+	GameManager.reset()
 	_main = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(_main)
+	Events.play_requested.emit()
 	await _frames(SETTLE_FRAMES)
 
 
