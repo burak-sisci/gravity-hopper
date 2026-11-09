@@ -283,7 +283,7 @@
 - [x] **M4-14** 🤖 Ekonomi simülasyonu (`tools/`): beceri profillerine göre tur kazançları → "kaç turda ne alınır?". Değerler GDD §9.3 hedeflerine çekilir: ilk yükseltme 2.–3. turda, hepsi yaklaşık 2 haftada (≈ 22.000 Glimmer).
   *Kabul:* Simülasyon tablosu `architecture.md`'de, hedefler tutuyor; değişen değerler GDD'de.
 - [x] **M4-15** 🤝 Oyun testi ("bir tur daha" döngüsü, İlerleme sayfası, S4–S5, final) + Planlama Gözden Geçirmesi → 🚪 (kullanıcı onayı 2026-11-08: "m4-15'i onaylıyorum"; İlerleme sayfaları "iyi")
-- [ ] **M4-16** 🤖 Glimmer yoğunluğu (kullanıcı kararı 2026-11-08, kapıda): parçalara riskli yollarda Glimmer dizileri eklenir, her Glimmer +1 sayar (`glimmer_value` 1); S1'de ≈ saniyede bir, yoğunluk üst sektörlerde artar (GDD §9.1). Tempo M4-14 benzetimiyle yeniden GDD §9.3'e çekilir.
+- [x] **M4-16** 🤖 Glimmer yoğunluğu (kullanıcı kararı 2026-11-08, kapıda): parçalara riskli yollarda Glimmer dizileri eklenir, her Glimmer +1 sayar (`glimmer_value` 1); S1'de ≈ saniyede bir, yoğunluk üst sektörlerde artar (GDD §9.1). Tempo M4-14 benzetimiyle yeniden GDD §9.3'e çekilir.
   *Kabul:* Doğrulayıcı her Glimmer'ı adil ve riskli yolda buluyor; Glimmer tehlike çizimine binmiyor (ölçülür, test); ekonomi hedef testi `glimmer_value` 1 ile geçiyor; Redmi'de en yoğun sektörde kare süresi bozulmuyor.
 
 ## M5 — Arayüz ve akış
