@@ -301,6 +301,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - İlk parça: uzun, boş bir duvar ve tek bir diken. Ekranda dil gerektirmeyen, nabız atan bir "dokun" eli ikonu belirir.
 - Tehlikeler tek tek tanıtılır; ilk sektör 3–5 turda geçilebilir olmalı.
 - İlk ölümden sonra sonuç ekranı ve ilk Glimmer'lar → "Yükseltmeler" düğmesi parlar.
+- FTUE bitince (ilk tur tamamlanınca) sonraki açılışlar **ana menüden** başlar (M4 Planlama Gözden Geçirmesi; gözden geçirilecek varsayım).
 
 ## 19. Ses ve his
 

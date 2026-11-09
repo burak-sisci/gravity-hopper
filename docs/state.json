@@ -11,7 +11,7 @@
     "task_title": "GameManager durum makinesi ve sahne geçişleri",
     "owner": "claude",
     "status": "not_started",
-    "note": "M4 kapandı (M4-15 kapısı 2026-11-08, M4-16 2026-11-09). M4 Planlama Gözden Geçirmesi M5'ten önce yapılır."
+    "note": "M4 kapandı (M4-15 kapısı 2026-11-08, M4-16 2026-11-09). M4 Planlama Gözden Geçirmesi yapıldı (2026-11-09, ADR-086); M5 12 göreve bölündü."
   },
 
   "session": {
@@ -22,6 +22,7 @@
   },
 
   "standard_queue": [
+    {"task": "M5", "owner": "user", "added": "2026-11-09", "reason": "Gözden geçir (varsayım, M4 Planlama Gözden Geçirmesi, ADR-086): M5 akışı ve görev bölümü.", "resume": "İlk açılış menüsüz tura girer (GDD §18), FTUE bitince açılışlar ana menüden; ölüm → sonuç ekranı → Tekrar / Menü. M5 12 göreve bölündü; yeni M5-10 menü müziği ve arayüz sesleri. İstenirse her açılış doğrudan tura girer, menü yalnızca sonuç ekranından açılır."},
     {"task": "M4-16", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir (varsayım, ADR-082): yükseltmelerin toplamı ≈ 22.000 → 26.220.", "resume": "Sık Glimmer (S1 ≈ saniyede bir, üstte vuruş başına biraz daha sık) ile düzenli oyuncu eski fiyatlarla bütün yükseltmeleri 10–11 günde bitiriyordu (hedef ≈ 2 hafta). Yoğunluğu azaltmak günleri pek değiştirmedi (oyuncu üst kontrol noktasından başlayıp dakikada aynı Glimmer'ı alıyor). Seçilen: üst kademe fiyatları %15–40 artırıldı, en ucuz Mıknatıs 60 → 40 (ilk yükseltme 3. turda). GDD'deki 22.000, eski Glimmer değerinden türetilmiş tahmindi; asıl hedef '2 hafta' sayıldı. İstenirse fiyatlar korunup Glimmer seyrekleştirilir; hedef testi ölçer."},
     {"task": "M4-14", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir: oyuncu profili varsayımları ve sektör bonusunun küçülmesi.", "resume": "Düzenli oyuncu varsayımı: günde 20 dk, ≈ 14 tur; ilk tur ≈ 320 m (≈ 25 sn); 7. günde en iyi ≈ 4600 m. Kullanıcı M4-15'te kendi turlarıyla karşılaştırır (gerçek ilk turları kısa / uzun mu?). Sektör bonusu 25 → 10 × sektör oldu (S1'i geçmek 10 Glimmer ≈ bir parçacık): tur sonu ekranında (M5) bonus küçük görünebilir; istenirse bonus artırılıp Glimmer değeri azaltılır, hedef testi bunu ölçer."},
     {"task": "M5-02", "owner": "claude", "added": "2026-11-08", "reason": "Not (benzetimden): kontrol noktası seçiminin tempoya etkisi.", "resume": "Yeni değerlerle 'hep en yüksek sektörden' başlayan düzenli oyuncu da 13 günde bitiriyor (tur başı 1. gün 20, orta 80; günde 28 kısa tur); 'hep S1'den' 15 gün. Menüde varsayılan seçim için büyük risk kalmadı; yine de en iyi kazanç en yüksekte değil (architecture §13.1)."},
@@ -131,14 +132,14 @@
   "temp_files": [],
 
   "docs_reviewed": {
-    "CLAUDE.md": "2026-10-21",
-    ".clauderules": "2026-10-21",
-    "docs/architecture.md": "2026-10-21",
-    "docs/GDD.md": "2026-10-21",
-    "docs/roadmap.md": "2026-10-21",
-    "docs/state.json": "2026-10-21",
-    "docs/music_research.md": "2026-10-21",
-    "CREDITS.md": "2026-10-21"
+    "CLAUDE.md": "2026-11-09",
+    ".clauderules": "2026-11-09",
+    "docs/architecture.md": "2026-11-09",
+    "docs/GDD.md": "2026-11-09",
+    "docs/roadmap.md": "2026-11-09",
+    "docs/state.json": "2026-11-09",
+    "docs/music_research.md": "2026-11-09",
+    "CREDITS.md": "2026-11-09"
   },
 
   "last_session": {

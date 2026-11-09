@@ -290,17 +290,30 @@
 
 **Hedef:** Oyun baştan sona, menüleriyle birlikte oynanıyor.
 
-- [ ] **M5-01** 🤖 `GameManager` durum makinesi ve sahne geçişleri
-- [ ] **M5-02** 🤖 Ana menü (sektör seçimi dahil; kontrol noktaları M4-09'da hazır)
-- [ ] **M5-03** 🤖 Sonuç ekranı (rekor, "rekora X m", kazanılan Glimmer, tek dokunuşla tekrar; İkinci Şans dirilişi düğmeye bağlanır, M4-07)
-- [ ] **M5-04** 🤖 Yükseltmeler ve izler ekranları (mantık M4-03 / M4-08'de; debug İlerleme sayfasının yerine)
-- [ ] **M5-05** 🤖 Ayarlar: ses, müzik, titreşim, dil, kalite, 60 FPS sınırı; başka cihazlarda gerekirse ses kaydırma (S-03)
-- [ ] **M5-06** 🤖 Duraklatma + arka plana geçince otomatik duraklatma ve kayıt
-- [ ] **M5-07** 🤖 İlk açılış deneyimi (FTUE)
-- [ ] **M5-08** 🤖 Titreşim
-- [ ] **M5-09** 🤖 Hakkında / lisanslar ekranı (Godot MIT lisans metni zorunlu)
-- [ ] **M5-10** 👤 Türkçe ve İngilizce metinlerin gözden geçirilmesi
-- [ ] **M5-11** 🤝 İlk kez açan biri gibi test + Planlama Gözden Geçirmesi → 🚪
+**Akış (M4 Planlama Gözden Geçirmesi, ADR-086):** İlk açılışta menü yok, oyun doğrudan başlar (GDD §18); FTUE bitince açılışlar ana menüden. Ölüm → sonuç ekranı → "Tekrar" (yeni tur) ya da "Menü". Ekranlar `Main/UI` içinde tek tek açılır, hepsi `Events` ile konuşur (.clauderules §3). Her ekran için ortak ölçülü kabul (*UI kabulü*): beş en-boy oranında (9:16, 9:19,5, 9:21, 3:4, 4:3) görünür öğeler çakışmıyor ve ekranın içinde; her düğme ≥ 48 dp, komşu düğmeler arası ≥ 8 dp; metin kontrastı ≥ 4,5 (büyük metin ≥ 3); TR ve EN metinler gerçek fontla kutusuna sığıyor; Redmi'den ekran görüntüsü.
+
+- [ ] **M5-01** 🤖 `GameManager` durum makinesi ve sahne geçişleri: izinli geçiş tablosu (`BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → RUNNING | MENU | SHOP`), izinsiz geçiş reddedilir ve debug günlüğüne yazılır; durum değişimi `Events.app_state_changed` ile duyurulur; `Main` duruma göre dünyayı kurar / bekletir. Ekranlar gelene dek geçici akış sürer (ölümden sonra kendiliğinden yeni tur).
+  *Kabul:* Her izinli ve izinsiz geçiş testte; `Main` menü durumunda tur başlatmıyor, "Başla" niyetiyle başlatıyor (test); ölümden yeni tura süre Redmi'de bozulmuyor (≤ 400 ms, şimdi 370–381 ms).
+- [ ] **M5-02** 🤖 Ana menü (GDD §20): Başla, sektör seçimi (yalnızca açık kontrol noktaları, M4-09), Yükseltmeler, İzler, Ayarlar; Günlük düğmesi M7-03'te. Ortak arayüz parçaları burada kurulur: neon düğme (`NeonButton`, Exo 2, `NeonLabel` görünümü), ekran açma / kapama, düğme dokunuşunun oyuncuyu çevirmemesi.
+  *Kabul:* UI kabulü; menüdeki dokunuş oyuncuyu çevirmiyor (test); kilitli sektör seçilemiyor (test); seçilen sektör kayda geçiyor ve tur oradan başlıyor.
+- [ ] **M5-03** 🤖 Sonuç ekranı (GDD §20): yükseklik, rekor durumu ("YENİ REKOR" ya da "rekora X m"), kazanılan Glimmer (toplanan + sektör bonusu + Çarpan, `Earnings` ile), büyük "Tekrar" (tek dokunuş), "Yükseltmeler", "Menü". İkinci Şans hakkı varsa "Dirilt" düğmesi (`Events.revive_requested`); `AUTO_REVIVE_DELAY` ve `AUTO_RESTART_DELAY` geçici akışları kalkar (M4-07). Reklamlı diriliş yeri M7-05'e ayrılır.
+  *Kabul:* UI kabulü; ekrandaki kazanç `Progression` cüzdanına eklenenle aynı (test); "Dirilt" yalnızca hak varken görünüyor ve tur kaldığı yerden sürüyor (test); "Tekrar"dan yeni turun ilk karesine Redmi'de ≤ 400 ms.
+- [ ] **M5-04** 🤖 Yükseltmeler ve izler ekranları (GDD §10, §11; mantık M4-03 / M4-08'de): kartlar mevcut seviye, sonraki etki, maliyet; alınamayan kart soluk; izlerde kuşanma ve kilit koşulu. Debug İlerleme sayfası yalnızca debug'da kalır.
+  *Kabul:* UI kabulü (en uzun etki metni dahil); satın alma ve kuşanma `Progression`'daki gibi (test); cüzdan yetmezken düğme kapalı (test); iz önizleme renkleri OKLab ile mevcut iz testinden geçiyor.
+- [ ] **M5-05** 🤖 Ayarlar: müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında; başka cihazlarda gerekirse ses kaydırma (S-03). Değişiklik hemen uygulanır ve `user://settings.cfg`'ye yazılır.
+  *Kabul:* UI kabulü; her ayar kaydedilip yeniden açılışta geri geliyor (test); dil değişince açık ekranın bütün metinleri yeniden yazılıyor (test); ses kaydırıcısı 0'da ilgili veri yolu sessiz (ölçülür).
+- [ ] **M5-06** 🤖 Duraklatma (HUD'da sağ üst düğme) + arka plana geçince otomatik duraklatma ve kayıt; devamda 3-2-1 geri sayım, müzik vuruşa yeniden kilitlenir.
+  *Kabul:* Duraklatmada fizik ve müzik duruyor, devamda müzik–vuruş farkı ≤ 1 kare (ölçülür); arka plana geçişte kayıt yazılıyor (test); duraklat düğmesi ≥ 48 dp ve oyuncuyu çevirmiyor.
+- [ ] **M5-07** 🤖 İlk açılış deneyimi (GDD §18): menüsüz doğrudan oyun, metinsiz nabızlı "dokun" eli (`tap_hint.tscn`), ilk parça uzun boş duvar + tek diken, ilk ölümden sonra "Yükseltmeler" düğmesi parlar; FTUE bitti bayrağı kayda yazılır.
+  *Kabul:* Boş kayıtla açılış menüsüz tura giriyor, bayraklı kayıtla menüye (test); ilk parça benzetimde tepki süreli botla geçiliyor; el ikonu ilk dokunuşta kayboluyor (test).
+- [ ] **M5-08** 🤖 Titreşim (GDD §19): çevirmede çok hafif, kıl payında kısa, ölümde belirgin; ayardan kapanır.
+  *Kabul:* Olay → titreşim süresi tablosu testte; ayar kapalıyken hiç çağrı yok (test); Redmi'de `adb` günlüğünden titreşim çağrıları sayılıyor.
+- [ ] **M5-09** 🤖 Hakkında / lisanslar ekranı: Godot MIT lisans metni (zorunlu) ve `CREDITS.md`'deki her dış varlık.
+  *Kabul:* `CREDITS.md`'deki her satır ekranda (test, katalog dolaşılır); Godot lisans metni `Engine.get_license_text()`'ten; kaydırma ve UI kabulü.
+- [ ] **M5-10** 🤖 Menü müziği ve arayüz sesleri (GDD §19): özgün menü parçası (`tools/music/`, ADR-065) ve düğme / satın alma / rekor sesleri; menü ↔ tur müzik geçişi.
+  *Kabul:* Menü parçası öbür parçalarla ±1 LU, tepe ≤ −1 dBTP (ölçülür); yeni efektler M3-15 düzey kurallarında (test); geçişte boşluk ya da çakışma yok (ölçülür).
+- [ ] **M5-11** 👤 Türkçe ve İngilizce metinlerin gözden geçirilmesi
+- [ ] **M5-12** 🤝 İlk kez açan biri gibi test + Planlama Gözden Geçirmesi → 🚪
 
 ## M6 — Cihaz uyumu ve performans
 
