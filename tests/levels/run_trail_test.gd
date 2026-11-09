@@ -15,7 +15,7 @@ func before_test() -> void:
 
 
 func after_test() -> void:
-	GameManager.change_state(GameManager.AppState.BOOT)
+	GameManager.reset()
 	Progression.reset()
 
 

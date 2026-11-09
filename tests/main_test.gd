@@ -37,14 +37,14 @@ func test_main_starts_a_run() -> void:
 	assert_int(_started_seeds.size()).is_equal(1)
 	assert_int(_started_seeds[0]).is_not_equal(0)
 	assert_int(_world().get_child_count()).is_equal(1)
-	assert_int(GameManager.state).is_equal(GameManager.AppState.RUNNING)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
 
 
 func test_death_restarts_run_quickly() -> void:
 	await _start_main()
 	var first_run: Node = _world().get_child(0)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
-	assert_int(GameManager.state).is_equal(GameManager.AppState.RESULTS)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RESULTS)
 	var frames: int = 0
 	while _started_seeds.size() < 2 and frames < MAX_RESTART_FRAMES + 10:
 		await get_tree().process_frame
@@ -56,7 +56,7 @@ func test_death_restarts_run_quickly() -> void:
 	assert_int(_started_seeds[1]).is_not_equal(_started_seeds[0])
 	assert_int(_world().get_child_count()).is_equal(1)
 	assert_object(_world().get_child(0)).is_not_same(first_run)
-	assert_int(GameManager.state).is_equal(GameManager.AppState.RUNNING)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
 
 
 func test_result_carries_height_cause_and_seed() -> void:
@@ -131,6 +131,25 @@ func test_runs_start_from_the_selected_checkpoint() -> void:
 	assert_array(_started_sectors).is_equal([2, 3])
 	await get_tree().process_frame
 	assert_int(_current_run().start_sector).is_equal(3)
+
+
+## Menü (M5-01): sonuçtan menüye geçince tur kalkar ve kendiliğinden yeni tur gelmez; Başla
+## niyeti seçili kontrol noktasından tur kurar.
+func test_menu_removes_the_run_and_play_starts_one() -> void:
+	Events.sector_entered.emit(2)
+	Progression.select_start_sector(2)
+	await _start_main()
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Events.menu_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	await _frames(MAX_RESTART_FRAMES + 10)
+	assert_int(_world().get_child_count()).is_equal(0)
+	assert_int(_started_seeds.size()).is_equal(1)
+	Events.play_requested.emit()
+	assert_array(_started_sectors).is_equal([2, 2])
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
+	await get_tree().process_frame
+	assert_int(_world().get_child_count()).is_equal(1)
 
 
 func test_settings_change_sets_neon_quality() -> void:

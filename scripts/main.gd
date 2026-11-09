@@ -7,6 +7,8 @@ extends Node
 ## Her tura Progression'ın kalıcı rekoru verilir; Run rekor çizgisini oraya koyar (M3-14, M4-02).
 ## Yükseltmelerin etkileri tur başında tek bir yük olarak Run'a ve GameManager'a verilir (M4-04).
 ## Tur, Progression'da seçilen kontrol noktasından başlar (M4-09).
+## Durum makinesi (M5-01): açılışta GameManager.launch_state()'e göre menü ya da tur; menü
+## durumunda tur kaldırılır, Events.play_requested ile seçili kontrol noktasından tur kurulur.
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -34,16 +36,19 @@ func _ready() -> void:
 	Events.retry_requested.connect(_start_run)
 	Events.start_requested.connect(_on_start_requested)
 	Events.start_sector_selected.connect(_on_start_sector_selected)
+	Events.play_requested.connect(_start_run)
+	Events.app_state_changed.connect(_on_app_state_changed)
 	_start_sector = Progression.start_sector
-	_start_run()
+	if GameManager.launch_state() == GameTypes.AppState.MENU:
+		GameManager.change_state(GameTypes.AppState.MENU)
+	else:
+		_start_run()
 
 
 ## Varsa eski turu kaldırır, yeni tohumla yeni bir tur kurar ve GameManager'a bildirir.
 ## Turlar arasında düğüm oluşturmak serbesttir; tur sırasında yasaktır (.clauderules §6).
 func _start_run() -> void:
-	if _run != null:
-		_world.remove_child(_run)
-		_run.queue_free()
+	_remove_run()
 	var run_seed: int = GameManager.new_run_seed()
 	_run = RUN_SCENE.instantiate() as Run
 	_run.run_seed = run_seed
@@ -72,6 +77,22 @@ func _on_start_sector_selected(sector: int) -> void:
 	_start_sector = sector
 
 
+## Menüde tur kalmaz: dünya boşalır (ana menünün arka planı M5-02'de).
+func _on_app_state_changed(state: GameTypes.AppState) -> void:
+	if state == GameTypes.AppState.MENU:
+		_remove_run()
+
+
+## Geçici akış (M5-03'e dek): bekleme sırasında menüye ya da yeni tura geçildiyse bir şey olmaz.
 func _on_run_ended(_result: RunResult) -> void:
 	await get_tree().create_timer(AUTO_RESTART_DELAY).timeout
-	_start_run()
+	if GameManager.state == GameTypes.AppState.RESULTS:
+		_start_run()
+
+
+func _remove_run() -> void:
+	if _run == null:
+		return
+	_world.remove_child(_run)
+	_run.queue_free()
+	_run = null

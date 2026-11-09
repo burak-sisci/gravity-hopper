@@ -10,14 +10,28 @@ extends Node
 ## da harcandıysa ölüm turu bitirir. Sonuç ekranı gelene kadar diriliş kendiliğinden olur;
 ## M5-03'te düğmeye (Events.revive_requested → revive()) bağlanır.
 
-enum AppState { BOOT, MENU, RUNNING, PAUSED, RESULTS, SHOP }
+## Durum makinesi (M5-01, architecture.md §5.1): her durumdan gidilebilecek durumlar. Burada
+## olmayan geçiş reddedilir (debug günlüğüne "STATE rejected" yazılır). Yeni tur her durumdan
+## başlayabilir (debug 5 tuşu ve --start= süren turu da yeniler).
+const TRANSITIONS: Dictionary[GameTypes.AppState, Array] = {
+	GameTypes.AppState.BOOT: [GameTypes.AppState.MENU, GameTypes.AppState.RUNNING],
+	GameTypes.AppState.MENU: [GameTypes.AppState.RUNNING, GameTypes.AppState.SHOP],
+	GameTypes.AppState.RUNNING: [
+		GameTypes.AppState.RUNNING, GameTypes.AppState.PAUSED, GameTypes.AppState.RESULTS,
+	],
+	GameTypes.AppState.PAUSED: [GameTypes.AppState.RUNNING, GameTypes.AppState.MENU],
+	GameTypes.AppState.RESULTS: [
+		GameTypes.AppState.RUNNING, GameTypes.AppState.MENU, GameTypes.AppState.SHOP,
+	],
+	GameTypes.AppState.SHOP: [GameTypes.AppState.MENU, GameTypes.AppState.RUNNING],
+}
 
 ## M4-07 geçici akışı: ölümden bu kadar sonra, hak varsa, diriliş kendiliğinden olur (ölüm
 ## donması ve patlaması görünsün). M5-03'te sonuç ekranındaki düğme bunun yerini alır.
 const AUTO_REVIVE_DELAY: float = 0.8
 
 ## Uygulamanın şu anki durumu.
-var state: AppState = AppState.BOOT
+var state: GameTypes.AppState = GameTypes.AppState.BOOT
 
 var _run_seed: int = 0
 var _start_sector: int = 1
@@ -40,11 +54,38 @@ func _ready() -> void:
 	Events.sector_entered.connect(_on_sector_entered)
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.near_miss.connect(_on_near_miss)
+	Events.menu_requested.connect(_on_menu_requested)
 
 
-## Durumu değiştirir. Geçersiz geçişlerin engellenmesi M5-01'de eklenecek.
-func change_state(new_state: AppState) -> void:
+## İzinliyse durumu değiştirir ve Events.app_state_changed duyurur; değilse durum aynı kalır.
+func change_state(new_state: GameTypes.AppState) -> bool:
+	if not can_change_to(new_state):
+		if OS.is_debug_build():
+			print("STATE rejected %s -> %s" % [
+				GameTypes.AppState.keys()[state], GameTypes.AppState.keys()[new_state],
+			])
+		return false
 	state = new_state
+	Events.app_state_changed.emit(new_state)
+	return true
+
+
+## Şu anki durumdan new_state'e geçmek izinli mi.
+func can_change_to(new_state: GameTypes.AppState) -> bool:
+	return TRANSITIONS[state].has(new_state)
+
+
+## Açılışta gidilecek durum. Main açılışta buna göre menüyü açar ya da turu başlatır.
+## Ana menü (M5-02) ve ilk açılış deneyimi (M5-07) gelene dek her açılış doğrudan tura girer.
+func launch_state() -> GameTypes.AppState:
+	return GameTypes.AppState.RUNNING
+
+
+## Durumu duyurmadan açılışa döndürür. Yalnızca testler içindir (her test temiz başlasın).
+func reset() -> void:
+	state = GameTypes.AppState.BOOT
+	_revive_pending = false
+	_run_serial += 1
 
 
 ## Yeni turun tohumu. Günlük meydan okumada (M7-03) tohum tarihten gelir.
@@ -66,7 +107,7 @@ func begin_run(run_seed: int, start_sector: int, loadout: RunLoadout = null) -> 
 	_sector_reached = start_sector
 	_glimmers = 0
 	_near_misses = 0
-	change_state(AppState.RUNNING)
+	change_state(GameTypes.AppState.RUNNING)
 	Progression.announce()
 	Events.run_started.emit(run_seed, start_sector)
 
@@ -74,7 +115,7 @@ func begin_run(run_seed: int, start_sector: int, loadout: RunLoadout = null) -> 
 ## Bekleyen dirilişi yapar: Events.player_revived duyurulur, tur sürer. Bekleyen yoksa ya da
 ## tur sürmüyorsa bir şey olmaz.
 func revive() -> void:
-	if not _revive_pending or state != AppState.RUNNING:
+	if not _revive_pending or state != GameTypes.AppState.RUNNING:
 		return
 	_revive_pending = false
 	Events.player_revived.emit()
@@ -90,12 +131,12 @@ func _on_height_changed(meters: int) -> void:
 
 
 func _on_glimmer_collected(value: int) -> void:
-	if state == AppState.RUNNING:
+	if state == GameTypes.AppState.RUNNING:
 		_glimmers += value
 
 
 func _on_near_miss(_combo: int, _multiplier: int) -> void:
-	if state == AppState.RUNNING:
+	if state == GameTypes.AppState.RUNNING:
 		_near_misses += 1
 
 
@@ -104,14 +145,14 @@ func _on_sector_entered(index: int) -> void:
 
 
 func _on_player_died(cause: GameTypes.DeathCause) -> void:
-	if state != AppState.RUNNING or _revive_pending:
+	if state != GameTypes.AppState.RUNNING or _revive_pending:
 		return
 	if _revives_left > 0:
 		_revives_left -= 1
 		_revive_pending = true
 		_revive_later(_run_serial)
 		return
-	change_state(AppState.RESULTS)
+	change_state(GameTypes.AppState.RESULTS)
 	var result: RunResult = RunResult.new()
 	result.height_m = _height_m
 	result.cause = cause
@@ -124,6 +165,14 @@ func _on_player_died(cause: GameTypes.DeathCause) -> void:
 	# Kazanç ve rekor sonuca yazılır, kayıt run_ended'den önce diske iner (§7.3).
 	Progression.finish_run(result)
 	Events.run_ended.emit(result)
+
+
+## Menü isteği: turdan çıkılır (sonuç ekranından ya da duraklatmadan). İzinsizse bir şey olmaz.
+## Bekleyen diriliş iptal olur.
+func _on_menu_requested() -> void:
+	if change_state(GameTypes.AppState.MENU):
+		_revive_pending = false
+		_run_serial += 1
 
 
 ## Geçici akış (M5-03'e dek): diriliş AUTO_REVIVE_DELAY sonra kendiliğinden. Arada yeni tur

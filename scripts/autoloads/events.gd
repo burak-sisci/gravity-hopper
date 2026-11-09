@@ -13,6 +13,9 @@ extends Node
 signal run_started(run_seed: int, start_sector: int)
 signal run_ended(result: RunResult)
 signal pause_changed(paused: bool)
+## Uygulama durumu değişti (M5-01). Aynı duruma geçiş de duyurulur
+## (ör. yeni tur: RUNNING → RUNNING).
+signal app_state_changed(state: GameTypes.AppState)
 
 # --- Oyuncu ---
 signal player_died(cause: GameTypes.DeathCause)
@@ -36,6 +39,8 @@ signal beat(index: int)
 
 # --- UI niyetleri (UI yayar, GameManager dinler) ---
 signal start_requested(sector: int)
+## Seçili kontrol noktasından tur başlat (ana menüdeki Başla, M5-01 / M5-02).
+signal play_requested
 signal retry_requested
 signal revive_requested
 signal menu_requested

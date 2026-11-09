@@ -19,6 +19,16 @@ enum Quality {
 	HIGH, ## Tüm efektler açık
 }
 
+## Uygulama durumu (M5-01, architecture.md §5.1). İzinli geçişler GameManager.TRANSITIONS'ta.
+enum AppState {
+	BOOT, ## Açılış: henüz menü ya da tur yok
+	MENU, ## Ana menü
+	RUNNING, ## Tur sürüyor
+	PAUSED, ## Tur duraklatıldı (M5-06)
+	RESULTS, ## Tur bitti, sonuç ekranı
+	SHOP, ## Yükseltmeler / izler ekranı (M5-04)
+}
+
 ## Neon bileşenin renk kaynağı (M3-05): sektörden bağımsız sabit renkler NeonStyle'da durur.
 enum NeonTone {
 	CUSTOM, ## Bileşenin kendi rengi (color)

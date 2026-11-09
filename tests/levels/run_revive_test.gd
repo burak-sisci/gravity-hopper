@@ -37,7 +37,7 @@ func after_test() -> void:
 	Events.player_revived.disconnect(_on_player_revived)
 	Events.run_ended.disconnect(_on_run_ended)
 	# Bekleyen bir diriliş ya da süren tur sonraki testlere taşmasın.
-	GameManager.change_state(GameManager.AppState.BOOT)
+	GameManager.reset()
 	Progression.reset()
 
 
