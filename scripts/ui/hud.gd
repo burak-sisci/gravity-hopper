@@ -23,6 +23,9 @@ extends Control
 ## Final (M4-13): Büyük Depolama Birimi'ne varınca (Events.great_storage_reached) sektör afişinin
 ## yerine, aynı dalga zamanlamasıyla "BÜYÜK DEPOLAMA BİRİMİ" afişi oyuncu renginde gelir ve
 ## FINALE_BANNER_TIME görünür.
+## Duraklat (M5-06, GDD §20): sağ üstte 150 × 150 düğme, altında Glimmer sayacı. Dokunuşu yutar
+## (çevirme olmaz) ve Events.pause_requested yayar; yalnızca tur sürerken (RUNNING) görünür.
+## HUD'daki tek dokunulan öğedir; öteki her Control dokunuşu geçirir.
 
 ## Sayılarda görünebilecek rakamlar (önceden çizilir).
 const DIGITS: String = "0123456789"
@@ -68,6 +71,7 @@ var _combo_tween: Tween
 @onready var _vignette: Control = %WallVignette
 @onready var _near_miss_label: NeonLabel = %NearMissLabel
 @onready var _combo_label: NeonLabel = %ComboLabel
+@onready var _pause: NeonButton = %PauseButton
 
 
 func _ready() -> void:
@@ -80,6 +84,8 @@ func _ready() -> void:
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
 	Events.near_miss.connect(_on_near_miss)
 	Events.combo_ended.connect(_on_combo_ended)
+	Events.app_state_changed.connect(_on_app_state_changed)
+	_pause.pressed.connect(Events.pause_requested.emit)
 	_sector_banner.visible = false
 	_near_miss_label.visible = false
 	_refresh()
@@ -90,6 +96,11 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
 		_refresh()
 		_warm_glyphs()
+
+
+## Duraklat düğmesi yalnızca süren turda.
+func _on_app_state_changed(state: GameTypes.AppState) -> void:
+	_pause.visible = state == GameTypes.AppState.RUNNING
 
 
 func _on_run_started(_run_seed: int, start_sector: int) -> void:

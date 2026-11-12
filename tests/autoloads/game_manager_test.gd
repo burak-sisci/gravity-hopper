@@ -4,6 +4,8 @@ extends GdUnitTestSuite
 ## revive_declined bitirir; teklif açıkken yeni tur ya da menü turu önce bitirir (kazanç kaybolmaz).
 ## Kendiliğinden diriliş yoktur. Tur sahnesi yok, yalnızca Events.
 ## Durum makinesi (M5-01, architecture.md §5.1): 36 geçişin hepsi, yazılı akışa karşı.
+## Duraklatma (M5-06): yalnızca süren tur duraklar, ağaç PAUSED'da durur; arka plana geçiş turu
+## duraklatır ve kaydı yazar; duraklatmadan menü turu QUIT nedeniyle bitirir, kazanç korunur.
 
 ## İzinli geçişler, architecture.md §5.1'deki akıştan elle yazıldı (koddaki tablodan kopya değil):
 ## BOOT → MENU | RUNNING (ilk açılış, M5-07); MENU → RUNNING | SHOP;
@@ -19,6 +21,7 @@ var _revived: int = 0
 var _offers: Array[int] = []
 var _results: Array[RunResult] = []
 var _states: Array[GameTypes.AppState] = []
+var _pauses: Array[bool] = []
 
 
 func before_test() -> void:
@@ -26,7 +29,9 @@ func before_test() -> void:
 	_offers.clear()
 	_results.clear()
 	_states.clear()
+	_pauses.clear()
 	Progression.reset()
+	Events.pause_changed.connect(_on_pause_changed)
 	Events.player_revived.connect(_on_player_revived)
 	Events.revive_offered.connect(_on_revive_offered)
 	Events.app_state_changed.connect(_on_app_state_changed)
@@ -38,6 +43,7 @@ func after_test() -> void:
 	Events.revive_offered.disconnect(_on_revive_offered)
 	Events.run_ended.disconnect(_on_run_ended)
 	Events.app_state_changed.disconnect(_on_app_state_changed)
+	Events.pause_changed.disconnect(_on_pause_changed)
 	GameManager.reset()
 	Progression.reset()
 
@@ -170,6 +176,71 @@ func test_menu_request_leaves_results_but_not_a_running_run() -> void:
 	])
 
 
+## Duraklat isteği yalnızca süren turu durdurur: ağaç duraklar, pause_changed bir kez duyurulur;
+## Devam ağacı sürdürür. Sonuç ekranında ve menüde istek bir şey yapmaz.
+func test_pause_and_resume_stop_and_continue_the_tree() -> void:
+	GameManager.begin_run(21, 1, RunLoadout.new())
+	Events.pause_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.PAUSED)
+	assert_bool(get_tree().paused).is_true()
+	Events.pause_requested.emit()
+	assert_array(_pauses).is_equal([true])
+	Events.resume_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
+	assert_bool(get_tree().paused).is_false()
+	Events.resume_requested.emit()
+	assert_array(_pauses).is_equal([true, false])
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Events.pause_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RESULTS)
+	Events.menu_requested.emit()
+	Events.pause_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	assert_bool(get_tree().paused).is_false()
+	assert_array(_pauses).is_equal([true, false])
+
+
+## Arka plana geçiş (motorun yaydığı bildirim, kökten bütün ağaca): süren tur duraklar ve
+## kaydedilmemiş ilerleme diske yazılır. Menüdeyken yalnızca kayıt yazılır.
+func test_going_to_background_pauses_the_run_and_writes_the_save() -> void:
+	GameManager.begin_run(22, 1, RunLoadout.new())
+	Progression.add_glimmers(6)
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(0)
+	get_tree().root.propagate_notification(Node.NOTIFICATION_APPLICATION_PAUSED)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.PAUSED)
+	assert_bool(get_tree().paused).is_true()
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(6)
+	GameManager.resume()
+	get_tree().root.propagate_notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.PAUSED)
+	Events.menu_requested.emit()
+	Progression.add_glimmers(2)
+	get_tree().root.propagate_notification(Node.NOTIFICATION_APPLICATION_PAUSED)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	assert_bool(get_tree().paused).is_false()
+	assert_int(SaveManager.load_game()["glimmers"]).is_equal(Progression.glimmers)
+
+
+## Duraklatmadan menü: tur QUIT nedeniyle biter, yükseklik ve Glimmer kazanca girer (bir kez),
+## ağaç sürer.
+func test_menu_from_pause_ends_the_run_and_keeps_the_earnings() -> void:
+	GameManager.begin_run(23, 1, RunLoadout.new())
+	Events.height_changed.emit(55)
+	Events.glimmer_collected.emit(9)
+	GameManager.pause()
+	Events.menu_requested.emit()
+	assert_int(_results.size()).is_equal(1)
+	assert_int(_results[0].cause).is_equal(GameTypes.DeathCause.QUIT)
+	assert_int(_results[0].height_m).is_equal(55)
+	assert_int(_results[0].earned).is_greater_equal(9)
+	assert_int(Progression.glimmers).is_equal(_results[0].earned)
+	assert_int(Progression.best_height_m).is_equal(55)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	assert_bool(get_tree().paused).is_false()
+	Events.menu_requested.emit()
+	assert_int(_results.size()).is_equal(1)
+
+
 func _loadout(revives: int) -> RunLoadout:
 	var loadout: RunLoadout = RunLoadout.new()
 	loadout.revives = revives
@@ -194,3 +265,7 @@ func _on_run_ended(result: RunResult) -> void:
 
 func _on_app_state_changed(state: GameTypes.AppState) -> void:
 	_states.append(state)
+
+
+func _on_pause_changed(paused: bool) -> void:
+	_pauses.append(paused)

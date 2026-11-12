@@ -14,6 +14,10 @@ extends Node
 ## Tur başlayınca çalar, oyuncu ölünce durur. Dirilişte (M4-07) saat yeniden açılır; parça,
 ## Run'ın ölümde durdurduğu vuruş saatinden, yani kaldığı yerden yeniden konumlanır.
 ##
+## Duraklatma (M5-06): oyun ağacı duraklayınca parça durur (efektler ağaçla birlikte bekler).
+## Devamda saat kaldığı yerden sürer; ilk sync_beat_clock parçayı vuruş saatine yeniden konumlar
+## (dirilişteki gibi). Devamdan sonraki ilk kayma ölçümü debug günlüğüne yazılır.
+##
 ## Efektler (M3-15, ADR-061): olay → ses eşlemesi SfxBank'te (data/audio/sfx_bank.tres).
 ## Havuz sabit sayıda çalardır (SfxBank.voices), oyun açılırken kurulur; tur sırasında düğüm
 ## oluşturulmaz. Boş çalar yoksa bitmesine en az kalan kesilir. Çalarlar SFX yolundadır.
@@ -73,6 +77,8 @@ var _last_drift: float = 0.0
 var _resyncs: int = 0
 var _max_drift: float = 0.0
 var _reported_bar: int = 0
+## Devamdan sonraki ilk kayma ölçümü bekleniyor (debug günlüğü).
+var _resume_pending: bool = false
 var _voices: Array[AudioStreamPlayer] = []
 ## Her çaların sesinin biteceği gerçek zaman (sn). play()'den hemen sonra `playing` hâlâ false
 ## olabildiği için doluluk buradan okunur; yoksa aynı karedeki iki efekt aynı çalara düşerdi.
@@ -112,6 +118,7 @@ func _ready() -> void:
 	Events.run_started.connect(_on_run_started)
 	Events.player_died.connect(_on_player_died)
 	Events.player_revived.connect(_on_player_revived)
+	Events.pause_changed.connect(_on_pause_changed)
 	Events.player_flipped.connect(play_sfx.bind(GameTypes.Sfx.FLIP))
 	Events.player_landed.connect(play_sfx.bind(GameTypes.Sfx.LAND))
 	Events.glimmer_collected.connect(_on_glimmer_collected)
@@ -218,6 +225,11 @@ func tension_playing() -> bool:
 ## Müzik vuruş saatine bağlı çalıyor mu (testler).
 func music_playing() -> bool:
 	return _clock_playing
+
+
+## Parçanın son konumlandığı vuruş saati (testler: devamda yeniden kilitlenme).
+func music_placed_at() -> float:
+	return _placed_at
 
 
 ## Sesin duvar yakınlığına yetişmiş değeri (testler ve debug).
@@ -329,6 +341,10 @@ func _measure_drift(beat_time: float, bar: float) -> void:
 	average /= _drift_samples.size()
 	_drift_samples.clear()
 	_last_drift = average
+	if _resume_pending:
+		_resume_pending = false
+		if OS.is_debug_build():
+			print("AUDIO resume drift=%d ms" % roundi(average * 1000.0))
 	_max_drift = maxf(_max_drift, absf(average))
 	# Turun ilk düzeltmesi hemen (başlangıç takılması), sonrakiler ölçüde en fazla bir kez.
 	if absf(average) > DRIFT_LIMIT and (_resyncs == 0 or beat_time - _placed_at >= bar):
@@ -367,6 +383,17 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 func _on_player_revived() -> void:
 	_clock_active = true
 	_clock_playing = false
+
+
+## Duraklayınca parça durur; devamda ilk sync_beat_clock vuruş saatine yeniden konumlar.
+func _on_pause_changed(paused: bool) -> void:
+	if not _clock_active:
+		return
+	if paused:
+		_music.stop()
+		_clock_playing = false
+	else:
+		_resume_pending = true
 
 
 ## Yalnızca tur sürerken: ölümden sonra kamera sarsılırken bildirilen yakınlık gerilimi açmasın.

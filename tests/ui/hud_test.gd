@@ -2,8 +2,10 @@ extends GdUnitTestSuite
 ## HUD (M1-10, architecture.md §12): yalnızca Events'i dinler; metinler çeviri anahtarlarından
 ## gelir ve dil değişince yenilenir. Neon yazılar (M3-18) dokunuş yutmaz; gösterebilecekleri
 ## harfleri önceden çizer (M3-19). Final (M4-13): Büyük Depolama Birimi afişi; bütün afişler iki
-## dilde kutularına sığar.
+## dilde kutularına sığar. Duraklat (M5-06): sağ üstteki düğme HUD'da dokunuşu yutan tek öğe;
+## dokunuşu oyuncuyu çevirmez, turu duraklatır; üst şerit her oranda ölçülerde.
 
+const UI: GDScript = preload("res://tests/ui/ui_acceptance.gd")
 const HUD_SCENE: PackedScene = preload("res://scenes/ui/hud.tscn")
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const TUNING: TuningConfig = preload("res://data/tuning/default_tuning.tres")
@@ -19,6 +21,8 @@ const WORST_GLIMMERS: int = 99999
 const WORST_HEIGHT_M: int = 99999
 ## Üst satırdaki yükseklik ve Glimmer yazıları arasında kalması gereken en az boşluk (px).
 const MIN_COUNTER_GAP: float = 24.0
+## Devamdan sonra tamponlanmış bir çevirmenin uygulanacağı süreden uzun bekleme (fizik adımı).
+const TUNING_BUFFER_FRAMES: int = 20
 
 var _hud: Control
 var _locale: String
@@ -250,11 +254,15 @@ func test_near_miss_text_and_combo() -> void:
 	assert_bool(_near_miss().visible).is_false()
 
 
-## Neon yazılar (M3-18): HUD'daki hiçbir Control dokunuşu yutmaz.
+## Neon yazılar (M3-18): duraklat düğmesi dışında HUD'daki hiçbir Control dokunuşu yutmaz.
 func test_hud_controls_ignore_mouse() -> void:
+	var pause: Control = _hud.get_node("%PauseButton") as Control
+	assert_int(pause.mouse_filter).is_equal(Control.MOUSE_FILTER_STOP)
 	var controls: Array[Node] = _hud.find_children("*", "Control", true, false)
 	assert_int(controls.size()).is_greater(6)
 	for node: Node in controls:
+		if node == pause or pause.is_ancestor_of(node):
+			continue
 		assert_int((node as Control).mouse_filter).override_failure_message(
 				"%s dokunuşu yutuyor" % node.name).is_equal(Control.MOUSE_FILTER_IGNORE)
 	assert_int(_hud.mouse_filter).is_equal(Control.MOUSE_FILTER_IGNORE)
@@ -287,6 +295,55 @@ func test_taps_on_labels_flip_player() -> void:
 		await _physics_frames(2)
 		assert_bool(player.is_gravity_right()).override_failure_message(
 				"%s dokunuşu yuttu" % node.name).is_not_equal(was_right)
+
+
+## Duraklat (M5-06): her oranda üst şeritteki yazılar ve düğme ekranda, çakışmasız; düğme
+## ≥ 48 dp, yazısı sığar ve okunur. Yalnızca süren turda görünür.
+func test_pause_button_layout_and_visibility() -> void:
+	for aspect: float in UI.ASPECTS:
+		var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
+		viewport.size = UI.canvas_size(aspect)
+		add_child(viewport)
+		var hud: Control = HUD_SCENE.instantiate() as Control
+		viewport.add_child(hud)
+		await get_tree().process_frame
+		var items: Array[Control] = []
+		for path: String in ["%HeightLabel", "%BestLabel", "%GlimmerLabel", "%PauseButton"]:
+			items.append(hud.get_node(path) as Control)
+		var problems: Array[String] = UI.layout_problems(items, Rect2(Vector2.ZERO, hud.size))
+		assert_array(problems).override_failure_message("%.3f: %s" % [aspect, problems]).is_empty()
+		assert_array(UI.button_fit_problems(hud.get_node("%PauseButton") as Button)).is_empty()
+		hud.queue_free()
+	assert_array(UI.button_contrast_problems(Color.BLACK)).is_empty()
+	var pause: Control = _hud.get_node("%PauseButton") as Control
+	for state: GameTypes.AppState in GameTypes.AppState.values():
+		Events.app_state_changed.emit(state)
+		assert_bool(pause.visible).is_equal(state == GameTypes.AppState.RUNNING)
+
+
+## Oyunun içinde duraklat düğmesine dokunuş turu duraklatır ama oyuncuyu çevirmez (devamdan sonra
+## da çevirme gelmez; dokunuş tampona girmemiştir).
+func test_pause_button_tap_pauses_without_flipping() -> void:
+	GameManager.reset()
+	var main: Node = auto_free(MAIN_SCENE.instantiate()) as Node
+	add_child(main)
+	Events.play_requested.emit()
+	Events.debug_invincibility_changed.emit(true)
+	await _physics_frames(SETTLE_FRAMES)
+	var player: Player = main.get_node("%World").get_child(0).get_node("Player") as Player
+	var waited: int = 0
+	while not player.is_on_wall() and waited < WALL_WAIT_FRAMES:
+		await get_tree().physics_frame
+		waited += 1
+	var was_right: bool = player.is_gravity_right()
+	var button: Control = main.get_node("UI/Hud").get_node("%PauseButton") as Control
+	_push_touch(button.get_global_rect().get_center())
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.PAUSED)
+	GameManager.resume()
+	await _physics_frames(TUNING_BUFFER_FRAMES)
+	assert_bool(player.is_gravity_right()).override_failure_message(
+			"duraklat dokunuşu oyuncuyu çevirdi").is_equal(was_right)
+	GameManager.reset()
 
 
 ## Isıtma (M3-19): her yazı geçerli dilde gösterebileceği bütün harfleri önceden çizer; afiş

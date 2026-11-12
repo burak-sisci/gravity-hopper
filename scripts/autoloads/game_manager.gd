@@ -10,6 +10,11 @@ extends Node
 ## revive_requested → oyuncu kaldığı yerde canlanır (Events.player_revived, durum RUNNING);
 ## revive_declined → tur biter. Teklif açıkken yeni tur ya da menü istenirse tur önce biter
 ## (kazanç kaybolmaz). Hak yoksa ölüm turu hemen bitirir.
+##
+## Duraklatma (M5-06): pause_requested (HUD) ya da uygulamanın arka plana geçmesi süren turu
+## PAUSED'a alır; PAUSED'a girince oyun ağacı duraklar (fizik, Run, müzik), çıkınca sürer
+## (Events.pause_changed). resume_requested → RUNNING. Duraklatmadan menüye dönmek turu ölüm gibi
+## bitirir (neden QUIT): toplanan Glimmer ve rekor kaydedilir, sonuç ekranı açılmaz.
 
 ## Durum makinesi (M5-01, architecture.md §5.1): her durumdan gidilebilecek durumlar. Burada
 ## olmayan geçiş reddedilir (debug günlüğüne "STATE rejected" yazılır). Yeni tur her durumdan
@@ -52,9 +57,17 @@ func _ready() -> void:
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.near_miss.connect(_on_near_miss)
 	Events.menu_requested.connect(_on_menu_requested)
+	Events.pause_requested.connect(pause)
+	Events.resume_requested.connect(resume)
 	Events.shop_requested.connect(_on_shop_requested)
 	Events.revive_requested.connect(revive)
 	Events.revive_declined.connect(_on_revive_declined)
+
+
+## Uygulama arka plana geçince ya da odağı kaybedince süren tur duraklar (M5-06).
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		pause()
 
 
 ## İzinliyse durumu değiştirir ve Events.app_state_changed duyurur; değilse durum aynı kalır.
@@ -66,6 +79,7 @@ func change_state(new_state: GameTypes.AppState) -> bool:
 			])
 		return false
 	state = new_state
+	_set_paused(new_state == GameTypes.AppState.PAUSED)
 	Events.app_state_changed.emit(new_state)
 	return true
 
@@ -84,6 +98,7 @@ func launch_state() -> GameTypes.AppState:
 ## Durumu duyurmadan açılışa döndürür. Yalnızca testler içindir (her test temiz başlasın).
 func reset() -> void:
 	state = GameTypes.AppState.BOOT
+	_set_paused(false)
 	_revive_pending = false
 
 
@@ -118,6 +133,18 @@ func revive() -> void:
 	_revive_pending = false
 	change_state(GameTypes.AppState.RUNNING)
 	Events.player_revived.emit()
+
+
+## Süren turu duraklatır (HUD düğmesi, arka plana geçiş). Tur sürmüyorsa bir şey olmaz.
+func pause() -> void:
+	if state == GameTypes.AppState.RUNNING:
+		change_state(GameTypes.AppState.PAUSED)
+
+
+## Duraklatılan turu sürdürür (Devam sayımı bitince).
+func resume() -> void:
+	if state == GameTypes.AppState.PAUSED:
+		change_state(GameTypes.AppState.RUNNING)
 
 
 ## Diriliş teklifi açık mı (testler ve sonuç ekranı).
@@ -178,10 +205,13 @@ func _end_run() -> void:
 
 
 ## Menü isteği: turdan çıkılır (sonuç ekranından ya da duraklatmadan). İzinsizse bir şey olmaz.
-## Diriliş teklifi açıksa tur önce biter.
+## Diriliş teklifi açıksa tur önce biter; duraklatılan tur QUIT nedeniyle biter.
 func _on_menu_requested() -> void:
 	if can_change_to(GameTypes.AppState.MENU):
 		_close_offer()
+		if state == GameTypes.AppState.PAUSED:
+			_death_cause = GameTypes.DeathCause.QUIT
+			_end_run()
 		change_state(GameTypes.AppState.MENU)
 
 
@@ -203,3 +233,11 @@ func _close_offer() -> void:
 		return
 	_revive_pending = false
 	_end_run()
+
+
+## Oyun ağacını duraklatır ya da sürdürür; değişince Events.pause_changed duyurulur.
+func _set_paused(paused: bool) -> void:
+	if not is_inside_tree() or get_tree().paused == paused:
+		return
+	get_tree().paused = paused
+	Events.pause_changed.emit(paused)

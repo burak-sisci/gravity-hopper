@@ -4,7 +4,8 @@ extends Control
 ## kalitesi, 60 FPS sınırı ve Hakkında (lisanslar M5-09'a dek kapalı). Değişiklik hemen uygulanır
 ## ve yazılır (Settings servisi, .clauderules §3); kaydırıcı sürüklenirken yalnızca uygulanır,
 ## bırakınca yazılır. Menünün üstünde açılır: Events.settings_requested ile kendini açar, geri
-## düğmesi ve durum değişimi kapatır. Dünyaya erişmez.
+## düğmesi ve durum değişimi kapatır. Dünyaya erişmez. Duraklatmadan da açılır (M5-06): oyun ağacı
+## duraklıyken çalışır (process_mode ALWAYS).
 
 ## Seçili ve seçili olmayan seçeneğin vurgusu (mağaza sekmeleriyle aynı).
 const ACTIVE: Color = ShopScreen.TAB_ACTIVE

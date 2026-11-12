@@ -10,6 +10,7 @@ enum DeathCause {
 	HAZARD, ## Bir tehlikeye çarptı
 	FELL, ## Duvar boşluğundan koridorun dışına düştü
 	WALL, ## Çöküş duvarına yakalandı
+	QUIT, ## Oyuncu duraklatmadan menüye döndü (M5-06)
 }
 
 ## Efekt kalitesi seviyesi (Ayarlar).

@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/ui/neon_slider.gd" id="5_neon_slider"]
 
 [node name="SettingsScreen" type="Control"]
+process_mode = 3
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2

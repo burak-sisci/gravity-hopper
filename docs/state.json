@@ -10,8 +10,8 @@
     "task": "M5-06",
     "task_title": "Duraklatma",
     "owner": "claude",
-    "status": "not_started",
-    "note": "M5-05 bitti (ayarlar katmanı, ADR-091). Ayarlar duraklatmadan da açılmalı: Events.settings_requested yayılır, SettingsScreen kendini açar; her app_state_changed ekranı kapatır. Kaydırıcı için ortak NeonSlider; UI kabulü kaydırıcıyı dokunma hedefi sayar."
+    "status": "in_progress",
+    "note": "M5-06 yarım (commit '[M5-06] (yarım)'): GameManager pause()/resume() + arka plana geçişte duraklatma (NOTIFICATION_APPLICATION_PAUSED / FOCUS_OUT), get_tree().paused + Events.pause_changed; AudioManager duraklayınca müziği durdurur, sürünce vuruşa yeniden kilitler (debug: 'AUDIO resume drift'); HUD'da PauseButton (150 px, yalnızca RUNNING'de görünür); PauseScreen (DEVAM 3-2-1 sayım → resume_requested, AYARLAR, MENÜ = DeathCause.QUIT, kazanç korunur); SettingsScreen ve PauseScreen process_mode ALWAYS. Testler: audio_manager, game_manager (3 yeni), hud (2 yeni) geçiyor; check TEMİZ (391). KALAN: tests/ui/pause_screen_test.gd (yerleşim 5 oran × 2 dil, sığma, kontrast, sayım ~180 karede tek resume_requested, arka planda sayım iptali, düğme sinyalleri), main_test duraklatma testi, bilerek bozma, Redmi ölçümü (duraklat düğmesi ≈ 965,135; DEVAM sonrası resume drift ≤ 16,7 ms; HOME tuşu → PAUSED + kayıt), belgeler (architecture §5.3/§7.2/§7.3, ADR-092, GDD §20, roadmap). Not: tek test dosyası çalıştırırken --fixed-fps 60 şart (check.ps1 gibi), yoksa HUD zaman testleri düşer. M5-05 bitti (ayarlar katmanı, ADR-091). Ayarlar duraklatmadan da açılmalı: Events.settings_requested yayılır, SettingsScreen kendini açar; her app_state_changed ekranı kapatır. Kaydırıcı için ortak NeonSlider; UI kabulü kaydırıcıyı dokunma hedefi sayar."
   },
 
   "session": {
@@ -278,9 +278,10 @@
 
   "last_session": {
     "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12; uygulama bir kez yarıda kapandı, kaldığı yerden sürdü). M5-03 bitti (sonuç ekranı, ADR-089). M5-04 bitti (mağaza, ADR-090). M5-05 bitti: ayarlar ekranı (müzik / efekt kaydırıcısı, titreşim, dil, efekt kalitesi, 60 FPS sınırı; Hakkında M5-09'a dek kapalı); Redmi'de müzik 0'da Music yolu -200 dB, açıkken -21,6 dB; ses kaydırma eklenmedi (ADR-091).",
+    "summary": "Otonom mesai (2026-11-12; uygulama bir kez yarıda kapandı, kaldığı yerden sürdü). M5-03 bitti (sonuç ekranı, ADR-089). M5-04 bitti (mağaza, ADR-090). M5-05 bitti: ayarlar ekranı (müzik / efekt kaydırıcısı, titreşim, dil, efekt kalitesi, 60 FPS sınırı; Hakkında M5-09'a dek kapalı); Redmi'de müzik 0'da Music yolu -200 dB, açıkken -21,6 dB; ses kaydırma eklenmedi (ADR-091). M5-06 (duraklatma) yarıda: kod ve 5 yeni test hazır, check TEMİZ; kullanıcı mesaiyi durdurdu.",
     "next_steps": [
-      "M5-06 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
+      "M5-06'yı bitir: current.note'taki KALAN listesi.",
+      "M5-07 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
       "standard_queue: M5-04 (alınan iz hemen kuşanılır) ve M5 akış varsayımını kullanıcıyla gözden geçir."
     ]
   }

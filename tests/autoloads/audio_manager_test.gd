@@ -1,12 +1,14 @@
 extends GdUnitTestSuite
 ## Müzik çalma (M2-20, architecture.md §8.3): tur başlayınca vuruş saatinin bildirdiği parça
 ## çalara konur ve döngüsü loop_start'tan kurulur; oyuncu ölünce durur, yeni turda yeniden kurulur;
-## dirilişte kaldığı yerden sürer (M4-07).
+## dirilişte kaldığı yerden sürer (M4-07); duraklayınca durur, devamda vuruş saatine yeniden
+## kilitlenir (M5-06).
 
 const MUSIC: MusicCatalog = preload("res://data/music/music_catalog.tres")
 
 
 func after_test() -> void:
+	Events.pause_changed.emit(false)
 	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
 	Engine.time_scale = 1.0
 
@@ -47,6 +49,22 @@ func test_revive_resumes_the_music_from_the_beat_clock() -> void:
 	Events.player_revived.emit()
 	AudioManager.sync_beat_clock(2.0, track)
 	assert_bool(AudioManager.music_playing()).is_true()
+	assert_object(AudioManager.current_track()).is_same(track)
+
+
+## Duraklatmada (M5-06) müzik durur ve saat bildirilse de çalmaz; devamda ilk bildirilen vuruş
+## saatine konumlanır (duraklamadan önceki konuma değil).
+func test_pause_stops_the_music_and_resume_relocks_it_to_the_beat() -> void:
+	var track: MusicTrack = _track(&"castle")
+	Events.run_started.emit(1, 1)
+	AudioManager.sync_beat_clock(0.0, track)
+	AudioManager.sync_beat_clock(3.0, track)
+	Events.pause_changed.emit(true)
+	assert_bool(AudioManager.music_playing()).is_false()
+	Events.pause_changed.emit(false)
+	AudioManager.sync_beat_clock(3.5, track)
+	assert_bool(AudioManager.music_playing()).is_true()
+	assert_float(AudioManager.music_placed_at()).is_equal(3.5)
 	assert_object(AudioManager.current_track()).is_same(track)
 
 

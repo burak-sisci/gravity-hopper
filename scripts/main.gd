@@ -12,6 +12,7 @@ extends Node
 ## Sonuç ekranı (M5-03) durum RESULTS iken açıktır; tur kendiliğinden yeniden başlamaz, Tekrar
 ## (Events.retry_requested) yeni turu kurar. Ölü tur ekranın arkasında donmuş kalır.
 ## Mağaza (M5-04) durum SHOP iken açıktır; menüdeki gibi tur kaldırılır.
+## Duraklatma ekranı (M5-06) durum PAUSED iken açıktır; tur ekranın arkasında donmuş bekler.
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -29,6 +30,7 @@ var _start_sector: int
 @onready var _menu: MainMenu = %MainMenu
 @onready var _results: ResultsScreen = %ResultsScreen
 @onready var _shop: ShopScreen = %ShopScreen
+@onready var _pause: PauseScreen = %PauseScreen
 
 
 func _ready() -> void:
@@ -91,6 +93,7 @@ func _on_app_state_changed(state: GameTypes.AppState) -> void:
 	_show(_results, state == GameTypes.AppState.RESULTS, _results.open)
 	_show(_menu, in_menu, _menu.open)
 	_show(_shop, in_shop, _shop.open)
+	_show(_pause, state == GameTypes.AppState.PAUSED, _pause.open)
 
 
 func _show(screen: Control, shown: bool, opener: Callable) -> void:

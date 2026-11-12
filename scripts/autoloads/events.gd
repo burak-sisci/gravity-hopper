@@ -12,6 +12,7 @@ extends Node
 # --- Tur yaşam döngüsü ---
 signal run_started(run_seed: int, start_sector: int)
 signal run_ended(result: RunResult)
+## Oyun ağacı duraklatıldı ya da sürdü (M5-06; durum PAUSED'a girince / çıkınca).
 signal pause_changed(paused: bool)
 ## Uygulama durumu değişti (M5-01). Aynı duruma geçiş de duyurulur
 ## (ör. yeni tur: RUNNING → RUNNING).
@@ -53,7 +54,9 @@ signal shop_requested(tab: GameTypes.ShopTab)
 ## Ayarlar ekranını aç (ana menü; duraklatma M5-06). Ekran menünün üstünde açılır, durum
 ## değişmez.
 signal settings_requested
+## HUD'daki duraklat düğmesi (M5-06). Arka plana geçişte GameManager kendisi duraklatır.
 signal pause_requested
+## Duraklatma ekranındaki Devam, 3-2-1 sayımı bitince (M5-06).
 signal resume_requested
 
 # --- Ekonomi ve ayarlar ---
