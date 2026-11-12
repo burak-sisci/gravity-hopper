@@ -7,7 +7,7 @@ extends Control
 ##   Dirilt ve Vazgeç. Reklamlı diriliş M7-05'te eklenir.
 ## Dünyaya erişmez; düğmeler niyet yayar. Main, durum RESULTS olunca open() çağırır. İçerik ölüm
 ## donması ve patlaması görünsün diye SHOW_DELAY sonra belirir; o ana dek dokunuş almaz.
-## Yükseltmeler düğmesi ekranı gelene dek (M5-04) kapalı.
+## Yükseltmeler mağazayı Yükseltmeler sekmesiyle açar (Events.shop_requested, M5-04).
 
 ## Ölümden içeriğin belirmesine kadar (ölüm donması 0,1 sn + patlama).
 const SHOW_DELAY: float = 0.5
@@ -35,6 +35,7 @@ func _ready() -> void:
 	_revive.pressed.connect(Events.revive_requested.emit)
 	_give_up.pressed.connect(Events.revive_declined.emit)
 	_menu.pressed.connect(Events.menu_requested.emit)
+	_upgrades.pressed.connect(Events.shop_requested.emit.bind(GameTypes.ShopTab.UPGRADES))
 	Events.run_ended.connect(_on_run_ended)
 	Events.revive_offered.connect(_on_revive_offered)
 

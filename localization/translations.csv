@@ -47,3 +47,17 @@ RESULTS_RETRY,RETRY,TEKRAR
 RESULTS_REVIVE,REVIVE,DİRİLT
 RESULTS_GIVE_UP,GIVE UP,VAZGEÇ
 RESULTS_MENU,MENU,MENÜ
+UPGRADE_MAGNET_EFFECT,%s m pull radius,%s m çekim
+UPGRADE_SHIELD_EFFECT,Shield recharges every %s m,Kalkan her %s m'de yenilenir
+UPGRADE_SHIELD_EFFECT_ZERO,Start with a shield,Tura kalkanla başla
+UPGRADE_HEAD_START_EFFECT,%s m dash,%s m sıçrama
+UPGRADE_GLIMMER_BOOST_EFFECT,+%s%% Glimmers,+%%%s Glimmer
+UPGRADE_SECOND_CHANCE_EFFECT,%s free revive per run,Turda %s ücretsiz diriliş
+SHOP_LEVEL,LV %d/%d,SV %d/%d
+SHOP_NEXT,Next: %s,Sonraki: %s
+SHOP_NOW,Now: %s,Şimdi: %s
+SHOP_MAXED,MAX,EN ÜST
+SHOP_EQUIP,EQUIP,KUŞAN
+SHOP_EQUIPPED,EQUIPPED,KUŞANILDI
+SHOP_LOCKED,LOCKED,KİLİTLİ
+NUMBER_DECIMAL,.,","

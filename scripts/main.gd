@@ -11,6 +11,7 @@ extends Node
 ## durumunda tur kaldırılır, Events.play_requested ile seçili kontrol noktasından tur kurulur.
 ## Sonuç ekranı (M5-03) durum RESULTS iken açıktır; tur kendiliğinden yeniden başlamaz, Tekrar
 ## (Events.retry_requested) yeni turu kurar. Ölü tur ekranın arkasında donmuş kalır.
+## Mağaza (M5-04) durum SHOP iken açıktır; menüdeki gibi tur kaldırılır.
 
 const DEBUG_LAYER_PATH: String = "res://scenes/debug/debug_layer.tscn"
 const RUN_SCENE: PackedScene = preload("res://scenes/levels/run.tscn")
@@ -27,6 +28,7 @@ var _start_sector: int
 @onready var _hud: Control = %Hud
 @onready var _menu: MainMenu = %MainMenu
 @onready var _results: ResultsScreen = %ResultsScreen
+@onready var _shop: ShopScreen = %ShopScreen
 
 
 func _ready() -> void:
@@ -78,20 +80,24 @@ func _on_start_sector_selected(sector: int) -> void:
 	_start_sector = sector
 
 
-## Menüde tur kalmaz: dünya boşalır, menü açılır, HUD gizlenir (M5-02). Sonuç durumunda sonuç
-## ekranı açılır (M5-03); başka durumda kapanır.
+## Menüde ve mağazada tur kalmaz: dünya boşalır, ekran açılır, HUD gizlenir (M5-02, M5-04).
+## Sonuç durumunda sonuç ekranı açılır (M5-03); her ekran kendi durumu dışında kapalıdır.
 func _on_app_state_changed(state: GameTypes.AppState) -> void:
 	var in_menu: bool = state == GameTypes.AppState.MENU
-	_hud.visible = not in_menu
-	if state == GameTypes.AppState.RESULTS:
-		_results.open()
-	else:
-		_results.visible = false
-	if in_menu:
+	var in_shop: bool = state == GameTypes.AppState.SHOP
+	_hud.visible = not (in_menu or in_shop)
+	if in_menu or in_shop:
 		_remove_run()
-		_menu.open()
+	_show(_results, state == GameTypes.AppState.RESULTS, _results.open)
+	_show(_menu, in_menu, _menu.open)
+	_show(_shop, in_shop, _shop.open)
+
+
+func _show(screen: Control, shown: bool, opener: Callable) -> void:
+	if shown:
+		opener.call()
 	else:
-		_menu.visible = false
+		screen.visible = false
 
 
 func _remove_run() -> void:

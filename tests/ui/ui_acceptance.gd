@@ -14,6 +14,9 @@ const MIN_GAP_PX: float = 24.0
 ## WCAG: normal metin 4,5; kapalı düğme yazısı (etkileşimsiz arayüz öğesi) 3.
 const MIN_CONTRAST: float = 4.5
 const MIN_DISABLED_CONTRAST: float = 3.0
+## En küçük yazı: 12 sp = 36 px (360 dp genişliğinde 1 sp = 3 px; Material'ın en küçük gövde
+## yazısı 12 sp).
+const MIN_FONT_PX: int = 36
 const LOCALES: Array[String] = ["en", "tr"]
 
 
@@ -85,6 +88,19 @@ static func label_fit_problems(label: Label, room: float) -> Array[String]:
 	if width > room:
 		problems.append("'%s' %.0f px > %.0f" % [label.text, width, room])
 	problems.append_array(glyph_problems(label_font(label), label.text))
+	return problems
+
+
+## Yazılar ve düğme yazıları en az MIN_FONT_PX boyunda.
+static func font_size_problems(items: Array[Control]) -> Array[String]:
+	var problems: Array[String] = []
+	for item: Control in items:
+		var size: int = item.get_theme_font_size(&"font_size")
+		var label: Label = item as Label
+		if label != null and label.label_settings != null:
+			size = label.label_settings.font_size
+		if size < MIN_FONT_PX:
+			problems.append("%s %d px < %d" % [item.name, size, MIN_FONT_PX])
 	return problems
 
 

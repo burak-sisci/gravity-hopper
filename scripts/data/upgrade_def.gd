@@ -10,6 +10,11 @@ extends Resource
 ## Adın ve açıklamanın çeviri anahtarları (mağaza, M5).
 @export var name_key: String = ""
 @export var desc_key: String = ""
+## Etki metninin çeviri anahtarı (mağaza kartı, M5-04); %s yerine etki yazılır.
+@export var effect_key: String = ""
+## Etki 0 iken kullanılan anahtar, sayısız (Kalkan Sv1: yenilenmez, yalnızca başta kalkan); boşsa
+## effect_key.
+@export var effect_zero_key: String = ""
 ## Her seviyenin fiyatı (Glimmer). Uzunluğu en üst seviyedir.
 @export var costs: Array[int] = []
 ## Her seviyenin etkisi, `unit` biriminde (Mıknatıs: çekim yarıçapı m; Kalkan: yenilenme

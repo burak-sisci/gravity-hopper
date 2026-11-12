@@ -53,6 +53,12 @@ enum Sfx {
 	FINALE, ## Büyük Depolama Birimi'ne varış (M4-13; özgün ses)
 }
 
+## Mağaza ekranının sekmesi (M5-04).
+enum ShopTab {
+	UPGRADES, ## Kalıcı yükseltmeler
+	TRAILS, ## Kozmetik izler
+}
+
 ## Kozmetik izin nasıl açıldığı (M4-08, GDD §11). Yedi günlük seri başarımı M7-03'te eklenir.
 enum TrailUnlock {
 	FREE, ## Baştan açık (varsayılan iz)

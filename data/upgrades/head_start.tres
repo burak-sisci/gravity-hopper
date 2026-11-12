@@ -7,6 +7,7 @@ script = ExtResource("1_def")
 id = &"head_start"
 name_key = "UPGRADE_HEAD_START"
 desc_key = "UPGRADE_HEAD_START_DESC"
+effect_key = "UPGRADE_HEAD_START_EFFECT"
 costs = Array[int]([140, 280, 560, 1120, 2240])
 values = Array[float]([100.0, 200.0, 300.0, 400.0, 500.0])
 unit = "m"

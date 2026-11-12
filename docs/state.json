@@ -7,11 +7,11 @@
 
   "current": {
     "milestone": "M5",
-    "task": "M5-04",
-    "task_title": "Yükseltmeler ve izler ekranları",
+    "task": "M5-05",
+    "task_title": "Ayarlar ekranı",
     "owner": "claude",
     "status": "not_started",
-    "note": "M5-03 bitti (sonuç ekranı, diriliş teklifi, ADR-089). Yeni ekranlar ölçüleri tests/ui/ui_acceptance.gd'den alır; sonuç ekranındaki YÜKSELTMELER düğmesi ve menüdekiler bu görevde açılır."
+    "note": "M5-04 bitti (mağaza: Yükseltmeler / İzler sekmeleri, ADR-090). Liste içindeki düğmeler MOUSE_FILTER_PASS olmalı (yoksa kaydırma düğmede takılır; shop_screen_test denetler). Ayarlar düğmesi menüde bu görevde açılır; ölçüler tests/ui/ui_acceptance.gd (yazılar ≥ 36 px dahil)."
   },
 
   "session": {
@@ -22,11 +22,48 @@
   },
 
   "standard_queue": [
-    {"task": "M5", "owner": "user", "added": "2026-11-09", "reason": "Gözden geçir (varsayım, M4 Planlama Gözden Geçirmesi, ADR-086): M5 akışı ve görev bölümü.", "resume": "İlk açılış menüsüz tura girer (GDD §18), FTUE bitince açılışlar ana menüden; ölüm → sonuç ekranı → Tekrar / Menü. M5 12 göreve bölündü; yeni M5-10 menü müziği ve arayüz sesleri. İstenirse her açılış doğrudan tura girer, menü yalnızca sonuç ekranından açılır."},
-    {"task": "M4-16", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir (varsayım, ADR-082): yükseltmelerin toplamı ≈ 22.000 → 26.220.", "resume": "Sık Glimmer (S1 ≈ saniyede bir, üstte vuruş başına biraz daha sık) ile düzenli oyuncu eski fiyatlarla bütün yükseltmeleri 10–11 günde bitiriyordu (hedef ≈ 2 hafta). Yoğunluğu azaltmak günleri pek değiştirmedi (oyuncu üst kontrol noktasından başlayıp dakikada aynı Glimmer'ı alıyor). Seçilen: üst kademe fiyatları %15–40 artırıldı, en ucuz Mıknatıs 60 → 40 (ilk yükseltme 3. turda). GDD'deki 22.000, eski Glimmer değerinden türetilmiş tahmindi; asıl hedef '2 hafta' sayıldı. İstenirse fiyatlar korunup Glimmer seyrekleştirilir; hedef testi ölçer."},
-    {"task": "M4-14", "owner": "user", "added": "2026-11-08", "reason": "Gözden geçir: oyuncu profili varsayımları ve sektör bonusunun küçülmesi.", "resume": "Düzenli oyuncu varsayımı: günde 20 dk, ≈ 14 tur; ilk tur ≈ 320 m (≈ 25 sn); 7. günde en iyi ≈ 4600 m. Kullanıcı M4-15'te kendi turlarıyla karşılaştırır (gerçek ilk turları kısa / uzun mu?). Sektör bonusu 25 → 10 × sektör oldu (S1'i geçmek 10 Glimmer ≈ bir parçacık): tur sonu ekranında (M5) bonus küçük görünebilir; istenirse bonus artırılıp Glimmer değeri azaltılır, hedef testi bunu ölçer."},
-    {"task": "M5-02", "owner": "claude", "added": "2026-11-08", "reason": "Not (benzetimden): kontrol noktası seçiminin tempoya etkisi.", "resume": "Yeni değerlerle 'hep en yüksek sektörden' başlayan düzenli oyuncu da 13 günde bitiriyor (tur başı 1. gün 20, orta 80; günde 28 kısa tur); 'hep S1'den' 15 gün. Menüde varsayılan seçim için büyük risk kalmadı; yine de en iyi kazanç en yüksekte değil (architecture §13.1)."},
-    {"task": "test", "owner": "claude", "added": "2026-11-08", "reason": "Teknik not: tests/ui/hud_test.gd tek başına çalıştırılınca 5 zamanlama hatası veriyor (afiş süresi 1,42 / 1,67 sn > 1,3; M4-14'ten önce de aynı). Tam kontrolde geçiyor.", "resume": "İlk karelerdeki gecikmeye (gölgelendirici derleme) bağlı görünüyor; testler kare sayısı yerine zamanla ölçecek ya da ısınma karesi bekleyecek biçimde sağlamlaştırılır. Acil değil."}
+    {
+      "task": "M5-04",
+      "owner": "user",
+      "added": "2026-11-12",
+      "reason": "Gözden geçir (varsayım, ADR-090): satın alınan iz hemen kuşanılıyor; mağaza tek ekran, iki sekme.",
+      "resume": "İz alınınca ayrıca KUŞAN'a basmak gerekmiyor (oyuncunun beklediği sanıldı). Menüdeki Yükseltmeler ve İzler aynı mağazayı ilgili sekmesiyle açıyor. İstenirse alım kuşanmadan ayrılır ya da iki ayrı ekran yapılır."
+    },
+    {
+      "task": "M5",
+      "owner": "user",
+      "added": "2026-11-09",
+      "reason": "Gözden geçir (varsayım, M4 Planlama Gözden Geçirmesi, ADR-086): M5 akışı ve görev bölümü.",
+      "resume": "İlk açılış menüsüz tura girer (GDD §18), FTUE bitince açılışlar ana menüden; ölüm → sonuç ekranı → Tekrar / Menü. M5 12 göreve bölündü; yeni M5-10 menü müziği ve arayüz sesleri. İstenirse her açılış doğrudan tura girer, menü yalnızca sonuç ekranından açılır."
+    },
+    {
+      "task": "M4-16",
+      "owner": "user",
+      "added": "2026-11-08",
+      "reason": "Gözden geçir (varsayım, ADR-082): yükseltmelerin toplamı ≈ 22.000 → 26.220.",
+      "resume": "Sık Glimmer (S1 ≈ saniyede bir, üstte vuruş başına biraz daha sık) ile düzenli oyuncu eski fiyatlarla bütün yükseltmeleri 10–11 günde bitiriyordu (hedef ≈ 2 hafta). Yoğunluğu azaltmak günleri pek değiştirmedi (oyuncu üst kontrol noktasından başlayıp dakikada aynı Glimmer'ı alıyor). Seçilen: üst kademe fiyatları %15–40 artırıldı, en ucuz Mıknatıs 60 → 40 (ilk yükseltme 3. turda). GDD'deki 22.000, eski Glimmer değerinden türetilmiş tahmindi; asıl hedef '2 hafta' sayıldı. İstenirse fiyatlar korunup Glimmer seyrekleştirilir; hedef testi ölçer."
+    },
+    {
+      "task": "M4-14",
+      "owner": "user",
+      "added": "2026-11-08",
+      "reason": "Gözden geçir: oyuncu profili varsayımları ve sektör bonusunun küçülmesi.",
+      "resume": "Düzenli oyuncu varsayımı: günde 20 dk, ≈ 14 tur; ilk tur ≈ 320 m (≈ 25 sn); 7. günde en iyi ≈ 4600 m. Kullanıcı M4-15'te kendi turlarıyla karşılaştırır (gerçek ilk turları kısa / uzun mu?). Sektör bonusu 25 → 10 × sektör oldu (S1'i geçmek 10 Glimmer ≈ bir parçacık): tur sonu ekranında (M5) bonus küçük görünebilir; istenirse bonus artırılıp Glimmer değeri azaltılır, hedef testi bunu ölçer."
+    },
+    {
+      "task": "M5-02",
+      "owner": "claude",
+      "added": "2026-11-08",
+      "reason": "Not (benzetimden): kontrol noktası seçiminin tempoya etkisi.",
+      "resume": "Yeni değerlerle 'hep en yüksek sektörden' başlayan düzenli oyuncu da 13 günde bitiriyor (tur başı 1. gün 20, orta 80; günde 28 kısa tur); 'hep S1'den' 15 gün. Menüde varsayılan seçim için büyük risk kalmadı; yine de en iyi kazanç en yüksekte değil (architecture §13.1)."
+    },
+    {
+      "task": "test",
+      "owner": "claude",
+      "added": "2026-11-08",
+      "reason": "Teknik not: tests/ui/hud_test.gd tek başına çalıştırılınca 5 zamanlama hatası veriyor (afiş süresi 1,42 / 1,67 sn > 1,3; M4-14'ten önce de aynı). Tam kontrolde geçiyor.",
+      "resume": "İlk karelerdeki gecikmeye (gölgelendirici derleme) bağlı görünüyor; testler kare sayısı yerine zamanla ölçecek ya da ısınma karesi bekleyecek biçimde sağlamlaştırılır. Acil değil."
+    }
   ],
 
   "milestones": [
@@ -136,7 +173,8 @@
     "M4-16",
     "M5-01",
     "M5-02",
-    "M5-03"
+    "M5-03",
+    "M5-04"
   ],
 
   "blockers": [],
@@ -239,10 +277,10 @@
 
   "last_session": {
     "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12). M5-03 bitti: sonuç ekranı + İkinci Şans teklifi (Dirilt / Vazgeç), Redmi'de Tekrar → ilk kare 85–180 ms, ADR-089.",
+    "summary": "Otonom mesai (2026-11-12; uygulama bir kez yarıda kapandı, kaldığı yerden sürdü). M5-03 bitti (sonuç ekranı, ADR-089). M5-04 bitti: mağaza (Yükseltmeler / İzler sekmeleri, kaydırılan kart listeleri, canlı iz önizlemesi), Redmi'de satın alma, kuşanma ve kaydırma ölçüldü; düğmede başlayan kaydırmanın takılması bulunup düzeltildi ve teste bağlandı (ADR-090).",
     "next_steps": [
-      "M5-04 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
-      "standard_queue: M5 akış varsayımını kullanıcıyla gözden geçir."
+      "M5-05 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
+      "standard_queue: M5-04 (alınan iz hemen kuşanılır) ve M5 akış varsayımını kullanıcıyla gözden geçir."
     ]
   }
 }

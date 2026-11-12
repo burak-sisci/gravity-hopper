@@ -52,6 +52,7 @@ func _ready() -> void:
 	Events.glimmer_collected.connect(_on_glimmer_collected)
 	Events.near_miss.connect(_on_near_miss)
 	Events.menu_requested.connect(_on_menu_requested)
+	Events.shop_requested.connect(_on_shop_requested)
 	Events.revive_requested.connect(revive)
 	Events.revive_declined.connect(_on_revive_declined)
 
@@ -182,6 +183,13 @@ func _on_menu_requested() -> void:
 	if can_change_to(GameTypes.AppState.MENU):
 		_close_offer()
 		change_state(GameTypes.AppState.MENU)
+
+
+## Mağaza isteği (ana menü ve sonuç ekranı, M5-04); sekmeyi ekran kendisi seçer.
+func _on_shop_requested(_tab: GameTypes.ShopTab) -> void:
+	if can_change_to(GameTypes.AppState.SHOP):
+		_close_offer()
+		change_state(GameTypes.AppState.SHOP)
 
 
 func _on_revive_declined() -> void:

@@ -67,6 +67,7 @@ func test_texts_fit_in_both_languages() -> void:
 			await get_tree().process_frame
 			var column: Control = screen.get_node("Content/Column") as Control
 			var room: float = column.offset_right - column.offset_left
+			assert_array(UI.font_size_problems(UI.leaves(screen))).is_empty()
 			for item: Control in UI.leaves(screen):
 				var problems: Array[String] = UI.button_fit_problems(item as Button) \
 						if item is Button else UI.label_fit_problems(item as Label, room)

@@ -93,8 +93,8 @@ func test_declined_revive_ends_the_run_and_keeps_the_earnings() -> void:
 	assert_int(_revived).is_equal(0)
 
 
-## Teklif açıkken yeni tur ya da menü: tur önce biter (sonuç ve kazanç bir kez), teklif yeni tura
-## taşmaz; hakkı olmayan yeni turda teklif olmaz.
+## Teklif açıkken yeni tur, menü ya da mağaza: tur önce biter (sonuç ve kazanç bir kez), teklif
+## yeni tura taşmaz; hakkı olmayan yeni turda teklif olmaz.
 func test_open_offer_closes_on_a_new_run_or_menu() -> void:
 	GameManager.begin_run(13, 1, _loadout(1))
 	Events.glimmer_collected.emit(5)
@@ -115,6 +115,11 @@ func test_open_offer_closes_on_a_new_run_or_menu() -> void:
 	assert_int(_results.size()).is_equal(3)
 	Events.revive_requested.emit()
 	assert_int(_revived).is_equal(0)
+	GameManager.begin_run(16, 1, _loadout(1))
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Events.shop_requested.emit(GameTypes.ShopTab.UPGRADES)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.SHOP)
+	assert_int(_results.size()).is_equal(4)
 
 
 func test_without_the_upgrade_death_ends_the_run() -> void:

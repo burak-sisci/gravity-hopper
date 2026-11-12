@@ -7,6 +7,7 @@ script = ExtResource("1_def")
 id = &"magnet"
 name_key = "UPGRADE_MAGNET"
 desc_key = "UPGRADE_MAGNET_DESC"
+effect_key = "UPGRADE_MAGNET_EFFECT"
 costs = Array[int]([40, 80, 160, 320, 640])
 values = Array[float]([1.8, 2.6, 3.4, 4.2, 5.0])
 unit = "m"

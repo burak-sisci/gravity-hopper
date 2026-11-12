@@ -1,0 +1,120 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/shop_screen.gd" id="1_shop"]
+[ext_resource type="Resource" path="res://data/sectors/sector_catalog.tres" id="2_sectors"]
+[ext_resource type="Script" path="res://scripts/components/neon_label.gd" id="3_neon_label"]
+[ext_resource type="Script" path="res://scripts/ui/neon_button.gd" id="4_neon_button"]
+
+[node name="ShopScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_shop")
+sectors = ExtResource("2_sectors")
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.02, 0.05, 1)
+
+[node name="BackButton" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 150)
+offset_left = 40.0
+offset_top = 60.0
+offset_right = 190.0
+offset_bottom = 210.0
+auto_translate_mode = 2
+text = "<"
+script = ExtResource("4_neon_button")
+font_size = 72
+
+[node name="Wallet" type="Label" parent="."]
+unique_name_in_owner = true
+auto_translate_mode = 2
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -640.0
+offset_top = 100.0
+offset_right = -40.0
+offset_bottom = 170.0
+grow_horizontal = 0
+horizontal_alignment = 2
+vertical_alignment = 1
+script = ExtResource("3_neon_label")
+tone = 2
+font_size = 48
+
+[node name="Tabs" type="HBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -500.0
+offset_top = 250.0
+offset_right = 500.0
+offset_bottom = 400.0
+grow_horizontal = 2
+theme_override_constants/separation = 24
+
+[node name="UpgradesTab" type="Button" parent="Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(488, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MENU_UPGRADES"
+script = ExtResource("4_neon_button")
+font_size = 48
+
+[node name="TrailsTab" type="Button" parent="Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(488, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MENU_TRAILS"
+script = ExtResource("4_neon_button")
+font_size = 48
+
+[node name="UpgradesList" type="ScrollContainer" parent="."]
+unique_name_in_owner = true
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_top = 440.0
+offset_right = 500.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="UpgradesBox" type="VBoxContainer" parent="UpgradesList"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 24
+
+[node name="TrailsList" type="ScrollContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -500.0
+offset_top = 440.0
+offset_right = 500.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="TrailsGrid" type="GridContainer" parent="TrailsList"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 24
+columns = 2

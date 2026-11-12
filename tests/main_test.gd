@@ -171,6 +171,31 @@ func test_menu_removes_the_run_and_play_starts_one() -> void:
 	assert_int(_world().get_child_count()).is_equal(1)
 
 
+## Mağaza (M5-04): menüden açılınca menü ve HUD gizli, tur yok; sonuç ekranından açılınca tur
+## kalkar; geri menüye döner.
+func test_shop_opens_from_menu_and_results_without_a_run() -> void:
+	_open_main()
+	await _frames(2)
+	var shop: Control = _main.get_node("%ShopScreen") as Control
+	Events.shop_requested.emit(GameTypes.ShopTab.TRAILS)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.SHOP)
+	assert_bool(shop.visible).is_true()
+	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_false()
+	assert_bool((_main.get_node("%Hud") as Control).visible).is_false()
+	Events.menu_requested.emit()
+	assert_bool(shop.visible).is_false()
+	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_true()
+	Events.play_requested.emit()
+	await _frames(5)
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	Events.shop_requested.emit(GameTypes.ShopTab.UPGRADES)
+	assert_bool(shop.visible).is_true()
+	assert_bool((_main.get_node("%ResultsScreen") as Control).visible).is_false()
+	await get_tree().process_frame
+	assert_int(_world().get_child_count()).is_equal(0)
+	await _frames(TEARDOWN_FRAMES)
+
+
 func test_settings_change_sets_neon_quality() -> void:
 	var stored: GameTypes.Quality = Settings.effect_quality
 	await _start_main()

@@ -108,14 +108,12 @@ mouse_filter = 2
 [node name="UpgradesButton" type="Button" parent="Column"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(880, 150)
-disabled = true
 text = "MENU_UPGRADES"
 script = ExtResource("4_neon_button")
 
 [node name="TrailsButton" type="Button" parent="Column"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(880, 150)
-disabled = true
 text = "MENU_TRAILS"
 script = ExtResource("4_neon_button")
 

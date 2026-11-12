@@ -50,6 +50,7 @@ func test_texts_fit_in_both_languages() -> void:
 	for locale: String in UI.LOCALES:
 		TranslationServer.set_locale(locale)
 		var menu: MainMenu = await _open(UI.ASPECTS[0])
+		assert_array(UI.font_size_problems(UI.leaves(menu))).is_empty()
 		for item: Control in UI.leaves(menu):
 			if item is Button:
 				var problems: Array[String] = UI.button_fit_problems(item as Button)

@@ -103,7 +103,6 @@ font_size = 84
 [node name="UpgradesButton" type="Button" parent="Content/Column"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(880, 150)
-disabled = true
 text = "MENU_UPGRADES"
 script = ExtResource("3_neon_button")
 

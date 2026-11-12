@@ -48,6 +48,8 @@ signal revive_requested
 ## Diriliş teklifi geri çevrildi: tur biter (M5-03).
 signal revive_declined
 signal menu_requested
+## Mağaza ekranını aç (ana menü ve sonuç ekranı, M5-04).
+signal shop_requested(tab: GameTypes.ShopTab)
 signal pause_requested
 signal resume_requested
 

@@ -7,6 +7,7 @@ script = ExtResource("1_def")
 id = &"second_chance"
 name_key = "UPGRADE_SECOND_CHANCE"
 desc_key = "UPGRADE_SECOND_CHANCE_DESC"
+effect_key = "UPGRADE_SECOND_CHANCE_EFFECT"
 costs = Array[int]([7000])
 values = Array[float]([1.0])
 unit = "count"
