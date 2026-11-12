@@ -306,7 +306,7 @@
   *Kabul:* Duraklatmada fizik ve müzik duruyor, devamda müzik–vuruş farkı ≤ 1 kare (ölçülür); arka plana geçişte kayıt yazılıyor (test); duraklat düğmesi ≥ 48 dp ve oyuncuyu çevirmiyor.
 - [x] **M5-07** 🤖 İlk açılış deneyimi (GDD §18): menüsüz doğrudan oyun, metinsiz nabızlı "dokun" eli (`tap_hint.tscn`), ilk parça uzun boş duvar + tek diken, ilk ölümden sonra "Yükseltmeler" düğmesi parlar; FTUE bitti bayrağı kayda yazılır.
   *Kabul:* Boş kayıtla açılış menüsüz tura giriyor, bayraklı kayıtla menüye (test); ilk parça benzetimde tepki süreli botla geçiliyor; el ikonu ilk dokunuşta kayboluyor (test).
-- [ ] **M5-08** 🤖 Titreşim (GDD §19): çevirmede çok hafif, kıl payında kısa, ölümde belirgin; ayardan kapanır.
+- [x] **M5-08** 🤖 Titreşim (GDD §19): çevirmede çok hafif, kıl payında kısa, ölümde belirgin; ayardan kapanır.
   *Kabul:* Olay → titreşim süresi tablosu testte; ayar kapalıyken hiç çağrı yok (test); Redmi'de `adb` günlüğünden titreşim çağrıları sayılıyor.
 - [ ] **M5-09** 🤖 Hakkında / lisanslar ekranı: Godot MIT lisans metni (zorunlu) ve `CREDITS.md`'deki her dış varlık.
   *Kabul:* `CREDITS.md`'deki her satır ekranda (test, katalog dolaşılır); Godot lisans metni `Engine.get_license_text()`'ten; kaydırma ve UI kabulü.

@@ -7,11 +7,11 @@
 
   "current": {
     "milestone": "M5",
-    "task": "M5-08",
-    "task_title": "Titreşim",
+    "task": "M5-09",
+    "task_title": "Hakkında / lisanslar ekranı",
     "owner": "claude",
     "status": "not_started",
-    "note": "M5-07 bitti (ilk açılış, ADR-093): boş kayıt menüsüz tanıtım turuna girer (ChunkLibrary.intro), kodla çizilen dokun eli ilk çevirmede söner, ilk sonuçta Yükseltmeler parlar, ftue_done kayda yazılır. Elle yazılan .tscn'lerde Control düğümlerine layout_mode yaz (Redmi'de anchor kaybı)."
+    "note": "M5-08 bitti (titreşim, ADR-094): Haptics autoload'u, VIBRATE izni. Redmi'de istekler doğru gidiyor ama cihazın dokunma titreşimi kapalı olduğu için Android yok sayıyor (standard_queue). Hakkında düğmesi M5-05'te kapalı bırakıldı; M5-09'da açılır."
   },
 
   "session": {
@@ -77,6 +77,13 @@
       "added": "2026-11-12",
       "reason": "Gözden geçir (varsayım): tanıtım parçası 14 vuruş boş duvar + oyuncunun duvarında tek diken + karşı duvarda 3 Glimmer; dokunmayan oyuncu 7,6 sn sonra 89 m'de ölür. El ekranın ortasında, alt yarıda; Yükseltmeler vurgusu yeşil kenar + 1,06 ölçek nabız.",
       "resume": "Kullanıcı ilk açılışı oyuncu gözüyle denesin (kayıt silinerek): el anlaşılıyor mu, ilk diken çok mu geç / erken?"
+    },
+    {
+      "task": "M5-08",
+      "owner": "user",
+      "added": "2026-11-12",
+      "reason": "Karar / gözden geçir: Godot titreşimi Android'e 'dokunma geri bildirimi' (usage TOUCH) olarak gönderiyor. Redmi'de sistem dokunma titreşimi kapalı (haptic_feedback_enabled=0), bu yüzden 7 isteğin 7'si de ignored_for_settings: oyun bu telefonda titremiyor. Varsayım: sistem ayarına uymak doğru; oyun ayarından ayrı titreşim istenirse Android eklentisi gerekir (.clauderules §1, onay).",
+      "resume": "Kullanıcı telefonda Ayarlar → Ses ve titreşim → Dokunma geri bildirimi'ni açıp titreşimin hissini (çevirme çok hafif mi, ölüm belirgin mi) denesin; sistem kapalıyken de titremeli mi kararını versin."
     }
   ],
 
@@ -191,7 +198,8 @@
     "M5-04",
     "M5-05",
     "M5-06",
-    "M5-07"
+    "M5-07",
+    "M5-08"
   ],
 
   "blockers": [],
@@ -294,10 +302,10 @@
 
   "last_session": {
     "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12, ikinci). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi.",
+    "summary": "Otonom mesai (2026-11-12, ikinci). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi. M5-08 bitti: titreşim (Haptics, ADR-094); Redmi'de 6 FLIP + 1 DEATH isteği Android'e doğru değerlerle ulaştı, ama sistem dokunma titreşimi kapalı olduğundan yok sayıldı (karar kuyrukta).",
     "next_steps": [
-      "M5-08 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
-      "standard_queue: M5-07 (ilk açılış hissi), M5-06 (devam kayması varsayımı), M5-04 (alınan iz hemen kuşanılır) ve M5 akış varsayımını kullanıcıyla gözden geçir."
+      "M5-09, M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
+      "standard_queue: M5-08 (titreşim / sistem ayarı kararı), M5-07 (ilk açılış hissi), M5-06 (devam kayması), M5-04 ve M5 akış varsayımı."
     ]
   }
 }

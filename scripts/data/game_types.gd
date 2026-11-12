@@ -54,6 +54,13 @@ enum Sfx {
 	FINALE, ## Büyük Depolama Birimi'ne varış (M4-13; özgün ses)
 }
 
+## Titreşim olayları (M5-08, GDD §19; süreler Haptics.PATTERNS'ta).
+enum Haptic {
+	FLIP, ## Çevirme: çok hafif
+	NEAR_MISS, ## Kıl payı: kısa
+	DEATH, ## Ölüm: belirgin
+}
+
 ## Mağaza ekranının sekmesi (M5-04).
 enum ShopTab {
 	UPGRADES, ## Kalıcı yükseltmeler
