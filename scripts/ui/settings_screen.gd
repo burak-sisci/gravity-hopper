@@ -1,11 +1,11 @@
 class_name SettingsScreen
 extends Control
 ## Ayarlar (M5-05, GDD §20, architecture.md §5.3): müzik ve efekt düzeyi, titreşim, dil, efekt
-## kalitesi, 60 FPS sınırı ve Hakkında (lisanslar M5-09'a dek kapalı). Değişiklik hemen uygulanır
-## ve yazılır (Settings servisi, .clauderules §3); kaydırıcı sürüklenirken yalnızca uygulanır,
-## bırakınca yazılır. Menünün üstünde açılır: Events.settings_requested ile kendini açar, geri
-## düğmesi ve durum değişimi kapatır. Dünyaya erişmez. Duraklatmadan da açılır (M5-06): oyun ağacı
-## duraklıyken çalışır (process_mode ALWAYS).
+## kalitesi, 60 FPS sınırı ve Hakkında (Events.about_requested; AboutScreen üstte açılır, M5-09).
+## Değişiklik hemen uygulanır ve yazılır (Settings servisi, .clauderules §3); kaydırıcı
+## sürüklenirken yalnızca uygulanır, bırakınca yazılır. Menünün üstünde açılır:
+## Events.settings_requested ile kendini açar, geri düğmesi ve durum değişimi kapatır. Dünyaya
+## erişmez. Duraklatmadan da açılır (M5-06): oyun ağacı duraklıyken çalışır (process_mode ALWAYS).
 
 ## Seçili ve seçili olmayan seçeneğin vurgusu (mağaza sekmeleriyle aynı).
 const ACTIVE: Color = ShopScreen.TAB_ACTIVE
@@ -16,6 +16,7 @@ const IDLE: Color = ShopScreen.TAB_IDLE
 @onready var _sfx: NeonSlider = %SfxSlider
 @onready var _vibration: NeonButton = %VibrationButton
 @onready var _fps: NeonButton = %FpsButton
+@onready var _about: NeonButton = %AboutButton
 @onready var _languages: Dictionary[String, NeonButton] = {
 	"tr": %TurkishButton, "en": %EnglishButton,
 }
@@ -39,6 +40,7 @@ func _ready() -> void:
 		_languages[code].pressed.connect(Settings.set_language.bind(code))
 	for quality: GameTypes.Quality in _qualities:
 		_qualities[quality].pressed.connect(Settings.set_effect_quality.bind(quality))
+	_about.pressed.connect(Events.about_requested.emit)
 	Events.settings_requested.connect(open)
 	Events.settings_changed.connect(refresh)
 	Events.app_state_changed.connect(func(_state: GameTypes.AppState) -> void: close())

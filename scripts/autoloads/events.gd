@@ -54,6 +54,8 @@ signal shop_requested(tab: GameTypes.ShopTab)
 ## Ayarlar ekranını aç (ana menü; duraklatma M5-06). Ekran menünün üstünde açılır, durum
 ## değişmez.
 signal settings_requested
+## Ayarlar'daki Hakkında düğmesi (M5-09): Hakkında / lisanslar ekranı ayarların üstünde açılır.
+signal about_requested
 ## HUD'daki duraklat düğmesi (M5-06). Arka plana geçişte GameManager kendisi duraklatır.
 signal pause_requested
 ## Duraklatma ekranındaki Devam, 3-2-1 sayımı bitince (M5-06).

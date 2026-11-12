@@ -8,7 +8,7 @@
 
 | Bileşen | Sürüm | Lisans | Not |
 | --- | --- | --- | --- |
-| Godot Engine | 4.7.2 | MIT | Godot ve içerdiği üçüncü taraf bileşenlerin lisans metni oyun içindeki "Hakkında" ekranında gösterilmeli (M5-09) |
+| Godot Engine | 4.7.2 | MIT | Godot ve içerdiği üçüncü taraf bileşenlerin lisans metni oyun içindeki "Hakkında" ekranında gösteriliyor (M5-09: `Engine.get_license_text()`, `get_copyright_info()`, `get_license_info()`). Bu dosyadaki oyuna giren her satır `data/credits/credits.tres`'te de olmalı; test eşler |
 
 ## Görseller
 

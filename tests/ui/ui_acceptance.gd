@@ -108,12 +108,12 @@ static func font_size_problems(items: Array[Control]) -> Array[String]:
 	return problems
 
 
-## Font metnin her harfini içerir.
+## Font metnin her harfini içerir (boşluk ve satır sonu gibi denetim karakterleri çizilmez).
 static func glyph_problems(font: Font, text: String) -> Array[String]:
 	var problems: Array[String] = []
 	for index: int in text.length():
 		var code: int = text.unicode_at(index)
-		if code != 32 and not font.has_char(code):
+		if code > 32 and not font.has_char(code):
 			problems.append("fontta yok: '%s'" % text[index])
 	return problems
 

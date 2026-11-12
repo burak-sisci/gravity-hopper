@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_screen.tscn" id="5_shop"]
 [ext_resource type="PackedScene" path="res://scenes/ui/settings_screen.tscn" id="6_settings"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_screen.tscn" id="7_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/about_screen.tscn" id="8_about"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
@@ -44,6 +45,10 @@ unique_name_in_owner = true
 visible = false
 
 [node name="SettingsScreen" parent="UI" instance=ExtResource("6_settings")]
+unique_name_in_owner = true
+visible = false
+
+[node name="AboutScreen" parent="UI" instance=ExtResource("8_about")]
 unique_name_in_owner = true
 visible = false
 

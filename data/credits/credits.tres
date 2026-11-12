@@ -1,0 +1,134 @@
+[gd_resource type="Resource" script_class="CreditsCatalog" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/credits_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" path="res://scripts/data/credit_entry.gd" id="2_entry"]
+
+[sub_resource type="Resource" id="Entry_00"]
+script = ExtResource("2_entry")
+credits_row = "Godot Engine"
+title = "Godot Engine 4.7.2"
+author = "Juan Linietsky, Ariel Manzur & Godot Engine contributors"
+license = "MIT"
+
+[sub_resource type="Resource" id="Entry_01"]
+script = ExtResource("2_entry")
+credits_row = "Kervan (`caravan`, 100 BPM, Orta Doğu)"
+title = "CREDITS_CARAVAN"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
+[sub_resource type="Resource" id="Entry_02"]
+script = ExtResource("2_entry")
+credits_row = "Pagoda (`pagoda`, 90 BPM, Doğu Asya)"
+title = "CREDITS_PAGODA"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
+[sub_resource type="Resource" id="Entry_03"]
+script = ExtResource("2_entry")
+credits_row = "Kale (`castle`, 120 BPM, Orta Çağ Avrupa)"
+title = "CREDITS_CASTLE"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
+[sub_resource type="Resource" id="Entry_04"]
+script = ExtResource("2_entry")
+credits_row = "Versilian Community Sample Library (VCSL)"
+title = "Versilian Community Sample Library (VCSL)"
+author = "Versilian Studios (Sam Gossner)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_05"]
+script = ExtResource("2_entry")
+credits_row = "Versilian Studios Chamber Orchestra 2 Community Edition (VSCO 2 CE)"
+title = "VSCO 2 Community Edition"
+author = "Versilian Studios (Sam Gossner)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_06"]
+script = ExtResource("2_entry")
+credits_row = "phaseJump2.ogg (Digital Audio)"
+title = "phaseJump2.ogg · Digital Audio"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_07"]
+script = ExtResource("2_entry")
+credits_row = "impactGeneric_light_000.ogg (Impact Sounds)"
+title = "impactGeneric_light_000.ogg · Impact Sounds"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_08"]
+script = ExtResource("2_entry")
+credits_row = "confirmation_003.ogg (Interface Sounds)"
+title = "confirmation_003.ogg · Interface Sounds"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_09"]
+script = ExtResource("2_entry")
+credits_row = "phaserUp4.ogg (Digital Audio)"
+title = "phaserUp4.ogg · Digital Audio"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_10"]
+script = ExtResource("2_entry")
+credits_row = "highUp.ogg (Digital Audio)"
+title = "highUp.ogg · Digital Audio"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_11"]
+script = ExtResource("2_entry")
+credits_row = "glass_004.ogg (Interface Sounds)"
+title = "glass_004.ogg · Interface Sounds"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_12"]
+script = ExtResource("2_entry")
+credits_row = "explosionCrunch_000.ogg (Sci-fi Sounds)"
+title = "explosionCrunch_000.ogg · Sci-fi Sounds"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_13"]
+script = ExtResource("2_entry")
+credits_row = "zapThreeToneUp.ogg (Digital Audio)"
+title = "zapThreeToneUp.ogg · Digital Audio"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_14"]
+script = ExtResource("2_entry")
+credits_row = "jingles_PIZZI10.ogg (Music Jingles)"
+title = "jingles_PIZZI10.ogg · Music Jingles"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_15"]
+script = ExtResource("2_entry")
+credits_row = "computerNoise_000.ogg (Sci-fi Sounds), dikişsiz döngüye çevrildi"
+title = "computerNoise_000.ogg · Sci-fi Sounds"
+author = "Kenney (kenney.nl)"
+license = "CC0 1.0"
+
+[sub_resource type="Resource" id="Entry_16"]
+script = ExtResource("2_entry")
+credits_row = "Büyük Depolama Birimi finali (M4-13): kodla üretildi, örnek ses yok"
+title = "CREDITS_FINALE"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
+[sub_resource type="Resource" id="Entry_17"]
+script = ExtResource("2_entry")
+credits_row = "Exo 2, Version 2.010 (`Exo2[wght].ttf`, değişken ağırlık; google/fonts `ofl/exo2`, blob `9cb2018`, 2026-10-15'te indirildi, değiştirilmedi). Copyright 2013 The Exo 2 Project Authors"
+title = "Exo 2"
+author = "The Exo 2 Project Authors"
+license = "SIL OFL 1.1"
+
+[resource]
+script = ExtResource("1_catalog")
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_00"), SubResource("Entry_01"), SubResource("Entry_02"), SubResource("Entry_03"), SubResource("Entry_04"), SubResource("Entry_05"), SubResource("Entry_06"), SubResource("Entry_07"), SubResource("Entry_08"), SubResource("Entry_09"), SubResource("Entry_10"), SubResource("Entry_11"), SubResource("Entry_12"), SubResource("Entry_13"), SubResource("Entry_14"), SubResource("Entry_15"), SubResource("Entry_16"), SubResource("Entry_17")])

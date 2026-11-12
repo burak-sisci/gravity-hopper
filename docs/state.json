@@ -7,18 +7,18 @@
 
   "current": {
     "milestone": "M5",
-    "task": "M5-09",
-    "task_title": "Hakkında / lisanslar ekranı",
+    "task": "M5-10",
+    "task_title": "Menü müziği ve arayüz sesleri",
     "owner": "claude",
     "status": "not_started",
-    "note": "M5-08 bitti (titreşim, ADR-094): Haptics autoload'u, VIBRATE izni. Redmi'de istekler doğru gidiyor ama cihazın dokunma titreşimi kapalı olduğu için Android yok sayıyor (standard_queue). Hakkında düğmesi M5-05'te kapalı bırakıldı; M5-09'da açılır."
+    "note": "M5-09 bitti (Hakkında, ADR-095): CreditsCatalog + AboutScreen, karelere bölünmüş kurulum. Redmi: üst kısım 0,2 sn'de, en uzun kare 88–96 ms (önce 1051 ms donma)."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
     "started": "2026-11-12",
-    "note": "Otonom mesai 2026-11-12 (ikinci; \"otonom mesai başlat\"). Plan: M5-06'yı bitir (current.note KALAN), sonra M5-07 … M5-10 (🤖); 🤝/👤 ve kararlar standard_queue'ya."
+    "note": "Otonom mesai 2026-11-12 (ikinci; \"otonom mesai başlat\"). Plan: M5-06'yı bitir (current.note KALAN), sonra M5-07 … M5-10 (🤖); 🤝/👤 ve kararlar standard_queue'ya. Kullanıcı M5-09'dan sonra mesaiyi sonlandırdı; M5-10 başlanmadı."
   },
 
   "standard_queue": [
@@ -199,7 +199,8 @@
     "M5-05",
     "M5-06",
     "M5-07",
-    "M5-08"
+    "M5-08",
+    "M5-09"
   ],
 
   "blockers": [],
@@ -302,9 +303,9 @@
 
   "last_session": {
     "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12, ikinci). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi. M5-08 bitti: titreşim (Haptics, ADR-094); Redmi'de 6 FLIP + 1 DEATH isteği Android'e doğru değerlerle ulaştı, ama sistem dokunma titreşimi kapalı olduğundan yok sayıldı (karar kuyrukta).",
+    "summary": "Otonom mesai (2026-11-12, ikinci; kullanıcı M5-09'dan sonra sonlandırdı, M5-10 başlanmadı). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi. M5-08 bitti: titreşim (Haptics, ADR-094); Redmi'de 6 FLIP + 1 DEATH isteği Android'e doğru değerlerle ulaştı, ama sistem dokunma titreşimi kapalı olduğundan yok sayıldı (karar kuyrukta). M5-09 bitti: Hakkında / lisanslar (CreditsCatalog, CREDITS.md eşlik testi, Godot lisans metinleri), ADR-095. Redmi'de tek karede kurulum 1051 ms donuyordu; karelere bölününce en uzun kare 88–96 ms, üst kısım 0,2 sn'de görünür.",
     "next_steps": [
-      "M5-09, M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
+      "M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
       "standard_queue: M5-08 (titreşim / sistem ayarı kararı), M5-07 (ilk açılış hissi), M5-06 (devam kayması), M5-04 ve M5 akış varsayımı."
     ]
   }
