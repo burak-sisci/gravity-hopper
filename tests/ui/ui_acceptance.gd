@@ -30,17 +30,19 @@ static func canvas_size(aspect: float) -> Vector2i:
 	return Vector2i(size.round())
 
 
-## Görünür yaprak öğeler: düğmeler ve yazılar (kaplar ve zemin değil).
+## Görünür yaprak öğeler: düğmeler, kaydırıcılar ve yazılar (kaplar ve zemin değil).
 static func leaves(root: Control) -> Array[Control]:
 	var found: Array[Control] = []
 	for node: Node in root.find_children("*", "Control", true, false):
 		var control: Control = node as Control
-		if control.is_visible_in_tree() and (control is Button or control is Label):
+		if control.is_visible_in_tree() and (control is Button or control is Label
+				or control is Slider):
 			found.append(control)
 	return found
 
 
-## Öğeler ekranın içinde ve çakışmıyor; düğmeler ≥ 48 dp ve aralarında ≥ 8 dp.
+## Öğeler ekranın içinde ve çakışmıyor; dokunulan öğeler (düğme, kaydırıcı) ≥ 48 dp ve aralarında
+## ≥ 8 dp.
 static func layout_problems(items: Array[Control], screen: Rect2) -> Array[String]:
 	var problems: Array[String] = []
 	for item: Control in items:
@@ -50,12 +52,12 @@ static func layout_problems(items: Array[Control], screen: Rect2) -> Array[Strin
 		for other: Control in items:
 			if other != item and rect.intersection(other.get_global_rect()).get_area() > 0.0:
 				problems.append("%s ~ %s çakışıyor" % [item.name, other.name])
-		if not item is Button:
+		if not _touchable(item):
 			continue
 		if minf(rect.size.x, rect.size.y) < MIN_TOUCH_PX:
 			problems.append("%s %s < %.0f px" % [item.name, rect.size, MIN_TOUCH_PX])
 		for other: Control in items:
-			if other != item and other is Button:
+			if other != item and _touchable(other):
 				var gap: float = _gap(rect, other.get_global_rect())
 				if gap < MIN_GAP_PX:
 					problems.append("%s ~ %s arası %.0f px" % [item.name, other.name, gap])
@@ -91,10 +93,12 @@ static func label_fit_problems(label: Label, room: float) -> Array[String]:
 	return problems
 
 
-## Yazılar ve düğme yazıları en az MIN_FONT_PX boyunda.
+## Yazılar ve düğme yazıları en az MIN_FONT_PX boyunda (kaydırıcının yazısı yok).
 static func font_size_problems(items: Array[Control]) -> Array[String]:
 	var problems: Array[String] = []
 	for item: Control in items:
+		if item is Slider:
+			continue
 		var size: int = item.get_theme_font_size(&"font_size")
 		var label: Label = item as Label
 		if label != null and label.label_settings != null:
@@ -143,6 +147,10 @@ static func label_contrast_problems(label: Label, ground: Color) -> Array[String
 
 
 ## İki dikdörtgen arasındaki en kısa boşluk (çakışıyorsa 0).
+static func _touchable(item: Control) -> bool:
+	return item is Button or item is Slider
+
+
 static func _gap(a: Rect2, b: Rect2) -> float:
 	var dx: float = maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
 	var dy: float = maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))

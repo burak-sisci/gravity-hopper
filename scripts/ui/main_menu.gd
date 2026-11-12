@@ -5,7 +5,7 @@ extends Control
 ## Dünyaya erişmez: Başla Events.play_requested yayar; seçim ve cüzdan Progression servisinden
 ## (.clauderules §3: autoload servis gibi çağrılabilir). Main, durum MENU olunca open() çağırır.
 ## Yükseltmeler / İzler mağazayı ilgili sekmesiyle açar (Events.shop_requested, M5-04).
-## Ayarlar (M5-05) ekranı gelene dek kapalıdır.
+## Ayarlar, ayarlar ekranını açar (Events.settings_requested, M5-05).
 
 ## Sektör adları ve renkleri.
 @export var sectors: SectorCatalog
@@ -18,6 +18,7 @@ extends Control
 @onready var _play: NeonButton = %PlayButton
 @onready var _upgrades: NeonButton = %UpgradesButton
 @onready var _trails: NeonButton = %TrailsButton
+@onready var _settings: NeonButton = %SettingsButton
 
 
 func _ready() -> void:
@@ -26,6 +27,7 @@ func _ready() -> void:
 	_play.pressed.connect(Events.play_requested.emit)
 	_upgrades.pressed.connect(Events.shop_requested.emit.bind(GameTypes.ShopTab.UPGRADES))
 	_trails.pressed.connect(Events.shop_requested.emit.bind(GameTypes.ShopTab.TRAILS))
+	_settings.pressed.connect(Events.settings_requested.emit)
 	Events.glimmers_changed.connect(func(_total: int) -> void: refresh())
 	Events.sector_unlocked.connect(func(_index: int) -> void: refresh())
 	refresh()

@@ -1,0 +1,231 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/settings_screen.gd" id="1_settings"]
+[ext_resource type="Script" path="res://scripts/components/neon_label.gd" id="3_neon_label"]
+[ext_resource type="Script" path="res://scripts/ui/neon_button.gd" id="4_neon_button"]
+[ext_resource type="Script" path="res://scripts/ui/neon_slider.gd" id="5_neon_slider"]
+
+[node name="SettingsScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.02, 0.05, 1)
+
+[node name="BackButton" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 150)
+offset_left = 40.0
+offset_top = 60.0
+offset_right = 190.0
+offset_bottom = 210.0
+auto_translate_mode = 2
+text = "<"
+script = ExtResource("4_neon_button")
+font_size = 72
+
+[node name="Title" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 60.0
+offset_right = 320.0
+offset_bottom = 210.0
+grow_horizontal = 2
+text = "MENU_SETTINGS"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 72
+
+[node name="Column" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -500.0
+offset_top = 300.0
+offset_right = 500.0
+offset_bottom = 1542.0
+grow_horizontal = 2
+theme_override_constants/separation = 32
+
+[node name="MusicRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="MusicLabel" type="Label" parent="Column/MusicRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_MUSIC"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="MusicSlider" type="HSlider" parent="Column/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(616, 150)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+script = ExtResource("5_neon_slider")
+
+[node name="SfxRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="SfxLabel" type="Label" parent="Column/SfxRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_SFX"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="SfxSlider" type="HSlider" parent="Column/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(616, 150)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+script = ExtResource("5_neon_slider")
+
+[node name="VibrationRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VibrationLabel" type="Label" parent="Column/VibrationRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_VIBRATION"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="VibrationButton" type="Button" parent="Column/VibrationRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(616, 150)
+layout_mode = 2
+text = "SETTINGS_ON"
+script = ExtResource("4_neon_button")
+font_size = 44
+
+[node name="LanguageRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="LanguageLabel" type="Label" parent="Column/LanguageRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_LANGUAGE"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="Choices" type="HBoxContainer" parent="Column/LanguageRow"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="TurkishButton" type="Button" parent="Column/LanguageRow/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(296, 150)
+layout_mode = 2
+auto_translate_mode = 2
+text = "TÜRKÇE"
+script = ExtResource("4_neon_button")
+font_size = 40
+
+[node name="EnglishButton" type="Button" parent="Column/LanguageRow/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(296, 150)
+layout_mode = 2
+auto_translate_mode = 2
+text = "ENGLISH"
+script = ExtResource("4_neon_button")
+font_size = 40
+
+[node name="QualityRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="QualityLabel" type="Label" parent="Column/QualityRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_QUALITY"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="Choices" type="HBoxContainer" parent="Column/QualityRow"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="LowButton" type="Button" parent="Column/QualityRow/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(189, 150)
+layout_mode = 2
+text = "QUALITY_LOW"
+script = ExtResource("4_neon_button")
+font_size = 36
+
+[node name="MediumButton" type="Button" parent="Column/QualityRow/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(189, 150)
+layout_mode = 2
+text = "QUALITY_MEDIUM"
+script = ExtResource("4_neon_button")
+font_size = 36
+
+[node name="HighButton" type="Button" parent="Column/QualityRow/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(189, 150)
+layout_mode = 2
+text = "QUALITY_HIGH"
+script = ExtResource("4_neon_button")
+font_size = 36
+
+[node name="FpsRow" type="HBoxContainer" parent="Column"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="FpsLabel" type="Label" parent="Column/FpsRow"]
+custom_minimum_size = Vector2(360, 150)
+layout_mode = 2
+text = "SETTINGS_FPS_LIMIT"
+vertical_alignment = 1
+autowrap_mode = 3
+script = ExtResource("3_neon_label")
+color = Color(0, 0.85, 1, 1)
+font_size = 44
+
+[node name="FpsButton" type="Button" parent="Column/FpsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(616, 150)
+layout_mode = 2
+text = "SETTINGS_OFF"
+script = ExtResource("4_neon_button")
+font_size = 44
+
+[node name="AboutButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1000, 150)
+layout_mode = 2
+disabled = true
+text = "SETTINGS_ABOUT"
+script = ExtResource("4_neon_button")

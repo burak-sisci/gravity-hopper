@@ -300,7 +300,7 @@
   *Kabul:* UI kabulü; ekrandaki kazanç `Progression` cüzdanına eklenenle aynı (test); "Dirilt" yalnızca hak varken görünüyor ve tur kaldığı yerden sürüyor (test); "Tekrar"dan yeni turun ilk karesine Redmi'de ≤ 400 ms.
 - [x] **M5-04** 🤖 Yükseltmeler ve izler ekranları (GDD §10, §11; mantık M4-03 / M4-08'de): kartlar mevcut seviye, sonraki etki, maliyet; alınamayan kart soluk; izlerde kuşanma ve kilit koşulu. Debug İlerleme sayfası yalnızca debug'da kalır.
   *Kabul:* UI kabulü (en uzun etki metni dahil); satın alma ve kuşanma `Progression`'daki gibi (test); cüzdan yetmezken düğme kapalı (test); iz önizleme renkleri OKLab ile mevcut iz testinden geçiyor.
-- [ ] **M5-05** 🤖 Ayarlar: müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında; başka cihazlarda gerekirse ses kaydırma (S-03). Değişiklik hemen uygulanır ve `user://settings.cfg`'ye yazılır.
+- [x] **M5-05** 🤖 Ayarlar: müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında; başka cihazlarda gerekirse ses kaydırma (S-03). Değişiklik hemen uygulanır ve `user://settings.cfg`'ye yazılır.
   *Kabul:* UI kabulü; her ayar kaydedilip yeniden açılışta geri geliyor (test); dil değişince açık ekranın bütün metinleri yeniden yazılıyor (test); ses kaydırıcısı 0'da ilgili veri yolu sessiz (ölçülür).
 - [ ] **M5-06** 🤖 Duraklatma (HUD'da sağ üst düğme) + arka plana geçince otomatik duraklatma ve kayıt; devamda 3-2-1 geri sayım, müzik vuruşa yeniden kilitlenir.
   *Kabul:* Duraklatmada fizik ve müzik duruyor, devamda müzik–vuruş farkı ≤ 1 kare (ölçülür); arka plana geçişte kayıt yazılıyor (test); duraklat düğmesi ≥ 48 dp ve oyuncuyu çevirmiyor.

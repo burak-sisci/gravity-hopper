@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/main_menu.tscn" id="3_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/results_screen.tscn" id="4_results"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop_screen.tscn" id="5_shop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/settings_screen.tscn" id="6_settings"]
 
 [node name="Main" type="Node"]
 script = ExtResource("0_main")
@@ -34,6 +35,10 @@ unique_name_in_owner = true
 visible = false
 
 [node name="ShopScreen" parent="UI" instance=ExtResource("5_shop")]
+unique_name_in_owner = true
+visible = false
+
+[node name="SettingsScreen" parent="UI" instance=ExtResource("6_settings")]
 unique_name_in_owner = true
 visible = false
 

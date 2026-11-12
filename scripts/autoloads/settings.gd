@@ -1,12 +1,21 @@
 extends Node
 ## Oyuncu ayarları: ses, müzik, titreşim, dil, efekt kalitesi, FPS sınırı.
 ##
-## user://settings.cfg dosyasında şifresiz saklanır. Açılışta okunur ve dil uygulanır.
+## user://settings.cfg dosyasında şifresiz saklanır. Açılışta okunur ve uygulanır: dil, ses yolları
+## (Music / SFX; 0'da yol susturulur), FPS sınırı. Efekt kalitesini Main uygular (settings_changed).
+## Titreşimi M5-08 okur. Ayarlar ekranı (M5-05) set_… işlevleriyle değiştirir: hemen uygulanır
+## ve yazılır.
 ## Dil seçimi: oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce.
 
 const SETTINGS_PATH: String = "user://settings.cfg"
 const SUPPORTED_LANGUAGES: Array[String] = ["tr", "en"]
 const FALLBACK_LANGUAGE: String = "en"
+const MUSIC_BUS: StringName = &"Music"
+const SFX_BUS: StringName = &"SFX"
+## FPS sınırı açıkken Engine.max_fps; kapalıyken 0 (ekranın yenileme hızı).
+const LIMITED_FPS: int = 60
+## Debug: tur başladıktan bu kadar sonra yolların tepe düzeyi günlüğe yazılır (cihazda ölçüm).
+const PEAK_LOG_DELAY: float = 2.0
 
 ## Müzik ses düzeyi (0–1).
 var music_volume: float = 0.8
@@ -20,11 +29,16 @@ var language: String = ""
 var effect_quality: GameTypes.Quality = GameTypes.Quality.HIGH
 ## Açıksa oyun 60 FPS ile sınırlanır (pil tasarrufu).
 var limit_fps_60: bool = false
+## Ayar dosyası (testler geçici dosyaya çevirir).
+var path: String = SETTINGS_PATH
 
 
 func _ready() -> void:
 	load_settings()
 	apply_language()
+	apply()
+	if OS.is_debug_build():
+		Events.run_started.connect(_on_run_started)
 
 
 ## Seçili dile, cihaz diline ve desteklenen dillere göre kullanılacak dili döndürür.
@@ -39,7 +53,7 @@ static func resolve_language(preferred: String, device_language: String) -> Stri
 ## Ayarları dosyadan okur. Dosya yoksa ya da bozuksa varsayılanlar kalır.
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(SETTINGS_PATH) != OK:
+	if cfg.load(path) != OK:
 		return
 	music_volume = clampf(float(cfg.get_value("audio", "music_volume", music_volume)), 0.0, 1.0)
 	sfx_volume = clampf(float(cfg.get_value("audio", "sfx_volume", sfx_volume)), 0.0, 1.0)
@@ -60,10 +74,45 @@ func save_settings() -> void:
 	cfg.set_value("general", "language", language)
 	cfg.set_value("video", "effect_quality", effect_quality)
 	cfg.set_value("video", "limit_fps_60", limit_fps_60)
-	var err: Error = cfg.save(SETTINGS_PATH)
+	var err: Error = cfg.save(path)
 	if err != OK:
 		push_error("Ayarlar kaydedilemedi: %s" % error_string(err))
+	_log("saved music=%.2f sfx=%.2f vibration=%s language=%s quality=%d fps60=%s" % [
+		music_volume, sfx_volume, vibration, language, effect_quality, limit_fps_60])
 	Events.settings_changed.emit()
+
+
+## Ses düzeylerini ve FPS sınırını uygular (dil apply_language'de, kalite Main'de).
+func apply() -> void:
+	_apply_bus(MUSIC_BUS, music_volume)
+	_apply_bus(SFX_BUS, sfx_volume)
+	Engine.max_fps = LIMITED_FPS if limit_fps_60 else 0
+
+
+## Müzik düzeyini değiştirir ve uygular; save yanlışsa yazmaz (kaydırıcı sürüklenirken).
+func set_music_volume(value: float, save: bool = true) -> void:
+	music_volume = clampf(value, 0.0, 1.0)
+	_changed(save)
+
+
+func set_sfx_volume(value: float, save: bool = true) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	_changed(save)
+
+
+func set_vibration(on: bool) -> void:
+	vibration = on
+	_changed(true)
+
+
+func set_effect_quality(quality: GameTypes.Quality) -> void:
+	effect_quality = quality
+	_changed(true)
+
+
+func set_limit_fps_60(on: bool) -> void:
+	limit_fps_60 = on
+	_changed(true)
 
 
 ## Kullanılacak dili belirler ve oyuna uygular.
@@ -76,3 +125,33 @@ func set_language(code: String) -> void:
 	language = code
 	apply_language()
 	save_settings()
+
+
+func _changed(save: bool) -> void:
+	apply()
+	if save:
+		save_settings()
+
+
+## Yolun düzeyi doğrusal değerden dB'ye; 0'da yol susturulur (linear_to_db(0) = -inf).
+func _apply_bus(bus_name: StringName, value: float) -> void:
+	var bus: int = AudioServer.get_bus_index(bus_name)
+	if bus < 0:
+		return
+	AudioServer.set_bus_mute(bus, value <= 0.0)
+	AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(value, 0.0001)))
+
+
+## Debug: turda yolların gerçekten çalıp çalmadığı (tepe dB; susturulan yol -200 dB'de kalır).
+func _on_run_started(_run_seed: int, _start_sector: int) -> void:
+	await get_tree().create_timer(PEAK_LOG_DELAY).timeout
+	for bus_name: StringName in [MUSIC_BUS, SFX_BUS]:
+		var bus: int = AudioServer.get_bus_index(bus_name)
+		_log("bus %s peak=%.1f dB mute=%s volume=%.1f dB" % [bus_name,
+			AudioServer.get_bus_peak_volume_left_db(bus, 0), AudioServer.is_bus_mute(bus),
+			AudioServer.get_bus_volume_db(bus)])
+
+
+func _log(line: String) -> void:
+	if OS.is_debug_build():
+		print("SETTINGS ", line)

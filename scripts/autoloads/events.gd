@@ -50,6 +50,9 @@ signal revive_declined
 signal menu_requested
 ## Mağaza ekranını aç (ana menü ve sonuç ekranı, M5-04).
 signal shop_requested(tab: GameTypes.ShopTab)
+## Ayarlar ekranını aç (ana menü; duraklatma M5-06). Ekran menünün üstünde açılır, durum
+## değişmez.
+signal settings_requested
 signal pause_requested
 signal resume_requested
 
