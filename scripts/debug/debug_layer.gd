@@ -236,6 +236,11 @@ func _connect_event_log() -> void:
 		_log_event("player_died cause=%s" % GameTypes.DeathCause.keys()[cause]))
 	Events.run_started.connect(func(run_seed: int, start_sector: int) -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
+	# Yeni turun ekrana çizilen ilk karesi (Tekrar → ilk kare ölçümü, M5-03).
+	var first_frame: Callable = _log_event.bind("run_first_frame")
+	Events.run_started.connect(func(_run_seed: int, _start_sector: int) -> void:
+		if not RenderingServer.frame_post_draw.is_connected(first_frame):
+			RenderingServer.frame_post_draw.connect(first_frame, CONNECT_ONE_SHOT))
 	Events.sector_entered.connect(func(index: int) -> void:
 		_log_event("sector_entered index=%d" % index))
 	Events.near_miss.connect(func(combo: int, multiplier: int) -> void:

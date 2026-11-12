@@ -97,7 +97,7 @@ Renk körü bir oyuncu da **yalnızca şekle bakarak** oynayabilmelidir.
   - Çöküş duvarı geri itilir (en az 20 m).
   - 2 sn dokunulmazlık verilir.
   - Müzik kaldığı yerden devam eder: ölümde oyun saati durur, diriliş tam ölünen yerden sürer.
-  - Ücretsiz diriliş İkinci Şans yükseltmesiyle gelir (M4-07). Sonuç ekranı gelene dek ölümden 0,8 sn sonra kendiliğinden olur; M5-03'te düğmeye bağlanır.
+  - Ücretsiz diriliş İkinci Şans yükseltmesiyle gelir (M4-07). Hak varken ölünce sonuç ekranı "İKİNCİ ŞANS" teklifini gösterir: **Dirilt** turu kaldığı yerden sürdürür, **Vazgeç** turu bitirir (M5-03). Teklif açıkken Tekrar ya da Menü seçilirse tur biter, kazanılan Glimmer kaybolmaz.
 
 ## 8. Puanlama
 
@@ -321,7 +321,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | Ekran | İçerik |
 | --- | --- |
 | **HUD** | Sol üst: yükseklik (m). Üst orta: sektör adı (geçişte büyür). Sağ üst: duraklat, altında Glimmer sayısı. Oyuncunun hemen altında "KIL PAYI!" yazısı ve kombo (×2 / ×3). Kenarlarda duvar vinyeti. **Neon yazılar (M3-18):** açık çekirdek, renkli kenar ve yumuşak parlama. Yükseklik, kıl payı ve sektör afişi sektörün vurgu renginde (yeni sektörde renk dalgasıyla değişir), rekor satırı rekor çizgisinin sarısında, Glimmer ve kombo Glimmer yeşilinde. Düşük kalitede parlama yok. |
-| **Sonuç** | Yükseklik, rekor durumu, kazanılan Glimmer. Büyük "Tekrar" düğmesi; "Diriliş (reklam)", "Yükseltmeler". |
+| **Sonuç** | Ölümden 0,5 sn sonra, ölü turun üstünde karartmayla belirir. Yükseklik, rekor durumu ("YENİ REKOR!" ya da "REKORA X m"), kazanılan Glimmer ve dökümü (toplanan · bonus). Büyük "Tekrar", "Yükseltmeler", "Menü". İkinci Şans hakkı varken önce teklif: "İKİNCİ ŞANS", büyük "Dirilt" ve "Vazgeç"; reklamlı diriliş M7-05'te eklenir. M5-03 |
 | **Ana menü** | Başla (sektör seçimi: açık kontrol noktaları arasında oklarla), Günlük (M7-03), Yükseltmeler, İzler, Ayarlar; sağ üstte cüzdan. Neon düğmeler (koyu dolgu, renkli kenar, yumuşak parlama). M5-02 |
 | **Yükseltmeler / İzler** | Kartlar: mevcut seviye, sonraki etki, maliyet |
 | **Ayarlar** | Müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında (lisanslar) |
