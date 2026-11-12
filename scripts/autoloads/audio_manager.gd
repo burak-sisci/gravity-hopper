@@ -392,8 +392,16 @@ func _on_pause_changed(paused: bool) -> void:
 	if paused:
 		_music.stop()
 		_clock_playing = false
+		if OS.is_debug_build():
+			# Telefonda ölçü: duraklamadan biraz sonra müzik yolu gerçekten sessiz mi.
+			get_tree().create_timer(SETTLE_TIME, true).timeout.connect(_log_paused_peak)
 	else:
 		_resume_pending = true
+
+
+func _log_paused_peak() -> void:
+	print("AUDIO paused music peak=%.1f dB" % AudioServer.get_bus_peak_volume_left_db(
+			_music_bus, 0))
 
 
 ## Yalnızca tur sürerken: ölümden sonra kamera sarsılırken bildirilen yakınlık gerilimi açmasın.

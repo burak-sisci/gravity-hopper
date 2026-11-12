@@ -302,7 +302,7 @@
   *Kabul:* UI kabulü (en uzun etki metni dahil); satın alma ve kuşanma `Progression`'daki gibi (test); cüzdan yetmezken düğme kapalı (test); iz önizleme renkleri OKLab ile mevcut iz testinden geçiyor.
 - [x] **M5-05** 🤖 Ayarlar: müzik, efekt, titreşim, dil, efekt kalitesi, 60 FPS sınırı, Hakkında; başka cihazlarda gerekirse ses kaydırma (S-03). Değişiklik hemen uygulanır ve `user://settings.cfg`'ye yazılır.
   *Kabul:* UI kabulü; her ayar kaydedilip yeniden açılışta geri geliyor (test); dil değişince açık ekranın bütün metinleri yeniden yazılıyor (test); ses kaydırıcısı 0'da ilgili veri yolu sessiz (ölçülür).
-- [ ] **M5-06** 🤖 Duraklatma (HUD'da sağ üst düğme) + arka plana geçince otomatik duraklatma ve kayıt; devamda 3-2-1 geri sayım, müzik vuruşa yeniden kilitlenir.
+- [x] **M5-06** 🤖 Duraklatma (HUD'da sağ üst düğme) + arka plana geçince otomatik duraklatma ve kayıt; devamda 3-2-1 geri sayım, müzik vuruşa yeniden kilitlenir.
   *Kabul:* Duraklatmada fizik ve müzik duruyor, devamda müzik–vuruş farkı ≤ 1 kare (ölçülür); arka plana geçişte kayıt yazılıyor (test); duraklat düğmesi ≥ 48 dp ve oyuncuyu çevirmiyor.
 - [ ] **M5-07** 🤖 İlk açılış deneyimi (GDD §18): menüsüz doğrudan oyun, metinsiz nabızlı "dokun" eli (`tap_hint.tscn`), ilk parça uzun boş duvar + tek diken, ilk ölümden sonra "Yükseltmeler" düğmesi parlar; FTUE bitti bayrağı kayda yazılır.
   *Kabul:* Boş kayıtla açılış menüsüz tura giriyor, bayraklı kayıtla menüye (test); ilk parça benzetimde tepki süreli botla geçiliyor; el ikonu ilk dokunuşta kayboluyor (test).

@@ -207,6 +207,36 @@ func test_settings_change_sets_neon_quality() -> void:
 	Neon.quality = GameTypes.Quality.HIGH
 
 
+## Duraklatma (M5-06): HUD düğmesi oyunu dondurur (oyuncu yerinde kalır), duraklatma ekranı açılır;
+## devam isteği turu sürdürür (oyuncu yeniden ilerler); duraklatmadan Menü turu kaldırır ve
+## sonucu QUIT nedeniyle duyurur.
+func test_pause_freezes_the_run_and_menu_ends_it() -> void:
+	await _start_main()
+	await _frames(20)
+	var player: Node2D = _current_run().get_node("%Player") as Node2D
+	var pause: Control = _main.get_node("%PauseScreen") as Control
+	Events.pause_requested.emit()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.PAUSED)
+	assert_bool(get_tree().paused).is_true()
+	assert_bool(pause.visible).is_true()
+	var frozen: Vector2 = player.global_position
+	await _frames(30)
+	assert_that(player.global_position).is_equal(frozen)
+	Events.resume_requested.emit()
+	assert_bool(get_tree().paused).is_false()
+	assert_bool(pause.visible).is_false()
+	await _frames(10)
+	assert_that(player.global_position).is_not_equal(frozen)
+	Events.pause_requested.emit()
+	Events.menu_requested.emit()
+	assert_bool(get_tree().paused).is_false()
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.MENU)
+	assert_int(_results.size()).is_equal(1)
+	assert_int(_results[0].cause).is_equal(GameTypes.DeathCause.QUIT)
+	await _frames(NO_RESTART_FRAMES)
+	assert_int(_world().get_child_count()).is_equal(0)
+
+
 ## Açılış menüden (M5-02); testler Başla ile tura girer.
 func _start_main() -> void:
 	_open_main()
