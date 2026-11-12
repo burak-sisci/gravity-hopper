@@ -90,9 +90,9 @@ func can_change_to(new_state: GameTypes.AppState) -> bool:
 
 
 ## Açılışta gidilecek durum. Main açılışta buna göre menüyü açar ya da turu başlatır.
-## Açılış ana menüden (M5-02); ilk açılış deneyimi (M5-07) ilk açılışta doğrudan tura girer.
+## Açılış ana menüden (M5-02); ilk açılış deneyimi bitmemişse (M5-07, GDD §18) doğrudan tura.
 func launch_state() -> GameTypes.AppState:
-	return GameTypes.AppState.MENU
+	return GameTypes.AppState.MENU if Progression.ftue_done else GameTypes.AppState.RUNNING
 
 
 ## Durumu duyurmadan açılışa döndürür. Yalnızca testler içindir (her test temiz başlasın).

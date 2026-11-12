@@ -252,6 +252,37 @@ func test_second_chance_loadout_follows_the_level() -> void:
 	assert_int(Progression.loadout().revives).is_equal(1)
 
 
+## İlk açılış (M5-07): boş kayıtta bayrak kapalı; ilk tur sonu first_run = true ve bayrak
+## kaydedilir; sonraki turlar first_run değil. Bayraksız ama turu olan eski kayıt ilk açılışı
+## yeniden görmez.
+func test_ftue_flag_is_set_once_and_saved() -> void:
+	assert_bool(Progression.ftue_done).is_false()
+	var first: RunResult = _result(30, 2, 1, 1)
+	Progression.finish_run(first)
+	assert_bool(first.first_run).is_true()
+	assert_bool(Progression.ftue_done).is_true()
+	assert_bool(bool(SaveManager.load_game()["ftue_done"])).is_true()
+	var second: RunResult = _result(40, 2, 1, 1)
+	Progression.finish_run(second)
+	assert_bool(second.first_run).is_false()
+	Progression.ftue_done = false
+	Progression.reload()
+	assert_bool(Progression.ftue_done).is_true()
+
+
+func test_old_save_with_runs_skips_the_ftue() -> void:
+	var data: Dictionary[String, Variant] = SaveManager.load_game()
+	data.erase("ftue_done")
+	(data["stats"] as Dictionary)["runs"] = 3
+	SaveManager.save_game(data)
+	Progression.reload()
+	assert_bool(Progression.ftue_done).is_true()
+	data["stats"]["runs"] = 0
+	SaveManager.save_game(data)
+	Progression.reload()
+	assert_bool(Progression.ftue_done).is_false()
+
+
 func _result(height_m: int, glimmers: int, start_sector: int, reached: int) -> RunResult:
 	var result: RunResult = RunResult.new()
 	result.height_m = height_m

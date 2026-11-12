@@ -4,31 +4,39 @@ extends GdUnitTestSuite
 ## Rekor (M3-14, M4-02): Progression kalıcı rekoru tutar ve kaydeder, Main yeni tura verir;
 ## tur sonu kazancı cüzdana girer. Kontrol noktası (M4-09): tur seçili sektörden başlar.
 ## Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
+## İlk açılış (M5-07): boş kayıtta menü yerine tanıtım parçasıyla başlayan tur ve "dokun" eli.
+## Öteki testler deneyimli oyuncu gibi açar (ftue_done = true).
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 ## Ölümden sonra kendiliğinden yeni tur gelmediği gözlenen süre (eski akış 0,35 sn = 21 kare).
 const NO_RESTART_FRAMES: int = 40
 ## Sahne silinmeden önce beklenen kare (sonuç ekranının tween'i, ertelenmiş çağrılar).
 const TEARDOWN_FRAMES: int = 30
+## Tanıtım parçasının kimliği (ChunkLibrary.intro'nun dosya adı).
+const INTRO_ID: String = "ftue_intro_01"
 
 var _main: Node
 var _started_seeds: Array[int] = []
 var _started_sectors: Array[int] = []
 var _results: Array[RunResult] = []
+var _placed: Array[StringName] = []
 
 
 func before_test() -> void:
 	_started_seeds.clear()
 	_started_sectors.clear()
 	_results.clear()
+	_placed.clear()
 	Progression.reset()
 	Events.run_started.connect(_on_run_started)
 	Events.run_ended.connect(_on_run_ended)
+	Events.chunk_placed.connect(_on_chunk_placed)
 
 
 func after_test() -> void:
 	Events.run_started.disconnect(_on_run_started)
 	Events.run_ended.disconnect(_on_run_ended)
+	Events.chunk_placed.disconnect(_on_chunk_placed)
 	Progression.reset()
 
 
@@ -43,6 +51,35 @@ func test_main_opens_the_menu_first() -> void:
 	Events.play_requested.emit()
 	assert_bool((_main.get_node("%MainMenu") as Control).visible).is_false()
 	assert_bool((_main.get_node("%Hud") as Control).visible).is_true()
+	await _frames(TEARDOWN_FRAMES)
+
+
+## İlk açılış (M5-07, GDD §18): boş kayıt menüyü atlar, tur tanıtım parçasıyla başlar, el görünür;
+## ilk çevirmede el söner. İlk ölümde Yükseltmeler parlar; Tekrar'da tanıtım ve el yok.
+func test_first_launch_starts_the_intro_run_with_the_tap_hint() -> void:
+	_open_main(true)
+	await _frames(5)
+	assert_int(GameManager.state).is_equal(GameTypes.AppState.RUNNING)
+	assert_int(_started_seeds.size()).is_equal(1)
+	assert_array(_placed).is_not_empty()
+	assert_str(String(_placed[0])).is_equal(INTRO_ID)
+	var hud: Hud = _main.get_node("%Hud") as Hud
+	assert_bool(hud.tap_hint_visible()).is_true()
+	Events.player_flipped.emit()
+	assert_bool(hud.tap_hint_visible()).is_false()
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	assert_bool(_results[0].first_run).is_true()
+	var results: ResultsScreen = _main.get_node("%ResultsScreen") as ResultsScreen
+	assert_bool(results.is_upgrades_highlighted()).is_true()
+	assert_bool(Progression.ftue_done).is_true()
+	_placed.clear()
+	_retry(2)
+	await _frames(5)
+	assert_bool(hud.tap_hint_visible()).is_false()
+	assert_array(_placed).not_contains([StringName(INTRO_ID)])
+	Events.player_died.emit(GameTypes.DeathCause.HAZARD)
+	assert_bool(_results[1].first_run).is_false()
+	assert_bool(results.is_upgrades_highlighted()).is_false()
 	await _frames(TEARDOWN_FRAMES)
 
 
@@ -244,8 +281,9 @@ func _start_main() -> void:
 	await _frames(5)
 
 
-func _open_main() -> void:
+func _open_main(first_launch: bool = false) -> void:
 	GameManager.reset()
+	Progression.ftue_done = not first_launch
 	_main = auto_free(MAIN_SCENE.instantiate()) as Node
 	add_child(_main)
 
@@ -263,6 +301,10 @@ func _retry(count: int) -> void:
 	Events.retry_requested.emit()
 	assert_int(_started_seeds.size()).is_equal(count)
 	await get_tree().process_frame
+
+
+func _on_chunk_placed(chunk_id: StringName, _difficulty: int, _sector: int) -> void:
+	_placed.append(chunk_id)
 
 
 func _on_run_started(run_seed: int, start_sector: int) -> void:

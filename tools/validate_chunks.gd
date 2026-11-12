@@ -19,7 +19,7 @@ func _initialize() -> void:
 		scenes.append(load(path) as PackedScene)
 	var from_library: bool = scenes.is_empty()
 	if from_library:
-		scenes = (load(LIBRARY_PATH) as ChunkLibrary).chunks
+		scenes = (load(LIBRARY_PATH) as ChunkLibrary).all_chunks()
 	var tuning: TuningConfig = load(TUNING_PATH) as TuningConfig
 	var sectors: SectorCatalog = load(SECTORS_PATH) as SectorCatalog
 	var validator: ChunkValidator = ChunkValidator.new(

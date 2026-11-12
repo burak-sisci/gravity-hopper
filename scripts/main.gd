@@ -26,7 +26,7 @@ var _start_sector: int
 @onready var _world: Node2D = %World
 @onready var _chunk_pools: ChunkPools = %ChunkPools
 @onready var _debug: CanvasLayer = %Debug
-@onready var _hud: Control = %Hud
+@onready var _hud: Hud = %Hud
 @onready var _menu: MainMenu = %MainMenu
 @onready var _results: ResultsScreen = %ResultsScreen
 @onready var _shop: ShopScreen = %ShopScreen
@@ -62,10 +62,15 @@ func _start_run() -> void:
 	var loadout: RunLoadout = Progression.loadout()
 	_run.loadout = loadout
 	_run.chunk_pools = _chunk_pools
+	# İlk açılış turu (M5-07): ilk parça tanıtım parçası, ekranda "dokun" eli.
+	var first_run: bool = not Progression.ftue_done
+	_run.ftue = first_run
 	_world.add_child(_run)
 	# Run, katalog dışı sektörü sınırlar; duyurulan sektör gerçek başlangıçtır.
 	_start_sector = _run.start_sector
 	GameManager.begin_run(run_seed, _start_sector, loadout)
+	if first_run:
+		_hud.show_tap_hint()
 
 
 func _apply_quality() -> void:

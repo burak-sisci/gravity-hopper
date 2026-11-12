@@ -38,7 +38,7 @@ func test_every_chunk_fits_the_grid() -> void:
 
 func test_every_chunk_is_in_the_library() -> void:
 	var listed: PackedStringArray = PackedStringArray()
-	for scene: PackedScene in LIBRARY.chunks:
+	for scene: PackedScene in LIBRARY.all_chunks():
 		listed.append(scene.resource_path)
 	assert_array(Array(listed)).contains_exactly_in_any_order(Array(_chunk_paths()))
 

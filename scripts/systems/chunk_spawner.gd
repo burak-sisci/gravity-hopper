@@ -20,6 +20,9 @@ extends Node2D
 ## yalnızca bu düğüm çeker. Havuzlar en uzun ekrana göre kurulur; tükenmeleri seçimi değiştirmez.
 ## Her yerleştirmede Events.chunk_placed yayar (debug olay günlüğü, zorluk ölçümü).
 ##
+## İlk açılış (M5-07): use_intro açıksa turun ilk parçası kütüphanenin tanıtım parçasıdır
+## (ChunkLibrary.intro; RNG çekmez). Tanıtım parçası rastgele seçime hiç girmez.
+##
 ## Havuzlar (M3-10, ADR-054): oyunda Main'in ChunkPools'u turlar arasında korunur; tur bitince
 ## (ağaçtan çıkarken) etkin parçalar oraya döner. ChunkPools atanmamışsa (testler) havuzlar bu
 ## düğümün altında kurulur ve turla birlikte silinir.
@@ -47,6 +50,8 @@ var placed_difficulties: Array[int] = []
 var placed_targets: Array[float] = []
 ## Turlar arasında korunan havuzlar (Run atar). Atanmamışsa havuzlar bu düğümün altında kurulur.
 var shared_pools: ChunkPools = null
+## Turun ilk parçası tanıtım parçası olsun (FTUE turu; setup'tan önce verilir).
+var use_intro: bool = false
 
 var _rng: RunRng
 var _tuning: TuningConfig
@@ -66,6 +71,7 @@ var _active: Array[ChunkInfo] = []
 var _active_pools: Array[ObjectPool] = []
 var _next_bottom: float = 0.0
 var _half_width: float = 0.0
+var _intro_pool: ObjectPool = null
 
 
 ## Tur bitince etkin parçalar havuza döner; paylaşılan havuzlar sonraki tura boş geçer.
@@ -99,6 +105,12 @@ func setup(rng: RunRng, tuning: TuningConfig, sectors: SectorCatalog, start_sect
 		pool.reserve(ceili(span / info.height_px(min_beat)) + 1)
 		_pools.append(pool)
 		_ids.append(StringName(scene.resource_path.get_file().get_basename()))
+	if use_intro and library.intro != null:
+		if shared_pools == null:
+			_intro_pool = ObjectPool.new(library.intro, self)
+		else:
+			_intro_pool = shared_pools.pool_for(library.intro)
+		_intro_pool.reserve(1)
 	var beat: float = sectors.def_at(start_sector).beat_px(bpm)
 	_next_bottom = start_y - ceilf(TuningConfig.to_px(tuning.run_start_gap) / beat) * beat
 
@@ -233,6 +245,10 @@ func _place_next() -> bool:
 		return true
 	var beat: float = _sectors.def_at(_sector).beat_px(_bpm)
 	var room: float = _next_bottom - end_y
+	if _intro_pool != null and placed_names.is_empty():
+		_place(_intro_pool, StringName(library.intro.resource_path.get_file().get_basename()),
+				beat, target_difficulty())
+		return true
 	var allowed: bool = false
 	var fitting: Array[int] = []
 	for i: int in _pools.size():
@@ -257,18 +273,23 @@ func _place_next() -> bool:
 		var gap: float = (difficulty - target) / _tuning.difficulty_spread
 		weights.append(exp(-0.5 * gap * gap))
 	var index: int = candidates[_rng.weighted_index(weights)]
-	var chunk: ChunkInfo = _pools[index].acquire() as ChunkInfo
+	_place(_pools[index], _ids[index], beat, target)
+	return true
+
+
+## Parçayı havuzdan alır, sıradaki yere koyar ve kaydeder.
+func _place(pool: ObjectPool, id: StringName, beat: float, target: float) -> void:
+	var chunk: ChunkInfo = pool.acquire() as ChunkInfo
 	chunk.reset()
 	chunk.glimmer_collected.connect(glimmer_collected.emit)
 	chunk.position = Vector2(0.0, _next_bottom)
 	chunk.layout(beat, _half_width)
 	chunk.reset_physics_interpolation()
 	_active.append(chunk)
-	_active_pools.append(_pools[index])
-	placed_names.append(_ids[index])
+	_active_pools.append(pool)
+	placed_names.append(id)
 	placed_bottoms.append(_next_bottom)
 	placed_difficulties.append(chunk.difficulty)
 	placed_targets.append(target)
 	_next_bottom = chunk.top_y()
-	Events.chunk_placed.emit(_ids[index], chunk.difficulty, _sector)
-	return true
+	Events.chunk_placed.emit(id, chunk.difficulty, _sector)

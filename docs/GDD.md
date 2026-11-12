@@ -302,6 +302,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - Tehlikeler tek tek tanıtılır; ilk sektör 3–5 turda geçilebilir olmalı.
 - İlk ölümden sonra sonuç ekranı ve ilk Glimmer'lar → "Yükseltmeler" düğmesi parlar.
 - FTUE bitince (ilk tur tamamlanınca) sonraki açılışlar **ana menüden** başlar (M4 Planlama Gözden Geçirmesi; gözden geçirilecek varsayım).
+- **Uygulama (M5-07):** ilk parça 14 vuruşluk boş bir duvar, oyuncunun bulunduğu duvarda tek diken ve karşı duvarda üç Glimmer (çevirmeyi ödüllendirir). El, ekranın ortasında, alt yarıda: açık renkli, camgöbeği kenarlı; her saniye bir kez basar ve parmak ucundan bir halka yayılır. İlk çevirmede kaybolur. İlk sonuç ekranında Yükseltmeler düğmesi Glimmer yeşiline döner ve yavaşça büyüyüp küçülür. Uygulama ilk tur bitmeden kapanırsa sonraki açılış yine tanıtımla başlar.
 
 ## 19. Ses ve his
 

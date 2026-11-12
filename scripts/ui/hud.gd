@@ -1,3 +1,4 @@
+class_name Hud
 extends Control
 ## Minimal HUD (M1-10, GDD §20): sol üstte anlık yükseklik, altında oturum rekoru.
 ## Sektör afişi (M2-09): sektöre girince ya da tur bir sonraki sektörden başlayınca "SEKTÖR 2 ·
@@ -26,6 +27,8 @@ extends Control
 ## Duraklat (M5-06, GDD §20): sağ üstte 150 × 150 düğme, altında Glimmer sayacı. Dokunuşu yutar
 ## (çevirme olmaz) ve Events.pause_requested yayar; yalnızca tur sürerken (RUNNING) görünür.
 ## HUD'daki tek dokunulan öğedir; öteki her Control dokunuşu geçirir.
+## İlk açılış (M5-07, GDD §18): Main ilk turda show_tap_hint() çağırır; nabız atan el (TapHint)
+## oyuncunun ilk çevirmesinde ya da yeni turda kaybolur.
 
 ## Sayılarda görünebilecek rakamlar (önceden çizilir).
 const DIGITS: String = "0123456789"
@@ -72,6 +75,7 @@ var _combo_tween: Tween
 @onready var _near_miss_label: NeonLabel = %NearMissLabel
 @onready var _combo_label: NeonLabel = %ComboLabel
 @onready var _pause: NeonButton = %PauseButton
+@onready var _tap_hint: TapHint = %TapHint
 
 
 func _ready() -> void:
@@ -103,7 +107,17 @@ func _on_app_state_changed(state: GameTypes.AppState) -> void:
 	_pause.visible = state == GameTypes.AppState.RUNNING
 
 
+## İlk turun "dokun" eli (M5-07). Main çağırır (aşağı çağrı); ilk çevirmede kendiliğinden söner.
+func show_tap_hint() -> void:
+	_tap_hint.show_hint()
+
+
+func tap_hint_visible() -> bool:
+	return _tap_hint.visible
+
+
 func _on_run_started(_run_seed: int, start_sector: int) -> void:
+	_tap_hint.hide_hint()
 	_height_m = 0
 	_glimmers = 0
 	_vignette.modulate.a = 0.0

@@ -23,6 +23,9 @@ var highest_sector: int = 1
 ## Seçilen kontrol noktası: Main yeni turu bu sektörden başlatır (M4-09). Her zaman açık bir
 ## sektördür; yalnızca select_start_sector değiştirir.
 var start_sector: int = 1
+## İlk açılış deneyimi bitti mi (M5-07, GDD §18): ilk tur bitince açılır ve kaydedilir. Kayıtta
+## bayrak yoksa ama tur oynanmışsa (eski kayıt) bitmiş sayılır.
+var ftue_done: bool = false
 
 var _data: Dictionary[String, Variant] = {}
 ## Kaydedilmemiş değişiklik var.
@@ -52,9 +55,10 @@ func reload() -> void:
 	best_height_m = int(_data["best_height_m"])
 	highest_sector = maxi(int(_data["highest_sector"]), 1)
 	start_sector = clampi(int(_data["start_sector"]), 1, highest_sector)
+	ftue_done = bool(_data["ftue_done"]) or int((_data["stats"] as Dictionary)["runs"]) > 0
 	_dirty = false
-	_log("loaded glimmers=%d best=%d sector=%d start=%d" % [
-		glimmers, best_height_m, highest_sector, start_sector,
+	_log("loaded glimmers=%d best=%d sector=%d start=%d ftue_done=%s" % [
+		glimmers, best_height_m, highest_sector, start_sector, ftue_done,
 	])
 	announce()
 
@@ -88,6 +92,8 @@ func finish_run(result: RunResult) -> void:
 	result.boost_bonus = Earnings.boost_bonus(base, result.glimmer_boost)
 	result.earned = result.glimmers + result.sector_bonus + result.boost_bonus
 	result.new_record = result.height_m > best_height_m
+	result.first_run = not ftue_done
+	ftue_done = true
 	var stats: Dictionary = _data["stats"]
 	stats["runs"] = int(stats["runs"]) + 1
 	stats["total_height_m"] = int(stats["total_height_m"]) + result.height_m
@@ -251,6 +257,7 @@ func save() -> bool:
 	_data["best_height_m"] = best_height_m
 	_data["highest_sector"] = highest_sector
 	_data["start_sector"] = start_sector
+	_data["ftue_done"] = ftue_done
 	var ok: bool = SaveManager.save_game(_data)
 	if ok:
 		_dirty = false

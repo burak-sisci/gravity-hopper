@@ -7,11 +7,11 @@
 
   "current": {
     "milestone": "M5",
-    "task": "M5-07",
-    "task_title": "İlk açılış deneyimi (FTUE)",
+    "task": "M5-08",
+    "task_title": "Titreşim",
     "owner": "claude",
     "status": "not_started",
-    "note": "M5-06 bitti (duraklatma, ADR-092): PAUSED ağacı dondurur, arka plana geçiş duraklatır, devam 3-2-1, müzik vuruşa yeniden yerleşir, duraklatmadan Menü = QUIT (kazanç korunur). Açılış GameManager.launch_state()'ten: FTUE bayrağı (kayıtta ftue_done) burada okunacak."
+    "note": "M5-07 bitti (ilk açılış, ADR-093): boş kayıt menüsüz tanıtım turuna girer (ChunkLibrary.intro), kodla çizilen dokun eli ilk çevirmede söner, ilk sonuçta Yükseltmeler parlar, ftue_done kayda yazılır. Elle yazılan .tscn'lerde Control düğümlerine layout_mode yaz (Redmi'de anchor kaybı)."
   },
 
   "session": {
@@ -70,6 +70,13 @@
       "added": "2026-11-08",
       "reason": "Teknik not: tests/ui/hud_test.gd tek başına çalıştırılınca 5 zamanlama hatası veriyor (afiş süresi 1,42 / 1,67 sn > 1,3; M4-14'ten önce de aynı). Tam kontrolde geçiyor.",
       "resume": "İlk karelerdeki gecikmeye (gölgelendirici derleme) bağlı görünüyor; testler kare sayısı yerine zamanla ölçecek ya da ısınma karesi bekleyecek biçimde sağlamlaştırılır. Acil değil."
+    },
+    {
+      "task": "M5-07",
+      "owner": "user",
+      "added": "2026-11-12",
+      "reason": "Gözden geçir (varsayım): tanıtım parçası 14 vuruş boş duvar + oyuncunun duvarında tek diken + karşı duvarda 3 Glimmer; dokunmayan oyuncu 7,6 sn sonra 89 m'de ölür. El ekranın ortasında, alt yarıda; Yükseltmeler vurgusu yeşil kenar + 1,06 ölçek nabız.",
+      "resume": "Kullanıcı ilk açılışı oyuncu gözüyle denesin (kayıt silinerek): el anlaşılıyor mu, ilk diken çok mu geç / erken?"
     }
   ],
 
@@ -183,7 +190,8 @@
     "M5-03",
     "M5-04",
     "M5-05",
-    "M5-06"
+    "M5-06",
+    "M5-07"
   ],
 
   "blockers": [],
@@ -286,10 +294,10 @@
 
   "last_session": {
     "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12, ikinci). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220).",
+    "summary": "Otonom mesai (2026-11-12, ikinci). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi.",
     "next_steps": [
-      "M5-07 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
-      "standard_queue: M5-06 (devam kayması varsayımı), M5-04 (alınan iz hemen kuşanılır) ve M5 akış varsayımını kullanıcıyla gözden geçir."
+      "M5-08 … M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
+      "standard_queue: M5-07 (ilk açılış hissi), M5-06 (devam kayması varsayımı), M5-04 (alınan iz hemen kuşanılır) ve M5 akış varsayımını kullanıcıyla gözden geçir."
     ]
   }
 }

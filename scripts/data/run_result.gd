@@ -30,3 +30,6 @@ var earned: int = 0
 var new_record: bool = false
 ## Bu turdan sonraki kalıcı rekor (m); sonuç ekranının "rekora X m" satırı için.
 var best_height_m: int = 0
+## İlk açılış deneyiminin turu muydu (M5-07; Progression yazar). Sonuç ekranı Yükseltmeler
+## düğmesini parlatır.
+var first_run: bool = false

@@ -8,15 +8,24 @@ extends Control
 ## Dünyaya erişmez; düğmeler niyet yayar. Main, durum RESULTS olunca open() çağırır. İçerik ölüm
 ## donması ve patlaması görünsün diye SHOW_DELAY sonra belirir; o ana dek dokunuş almaz.
 ## Yükseltmeler mağazayı Yükseltmeler sekmesiyle açar (Events.shop_requested, M5-04).
+## İlk açılış (M5-07, GDD §18): ilk turun sonunda (RunResult.first_run) Yükseltmeler düğmesi Glimmer
+## yeşiliyle parlar ve nabız gibi büyüyüp küçülür: oyuncu harcayacağı yeri bulsun.
 
 ## Ölümden içeriğin belirmesine kadar (ölüm donması 0,1 sn + patlama).
 const SHOW_DELAY: float = 0.5
 const FADE_TIME: float = 0.2
+## İlk turda Yükseltmeler düğmesinin vurgu rengi (Glimmer yeşili, NeonStyle.glimmer_color) ve
+## nabzı: en büyük ölçek, yarım nabız süresi (sn).
+const HIGHLIGHT_ACCENT: Color = Color(0.35, 1.0, 0.5)
+const HIGHLIGHT_SCALE: float = 1.06
+const HIGHLIGHT_HALF_SEC: float = 0.5
 
 var _result: RunResult
 var _offering: bool = false
 var _offer_height: int = 0
 var _tween: Tween
+var _highlight_tween: Tween
+var _upgrades_accent: Color
 
 @onready var _content: Control = %Content
 @onready var _height: NeonLabel = %HeightLabel
@@ -38,6 +47,7 @@ func _ready() -> void:
 	_upgrades.pressed.connect(Events.shop_requested.emit.bind(GameTypes.ShopTab.UPGRADES))
 	Events.run_ended.connect(_on_run_ended)
 	Events.revive_offered.connect(_on_revive_offered)
+	_upgrades_accent = _upgrades.accent
 
 
 func _notification(what: int) -> void:
@@ -66,6 +76,11 @@ func show_now() -> void:
 	_content.modulate.a = 1.0
 
 
+## Yükseltmeler düğmesi ilk tur vurgusunda mı.
+func is_upgrades_highlighted() -> bool:
+	return _highlight_tween != null and _highlight_tween.is_valid()
+
+
 ## Diriliş teklifi kipinde mi.
 func is_offering() -> bool:
 	return _offering
@@ -74,7 +89,24 @@ func is_offering() -> bool:
 func _on_run_ended(result: RunResult) -> void:
 	_result = result
 	_offering = false
+	_set_highlight(result.first_run)
 	_refresh()
+
+
+func _set_highlight(on: bool) -> void:
+	if _highlight_tween != null:
+		_highlight_tween.kill()
+		_highlight_tween = null
+	_upgrades.scale = Vector2.ONE
+	_upgrades.accent = HIGHLIGHT_ACCENT if on else _upgrades_accent
+	if not on:
+		return
+	_upgrades.pivot_offset = _upgrades.custom_minimum_size * 0.5
+	_highlight_tween = create_tween().set_loops().set_ignore_time_scale()
+	_highlight_tween.set_trans(Tween.TRANS_SINE)
+	_highlight_tween.tween_property(_upgrades, ^"scale", Vector2.ONE * HIGHLIGHT_SCALE,
+			HIGHLIGHT_HALF_SEC)
+	_highlight_tween.tween_property(_upgrades, ^"scale", Vector2.ONE, HIGHLIGHT_HALF_SEC)
 
 
 func _on_revive_offered(height_m: int) -> void:

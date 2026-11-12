@@ -71,6 +71,8 @@ const PROXIMITY_STEP: float = 0.01
 @export var start_sector: int = 1
 ## Rekor yüksekliği (m; Main, Progression'ın kalıcı rekorunu verir). 0 ise rekor çizgisi yok.
 @export var record_height: int = 0
+## İlk açılış deneyiminin turu (M5-07; Main verir): ilk parça tanıtım parçasıdır.
+@export var ftue: bool = false
 
 ## Turun yükseltme yükü (Main, Progression'dan verir). Boş yük yükseltmesiz turdur.
 var loadout: RunLoadout = RunLoadout.new()
@@ -162,6 +164,7 @@ func _ready() -> void:
 	_show_palette(def.palette, true)
 	_place_record()
 	_chunks.shared_pools = chunk_pools
+	_chunks.use_intro = ftue
 	_chunks.setup(rng, tuning, sectors, start_sector, _start_y, _conductor.bpm)
 	_chunks.glimmer_collected.connect(_on_glimmer_collected)
 	if loadout.magnet_m > 0.0:
