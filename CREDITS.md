@@ -25,6 +25,7 @@ Müzik parçaları özgündür (M3-21, ADR-065): Claude (Anthropic) Gravity Hopp
 | Kervan (`caravan`, 100 BPM, Orta Doğu) | `tools/music/tracks/caravan.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Tur müziği (`assets/audio/music/caravan.ogg`) |
 | Pagoda (`pagoda`, 90 BPM, Doğu Asya) | `tools/music/tracks/pagoda.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Tur müziği (`pagoda.ogg`) |
 | Kale (`castle`, 120 BPM, Orta Çağ Avrupa) | `tools/music/tracks/castle.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Tur müziği (`castle.ogg`) |
+| Liman (`harbor`, 84 BPM, menü müziği; M5-10) | `tools/music/tracks/harbor.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Menü müziği (`harbor.ogg`; tur kataloğunda değil) |
 | Versilian Community Sample Library (VCSL) | [github.com/sgossner/VCSL](https://github.com/sgossner/VCSL), commit `c1ea7bc` | Versilian Studios (Sam Gossner) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Parçalardaki darbuka, def, tef, çıngırak, zil, rüzgâr çanı, büyük davul, trampet, timpani, telli (strumstick), đàn tranh, halk arpı ve blok flüt kayıtları |
 | Versilian Studios Chamber Orchestra 2 Community Edition (VSCO 2 CE) | [github.com/sgossner/VSCO-2-CE](https://github.com/sgossner/VSCO-2-CE), commit `4403009` | Versilian Studios (Sam Gossner) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Parçalardaki flüt, obua, keman, viyola, viyolonsel, kontrbas, korno ve arp kayıtları |
 
@@ -45,6 +46,7 @@ Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar de�
 | jingles_PIZZI10.ogg (Music Jingles) | [kenney.nl/assets/music-jingles](https://kenney.nl/assets/music-jingles) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Rekor kırma (`assets/audio/sfx/record.ogg`) |
 | computerNoise_000.ogg (Sci-fi Sounds), dikişsiz döngüye çevrildi | [kenney.nl/assets/sci-fi-sounds](https://kenney.nl/assets/sci-fi-sounds) | Kenney (kenney.nl) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | Çöküş duvarı gerilim sesi (`assets/audio/sfx/tension.ogg`, M3-16) |
 | Büyük Depolama Birimi finali (M4-13): kodla üretildi, örnek ses yok | `tools/sfx_synth.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Final sesi (`assets/audio/sfx/finale.ogg`) |
+| Arayüz dokunuşu ve satın alma sesi (M5-10): kodla üretildi, örnek ses yok | `tools/sfx_synth.py` | Claude (Anthropic), Gravity Hopper için | Özgün (projenin) | Düğme ve satın alma sesleri (`ui_tap.ogg`, `purchase.ogg`) |
 
 ## Fontlar
 

@@ -1,10 +1,15 @@
 """Özgün ses efektlerini kodla üreten araç (M4-13, architecture.md §8.8, ADR-081).
 
-Kenney paketlerinde karşılığı olmayan büyük anların sesini sıfırdan sentezler; örnek ses ya da
-başkasının kaydı kullanılmaz (projenin özgün eseri). Şimdilik tek ses var:
+Kenney paketlerinde karşılığı olmayan seslerini sıfırdan sentezler; örnek ses ya da başkasının
+kaydı kullanılmaz (projenin özgün eseri):
   finale: Büyük Depolama Birimi'ne varış (Events.great_storage_reached). Alçak bir vuruş, açık
      beşlilerle (D–A) hızla yükselen arpej, yavaş açılan bir akor yüzeyi ve seyrelen pırıltılar.
      Üçlü yoktur: majör/minör renk vermez, D Hicaz ve D Dorian parçalarıyla çakışmaz.
+  ui_tap (M5-10): arayüz düğmesine dokunuş. Kısa, yumuşak bir "tık": 1,6 kHz'lik iki kısmi ses
+     (cam gibi), 35 ms'de söner; başta 2 ms'lik hafif bir gürültü saldırısı. Menüde sık çalar,
+     müziğin altında kalır.
+  purchase (M5-10): satın alma. Menü parçasının D majöründe yükselen üç nota (D6, F#6, A6;
+     70 ms arayla), çan gibi parlak kısmi seslerle; 0,7 sn'de söner.
 
 Her ses:
   1. assets/audio/sfx/<olay>.ogg olarak yazılır (OGG Vorbis; dosyanın tepesi FILE_PEAK_DB).
@@ -94,10 +99,40 @@ def finale() -> np.ndarray:
     return out * 10 ** (FILE_PEAK_DB / 20) / float(np.max(np.abs(out)))
 
 
+def ui_tap() -> np.ndarray:
+    length = 0.09
+    t = np.arange(int(length * SR)) / SR
+    rng = np.random.default_rng(SEED + 1)
+    body = (np.sin(2 * math.pi * 1600 * t) + 0.45 * np.sin(2 * math.pi * 3150 * t)
+            + 0.2 * np.sin(2 * math.pi * 820 * t)) * envelope(t, 0.001, 0.018)
+    attack = int(0.002 * SR)
+    body[:attack] += rng.standard_normal(attack) * np.linspace(1, 0, attack) * 0.35
+    fade = int(0.01 * SR)
+    body[-fade:] *= np.linspace(1, 0, fade)
+    return body * 10 ** (FILE_PEAK_DB / 20) / float(np.max(np.abs(body)))
+
+
+def purchase() -> np.ndarray:
+    length = 0.9
+    out = np.zeros(int(length * SR))
+    t = np.arange(int(0.75 * SR)) / SR
+    for i, freq in enumerate((1174.66, 1479.98, 1760.0)):
+        bell = (tone(freq, t, 3, 1.4, 4) + 0.3 * np.sin(2 * math.pi * freq * 2.76 * t)
+                * np.exp(-t / 0.06))
+        place(out, i * 0.07, bell * envelope(t, 0.002, 0.22 + 0.05 * i) * (0.8 + 0.1 * i))
+    fade = int(0.1 * SR)
+    out[-fade:] *= np.cos(np.linspace(0, math.pi / 2, fade))
+    return out * 10 ** (FILE_PEAK_DB / 20) / float(np.max(np.abs(out)))
+
+
 # Sıra GameTypes.Sfx ile aynı: sfx_prep.SOUNDS'tan sonra gelir.
 SYNTH = [
     {"id": "finale", "render": finale, "tier": "moment", "jitter": 0.0,
      "title": "Büyük Depolama Birimi finali"},
+    {"id": "ui_tap", "render": ui_tap, "tier": "frequent", "jitter": 0.03,
+     "title": "Arayüz dokunuşu"},
+    {"id": "purchase", "render": purchase, "tier": "reward", "jitter": 0.0,
+     "title": "Satın alma"},
 ]
 
 

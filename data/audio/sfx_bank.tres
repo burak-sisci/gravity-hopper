@@ -12,6 +12,8 @@
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/sector.ogg" id="10_sector"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/record.ogg" id="11_record"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/finale.ogg" id="12_finale"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/ui_tap.ogg" id="13_ui_tap"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/purchase.ogg" id="14_purchase"]
 
 [sub_resource type="Resource" id="Resource_flip"]
 script = ExtResource("2_sound")
@@ -123,7 +125,29 @@ author = "Claude (Anthropic), Gravity Hopper için"
 license = "Özgün (projenin)"
 source_url = "tools/sfx_synth.py"
 
+[sub_resource type="Resource" id="Resource_ui_tap"]
+script = ExtResource("2_sound")
+event = 10
+stream = ExtResource("13_ui_tap")
+volume_db = -10.1
+pitch_jitter = 0.03
+title = "Arayüz dokunuşu"
+author = "Claude (Anthropic), Gravity Hopper için"
+license = "Özgün (projenin)"
+source_url = "tools/sfx_synth.py"
+
+[sub_resource type="Resource" id="Resource_purchase"]
+script = ExtResource("2_sound")
+event = 11
+stream = ExtResource("14_purchase")
+volume_db = -7.7
+pitch_jitter = 0.00
+title = "Satın alma"
+author = "Claude (Anthropic), Gravity Hopper için"
+license = "Özgün (projenin)"
+source_url = "tools/sfx_synth.py"
+
 [resource]
 script = ExtResource("1_bank")
 voices = 8
-sounds = Array[ExtResource("2_sound")]([SubResource("Resource_flip"), SubResource("Resource_land"), SubResource("Resource_glimmer"), SubResource("Resource_near_miss"), SubResource("Resource_combo_up"), SubResource("Resource_shield_break"), SubResource("Resource_death"), SubResource("Resource_sector"), SubResource("Resource_record"), SubResource("Resource_finale")])
+sounds = Array[ExtResource("2_sound")]([SubResource("Resource_flip"), SubResource("Resource_land"), SubResource("Resource_glimmer"), SubResource("Resource_near_miss"), SubResource("Resource_combo_up"), SubResource("Resource_shield_break"), SubResource("Resource_death"), SubResource("Resource_sector"), SubResource("Resource_record"), SubResource("Resource_finale"), SubResource("Resource_ui_tap"), SubResource("Resource_purchase")])

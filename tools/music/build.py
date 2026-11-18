@@ -9,10 +9,14 @@ data/music/music_catalog.tres.
   - Ses düzeyi dosyaya işlenmez, volume_db alanına yazılır: parçanın telefon bandındaki
     (250 Hz üstü) ortanca kısa süreli düzeyi, efektlerin dengelendiği müzik düzeyine
     (MUSIC_REFERENCE_DB, M3-15) çekilir. Böylece efekt dengesi değişmez.
+  - Menü parçası (MENU_TRACKS, M5-10) tur kataloğuna girmez; data/music/<id>.tres olarak yazılır.
+    Ses düzeyi tümleşik ses yüksekliğiyle (LUFS, tools/loudness.py) tur parçalarının oyunda
+    çalan ortalamasına çekilir (kabul: ±1 LU; tools/audio_check.py denetler).
 
 Kullanım (proje dışındaki geliştirme ortamı; numpy 2.5.4, soundfile 0.14.0):
   python -I tools/music/build.py                      bütün parçalar
   python -I tools/music/build.py caravan              tek parça
+  python -I tools/music/build.py harbor               menü parçası
   python -I tools/music/build.py caravan --preview x.wav [--from 30 --to 60]
                                                       yalnızca dinleme dosyası (oyuna yazmaz)
 Kayıtlar ilk çalıştırmada indirilir (~1 GB, %LOCALAPPDATA%/gravity-hopper/music_src).
@@ -35,10 +39,12 @@ import numpy as np  # noqa: E402
 import soundfile as sf  # noqa: E402
 
 import engine  # noqa: E402
+import loudness  # noqa: E402
 import sfx_prep  # noqa: E402
 from engine import Event  # noqa: E402
 
 TRACKS = ["caravan", "pagoda", "castle"]
+MENU_TRACKS = ["harbor"]
 AUDIO_DIR = ROOT / "assets" / "audio" / "music"
 DATA_DIR = ROOT / "data" / "music"
 AUTHOR = "Claude (Anthropic), Gravity Hopper için"
@@ -142,11 +148,30 @@ def write_catalog(ids: list[str]) -> None:
                                                  newline="\n")
 
 
+def played_lufs(track_id: str) -> float:
+    """Parçanın oyunda çalan tümleşik ses yüksekliği: dosya + volume_db."""
+    x, sr = sf.read(str(AUDIO_DIR / f"{track_id}.ogg"), always_2d=True)
+    text = (DATA_DIR / f"{track_id}.tres").read_text(encoding="utf-8")
+    volume = float(text.split("volume_db = ")[1].splitlines()[0])
+    return loudness.integrated_lufs(x, sr) + volume
+
+
+def menu_volume_db(path: Path) -> float:
+    """Menü parçasını tur parçalarının çalan ortalama ses yüksekliğine çeker (kodlanmış dosyadan)."""
+    target = float(np.mean([played_lufs(t) for t in TRACKS]))
+    x, sr = sf.read(str(path), always_2d=True)
+    level = loudness.integrated_lufs(x, sr)
+    volume_db = round(max(MIN_VOLUME_DB, min(MAX_VOLUME_DB, target - level)), 1)
+    print(f"  menü: dosya {level:.2f} LUFS, hedef {target:.2f} → volume_db {volume_db:+.1f}, "
+          f"gerçek tepe {loudness.true_peak_db(x) + volume_db:.2f} dBTP")
+    return volume_db
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
-    parser.add_argument("ids", nargs="*", default=TRACKS)
+    parser.add_argument("ids", nargs="*", default=TRACKS + MENU_TRACKS)
     parser.add_argument("--preview")
     parser.add_argument("--from", dest="start", type=float, default=0.0)
     parser.add_argument("--to", dest="end", type=float, default=0.0)
@@ -173,6 +198,8 @@ def main() -> None:
                      engine.SR)
             continue
         write_ogg(AUDIO_DIR / f"{track_id}.ogg", x)
+        if track_id in MENU_TRACKS:
+            volume_db = menu_volume_db(AUDIO_DIR / f"{track_id}.ogg")
         write_track_resource(dict(id=track_id, bpm=track.BPM, volume_db=volume_db,
                                   title=track.TITLE))
     if not args.preview:

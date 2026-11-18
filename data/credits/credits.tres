@@ -31,6 +31,13 @@ title = "CREDITS_CASTLE"
 author = "Claude (Anthropic)"
 license = "ABOUT_ORIGINAL"
 
+[sub_resource type="Resource" id="Entry_18"]
+script = ExtResource("2_entry")
+credits_row = "Liman (`harbor`, 84 BPM, menü müziği; M5-10)"
+title = "CREDITS_HARBOR"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
 [sub_resource type="Resource" id="Entry_04"]
 script = ExtResource("2_entry")
 credits_row = "Versilian Community Sample Library (VCSL)"
@@ -122,6 +129,13 @@ title = "CREDITS_FINALE"
 author = "Claude (Anthropic)"
 license = "ABOUT_ORIGINAL"
 
+[sub_resource type="Resource" id="Entry_19"]
+script = ExtResource("2_entry")
+credits_row = "Arayüz dokunuşu ve satın alma sesi (M5-10): kodla üretildi, örnek ses yok"
+title = "CREDITS_UI_SOUNDS"
+author = "Claude (Anthropic)"
+license = "ABOUT_ORIGINAL"
+
 [sub_resource type="Resource" id="Entry_17"]
 script = ExtResource("2_entry")
 credits_row = "Exo 2, Version 2.010 (`Exo2[wght].ttf`, değişken ağırlık; google/fonts `ofl/exo2`, blob `9cb2018`, 2026-10-15'te indirildi, değiştirilmedi). Copyright 2013 The Exo 2 Project Authors"
@@ -131,4 +145,4 @@ license = "SIL OFL 1.1"
 
 [resource]
 script = ExtResource("1_catalog")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_00"), SubResource("Entry_01"), SubResource("Entry_02"), SubResource("Entry_03"), SubResource("Entry_04"), SubResource("Entry_05"), SubResource("Entry_06"), SubResource("Entry_07"), SubResource("Entry_08"), SubResource("Entry_09"), SubResource("Entry_10"), SubResource("Entry_11"), SubResource("Entry_12"), SubResource("Entry_13"), SubResource("Entry_14"), SubResource("Entry_15"), SubResource("Entry_16"), SubResource("Entry_17")])
+entries = Array[ExtResource("2_entry")]([SubResource("Entry_00"), SubResource("Entry_01"), SubResource("Entry_02"), SubResource("Entry_03"), SubResource("Entry_18"), SubResource("Entry_04"), SubResource("Entry_05"), SubResource("Entry_06"), SubResource("Entry_07"), SubResource("Entry_08"), SubResource("Entry_09"), SubResource("Entry_10"), SubResource("Entry_11"), SubResource("Entry_12"), SubResource("Entry_13"), SubResource("Entry_14"), SubResource("Entry_15"), SubResource("Entry_16"), SubResource("Entry_19"), SubResource("Entry_17")])

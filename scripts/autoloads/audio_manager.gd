@@ -32,6 +32,18 @@ extends Node
 ## (işlemci harcanmaz). Tur başında ve ölümde hemen sıfırlanır; ölümden sonraki yakınlık yok
 ## sayılır.
 ##
+## Menü müziği (M5-10, ADR-096): menüde ve mağazada menü parçası (Liman; tur kataloğunda değil)
+## kendi çalarında, Music yolunda çalar; menüye dönünce MENU_FADE_IN_SEC'de açılır. Sonuç ekranı
+## sessizdir. Tur başlayınca boşluk ve çakışma olmasın diye geçiş tur parçasının ilk çaldığı anda
+## başlar (o ana dek menü parçası sürer): CROSSFADE_SEC boyunca menü parçası kosinüsle söner, tur
+## parçası sinüsle açılır; genliklerin kareleri toplamı (toplam güç) hep 1'dir (eşit güçlü geçiş).
+## Menü müziği yoksa (yeniden dene, ilk açılış turu) tur parçası doğrudan tam düzeyde başlar.
+## Geçişler gerçek zamanla ilerler (Engine.time_scale'den bağımsız), ama bir karede en çok
+## MAX_FADE_STEP_SEC kadar: Redmi'de tur başındaki ≈ 400 ms'lik takılmadan sonraki ilk karede geçiş
+## bitmiş oluyordu (yumuşak geçiş yerine ani kesme). Takılmada menü parçası sürer, geçiş sonra akar.
+## Arayüz sesleri (UI_TAP, PURCHASE) ayrı, duraklatmada da çalan çalarlardadır: duraklatma
+## ekranındaki dokunuş ağaç durunca bekleyip devamda çalmasın.
+##
 ## Ölçüm karıştırma tamponu kadar titrer (Android'de onlarca ms). Bu yüzden kayma son karelerin
 ## ortalamasıyla ölçülür ve sınır aşılırsa ölçüde en fazla bir kez yeniden konumlanır. Her karede
 ## seek (durdur + çal) yapmak Android'de ses iş parçacığını çökertti (M2-07). Gerçek kayma örneği:
@@ -54,11 +66,31 @@ const TENSION_MIX: TensionMix = preload("res://data/audio/tension_mix.tres")
 ## Duyulan yakınlık hedefe bu kadar yaklaşınca ona eşitlenir (0'a inebilsin).
 const TENSION_SNAP: float = 0.001
 const USEC_PER_SEC: float = 1000000.0
+const MENU_TRACK: MusicTrack = preload("res://data/music/harbor.tres")
+## Menü → tur geçişi (sn, gerçek zaman). Kısa tutulur: tur parçasının ilk vuruşu sinüsle açılır.
+const CROSSFADE_SEC: float = 0.25
+## Menüye dönünce menü parçasının açılma süresi (sn).
+const MENU_FADE_IN_SEC: float = 1.5
+## Menüden çıkılıp tur başlamadığında (ör. sonuç ekranı) menü parçasının sönme süresi (sn).
+const MENU_FADE_OUT_SEC: float = 0.5
+## Sessiz sayılan genlik (-80 dB): volume_db'ye -inf yazılmasın.
+const SILENT_AMP: float = 0.0001
+## Geçişin bir karede ilerleyebileceği en uzun süre (sn): takılmada bile ≥ 8 adım.
+const MAX_FADE_STEP_SEC: float = 1.0 / 30.0
+## Menü parçasının çaldığı durumlar.
+const MENU_MUSIC_STATES: Array[GameTypes.AppState] = [
+	GameTypes.AppState.MENU, GameTypes.AppState.SHOP,
+]
+## Duraklatmada da çalan arayüz sesleri ve çalar sayıları.
+const UI_SFX: Array[GameTypes.Sfx] = [GameTypes.Sfx.UI_TAP, GameTypes.Sfx.PURCHASE]
+const UI_VOICES: int = 2
 
 ## Olay → ses eşlemesi (testler değiştirebilir). Çalar sayısı açılışta bundan kurulur.
 var sfx_bank: SfxBank = SFX_BANK
 ## Gerilim karışımı (testler değiştirebilir).
 var tension_mix: TensionMix = TENSION_MIX
+## Menü parçası (testler değiştirebilir).
+var menu_track: MusicTrack = MENU_TRACK
 
 var _music: AudioStreamPlayer
 ## Çalan parça (tur başında sıfırlanır; ilk sync_beat_clock kurar).
@@ -99,6 +131,18 @@ var _lowpass_index: int = -1
 ## Duvarın bildirilen yakınlığı ve sesin ona yetişen değeri.
 var _wall_proximity: float = 0.0
 var _heard_proximity: float = 0.0
+var _menu: AudioStreamPlayer
+## Menü parçası çalıyor mu (play()'den hemen sonra `playing` hâlâ false olabilir).
+var _menu_on: bool = false
+## Süren geçişler (from, to, last, elapsed, length; boşsa geçiş yok) ve o anki genlikler (0–1).
+var _menu_fade: Dictionary[StringName, float] = {}
+var _run_fade: Dictionary[StringName, float] = {}
+var _menu_amp: float = 0.0
+var _run_amp: float = 1.0
+## Tur başladı, menü parçası çalıyor: tur parçası ilk çaldığında geçiş başlar.
+var _crossfade_pending: bool = false
+var _ui_voices: Array[AudioStreamPlayer] = []
+var _ui_next: int = 0
 
 
 func _ready() -> void:
@@ -114,6 +158,15 @@ func _ready() -> void:
 	_tension = AudioStreamPlayer.new()
 	_tension.bus = SFX_BUS
 	add_child(_tension)
+	_menu = AudioStreamPlayer.new()
+	_menu.bus = MUSIC_BUS
+	add_child(_menu)
+	for i: int in UI_VOICES:
+		var ui_voice := AudioStreamPlayer.new()
+		ui_voice.bus = SFX_BUS
+		ui_voice.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(ui_voice)
+		_ui_voices.append(ui_voice)
 	_find_lowpass()
 	Events.run_started.connect(_on_run_started)
 	Events.player_died.connect(_on_player_died)
@@ -129,10 +182,13 @@ func _ready() -> void:
 	Events.record_broken.connect(play_sfx.bind(GameTypes.Sfx.RECORD))
 	Events.great_storage_reached.connect(_on_great_storage_reached)
 	Events.wall_proximity_changed.connect(_on_wall_proximity_changed)
+	Events.app_state_changed.connect(_on_app_state_changed)
+	Events.item_purchased.connect(func(_cost: int) -> void: play_sfx(GameTypes.Sfx.PURCHASE))
 
 
 ## Gerilim karışımı duvarın yakınlığına yumuşakça yetişir (yalnızca ses).
 func _process(delta: float) -> void:
+	_update_fades()
 	if _heard_proximity == _wall_proximity:
 		return
 	var smoothing: float = tension_mix.smoothing
@@ -164,6 +220,16 @@ func play_sfx(event: GameTypes.Sfx) -> void:
 	var sound: SfxSound = sfx_bank.sound_for(event) if sfx_bank != null else null
 	if sound == null or sound.stream == null or _voices.is_empty():
 		return
+	_sfx_counts[event] = _sfx_counts.get(event, 0) + 1
+	_last_sfx = sound
+	if event in UI_SFX:
+		var ui_voice: AudioStreamPlayer = _ui_voices[_ui_next]
+		_ui_next = (_ui_next + 1) % _ui_voices.size()
+		ui_voice.stream = sound.stream
+		ui_voice.volume_db = sound.volume_db
+		ui_voice.pitch_scale = 1.0 + randf_range(-sound.pitch_jitter, sound.pitch_jitter)
+		ui_voice.play()
+		return
 	var now: float = Time.get_ticks_usec() / USEC_PER_SEC
 	var index: int = _free_voice(now)
 	var voice: AudioStreamPlayer = _voices[index]
@@ -173,8 +239,6 @@ func play_sfx(event: GameTypes.Sfx) -> void:
 	voice.pitch_scale = 1.0 + randf_range(-sound.pitch_jitter, sound.pitch_jitter)
 	voice.play()
 	_voice_ends[index] = now + sound.duration(voice.pitch_scale)
-	_last_sfx = sound
-	_sfx_counts[event] = _sfx_counts.get(event, 0) + 1
 
 
 ## Son çalınan efekt (testler ve debug).
@@ -185,6 +249,43 @@ func last_sfx() -> SfxSound:
 ## Olayın sesinin oyun açıldığından beri kaç kez çaldığı (testler ve debug).
 func sfx_count(event: GameTypes.Sfx) -> int:
 	return _sfx_counts.get(event, 0)
+
+
+## Eşit güçlü geçişin genliği: `from`'dan `to`'ya, ilerleme 0–1. Açılış sinüs, sönüş kosinüs
+## çeyreğidir; aynı anda biri açılıp öbürü sönerken genliklerin kareleri toplamı sabittir.
+func fade_amp(from: float, to: float, progress: float) -> float:
+	if progress >= 1.0:
+		return to
+	var angle: float = maxf(progress, 0.0) * PI * 0.5
+	if to >= from:
+		return from + (to - from) * sin(angle)
+	return to + (from - to) * cos(angle)
+
+
+## Menü parçasının çaları (testler ve debug).
+func menu_player() -> AudioStreamPlayer:
+	return _menu
+
+
+## Menü (x) ve tur (y) parçasının o anki geçiş genliği (0–1; testler ve debug). Menü parçası
+## çalmıyorsa x 0'dır.
+func music_amps() -> Vector2:
+	return Vector2(_menu_amp if _menu_on else 0.0, _run_amp)
+
+
+## Bir geçiş sürüyor ya da bekliyor mu (testler).
+func fading() -> bool:
+	return _crossfade_pending or not _menu_fade.is_empty() or not _run_fade.is_empty()
+
+
+## Süren geçişleri hemen bitirir (testler).
+func finish_fades() -> void:
+	_update_fades(INF)
+
+
+## Arayüz seslerinin çalarları (testler).
+func ui_voices() -> Array[AudioStreamPlayer]:
+	return _ui_voices
 
 
 ## Efekt havuzundaki çalarlar (testler).
@@ -305,7 +406,7 @@ func _set_track(track: MusicTrack) -> void:
 		ogg.loop = true
 		ogg.loop_offset = track.loop_start
 	_music.stream = track.stream
-	_music.volume_db = track.volume_db
+	_apply_run_volume()
 	_clock_playing = false
 	if OS.is_debug_build():
 		print("AUDIO music=%s bpm=%s loop_start=%.2f length=%.2f" % [
@@ -318,6 +419,13 @@ func _place(beat_time: float) -> void:
 	var latency: float = AudioServer.get_output_latency() * Engine.time_scale
 	_music.play(_track.position_at(beat_time + latency))
 	_clock_playing = true
+	if _crossfade_pending:
+		# Tur parçası şimdi başlıyor: menü parçası tam bu anda sönmeye başlar (boşluk yok).
+		_crossfade_pending = false
+		_start_fade(_menu_fade, _menu_amp, 0.0, CROSSFADE_SEC)
+		_start_fade(_run_fade, 0.0, 1.0, CROSSFADE_SEC)
+		if OS.is_debug_build():
+			print("AUDIO crossfade start menu_amp=%.2f" % _menu_amp)
 	_placed_at = beat_time
 	_drift_samples.clear()
 
@@ -365,6 +473,9 @@ func _on_run_started(_run_seed: int, _start_sector: int) -> void:
 	_multiplier = 1
 	_music.stop()
 	_reset_tension()
+	_run_fade.clear()
+	_crossfade_pending = _menu_on
+	_run_amp = 0.0 if _crossfade_pending else 1.0
 	if OS.is_debug_build():
 		print("AUDIO output_latency=%d ms mix_rate=%d" % [
 			roundi(AudioServer.get_output_latency() * 1000.0), roundi(AudioServer.get_mix_rate()),
@@ -375,6 +486,11 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 	_clock_active = false
 	_clock_playing = false
 	_music.stop()
+	_run_fade.clear()
+	_run_amp = 1.0
+	if _crossfade_pending:
+		_crossfade_pending = false
+		_start_fade(_menu_fade, _menu_amp, 0.0, MENU_FADE_OUT_SEC)
 	_reset_tension()
 	play_sfx(GameTypes.Sfx.DEATH)
 
@@ -383,6 +499,81 @@ func _on_player_died(_cause: GameTypes.DeathCause) -> void:
 func _on_player_revived() -> void:
 	_clock_active = true
 	_clock_playing = false
+
+
+## Menü ve mağazada menü parçası açılır (çalıyorsa sürer); tur dışındaki öbür durumlarda söner.
+## Tur başlarken söndürmez: geçişi tur parçasının ilk çaldığı an başlatır (_place).
+func _on_app_state_changed(state: GameTypes.AppState) -> void:
+	if state in MENU_MUSIC_STATES:
+		if not _menu_on:
+			_menu.stream = menu_track.stream
+			var ogg: AudioStreamOggVorbis = menu_track.stream as AudioStreamOggVorbis
+			if ogg != null:
+				ogg.loop = true
+				ogg.loop_offset = menu_track.loop_start
+			_menu_amp = 0.0
+			_apply_menu_volume()
+			_menu.play()
+			_menu_on = true
+			if OS.is_debug_build():
+				print("AUDIO menu music start")
+		_crossfade_pending = false
+		if _menu_amp < 1.0 or not _menu_fade.is_empty():
+			_start_fade(_menu_fade, _menu_amp, 1.0, MENU_FADE_IN_SEC * (1.0 - _menu_amp))
+	elif state != GameTypes.AppState.RUNNING and _menu_on and not _crossfade_pending:
+		_start_fade(_menu_fade, _menu_amp, 0.0, MENU_FADE_OUT_SEC)
+
+
+func _start_fade(fade: Dictionary[StringName, float], from: float, to: float,
+		seconds: float) -> void:
+	fade[&"from"] = from
+	fade[&"to"] = to
+	fade[&"last"] = Time.get_ticks_usec() / USEC_PER_SEC
+	fade[&"elapsed"] = 0.0
+	fade[&"length"] = seconds
+
+
+## Süren geçişleri gerçek zamanla ilerletir; `now` verilirse o ana göre (INF: bitir).
+func _update_fades(now: float = -1.0) -> void:
+	if now < 0.0:
+		now = Time.get_ticks_usec() / USEC_PER_SEC
+	if not _menu_fade.is_empty():
+		_menu_amp = _fade_step(_menu_fade, now)
+		_apply_menu_volume()
+		if _menu_fade.is_empty() and _menu_amp <= SILENT_AMP:
+			_menu.stop()
+			_menu_on = false
+	if not _run_fade.is_empty():
+		_run_amp = _fade_step(_run_fade, now)
+		_apply_run_volume()
+		if OS.is_debug_build() and _music_bus >= 0:
+			# Telefonda ölçü: geçiş boyunca Music yolunun tepe düzeyi (boşluk ya da çakışma).
+			print("AUDIO xfade menu=%.3f run=%.3f bus_peak=%.1f dB" % [_menu_amp, _run_amp,
+					AudioServer.get_bus_peak_volume_left_db(_music_bus, 0)])
+
+
+## Geçişin `now`'daki genliği; geçiş bittiyse sözlüğü boşaltır.
+func _fade_step(fade: Dictionary[StringName, float], now: float) -> float:
+	var length: float = fade[&"length"]
+	if is_inf(now):
+		fade[&"elapsed"] = length
+	else:
+		fade[&"elapsed"] += clampf(now - fade[&"last"], 0.0, MAX_FADE_STEP_SEC)
+		fade[&"last"] = now
+	var progress: float = 1.0 if length <= 0.0 else fade[&"elapsed"] / length
+	var amp: float = fade_amp(fade[&"from"], fade[&"to"], progress)
+	if progress >= 1.0:
+		fade.clear()
+	return amp
+
+
+func _apply_menu_volume() -> void:
+	_menu.volume_db = menu_track.volume_db + linear_to_db(maxf(_menu_amp, SILENT_AMP))
+
+
+func _apply_run_volume() -> void:
+	if _track != null:
+		_music.volume_db = _track.volume_db + linear_to_db(maxf(_run_amp, SILENT_AMP))
 
 
 ## Duraklayınca parça durur; devamda ilk sync_beat_clock vuruş saatine yeniden konumlar.

@@ -2,26 +2,47 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-12",
+  "updated": "2026-11-18",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M5",
-    "task": "M5-10",
-    "task_title": "Menü müziği ve arayüz sesleri",
-    "owner": "claude",
-    "status": "not_started",
-    "note": "M5-09 bitti (Hakkında, ADR-095): CreditsCatalog + AboutScreen, karelere bölünmüş kurulum. Redmi: üst kısım 0,2 sn'de, en uzun kare 88–96 ms (önce 1051 ms donma)."
+    "task": "M5-11",
+    "task_title": "Türkçe ve İngilizce metinlerin gözden geçirilmesi",
+    "owner": "user",
+    "status": "waiting_user",
+    "note": "M5-10 bitti (menü müziği Liman + arayüz sesleri + eşit güçlü menü → tur geçişi, ADR-096; tools/audio_check.py check.ps1'in 6. adımı). Kalan M5 görevleri kullanıcıyla: M5-11 (👤) ve M5-12 (🤝 kapı)."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
-    "started": "2026-11-12",
-    "note": "Otonom mesai 2026-11-12 (ikinci; \"otonom mesai başlat\"). Plan: M5-06'yı bitir (current.note KALAN), sonra M5-07 … M5-10 (🤖); 🤝/👤 ve kararlar standard_queue'ya. Kullanıcı M5-09'dan sonra mesaiyi sonlandırdı; M5-10 başlanmadı."
+    "started": "2026-11-18",
+    "note": "Otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
   },
 
   "standard_queue": [
+    {
+      "task": "M5-11",
+      "owner": "user",
+      "added": "2026-11-18",
+      "reason": "👤 görev: Türkçe ve İngilizce metinlerin gözden geçirilmesi (otonom mesaide yapılmaz).",
+      "resume": "localization/translations.csv'deki bütün metinler; kullanıcı okur, düzeltmeleri söyler, Claude işler (iki dil birlikte)."
+    },
+    {
+      "task": "M5-12",
+      "owner": "user",
+      "added": "2026-11-18",
+      "reason": "🤝 kilometre taşı kapısı: ilk kez açan biri gibi test + Planlama Gözden Geçirmesi. Kullanıcı onayı olmadan M6'ya geçilmez.",
+      "resume": "M5-11'den sonra. Telefonda kayıt sıfırlanarak ilk açılıştan başlanır."
+    },
+    {
+      "task": "M5-10",
+      "owner": "user",
+      "added": "2026-11-18",
+      "reason": "Gözden geçir (varsayım, ADR-096): menü parçası Liman'ın zevki; sonuç ekranının sessiz olması; dokunuş sesinin her neon düğmede (HUD duraklat, mağazada Al dahil; Al'da satın alma sesi üstüne biner) çalması.",
+      "resume": "Ölçülenler: Liman −17,30 LUFS (tur ortalamasına +0,04 LU), tepe −4,67 dBTP; dokunuş −3,0 dB (sık), satın alma +3,0 dB (ödül); Redmi'de geçiş 29 adım, toplam güç ±0,005 dB, boşluk yok. Beğenilmezse: parça tools/music/tracks/harbor.py'de yeniden bestelenir; sonuç ekranına menü parçası eklenebilir (MENU_MUSIC_STATES); düğme bazında click_sound kapatılabilir."
+    },
     {
       "task": "M5-06",
       "owner": "user",
@@ -200,7 +221,8 @@
     "M5-06",
     "M5-07",
     "M5-08",
-    "M5-09"
+    "M5-09",
+    "M5-10"
   ],
 
   "blockers": [],
@@ -302,11 +324,11 @@
   },
 
   "last_session": {
-    "date": "2026-11-12",
-    "summary": "Otonom mesai (2026-11-12, ikinci; kullanıcı M5-09'dan sonra sonlandırdı, M5-10 başlanmadı). M5-06 bitti: duraklatma (HUD düğmesi, arka planda otomatik, 3-2-1 devam, Ayarlar, Menü = QUIT), ADR-092. Redmi: duraklatmada ekran 2 sn'de %0 değişti, müzik yolu 8/8 kez -200 dB; devamda kayma 1–22 ms (9 deneme), duraklatmasız 33–36 ms; HOME → PAUSED, geri dönünce duraklatma ekranı; Menü → cause=QUIT, +1054 Glimmer cüzdana, kayıt yazıldı. Ölümsüz deneme turu debug kaydını bozduğu için kayıt .bak'tan geri alındı (rekor 8990, cüzdan 13220). M5-07 bitti: ilk açılış (menüsüz tanıtım turu, dokun eli, Yükseltmeler parlaması, ftue_done), ADR-093. Redmi: el ortada (390,1298), dokunuşla %25,9 → %0,0 açık piksel; layout_mode eksikliği yüzünden dışa aktarmada el (0,0)'a düşüyordu, düzeltildi ve teste bağlandı. Telefon kaydı silinip denendi, sonra birebir geri yüklendi. M5-08 bitti: titreşim (Haptics, ADR-094); Redmi'de 6 FLIP + 1 DEATH isteği Android'e doğru değerlerle ulaştı, ama sistem dokunma titreşimi kapalı olduğundan yok sayıldı (karar kuyrukta). M5-09 bitti: Hakkında / lisanslar (CreditsCatalog, CREDITS.md eşlik testi, Godot lisans metinleri), ADR-095. Redmi'de tek karede kurulum 1051 ms donuyordu; karelere bölününce en uzun kare 88–96 ms, üst kısım 0,2 sn'de görünür.",
+    "date": "2026-11-18",
+    "summary": "Otonom mesai (2026-11-18). M5-10 bitti: menü müziği ve arayüz sesleri, ADR-096. Özgün menü parçası Liman (D majör, 84 BPM, 32 ölçü; tur kataloğu dışında). tools/loudness.py (BS.1770-4 LUFS + gerçek tepe, kendini sınar) ve tools/audio_check.py (check.ps1'in 6. adımı: müzik ±1 LU, ≤ −1 dBTP; efekt katmanları). Ölçülen: Kervan −17,30, Kale −17,85, Pagoda −16,86, Liman −17,30 LUFS; tepeler ≤ −2,98 dBTP; 12 efekt hedeften ≤ 0,10 dB. Sentezlenen dokunuş (−3 dB katman) ve satın alma (+3 dB) sesleri; NeonButton tıklar, Events.item_purchased satın alma sesini çalar; arayüz sesleri duraklatmada da çalan ayrı çalarlarda. AudioManager: menü/mağazada menü parçası, menü → tur 0,25 sn eşit güçlü geçiş tur parçasının ilk çaldığı anda. Redmi'de ilk denemede tur başı ≈ 400 ms takılma geçişi tek adımda bitirdi (ani kesme) → kare başı ≤ 1/30 sn sınırı ve 400 ms takılmalı kalıcı test; sonra üç geçişte 29 adım, toplam güç 0,999–1,001, Music yolu −10,7 … −26,4 dB (boşluk yok); TEKRAR'da geçiş yok; arka planda ses duraklıyor. menu_music_test 6 test; 10 + 6 bilerek bozmanın hepsi yakalandı. Seçilen varsayımlar standard_queue'da (M5-10). M5-11 (👤) ve M5-12 (🤝 kapı) kuyrukta; kapı geçilmedi.",
     "next_steps": [
-      "M5-10 (🤖); M5-11 (👤) ve M5-12 (🤝 kapı) kullanıcıyla.",
-      "standard_queue: M5-08 (titreşim / sistem ayarı kararı), M5-07 (ilk açılış hissi), M5-06 (devam kayması), M5-04 ve M5 akış varsayımı."
+      "M5-11 (👤): metinleri gözden geçirme; M5-12 (🤝 kapı): ilk kez açan biri gibi test + Planlama Gözden Geçirmesi.",
+      "standard_queue: M5-10 (menü müziği zevki, sonuç ekranı sessiz, düğme sesi), M5-08 (titreşim / sistem ayarı kararı), M5-07, M5-06, M5-04 ve M5 akış varsayımı."
     ]
   }
 }

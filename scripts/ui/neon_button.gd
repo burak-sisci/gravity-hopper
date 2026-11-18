@@ -4,6 +4,7 @@ extends Button
 ## yumuşak parlama (StyleBoxFlat gölgesi; doku, düğüm ya da shader yok). Yazı proje fontu
 ## (Exo 2 kalın); metin çeviri anahtarıdır, Button kendisi çevirir. Basılınca dolgu aydınlanır.
 ## Ölçüler (dokunma hedefi ≥ 48 dp, metin kontrastı) tests/ui/main_menu_test.gd'de.
+## Basılınca arayüz dokunuş sesi çalar (M5-10; AudioManager servisi, duraklatmada da çalar).
 
 ## Dolgu: metin kontrastı bunun üstünde ölçülür.
 const FILL: Color = Color(0.03, 0.05, 0.12, 0.94)
@@ -28,11 +29,14 @@ const GLOW_ALPHA: float = 0.35
 	set(value):
 		font_size = value
 		apply_style()
+## Basılınca dokunuş sesi çalsın mı.
+@export var click_sound: bool = true
 
 
 func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 	apply_style()
+	pressed.connect(_on_pressed)
 
 
 ## Kutuları ve yazı renklerini vurgu rengiyle yeniden kurar.
@@ -49,6 +53,11 @@ func apply_style() -> void:
 		add_theme_color_override(state, TEXT)
 	add_theme_color_override(&"font_disabled_color", TEXT_DISABLED)
 	add_theme_font_size_override(&"font_size", font_size)
+
+
+func _on_pressed() -> void:
+	if click_sound:
+		AudioManager.play_sfx(GameTypes.Sfx.UI_TAP)
 
 
 func _box(fill: Color, border: Color, glow: bool = true) -> StyleBoxFlat:

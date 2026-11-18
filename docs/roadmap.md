@@ -310,7 +310,7 @@
   *Kabul:* Olay → titreşim süresi tablosu testte; ayar kapalıyken hiç çağrı yok (test); Redmi'de `adb` günlüğünden titreşim çağrıları sayılıyor.
 - [x] **M5-09** 🤖 Hakkında / lisanslar ekranı: Godot MIT lisans metni (zorunlu) ve `CREDITS.md`'deki her dış varlık.
   *Kabul:* `CREDITS.md`'deki her satır ekranda (test, katalog dolaşılır); Godot lisans metni `Engine.get_license_text()`'ten; kaydırma ve UI kabulü.
-- [ ] **M5-10** 🤖 Menü müziği ve arayüz sesleri (GDD §19): özgün menü parçası (`tools/music/`, ADR-065) ve düğme / satın alma / rekor sesleri; menü ↔ tur müzik geçişi.
+- [x] **M5-10** 🤖 Menü müziği ve arayüz sesleri (GDD §19): özgün menü parçası (`tools/music/`, ADR-065) ve düğme / satın alma / rekor sesleri; menü ↔ tur müzik geçişi.
   *Kabul:* Menü parçası öbür parçalarla ±1 LU, tepe ≤ −1 dBTP (ölçülür); yeni efektler M3-15 düzey kurallarında (test); geçişte boşluk ya da çakışma yok (ölçülür).
 - [ ] **M5-11** 👤 Türkçe ve İngilizce metinlerin gözden geçirilmesi
 - [ ] **M5-12** 🤝 İlk kez açan biri gibi test + Planlama Gözden Geçirmesi → 🚪

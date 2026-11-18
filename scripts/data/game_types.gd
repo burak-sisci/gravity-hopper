@@ -52,6 +52,8 @@ enum Sfx {
 	SECTOR, ## Yeni sektöre geçiş
 	RECORD, ## Oturum rekoru kırıldı (rekor çizgisine varıldı)
 	FINALE, ## Büyük Depolama Birimi'ne varış (M4-13; özgün ses)
+	UI_TAP, ## Arayüz düğmesine dokunuş (M5-10; özgün ses)
+	PURCHASE, ## Yükseltme ya da iz satın alındı (M5-10; özgün ses)
 }
 
 ## Titreşim olayları (M5-08, GDD §19; süreler Haptics.PATTERNS'ta).

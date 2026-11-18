@@ -141,6 +141,7 @@ func buy_upgrade(id: StringName) -> bool:
 	save()
 	Events.glimmers_changed.emit(glimmers)
 	Events.upgrade_purchased.emit(id, level)
+	Events.item_purchased.emit(cost)
 	_log("bought %s level=%d cost=%d wallet=%d" % [id, level, cost, glimmers])
 	return true
 
@@ -192,6 +193,7 @@ func buy_trail(id: StringName) -> bool:
 	save()
 	Events.glimmers_changed.emit(glimmers)
 	Events.trail_unlocked.emit(id)
+	Events.item_purchased.emit(cost)
 	_log("bought trail %s cost=%d wallet=%d" % [id, cost, glimmers])
 	return true
 

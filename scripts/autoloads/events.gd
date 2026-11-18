@@ -67,6 +67,8 @@ signal best_height_changed(meters: int)
 signal upgrade_purchased(id: StringName, level: int)
 signal trail_unlocked(id: StringName)
 signal trail_equipped(id: StringName)
+## Mağazada bir şey satın alındı (yükseltme ya da iz; satın alma sesi, M5-10).
+signal item_purchased(cost: int)
 signal sector_unlocked(index: int)
 signal start_sector_selected(index: int)
 signal settings_changed

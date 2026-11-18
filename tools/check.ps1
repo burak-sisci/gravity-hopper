@@ -2,13 +2,15 @@
 # + sahne denetimi (düğüm başvuruları, sinyal bağlantıları; tools/scene_tool.gd)
 # + desen parçası doğrulama (her parça her sektör hızında adil mi; tools/validate_chunks.gd)
 # + kod denetimi (gdlint, kurallar kökteki gdlintrc'de)
+# + ses düzeyi denetimi (müzik LUFS ±1 LU ve ≤ -1 dBTP, efekt katmanları; tools/audio_check.py)
 # + otomatik testler (gdUnit4, tests/ altındaki tüm test takımları).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
 # Çıkış kodu 0 = temiz. Godot'nun ekransız modu uyarıları yazdırmadığı için geçici bir
 # override.cfg ile "Warn" seviyesindeki kurallar "Error" yapılır; dosya her durumda silinir.
 param(
 	[string]$Godot = "C:\Users\burak\Godot\Godot_v4.7.2-stable_win64_console.exe",
-	[string]$GdLint = (Join-Path $env:LOCALAPPDATA "gravity-hopper\venv\Scripts\gdlint.exe")
+	[string]$GdLint = (Join-Path $env:LOCALAPPDATA "gravity-hopper\venv\Scripts\gdlint.exe"),
+	[string]$Python = (Join-Path $env:LOCALAPPDATA "gravity-hopper\venv\Scripts\python.exe")
 )
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -65,7 +67,17 @@ if (-not (Test-Path -LiteralPath $GdLint)) {
 	} finally { Pop-Location }
 }
 
-# 6) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
+# 6) Ses düzeyi: oyuna giren her ses oyunda çalındığı düzeyde ölçülür (tools/audio_check.py)
+if (-not (Test-Path -LiteralPath $Python)) {
+	Write-Output "PYTHON YOK: $Python (kurulum: docs/architecture.md §13.1)"; $code = 1
+} else {
+	$audio = & $Python -I (Join-Path $root "tools\audio_check.py") 2>&1 | ForEach-Object { "$_" }
+	if ($LASTEXITCODE -ne 0) {
+		Write-Output "SES SORUNLU:"; $audio | Where-Object { $_ -match "^SORUN|SELFTEST|Error" }; $code = 1
+	} else { Write-Output "OK   ses düzeyi (müzik ±1 LU, ≤ -1 dBTP; efekt katmanları)" }
+}
+
+# 7) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
 #    betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. -c: ilk hatada durma.
 #    Raporlar proje dışına (user://gdunit-reports) yazılır. Sıfırdan farklı her çıkış sorundur
 #    (başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı).

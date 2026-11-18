@@ -114,9 +114,13 @@ def load_mono(path: Path) -> tuple[np.ndarray, int]:
 
 def music_reference() -> float:
     """Müziğin oyunda çalan ortanca kısa süreli düzeyi: parçaların volume_db'si uygulanmış,
-    parçaların ortalaması."""
+    tur parçalarının (music_catalog.tres) ortalaması. Menü parçası (M5-10) sayılmaz: efektler
+    tur müziğine göre dengelidir."""
     levels = []
+    catalog = (MUSIC_DATA / "music_catalog.tres").read_text(encoding="utf-8")
     for res in sorted(MUSIC_DATA.glob("*.tres")):
+        if f'path="res://data/music/{res.name}"' not in catalog:
+            continue
         match = re.search(r"^volume_db = (-?[\d.]+)$", res.read_text(encoding="utf-8"), re.M)
         ogg = MUSIC_DIR / (res.stem + ".ogg")
         if match is None or not ogg.exists():
