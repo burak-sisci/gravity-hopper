@@ -50,7 +50,7 @@ func test_layout_holds_on_every_aspect_language_and_mode() -> void:
 				var items: Array[Control] = UI.leaves(screen)
 				assert_int(items.size()).is_equal(OFFER_ITEMS if offer else RESULT_ITEMS)
 				var problems: Array[String] = UI.layout_problems(items,
-						Rect2(Vector2.ZERO, screen.size))
+						UI.worst_safe_rect(screen))
 				assert_array(problems).override_failure_message("%s %.3f teklif=%s: %s" % [
 					locale, aspect, offer, problems]).is_empty()
 				screen.get_parent().queue_free()
@@ -189,6 +189,7 @@ func _open(aspect: float) -> ResultsScreen:
 	add_child(viewport)
 	var screen: ResultsScreen = SCREEN_SCENE.instantiate() as ResultsScreen
 	viewport.add_child(screen)
+	UI.apply_worst_safe_area(screen)
 	screen.open()
 	screen.show_now()
 	await get_tree().process_frame

@@ -31,12 +31,15 @@ var _start_sector: int
 @onready var _results: ResultsScreen = %ResultsScreen
 @onready var _shop: ShopScreen = %ShopScreen
 @onready var _pause: PauseScreen = %PauseScreen
+@onready var _ui: CanvasLayer = %UI
 
 
 func _ready() -> void:
 	if OS.is_debug_build() and ResourceLoader.exists(DEBUG_LAYER_PATH):
 		_debug.add_child((load(DEBUG_LAYER_PATH) as PackedScene).instantiate())
 	_apply_quality()
+	_apply_safe_area()
+	get_viewport().size_changed.connect(_apply_safe_area)
 	Events.settings_changed.connect(_apply_quality)
 	Events.retry_requested.connect(_start_run)
 	Events.start_requested.connect(_on_start_requested)
@@ -48,6 +51,20 @@ func _ready() -> void:
 		GameManager.change_state(GameTypes.AppState.MENU)
 	else:
 		_start_run()
+
+
+## Arayüz ekranlarını cihazın güvenli alanına (çentik, kamera deliği) alır; zeminleri tam ekran
+## kalır (M6-01, SafeArea). Pencere boyutu değişince yeniden hesaplanır.
+func _apply_safe_area() -> void:
+	var insets: Vector4 = SafeArea.device_insets(get_viewport())
+	var shift: Vector4 = SafeArea.content_insets(insets)
+	for screen: Node in _ui.get_children():
+		if screen is Control:
+			SafeArea.fit(screen as Control, shift)
+	if OS.is_debug_build():
+		print("SAFE insets=%s shift=%s safe_area=%s window=%s canvas=%s" % [insets, shift,
+				DisplayServer.get_display_safe_area(), DisplayServer.window_get_size(),
+				get_viewport().get_visible_rect().size])
 
 
 ## Varsa eski turu kaldırır, yeni tohumla yeni bir tur kurar ve GameManager'a bildirir.

@@ -319,7 +319,7 @@
 
 **Hedef:** Farklı telefonlarda aynı kalite.
 
-- [ ] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe)
+- [x] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe)
 - [ ] **M6-02** 🤖 Ekran oranı matrisi: 16:9, 18:9, 20:9, 21:9, 4:3, katlanabilir
 - [ ] **M6-03** 🤖 Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu (hedef < 40 MB; debug APK şu an 68 MB, `architecture.md` §16)
 - [ ] **M6-04** 🤖 Android emülatöründe düşük seviyeli cihaz profili testi

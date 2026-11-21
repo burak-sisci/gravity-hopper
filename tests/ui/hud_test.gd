@@ -306,11 +306,12 @@ func test_pause_button_layout_and_visibility() -> void:
 		add_child(viewport)
 		var hud: Control = HUD_SCENE.instantiate() as Control
 		viewport.add_child(hud)
+		UI.apply_worst_safe_area(hud)
 		await get_tree().process_frame
 		var items: Array[Control] = []
 		for path: String in ["%HeightLabel", "%BestLabel", "%GlimmerLabel", "%PauseButton"]:
 			items.append(hud.get_node(path) as Control)
-		var problems: Array[String] = UI.layout_problems(items, Rect2(Vector2.ZERO, hud.size))
+		var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(hud))
 		assert_array(problems).override_failure_message("%.3f: %s" % [aspect, problems]).is_empty()
 		assert_array(UI.button_fit_problems(hud.get_node("%PauseButton") as Button)).is_empty()
 		hud.queue_free()

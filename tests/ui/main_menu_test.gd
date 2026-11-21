@@ -35,7 +35,7 @@ func test_layout_holds_on_every_aspect_and_language() -> void:
 			var menu: MainMenu = await _open(aspect)
 			var items: Array[Control] = UI.leaves(menu)
 			assert_int(items.size()).is_equal(9)
-			var problems: Array[String] = UI.layout_problems(items, Rect2(Vector2.ZERO, menu.size))
+			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(menu))
 			assert_array(problems).override_failure_message("%s %.3f: %s" % [
 				locale, aspect, problems]).is_empty()
 			menu.get_parent().queue_free()
@@ -117,6 +117,7 @@ func _open(aspect: float) -> MainMenu:
 	add_child(viewport)
 	var menu: MainMenu = MENU_SCENE.instantiate() as MainMenu
 	viewport.add_child(menu)
+	UI.apply_worst_safe_area(menu)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return menu

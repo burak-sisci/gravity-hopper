@@ -6,22 +6,29 @@
   "phase": "pre-production",
 
   "current": {
-    "milestone": "M5",
-    "task": "M5-11",
-    "task_title": "Türkçe ve İngilizce metinlerin gözden geçirilmesi",
-    "owner": "user",
-    "status": "waiting_user",
-    "note": "M5-10 bitti (menü müziği Liman + arayüz sesleri + eşit güçlü menü → tur geçişi, ADR-096; tools/audio_check.py check.ps1'in 6. adımı). Kalan M5 görevleri kullanıcıyla: M5-11 (👤) ve M5-12 (🤝 kapı)."
+    "milestone": "M6",
+    "task": "M6-02",
+    "task_title": "Ekran oranı matrisi",
+    "owner": "claude",
+    "status": "not_started",
+    "note": "M6-01 bitti (güvenli alan, ADR-099). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
     "started": "2026-11-21",
-    "note": "Otonom mesai 2026-11-21 (\"yeni mesai başlat. mesai türü: otonom mesai.\"). M5'te 🤖 görev yok, M6 kapının arkasında; kuyruktaki teknik not (hud_test) bakım olarak ele alındı. Önceki: otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
+    "note": "Otonom mesai 2026-11-21 (\"yeni mesai başlat. mesai türü: otonom mesai.\"). M5'te 🤖 görev yok, M6 kapının arkasında; kuyruktaki teknik not (hud_test) bakım olarak ele alındı. Kullanıcı kararı (ADR-098): kapı beklenmeden M6 🤖 görevlerine geçildi. Önceki: otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
   },
 
   "standard_queue": [
+    {
+      "task": "M6-01",
+      "owner": "user",
+      "added": "2026-11-21",
+      "reason": "Gözden geçir (varsayım, ADR-099): çentikli telefonda ekranlar çentiğin tamamı kadar değil, ekranların zaten bıraktığı payı (üstte 60 px) aşan kısmı kadar iner (Redmi'de 34 px).",
+      "resume": "Ölçülen: Redmi çentiği 94 px, köşe yarıçapı 102 px; cüzdan 34 px indi, zemin çentik şeridini kaplıyor, duraklat düğmesi güvenli alan çizgisinde. Beğenilmezse SafeArea.DESIGN_MARGINS küçültülür (0 → çentiğin tamamı kadar iner); UI kabulü yine ölçer."
+    },
     {
       "task": "M5-11",
       "owner": "user",
@@ -318,10 +325,10 @@
 
   "last_session": {
     "date": "2026-11-21",
-    "summary": "Otonom mesai (2026-11-21). Roadmap'te yapılabilecek 🤖 görev yok (M5-11 👤, M5-12 🤝 kapı; M6 kapı arkasında). standard_queue'daki teknik not ele alındı: hud_test tek başına artık 3/3 geçiyor (afiş zamanlama hatası tekrar etmedi), ama çıktısında motor hatası vardı: DebugLayer'ın tur ilk karesi günlüğü self kullanmayan lambdayla Events.run_started'a bağlıydı ve katman silinince asılı kalıyordu. Yönteme çevrildi; yeni tests/main_teardown_test.gd ana sahneyi kurup tur oynatıp siler ve autoload + RenderingServer sinyallerindeki bağlantı sayısını karşılaştırır (eski kodla Events.run_started +1 → düştü). Redmi'de run_first_frame günlüğü sürüyor. check.ps1 TEMİZ (424 test). ADR-097. Kapı geçilmedi.",
+    "summary": "Otonom mesai (2026-11-21). Bakım: DebugLayer'ın self kullanmayan lambdası Events.run_started'da asılı kalıyordu → yönteme çevrildi, tests/main_teardown_test.gd bağlantı sızıntısını ölçer (ADR-097). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6 🤖 görevlerine geçildi. M6-01 bitti (güvenli alan, ADR-099): SafeArea, full_bleed zeminler, içerik tasarım payını aşan kısım kadar kayar; UI kabulü her ekranı 150 px çentik + 150 px köşeyle ölçer; safe_area_test 4 test, 7 bilerek bozmanın hepsi yakalandı; Redmi'de içerik 34 px indi, zemin çentik şeridini kaplıyor. check.ps1 TEMİZ (428 test).",
     "next_steps": [
-      "M5-11 (👤): metinleri gözden geçirme; M5-12 (🤝 kapı): ilk kez açan biri gibi test + Planlama Gözden Geçirmesi.",
-      "standard_queue: M5-10 (menü müziği zevki, sonuç ekranı sessiz, düğme sesi), M5-08 (titreşim / sistem ayarı kararı), M5-07, M5-06, M5-04 ve M5 akış varsayımı."
+      "M6-02 (🤖): ekran oranı matrisi.",
+      "Kullanıcıyla: M5-11 (👤), M5-12 (🤝 kapı); standard_queue'daki varsayımlar (M6-01 güvenli alan kayması dahil)."
     ]
   }
 }

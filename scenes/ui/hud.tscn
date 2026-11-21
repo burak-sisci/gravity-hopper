@@ -27,7 +27,7 @@ mouse_filter = 2
 script = ExtResource("1_hud")
 sectors = ExtResource("2_sectors")
 
-[node name="WallVignette" type="Control" parent="."]
+[node name="WallVignette" type="Control" parent="." groups=["full_bleed"]]
 unique_name_in_owner = true
 modulate = Color(1, 1, 1, 0)
 anchors_preset = 15

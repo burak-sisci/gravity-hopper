@@ -83,7 +83,7 @@ func test_layout_holds_on_every_aspect_and_language() -> void:
 			var items: Array[Control] = []
 			for path: String in FRAME_ITEMS:
 				items.append(screen.get_node(path) as Control)
-			var problems: Array[String] = UI.layout_problems(items, Rect2(Vector2.ZERO, screen.size))
+			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(screen))
 			var list: ScrollContainer = screen.get_node("%List") as ScrollContainer
 			var box: Control = screen.get_node("%Box") as Control
 			for label: Label in _labels(screen):
@@ -219,6 +219,7 @@ func _add(scene: PackedScene, aspect: float) -> Control:
 	add_child(viewport)
 	var control: Control = scene.instantiate() as Control
 	viewport.add_child(control)
+	UI.apply_worst_safe_area(control)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return control

@@ -15,7 +15,7 @@ grow_vertical = 2
 script = ExtResource("1_about")
 catalog = ExtResource("2_credits")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." groups=["full_bleed"]]
 layout_mode = 1
 anchor_right = 1.0
 anchor_bottom = 1.0

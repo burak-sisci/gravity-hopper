@@ -239,6 +239,7 @@ func _open(aspect: float) -> ShopScreen:
 	add_child(viewport)
 	var shop: ShopScreen = SHOP_SCENE.instantiate() as ShopScreen
 	viewport.add_child(shop)
+	UI.apply_worst_safe_area(shop)
 	shop.open()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -258,7 +259,7 @@ func _header(shop: ShopScreen) -> Array[Control]:
 
 
 func _assert_layout(shop: ShopScreen, tab: GameTypes.ShopTab, where: String) -> void:
-	var screen: Rect2 = Rect2(Vector2.ZERO, shop.size)
+	var screen: Rect2 = UI.worst_safe_rect(shop)
 	var header: Array[Control] = _header(shop)
 	var problems: Array[String] = UI.layout_problems(header, screen)
 	var list: ScrollContainer = _list(shop, tab)

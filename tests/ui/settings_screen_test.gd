@@ -44,7 +44,7 @@ func test_layout_holds_on_every_aspect_and_language() -> void:
 			var screen: SettingsScreen = await _open(aspect)
 			var items: Array[Control] = UI.leaves(screen)
 			assert_int(items.size()).is_equal(LEAF_COUNT)
-			var problems: Array[String] = UI.layout_problems(items, Rect2(Vector2.ZERO, screen.size))
+			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(screen))
 			assert_array(problems).override_failure_message("%s %.3f: %s" % [
 				locale, aspect, problems]).is_empty()
 			screen.get_parent().queue_free()
@@ -189,6 +189,7 @@ func _add(scene: PackedScene, aspect: float) -> Control:
 	add_child(viewport)
 	var control: Control = scene.instantiate() as Control
 	viewport.add_child(control)
+	UI.apply_worst_safe_area(control)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return control

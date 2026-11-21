@@ -12,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_pause")
 
-[node name="Overlay" type="ColorRect" parent="."]
+[node name="Overlay" type="ColorRect" parent="." groups=["full_bleed"]]
 unique_name_in_owner = true
 anchor_right = 1.0
 anchor_bottom = 1.0

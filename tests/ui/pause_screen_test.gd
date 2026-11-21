@@ -53,7 +53,7 @@ func test_layout_holds_on_every_aspect_and_language() -> void:
 				var items: Array[Control] = UI.leaves(screen)
 				assert_int(items.size()).is_equal(COUNT_ITEMS if counting else MENU_ITEMS)
 				var problems: Array[String] = UI.layout_problems(items,
-						Rect2(Vector2.ZERO, screen.size))
+						UI.worst_safe_rect(screen))
 				assert_array(problems).override_failure_message("%s %.3f sayım=%s: %s" % [
 					locale, aspect, counting, problems]).is_empty()
 				screen.get_parent().queue_free()
@@ -159,6 +159,7 @@ func _open(aspect: float) -> PauseScreen:
 	add_child(viewport)
 	var screen: PauseScreen = SCREEN_SCENE.instantiate() as PauseScreen
 	viewport.add_child(screen)
+	UI.apply_worst_safe_area(screen)
 	screen.open()
 	await get_tree().process_frame
 	await get_tree().process_frame

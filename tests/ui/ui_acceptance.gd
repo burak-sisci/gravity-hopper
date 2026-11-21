@@ -18,6 +18,13 @@ const MIN_DISABLED_CONTRAST: float = 3.0
 ## yazısı 12 sp).
 const MIN_FONT_PX: int = 36
 const LOCALES: Array[String] = ["en", "tr"]
+## Güvenli alan (M6-01): ekran testleri kötü bir telefonda ölçer. Üstte 150 px çentik (≈ 50 dp;
+## Redmi 94, 1440 px genişlikli büyük kamera delikleri tuvalde ≈ 110–130; SafeArea.DESIGN_MARGINS
+## üstte 60'ı aşar, içerik kayar) ve 150 px yuvarlak köşe (≈ 50 dp; Redmi 102 = 37 dp). Dikey
+## telefonda yan ve alt kesik neredeyse yok: oralarda pay tasarım payına eşit (40 px; ölçü öğelerin
+## bu payı bıraktığını sınar). Godot köşe yarıçapını bildirmez: köşe bölgesi tasarımla boş kalır.
+const WORST_INSETS: Vector4 = Vector4(40.0, 150.0, 40.0, 40.0)
+const CORNER_RADIUS_PX: float = 150.0
 
 
 ## Oranı verilen ekranın tuval boyutu (stretch "expand", taban 1080 × 1920).
@@ -28,6 +35,45 @@ static func canvas_size(aspect: float) -> Vector2i:
 	if aspect > base.x / base.y:
 		size = Vector2(base.y * aspect, base.y)
 	return Vector2i(size.round())
+
+
+## Ekranı kötü telefonun güvenli alanına alır (Main'in cihazda yaptığı gibi: tasarım payını aşan
+## kısım kadar) ve öğelerin içinde kalması gereken güvenli dikdörtgeni döndürür.
+static func apply_worst_safe_area(screen: Control) -> void:
+	SafeArea.fit(screen, SafeArea.content_insets(WORST_INSETS))
+
+
+## Kötü telefonun güvenli dikdörtgeni (tuvalden payları çıkarılmış).
+static func worst_safe_rect(control: Control) -> Rect2:
+	var view: Vector2 = control.get_viewport_rect().size
+	return Rect2(WORST_INSETS.x, WORST_INSETS.y, view.x - WORST_INSETS.x - WORST_INSETS.z,
+			view.y - WORST_INSETS.y - WORST_INSETS.w)
+
+
+## Yuvarlak köşenin kestiği bölgeye giren sabit öğeler (her köşede yarıçap CORNER_RADIUS_PX'lik
+## çeyrek dairenin dışı, köşe karesinin içi; öğenin ekrandaki kısmının köşeye en yakın noktası
+## ölçülür). Kaydırılan listeler ve içerikleri sayılmaz: oyuncu onları köşeden kaydırarak çıkarır.
+static func corner_problems(items: Array[Control]) -> Array[String]:
+	var problems: Array[String] = []
+	for item: Control in items:
+		var view: Vector2 = item.get_viewport_rect().size
+		var rect: Rect2 = item.get_global_rect().intersection(Rect2(Vector2.ZERO, view))
+		if _scrolls(item) or not rect.has_area():
+			continue
+		var r: float = CORNER_RADIUS_PX
+		var corners: Array[Vector2] = [Vector2(r, r), Vector2(view.x - r, r),
+				Vector2(r, view.y - r), Vector2(view.x - r, view.y - r)]
+		for center: Vector2 in corners:
+			var left: bool = center.x < view.x / 2.0
+			var top: bool = center.y < view.y / 2.0
+			var nearest: Vector2 = Vector2(rect.position.x if left else rect.end.x,
+					rect.position.y if top else rect.end.y)
+			var outside_x: bool = nearest.x < center.x if left else nearest.x > center.x
+			var outside_y: bool = nearest.y < center.y if top else nearest.y > center.y
+			if outside_x and outside_y and nearest.distance_to(center) > r:
+				problems.append("%s köşede %s (merkeze %.0f px > %.0f)" % [
+					item.name, nearest, nearest.distance_to(center), r])
+	return problems
 
 
 ## Görünür yaprak öğeler: düğmeler, kaydırıcılar ve yazılar (kaplar ve zemin değil).
@@ -61,6 +107,7 @@ static func layout_problems(items: Array[Control], screen: Rect2) -> Array[Strin
 				var gap: float = _gap(rect, other.get_global_rect())
 				if gap < MIN_GAP_PX:
 					problems.append("%s ~ %s arası %.0f px" % [item.name, other.name, gap])
+	problems.append_array(corner_problems(items))
 	return problems
 
 
@@ -144,6 +191,16 @@ static func label_contrast_problems(label: Label, ground: Color) -> Array[String
 	if ratio < MIN_CONTRAST:
 		return ["%s '%s' %.2f" % [label.name, label.text, ratio]]
 	return []
+
+
+## Öğe kaydırılan bir liste ya da onun içinde.
+static func _scrolls(item: Node) -> bool:
+	var node: Node = item
+	while node != null:
+		if node is ScrollContainer:
+			return true
+		node = node.get_parent()
+	return false
 
 
 ## İki dikdörtgen arasındaki en kısa boşluk (çakışıyorsa 0).
