@@ -2,7 +2,7 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-18",
+  "updated": "2026-11-21",
   "phase": "pre-production",
 
   "current": {
@@ -17,8 +17,8 @@
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
-    "started": "2026-11-18",
-    "note": "Otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
+    "started": "2026-11-21",
+    "note": "Otonom mesai 2026-11-21 (\"yeni mesai başlat. mesai türü: otonom mesai.\"). M5'te 🤖 görev yok, M6 kapının arkasında; kuyruktaki teknik not (hud_test) bakım olarak ele alındı. Önceki: otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
   },
 
   "standard_queue": [
@@ -84,13 +84,6 @@
       "added": "2026-11-08",
       "reason": "Not (benzetimden): kontrol noktası seçiminin tempoya etkisi.",
       "resume": "Yeni değerlerle 'hep en yüksek sektörden' başlayan düzenli oyuncu da 13 günde bitiriyor (tur başı 1. gün 20, orta 80; günde 28 kısa tur); 'hep S1'den' 15 gün. Menüde varsayılan seçim için büyük risk kalmadı; yine de en iyi kazanç en yüksekte değil (architecture §13.1)."
-    },
-    {
-      "task": "test",
-      "owner": "claude",
-      "added": "2026-11-08",
-      "reason": "Teknik not: tests/ui/hud_test.gd tek başına çalıştırılınca 5 zamanlama hatası veriyor (afiş süresi 1,42 / 1,67 sn > 1,3; M4-14'ten önce de aynı). Tam kontrolde geçiyor.",
-      "resume": "İlk karelerdeki gecikmeye (gölgelendirici derleme) bağlı görünüyor; testler kare sayısı yerine zamanla ölçecek ya da ısınma karesi bekleyecek biçimde sağlamlaştırılır. Acil değil."
     },
     {
       "task": "M5-07",
@@ -324,8 +317,8 @@
   },
 
   "last_session": {
-    "date": "2026-11-18",
-    "summary": "Otonom mesai (2026-11-18). M5-10 bitti: menü müziği ve arayüz sesleri, ADR-096. Özgün menü parçası Liman (D majör, 84 BPM, 32 ölçü; tur kataloğu dışında). tools/loudness.py (BS.1770-4 LUFS + gerçek tepe, kendini sınar) ve tools/audio_check.py (check.ps1'in 6. adımı: müzik ±1 LU, ≤ −1 dBTP; efekt katmanları). Ölçülen: Kervan −17,30, Kale −17,85, Pagoda −16,86, Liman −17,30 LUFS; tepeler ≤ −2,98 dBTP; 12 efekt hedeften ≤ 0,10 dB. Sentezlenen dokunuş (−3 dB katman) ve satın alma (+3 dB) sesleri; NeonButton tıklar, Events.item_purchased satın alma sesini çalar; arayüz sesleri duraklatmada da çalan ayrı çalarlarda. AudioManager: menü/mağazada menü parçası, menü → tur 0,25 sn eşit güçlü geçiş tur parçasının ilk çaldığı anda. Redmi'de ilk denemede tur başı ≈ 400 ms takılma geçişi tek adımda bitirdi (ani kesme) → kare başı ≤ 1/30 sn sınırı ve 400 ms takılmalı kalıcı test; sonra üç geçişte 29 adım, toplam güç 0,999–1,001, Music yolu −10,7 … −26,4 dB (boşluk yok); TEKRAR'da geçiş yok; arka planda ses duraklıyor. menu_music_test 6 test; 10 + 6 bilerek bozmanın hepsi yakalandı. Seçilen varsayımlar standard_queue'da (M5-10). M5-11 (👤) ve M5-12 (🤝 kapı) kuyrukta; kapı geçilmedi.",
+    "date": "2026-11-21",
+    "summary": "Otonom mesai (2026-11-21). Roadmap'te yapılabilecek 🤖 görev yok (M5-11 👤, M5-12 🤝 kapı; M6 kapı arkasında). standard_queue'daki teknik not ele alındı: hud_test tek başına artık 3/3 geçiyor (afiş zamanlama hatası tekrar etmedi), ama çıktısında motor hatası vardı: DebugLayer'ın tur ilk karesi günlüğü self kullanmayan lambdayla Events.run_started'a bağlıydı ve katman silinince asılı kalıyordu. Yönteme çevrildi; yeni tests/main_teardown_test.gd ana sahneyi kurup tur oynatıp siler ve autoload + RenderingServer sinyallerindeki bağlantı sayısını karşılaştırır (eski kodla Events.run_started +1 → düştü). Redmi'de run_first_frame günlüğü sürüyor. check.ps1 TEMİZ (424 test). ADR-097. Kapı geçilmedi.",
     "next_steps": [
       "M5-11 (👤): metinleri gözden geçirme; M5-12 (🤝 kapı): ilk kez açan biri gibi test + Planlama Gözden Geçirmesi.",
       "standard_queue: M5-10 (menü müziği zevki, sonuç ekranı sessiz, düğme sesi), M5-08 (titreşim / sistem ayarı kararı), M5-07, M5-06, M5-04 ve M5 akış varsayımı."

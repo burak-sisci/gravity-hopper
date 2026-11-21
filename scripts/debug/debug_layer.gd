@@ -47,6 +47,8 @@ var _invincible: bool = false
 var _sector: int = 1
 ## Son duyurulan yükseklik (m; olay günlüğü için).
 var _height: int = 0
+## Turun ilk çizilen karesini günlüğe yazan bağlantı (tek atımlık; aynı Callable ile denetlenir).
+var _first_frame_log: Callable = _log_event.bind("run_first_frame")
 
 @onready var _tuning_panel: Control = %TuningPanel
 @onready var _progress_panel: ProgressPanel = %ProgressPanel
@@ -237,10 +239,9 @@ func _connect_event_log() -> void:
 	Events.run_started.connect(func(run_seed: int, start_sector: int) -> void:
 		_log_event("run_started seed=%d sector=%d" % [run_seed, start_sector]))
 	# Yeni turun ekrana çizilen ilk karesi (Tekrar → ilk kare ölçümü, M5-03).
-	var first_frame: Callable = _log_event.bind("run_first_frame")
-	Events.run_started.connect(func(_run_seed: int, _start_sector: int) -> void:
-		if not RenderingServer.frame_post_draw.is_connected(first_frame):
-			RenderingServer.frame_post_draw.connect(first_frame, CONNECT_ONE_SHOT))
+	# Yöntem bağlanır, lambda değil: `self` kullanmayan lambda nesneye bağlı sayılmaz, katman
+	# silinince Events'te asılı kalırdı (tests/main_teardown_test.gd).
+	Events.run_started.connect(_on_run_started_log_first_frame)
 	Events.sector_entered.connect(func(index: int) -> void:
 		_log_event("sector_entered index=%d" % index))
 	Events.near_miss.connect(func(combo: int, multiplier: int) -> void:
@@ -265,6 +266,11 @@ func _connect_event_log() -> void:
 			result.height_m, GameTypes.DeathCause.keys()[result.cause], result.earned,
 			result.sector_bonus, result.boost_bonus, result.new_record,
 		]))
+
+
+func _on_run_started_log_first_frame(_run_seed: int, _start_sector: int) -> void:
+	if not RenderingServer.frame_post_draw.is_connected(_first_frame_log):
+		RenderingServer.frame_post_draw.connect(_first_frame_log, CONNECT_ONE_SHOT)
 
 
 func _log_event(event_name: String) -> void:
