@@ -1,4 +1,4 @@
-"""Ses düzeyi denetimi (M5-10, architecture.md §8.8): check.ps1'in 7. adımı.
+"""Ses düzeyi denetimi (M5-10, architecture.md §8.8): check.ps1'in 6. adımı.
 
 Oyuna giren her sesi, oyunda çalındığı düzeyde (dosya + kaynaktaki volume_db) ölçer:
   1) Ölçerin kendisi: tools/loudness.py --selftest (bilinen sinüslerde LUFS ve dBTP).

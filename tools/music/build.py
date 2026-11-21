@@ -53,7 +53,9 @@ LICENSE = "Original"
 MUSIC_REFERENCE_DB = -23.4
 MIN_VOLUME_DB = -12.0
 MAX_VOLUME_DB = 0.0
-OGG_COMPRESSION = 0.4
+# Vorbis sıkıştırma düzeyi (0 en iyi kalite). M6-03: 0,4 (≈ 210 kbps) → 0,55 (≈ 160 kbps); indirme
+# boyutu hedefi (< 40 MB), telefon bandında (250 Hz–8 kHz) SNR kaybı ≈ 3,5 dB (Kervan, ölçüldü).
+OGG_COMPRESSION = 0.55
 # libsndfile'in Vorbis kodlayıcısı büyük tek yazımda çöküyor; küçük bloklarla yazılır.
 WRITE_BLOCK = 4096
 # Dikiş denetimi: sondan başa geçişteki örnek sıçraması, dikişin iki yanındaki 10 ms'de görülen

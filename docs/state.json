@@ -10,8 +10,8 @@
     "task": "M6-03",
     "task_title": "Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu",
     "owner": "claude",
-    "status": "not_started",
-    "note": "M6-01 (güvenli alan, ADR-099) ve M6-02 (ekran oranı matrisi, ADR-100) bitti. Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
+    "status": "in_progress",
+    "note": "M6-03 yarıda (kullanıcı mesaiyi bitirdi): indirme boyutu bitti (ADR-101; arm64 37,92 / armeabi-v7a 39,36 MB, check.ps1 7. adım), Redmi performans ölçümü yapıldı (S3 yüksek 8,69–9,03 ms ≤ 10, gerileme yok; mimari §16 notu yazılacak). Kalan: efekt kalitesi seviyeleri (zayıf cihazda otomatik düşürme gerekli mi; M6-04 emülatörüyle birlikte), S-09 takılma kümesi notu. M6-01 ve M6-02 bitti. Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
   },
 
   "session": {
@@ -22,6 +22,13 @@
   },
 
   "standard_queue": [
+    {
+      "task": "M6-03",
+      "owner": "user",
+      "added": "2026-11-21",
+      "reason": "Dinle (varsayım, ADR-101): müzik 192 → ≈ 160 kbps'e indirildi (indirme boyutu < 40 MB için). Kulaklıkla bir turda fark duyuluyor mu?",
+      "resume": "Beğenilmezse tools/music/build.py OGG_COMPRESSION geri 0.4 yapılır; o zaman 32 bit telefonlarda boyut 42,8 MB olur ve başka bir yerden (mimari, parça sayısı) kısılması gerekir."
+    },
     {
       "task": "M6-01",
       "owner": "user",
@@ -327,10 +334,10 @@
 
   "last_session": {
     "date": "2026-11-21",
-    "summary": "Otonom mesai (2026-11-21). Bakım: DebugLayer'ın self kullanmayan lambdası Events.run_started'da asılı kalıyordu → yönteme çevrildi, tests/main_teardown_test.gd bağlantı sızıntısını ölçer (ADR-097). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6 🤖 görevlerine geçildi. M6-01 bitti (güvenli alan, ADR-099): SafeArea, full_bleed zeminler, içerik tasarım payını aşan kısım kadar kayar; UI kabulü her ekranı 150 px çentik + 150 px köşeyle ölçer; safe_area_test 4 test, 7 bilerek bozmanın hepsi yakalandı; Redmi'de içerik 34 px indi, zemin çentik şeridini kaplıyor. M6-02 bitti (ADR-100): UI kabulü 11 oranlı matriste (katlanabilir ve web dahil), oyun dünyası her oranda ölçülüyor (aspect_matrix_test; 5 bilerek bozmanın hepsi yakalandı); PC görüntüsünde 5 oranda arka plan ağı 10 bandın hepsinde. check.ps1 TEMİZ (430 test).",
+    "summary": "Otonom mesai (2026-11-21), kullanıcı durdurdu. Bakım: sinyal sızıntısı (ADR-097). Kullanıcı kararıyla M5 kapısı beklenmeden M6 (ADR-098). M6-01 güvenli alan bitti (ADR-099; Redmi'de içerik 34 px indi). M6-02 ekran oranı matrisi bitti (ADR-100; 11 oran, oyun dünyası her oranda ölçülüyor). M6-03 yarıda: indirme boyutu 42,75 → 39,36 MB (en büyük mimari; müzik ≈ 160 kbps, ADR-101, check.ps1 7. adım), Redmi performansı S3 yüksek 8,69–9,03 ms (≤ 10, gerileme yok; 53–67. sn'de S-09 tipi 11 takılma kümesi). Telefondaki kayıt yedekle aynı, normal yapı yüklü. check.ps1 TEMİZ (430 test).",
     "next_steps": [
-      "M6-03 (🤖): performans + efekt kalitesi + indirme boyutu.",
-      "Kullanıcıyla: M5-11 (👤), M5-12 (🤝 kapı); standard_queue'daki varsayımlar (M6-01 güvenli alan kayması dahil)."
+      "M6-03'ü bitir: §16'ya performans notu, efekt kalitesi seviyeleri (zayıf cihazda otomatik düşürme kararı; M6-04 ile), S-09 notu.",
+      "Kullanıcıyla: müzik dinleme (M6-03), güvenli alan kayması (M6-01), M5-11 (👤), M5-12 (🤝 kapı) ve kuyruktaki diğer varsayımlar."
     ]
   }
 }

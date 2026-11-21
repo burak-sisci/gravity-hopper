@@ -3,6 +3,7 @@
 # + desen parçası doğrulama (her parça her sektör hızında adil mi; tools/validate_chunks.gd)
 # + kod denetimi (gdlint, kurallar kökteki gdlintrc'de)
 # + ses düzeyi denetimi (müzik LUFS ±1 LU ve ≤ -1 dBTP, efekt katmanları; tools/audio_check.py)
+# + indirme boyutu (en büyük mimaride < 40 MB; tools/size_report.py)
 # + otomatik testler (gdUnit4, tests/ altındaki tüm test takımları).
 # Kullanım: powershell -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1
 # Çıkış kodu 0 = temiz. Godot'nun ekransız modu uyarıları yazdırmadığı için geçici bir
@@ -77,7 +78,14 @@ if (-not (Test-Path -LiteralPath $Python)) {
 	} else { Write-Output "OK   ses düzeyi (müzik ±1 LU, ≤ -1 dBTP; efekt katmanları)" }
 }
 
-# 7) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
+# 7) İndirme boyutu: en büyük mimarinin cihazına inen boyut < 40 MB (tools/size_report.py)
+if (Test-Path -LiteralPath $Python) {
+	$size = & $Python -I (Join-Path $root "tools\size_report.py") 2>&1 | ForEach-Object { "$_" }
+	if ($LASTEXITCODE -ne 0) { Write-Output "BOYUT SORUNLU:"; $size; $code = 1 }
+	else { Write-Output ("OK   indirme boyutu: " + ($size | Select-Object -Last 1)) }
+}
+
+# 8) Otomatik testler (gdUnit4). --remote-debug kapalı bir bağlantı noktasına yönlenir; böylece
 #    betik hatasında Godot etkileşimli hata ayıklayıcıda asılı kalmaz. -c: ilk hatada durma.
 #    Raporlar proje dışına (user://gdunit-reports) yazılır. Sıfırdan farklı her çıkış sorundur
 #    (başarısız test, hata ya da serbest bırakılmamış düğüm uyarısı).
