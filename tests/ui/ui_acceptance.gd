@@ -3,8 +3,12 @@ extends RefCounted
 ## testleri aynı ölçüleri ve eşikleri kullanır. Her işlev sorunları metin listesi olarak döndürür;
 ## test listenin boş olduğunu doğrular (hata mesajında öğe ve değer yazar).
 
-## En-boy oranları (genişlik / yükseklik): 9:16, 9:19,5, 9:21, 3:4 (tablet), 4:3 (yatay tablet).
-const ASPECTS: Array[float] = [9.0 / 16.0, 9.0 / 19.5, 9.0 / 21.0, 3.0 / 4.0, 4.0 / 3.0]
+## Ekran oranı matrisi (M6-02; genişlik / yükseklik). Telefon: 9:16, 9:18, 9:19,5, 9:20, 9:21.
+## Katlanabilir: kapak ekranı 9:23 (Galaxy Z Fold 904 × 2316), iç ekran 5:6 (Fold 1812 × 2176) ve
+## 6:5 (Pixel Fold 2208 × 1840). Tablet 3:4, yatay tablet ve web 4:3, masaüstü web 16:9. İlki
+## (9:16) tek oranlı testlerin oranıdır.
+const ASPECTS: Array[float] = [9.0 / 16.0, 9.0 / 18.0, 9.0 / 19.5, 9.0 / 20.0, 9.0 / 21.0,
+		9.0 / 23.0, 5.0 / 6.0, 6.0 / 5.0, 3.0 / 4.0, 4.0 / 3.0, 16.0 / 9.0]
 ## 48 dp'nin tuval pikseli (taban genişlik 1080, stretch "expand": telefonda tuval genişliği
 ## ekran genişliğidir). 360 dp genişliğindeki telefonda 1 dp = 1080 / 360 = 3 px → 48 dp = 144 px.
 ## Redmi (≈ 393 dp) 132 px ister; 360 dp yaygın küçük telefonların genişliği.

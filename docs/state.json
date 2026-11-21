@@ -7,11 +7,11 @@
 
   "current": {
     "milestone": "M6",
-    "task": "M6-02",
-    "task_title": "Ekran oranı matrisi",
+    "task": "M6-03",
+    "task_title": "Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu",
     "owner": "claude",
     "status": "not_started",
-    "note": "M6-01 bitti (güvenli alan, ADR-099). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
+    "note": "M6-01 (güvenli alan, ADR-099) ve M6-02 (ekran oranı matrisi, ADR-100) bitti. Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
   },
 
   "session": {
@@ -222,7 +222,9 @@
     "M5-07",
     "M5-08",
     "M5-09",
-    "M5-10"
+    "M5-10",
+    "M6-01",
+    "M6-02"
   ],
 
   "blockers": [],
@@ -325,9 +327,9 @@
 
   "last_session": {
     "date": "2026-11-21",
-    "summary": "Otonom mesai (2026-11-21). Bakım: DebugLayer'ın self kullanmayan lambdası Events.run_started'da asılı kalıyordu → yönteme çevrildi, tests/main_teardown_test.gd bağlantı sızıntısını ölçer (ADR-097). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6 🤖 görevlerine geçildi. M6-01 bitti (güvenli alan, ADR-099): SafeArea, full_bleed zeminler, içerik tasarım payını aşan kısım kadar kayar; UI kabulü her ekranı 150 px çentik + 150 px köşeyle ölçer; safe_area_test 4 test, 7 bilerek bozmanın hepsi yakalandı; Redmi'de içerik 34 px indi, zemin çentik şeridini kaplıyor. check.ps1 TEMİZ (428 test).",
+    "summary": "Otonom mesai (2026-11-21). Bakım: DebugLayer'ın self kullanmayan lambdası Events.run_started'da asılı kalıyordu → yönteme çevrildi, tests/main_teardown_test.gd bağlantı sızıntısını ölçer (ADR-097). Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6 🤖 görevlerine geçildi. M6-01 bitti (güvenli alan, ADR-099): SafeArea, full_bleed zeminler, içerik tasarım payını aşan kısım kadar kayar; UI kabulü her ekranı 150 px çentik + 150 px köşeyle ölçer; safe_area_test 4 test, 7 bilerek bozmanın hepsi yakalandı; Redmi'de içerik 34 px indi, zemin çentik şeridini kaplıyor. M6-02 bitti (ADR-100): UI kabulü 11 oranlı matriste (katlanabilir ve web dahil), oyun dünyası her oranda ölçülüyor (aspect_matrix_test; 5 bilerek bozmanın hepsi yakalandı); PC görüntüsünde 5 oranda arka plan ağı 10 bandın hepsinde. check.ps1 TEMİZ (430 test).",
     "next_steps": [
-      "M6-02 (🤖): ekran oranı matrisi.",
+      "M6-03 (🤖): performans + efekt kalitesi + indirme boyutu.",
       "Kullanıcıyla: M5-11 (👤), M5-12 (🤝 kapı); standard_queue'daki varsayımlar (M6-01 güvenli alan kayması dahil)."
     ]
   }
