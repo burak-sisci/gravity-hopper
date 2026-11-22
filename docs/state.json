@@ -2,31 +2,59 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-21",
+  "updated": "2026-11-22",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M6",
-    "task": "M6-03",
-    "task_title": "Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu",
+    "task": "M6-01",
+    "task_title": "Güvenli alan (çentik, yuvarlak köşe)",
     "owner": "claude",
-    "status": "in_progress",
-    "note": "M6-03 yarıda (kullanıcı mesaiyi bitirdi): indirme boyutu bitti (ADR-101; arm64 37,92 / armeabi-v7a 39,36 MB, check.ps1 7. adım), Redmi performans ölçümü yapıldı (S3 yüksek 8,69–9,03 ms ≤ 10, gerileme yok; mimari §16 notu yazılacak). Kalan: efekt kalitesi seviyeleri (zayıf cihazda otomatik düşürme gerekli mi; M6-04 emülatörüyle birlikte), S-09 takılma kümesi notu. M6-01 ve M6-02 bitti. Kullanıcı kararı (ADR-098): M5 kapısı beklenmeden M6'nın 🤖 görevleri; M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'da."
+    "status": "not_started",
+    "note": "Yeniden açıldı (ADR-102): yan / alt 60 px profilde 4 testte 54 hata (taşma yatayda); Main'in güvenli alan testi pay 0'da boşa geçiyor. Kabul kriteri roadmap'te."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
-    "started": "2026-11-21",
-    "note": "Otonom mesai 2026-11-21 (\"yeni mesai başlat. mesai türü: otonom mesai.\"). M5'te 🤖 görev yok, M6 kapının arkasında; kuyruktaki teknik not (hud_test) bakım olarak ele alındı. Kullanıcı kararı (ADR-098): kapı beklenmeden M6 🤖 görevlerine geçildi. Önceki: otonom mesai 2026-11-18 (\"otonom mesai başlat\"). Plan: M5-10 (🤖, tek otonom görev); M5-11 (👤) ve M5-12 (🤝 kapı) standard_queue'ya; kapı geçilmez."
+    "started": "2026-11-22",
+    "note": "Otonom mesai 2026-11-22'de kullanıcı tarafından bitirildi (devam eden görevi tamamla, güvenli biçimde sonlandır): M5-12 kapandı, yeni göreve başlanmadı, push yapılmadı."
   },
 
   "standard_queue": [
     {
+      "task": "M6-12",
+      "owner": "user",
+      "added": "2026-11-22",
+      "reason": "Karar (D-13): çöküş duvarı dengesi.",
+      "resume": "Ölçüm ve seçenekler pending_user_decisions → D-13'te; öneri henüz benzetilmedi, oyun değerleri değiştirilmedi."
+    },
+    {
+      "task": "M6-07",
+      "owner": "user",
+      "added": "2026-11-22",
+      "reason": "Kullanıcı görevi: Google Play Console hesabı (25 $).",
+      "resume": "Kimlik doğrulaması günler sürebilir; erken açılması iyi olur."
+    },
+    {
+      "task": "M6-08",
+      "owner": "user",
+      "added": "2026-11-22",
+      "reason": "Kullanıcı görevi: tanıdıkların telefonlarında test.",
+      "resume": "M6'nın Claude görevleri bitince APK / web linkiyle."
+    },
+    {
+      "task": "M6-09",
+      "owner": "user",
+      "added": "2026-11-22",
+      "reason": "Kapı: M6 oyun testi ve Planlama Gözden Geçirmesi.",
+      "resume": "Otonom mesaide geçilmez; D-13 kapıdan önce karara bağlanır."
+    },
+    {
       "task": "M6-03",
       "owner": "user",
       "added": "2026-11-21",
-      "reason": "Dinle (varsayım, ADR-101): müzik 192 → ≈ 160 kbps'e indirildi (indirme boyutu < 40 MB için). Kulaklıkla bir turda fark duyuluyor mu?",
+      "reason": "Dinle (varsayım, ADR-101): müzik ölçülen ortalama 206 → 156 kbps'e indirildi (indirme boyutu < 40 MB için). Ölçülen kayıp: Kervan'da 8–16 kHz SNR 13,9 → 6,9 dB. Kulaklıkla bir turda fark duyuluyor mu?",
       "resume": "Beğenilmezse tools/music/build.py OGG_COMPRESSION geri 0.4 yapılır; o zaman 32 bit telefonlarda boyut 42,8 MB olur ve başka bir yerden (mimari, parça sayısı) kısılması gerekir."
     },
     {
@@ -34,21 +62,7 @@
       "owner": "user",
       "added": "2026-11-21",
       "reason": "Gözden geçir (varsayım, ADR-099): çentikli telefonda ekranlar çentiğin tamamı kadar değil, ekranların zaten bıraktığı payı (üstte 60 px) aşan kısmı kadar iner (Redmi'de 34 px).",
-      "resume": "Ölçülen: Redmi çentiği 94 px, köşe yarıçapı 102 px; cüzdan 34 px indi, zemin çentik şeridini kaplıyor, duraklat düğmesi güvenli alan çizgisinde. Beğenilmezse SafeArea.DESIGN_MARGINS küçültülür (0 → çentiğin tamamı kadar iner); UI kabulü yine ölçer."
-    },
-    {
-      "task": "M5-11",
-      "owner": "user",
-      "added": "2026-11-18",
-      "reason": "👤 görev: Türkçe ve İngilizce metinlerin gözden geçirilmesi (otonom mesaide yapılmaz).",
-      "resume": "localization/translations.csv'deki bütün metinler; kullanıcı okur, düzeltmeleri söyler, Claude işler (iki dil birlikte)."
-    },
-    {
-      "task": "M5-12",
-      "owner": "user",
-      "added": "2026-11-18",
-      "reason": "🤝 kilometre taşı kapısı: ilk kez açan biri gibi test + Planlama Gözden Geçirmesi. Kullanıcı onayı olmadan M6'ya geçilmez.",
-      "resume": "M5-11'den sonra. Telefonda kayıt sıfırlanarak ilk açılıştan başlanır."
+      "resume": "Ölçülen: Redmi çentiği 94 px, köşe yarıçapı 102 px; cüzdan 34 px indi, zemin çentik şeridini kaplıyor, duraklat düğmesi güvenli alan çizgisinde. En üstteki öğe çentik çizgisine değiyor (boşluk 0 px). Yan pay 60 px olunca yerleşim yatayda bozuluyor; M6-01 bunun için yeniden açıldı (ADR-102). Üst kayma beğenilmezse SafeArea.DESIGN_MARGINS küçültülür (0 → çentiğin tamamı kadar iner); UI kabulü yine ölçer."
     },
     {
       "task": "M5-10",
@@ -122,8 +136,8 @@
     { "id": "M2", "title": "Sonsuz ve adil",               "status": "done",        "user_approved": true, "approved_on": "2026-10-13" },
     { "id": "M3", "title": "Görsel ve işitsel kimlik",     "status": "done",        "user_approved": true, "approved_on": "2026-10-21" },
     { "id": "M4", "title": "Meta döngü",                   "status": "done",        "user_approved": true, "approved_on": "2026-11-08", "note": "15 atomik görev (ADR-066); kapıda M4-16 (Glimmer yoğunluğu) eklendi" },
-    { "id": "M5", "title": "Arayüz ve akış",               "status": "not_started", "user_approved": false },
-    { "id": "M6", "title": "Cihaz uyumu ve performans",    "status": "not_started", "user_approved": false },
+    { "id": "M5", "title": "Arayüz ve akış",               "status": "done",        "user_approved": true, "approved_on": "2026-11-22" },
+    { "id": "M6", "title": "Cihaz uyumu ve performans",    "status": "in_progress", "user_approved": false },
     { "id": "M7", "title": "Sosyal katman ve gelir",       "status": "not_started", "user_approved": false },
     { "id": "M8", "title": "Kapalı test ve yayın",         "status": "not_started", "user_approved": false }
   ],
@@ -230,7 +244,8 @@
     "M5-08",
     "M5-09",
     "M5-10",
-    "M6-01",
+    "M5-11",
+    "M5-12",
     "M6-02"
   ],
 
@@ -243,6 +258,20 @@
       "needed_by": "M8-01 (erken karar verilirse iyi olur)",
       "recommendation": "Kısa, kalıcı bir stüdyo adı seç.",
       "note": "Şimdilik geçici paket adı com.gravityhopper.dev kullanılıyor (export_presets.cfg)."
+    },
+    {
+      "id": "D-13",
+      "question": "Çöküş duvarı baskısı: Mıknatıs alınınca duvar neredeyse hiç görünmüyor ve uyarı ekran oranına bağlı. Ölçüm (2026-11-22, gerçek harita üreticisi, 48 tohum; kıl payı itişi ve kalkan yok, toplama rastgele): duvarı dengede tutan toplama oranı S1 0,29 · S2 0,40 · S3 0,51 · S4 0,62 · S5 0,70 · S6 0,68. 20:9 ekranda duvarın göründüğü süre, düzenli oyuncu mıknatıssız (0,60): S1 %8 · S3 %23 · S5 %86 (S5'te %46 yakalanıyor); tam mıknatısla (0,82): S1 %6 · S3 %5 · S5 %29 (yakalanan yok). 16:9 ekranda tam mıknatısla her sektörde en çok %0,2. Gerilim 20:9'da 20 m'de, 16:9'da 10,4 m'de başlıyor.",
+      "needed_by": "M6-09 kapısından önce",
+      "recommendation": "Mıknatısın çektiği Glimmer duvarı itmesin (parası yine gelsin), gerilim her ekranda aynı mesafede başlasın; S4–S6 sürünmesi benzetimle kalibre edilip denge kalıcı teste bağlansın. Öbür seçenekler: olduğu gibi bırakmak; bütün Glimmer itişini küçültmek (mıknatıssız oyuncuyu daha çok öldürür).",
+      "note": "Neden: glimmer_push M2-15'te 1 m seçildi, M4-16'da Glimmer sıklaştı (≈ 1,04–1,18/sn), itme aynı kaldı. Önerinin etkisi henüz benzetilmedi. Oyun değerleri değiştirilmedi (büyük tasarım sorusu, ADR-082 itirazı)."
+    },
+    {
+      "id": "D-14",
+      "question": "Lisans kuralı çelişkisi: müzik ve efekt araçları (tools/music, sfx_prep, sfx_synth) soundfile'ın içindeki LGPL-2.1 libsndfile'ı kullanıyor (M2-20'den beri, CREDITS'te yazılı). .clauderules §7 LGPL'i istisnasız yasaklıyor; istisna kaydı yok.",
+      "needed_by": "M6-09 kapısından önce",
+      "recommendation": "Dağıtılmayan geliştirme araçları için yazılı istisna (ADR): oyuna, depoya ve APK'ya girmez, yalnızca ürettiği ses dosyaları girer. Öbür seçenek: izinli lisanslı bir Vorbis kodlayıcıya geçmek.",
+      "note": "Karar gelene kadar araç değiştirilmedi."
     }
   ],
 
@@ -255,7 +284,7 @@
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-17", "status": "resolved", "answer": "M3-17: Exo 2 (OFL), Türkçe harfleri tam; Orbitron'da Ğ İ Ş ğ ş · eksikti, elendi (architecture.md §12)." },
     { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M2-18", "status": "resolved", "answer": "M0-10: ekransız 8 durum ve Redmi'de adb ile 3 dokunuş = 3 sayım. Gerçek iki başparmak denemesi M2-18 oyun testinde geçti; testte bulunan hızlı çift dokunuş sorunu ADR-036 ile giderildi." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." },
-    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1)", "resolve_in": "M6-03", "status": "open" }
+    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1). 2026-11-21: 10,5 sn içinde 11 kare 29–75 ms; giriş dalgası duvarsız 11,53 ms (tek örnek)", "resolve_in": "M6-03, M6-10", "status": "open" }
   ],
 
   "environment": {
@@ -302,12 +331,12 @@
 
   "approved_tuning": {
     "approved_on": "2026-10-11",
-    "source": "M1-14 his testi (Redmi, ayar paneli); kullanıcı başlangıç değerlerini değiştirmeden kaydetti. Geçerli kaynak data/tuning/default_tuning.tres, GDD §13.1.",
+    "source": "M1-14 his testi (Redmi, ayar paneli); kullanıcı başlangıç değerlerini değiştirmeden kaydetti (dokunma tamponu sonra M2-18'de değişti, ADR-036). Geçerli kaynak data/tuning/default_tuning.tres, GDD §13.1.",
     "values": {
       "climb_speed": "12 m/sn",
       "gravity_accel": "300 m/sn²",
       "max_side_speed": "64 m/sn",
-      "input_buffer_time": "0,12 sn",
+      "input_buffer_time": "0,45 sn (2026-10-13, M2-18; M1'de 0,12 sn)",
       "hurtbox_scale": 0.7,
       "lookahead": "28 m",
       "corridor_width": "18 m"
@@ -322,22 +351,23 @@
   "temp_files": [],
 
   "docs_reviewed": {
-    "CLAUDE.md": "2026-11-09",
-    ".clauderules": "2026-11-09",
-    "docs/architecture.md": "2026-11-09",
-    "docs/GDD.md": "2026-11-09",
-    "docs/roadmap.md": "2026-11-09",
-    "docs/state.json": "2026-11-09",
-    "docs/music_research.md": "2026-11-09",
-    "CREDITS.md": "2026-11-09"
+    "CLAUDE.md": "2026-11-22",
+    ".clauderules": "2026-11-22",
+    "docs/architecture.md": "2026-11-22",
+    "docs/GDD.md": "2026-11-22",
+    "docs/roadmap.md": "2026-11-22",
+    "docs/state.json": "2026-11-22",
+    "docs/music_research.md": "2026-11-22",
+    "CREDITS.md": "2026-11-22"
   },
 
   "last_session": {
-    "date": "2026-11-21",
-    "summary": "Otonom mesai (2026-11-21), kullanıcı durdurdu. Bakım: sinyal sızıntısı (ADR-097). Kullanıcı kararıyla M5 kapısı beklenmeden M6 (ADR-098). M6-01 güvenli alan bitti (ADR-099; Redmi'de içerik 34 px indi). M6-02 ekran oranı matrisi bitti (ADR-100; 11 oran, oyun dünyası her oranda ölçülüyor). M6-03 yarıda: indirme boyutu 42,75 → 39,36 MB (en büyük mimari; müzik ≈ 160 kbps, ADR-101, check.ps1 7. adım), Redmi performansı S3 yüksek 8,69–9,03 ms (≤ 10, gerileme yok; 53–67. sn'de S-09 tipi 11 takılma kümesi). Telefondaki kayıt yedekle aynı, normal yapı yüklü. check.ps1 TEMİZ (430 test).",
+    "date": "2026-11-22",
+    "summary": "Otonom mesai, kullanıcı bitirdi. M5-11 ve M5-12 kullanıcı onayıyla kapandı (M5 kapısı, ADR-102). Planlama Gözden Geçirmesi: sekiz belge okundu, bulunan çelişkiler ve eskimiş bilgiler düzeltildi, M6 atomik görevlere bölündü (M6-10/11/12 eklendi). 2026-11-21 iddiaları düzeltildi: M6-01 bitmemişti, M6-03'te gerileme olmadığı kanıtlı değil (S3 yüksek 8,36–9,03 ms, giriş dalgası 11,53 ms), müzik 206 → 156 kbps. Çok ajanlı denetim yarıda kesildi: 3 denetçiden 1'i bitti, doğrulayıcı çalışmadı; belgeye işlenen bulgular elle sınandı. Yalnızca belge değişti; telefon ölçümü yapılmadı.",
     "next_steps": [
-      "M6-03'ü bitir: §16'ya performans notu, efekt kalitesi seviyeleri (zayıf cihazda otomatik düşürme kararı; M6-04 ile), S-09 notu.",
-      "Kullanıcıyla: müzik dinleme (M6-03), güvenli alan kayması (M6-01), M5-11 (👤), M5-12 (🤝 kapı) ve kuyruktaki diğer varsayımlar."
+      "M6-01: güvenli alanı 60 px'lik yan / alt profilde geçir, Main'e sıfırdan farklı pay veren test.",
+      "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-04, M6-11, M6-05, M6-06.",
+      "Kullanıcıyla: D-13 ve D-14 (M6-09 kapısından önce), D-06, standard_queue'daki gözden geçirmeler, push onayı."
     ]
   }
 }

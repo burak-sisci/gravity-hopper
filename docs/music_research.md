@@ -2,13 +2,15 @@
 
 > 2026-10-13 · Kullanıcı isteği: "Ses ve müzik oyuncuyu oyuna bağlayan önemli etkenlerden biri. Olacak en güzel şekilde, profesyonel olanı yapalım." Bu belge seçenekleri, riskleri ve önerimi toplar. **Karar kullanıcınındır** (`state.json` → D-02). Kaynaklar en altta; çoğu ikincil kaynak olduğu için lisans ve fiyat bilgileri karar öncesinde ilgili tarafın güncel şartlarıyla doğrulanmalıdır.
 
+> **Durum (2026-11-22, M5 Planlama Gözden Geçirmesi):** Güncel müzik: üç özgün tur parçası + menü parçası Liman (M5-10, ADR-096), ≈ 156 kbps (M6-03, ADR-101; dinleme kullanıcıda). Geçerli bilgi architecture.md §8.3 ve GDD §19'da; bu belgenin tamamı araştırma kaydıdır.
+>
 > **Durum (2026-10-20, M3-21, ADR-065):** Kullanıcı isteğiyle eski beş parçanın yerine Claude'un bestelediği üç özgün parça geldi (gerçek enstrüman kayıtları, CC0; `tools/music/`, architecture.md §8.3). Aşağıdaki araştırma ve parça ölçümleri kayıt olarak duruyor.
 >
 > **Durum (2026-10-13):** Uygulandı (M2-20, ADR-040) ve kulak testi geçti: beş parça her turda rastgele çalar, turun temposu parçanındır. Sektör tempolarından ve sektör parçalarından söz eden bölümler (§1, §5, §6, §10, §12 "Sektör düşüncesi") bu kararla eskidi, kayıt olarak duruyor.
 >
 > **Son karar (2026-10-13, ADR-039):** İnsan yapımı, ücretsiz (CC0 / CC-BY) **hibrit orkestral** parçalar; yapay zekâ yalnızca yedek. Ana tema adayları ve ölçümler §12'de. Yapay zekâ araştırması §11'de, aşağıdaki önceki kararlar kayıt olarak duruyor.
 >
-> **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan hâlâ geçerli.
+> **Karar (2026-10-13, ADR-038):** Müzik **ücretsiz kütüphanelerden** (CC0 / CC-BY) gelir. Bir ana tema parçası menüde ve S1'de çalar; sonraki sektörler aynı tarzda kendi parçalarını çalar. Uygulama planı §10'da. §1–§7 araştırma kaydı olarak duruyor; §5'teki tür ve his tablosu ile §6'daki teknik plan o gün geçerliydi (ADR-040 ile eskidi).
 
 ## 1. Kısa sonuç
 

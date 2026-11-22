@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-10-21 (M3 Planlama Gözden Geçirmesi: M3 onaylandı, M4 görev numaraları; önceki: M3-21 özgün müzik) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-11-22 (M5 Planlama Gözden Geçirmesi: M5 onaylandı; çöküş duvarı dengesi D-13'te karar bekliyor) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -136,7 +136,7 @@ Yükseltmeler (§10) ve kozmetik izler (§11).
 
 ## 10. Kalıcı yükseltmeler
 
-Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upgrades/*.tres` dosyalarında (M4-03); satın alma şimdilik debug "İlerleme" sayfasından, mağaza ekranı M5'te.
+Maliyet formülü: `taban × 2^(seviye-1)`. Fiyatlar ve etkiler oyunda `data/upgrades/*.tres` dosyalarında (M4-03); satın alma mağaza ekranından (M5-04).
 
 | Yükseltme | Etki | Seviye | Maliyetler (başlangıç) |
 | --- | --- | --- | --- |
@@ -195,9 +195,9 @@ S4 ve S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla seçildi
 
 **S4 eflatunu (M4-11, ölçülerek seçildi):** Renk kuralı M4-11'den beri gözle görülen fark ölçüsüyle (OKLab) de denetlenir; eşikler onaylı paletlerden alındı. Eflatun tehlike kırmızısından 0,23 uzak (onaylı S3 turuncusu 0,195), rekor sarısından 0,50 (kötü bulunan eski kehribar 0,14 idi), renk körlüğü benzetimlerinde kırmızıdan ≥ 0,1. Mor (S2) ile eflatun komşu tonlar: aralarındaki fark 0,20'de kalıyor. İki sektör hiç yan yana gelmediği için bu kabul edildi (yan yana gelen sektörler ≥ 0,25).
 
-**S5 bozulması (M4-12, ölçülerek seçildi; varsayım, kullanıcı kararı bekliyor):** Çevre rengi gümüş, vurgu beyaz (nabız, afiş ve renk dalgası beyaz). Parlak beyaz çevre rengi iki onaylı kurala takıldı: saf beyaz sarı rekor çizgisine fazla yakın (0,185; kural ≥ 0,2), maviye çekilmiş beyaz ise S5'te varsayılan Neon izini Ayaz izinin aynısı yapıyor (0,054; kural ≥ 0,15). Glitch yalnızca arka planda: vuruşla yanıp sönen ince bantlar (camgöbeği ve eflatun) ve yüksek kalitede ağ çizgilerinin renk kayması. Orta kalitede yalnızca bantlar, düşükte glitch yok. Tehlikelere, oyuncuya ve HUD'a dokunmaz; renk dalgasında yalnızca S5'in tarafında görünür. Bandın üstünde de tehlike okunur (kontrast ≥ 4,5, testte).
+**S5 bozulması (M4-12, ölçülerek seçildi; kullanıcı onayı 2026-10-26, denemesiz):** Çevre rengi gümüş, vurgu beyaz (nabız, afiş ve renk dalgası beyaz). Parlak beyaz çevre rengi iki onaylı kurala takıldı: saf beyaz sarı rekor çizgisine fazla yakın (0,185; kural ≥ 0,2), maviye çekilmiş beyaz ise S5'te varsayılan Neon izini Ayaz izinin aynısı yapıyor (0,054; kural ≥ 0,15). Glitch yalnızca arka planda: vuruşla yanıp sönen ince bantlar (camgöbeği ve eflatun) ve yüksek kalitede ağ çizgilerinin renk kayması. Orta kalitede yalnızca bantlar, düşükte glitch yok. Tehlikelere, oyuncuya ve HUD'a dokunmaz; renk dalgasında yalnızca S5'in tarafında görünür. Bandın üstünde de tehlike okunur (kontrast ≥ 4,5, testte).
 
-**Büyük Depolama Birimi ve Taşma (M4-13; varsayım, kullanıcı denemesi bekliyor):**
+**Büyük Depolama Birimi ve Taşma (M4-13; kullanıcı onayı 2026-10-26, denemesiz):**
 
 - **Varış anı (7500 m):** S5'ten Taşma'ya geçilen adımda oynar. Sektör afişinin yerine "BÜYÜK DEPOLAMA BİRİMİ" afişi beyaz (oyuncu rengi) gelir ve 3,5 sn kalır (sektör afişi 2 sn). Oyuncunun çevresinde bütün sektörlerin renklerinde büyük bir parçacık patlaması çıkar ve oyuncuyla birlikte yükselir; kamera hafifçe sarsılır. Özel bir ses çalar ve aynı anda başlayan sektör sesinin yerini alır. Büyük Depo izi açılır (§11).
 - **Final sesi:** Projenin özgün sesi, kodla üretildi (`tools/sfx_synth.py`; örnek ses yok). Alçak bir vuruş, açık beşlilerle (D–A) yükselen bir arpej, yavaş açılan bir akor ve seyrelen pırıltılar; 3 sn. Üçlü yok: majör/minör renk vermez, D'deki iki parçayla çakışmaz. Ses düzeyi öteki büyük anların kuralıyla ölçülerek ayarlandı: telefon bandında müziğin 6 dB üstü.
@@ -215,7 +215,7 @@ S4 ve S5 paletleri o sektörler eklenirken (M4-11, M4-12) aynı kuralla seçildi
 **Kontrol noktaları:**
 
 - Ulaşılan her sektörün başlangıcı açılır. Tur başlarken hangi sektörden başlanacağı seçilebilir.
-  - M4-09: Sektör, oyuncu sınırını geçtiği anda açılır (tur o sırada bitse ya da uygulama kapansa da kaybolmaz). Açılmak seçmek değildir; başlangıç sektörünü oyuncu seçer, seçim saklanır. Seçim şimdilik debug İlerleme sayfasında, menüde M5-02'de. Skor mutlak yükseklikten sayılır.
+  - M4-09: Sektör, oyuncu sınırını geçtiği anda açılır (tur o sırada bitse ya da uygulama kapansa da kaybolmaz). Açılmak seçmek değildir; başlangıç sektörünü oyuncu seçer, seçim saklanır. Seçim ana menüde (M5-02). Skor mutlak yükseklikten sayılır.
 - Bu sayede Sektör 4'e ulaşmak için her seferinde 5000 m tırmanmak gerekmez.
 
 **Final ve sonrası:** Büyük Depolama Birimi'ne varış, oyunun "hikâye sonu"dur: kısa bir varış anı ve özel bir iz. Ardından Taşma modu sonsuza kadar devam eder (ayrıntılar yukarıda, M4-13).
@@ -358,4 +358,4 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
-| — | Tüm sayısal değerler (hız, uzunluk, maliyet, basınç) | M1–M4, ayar paneliyle |
+| D-13 | Çöküş duvarı baskısı: mıknatıs ve ekran oranı gerilimi değiştiriyor (ölçüm: `state.json`) | M6-12, M6-09 kapısından önce |

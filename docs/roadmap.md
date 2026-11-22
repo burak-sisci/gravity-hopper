@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-10-21 (M3 Planlama Gözden Geçirmesi: M3 onaylandı, M4 atomik hale getirildi, 15 görev; ADR-066)
+> Son güncelleme: 2026-11-22 (M5 Planlama Gözden Geçirmesi: M5 onaylandı, M6 atomik hale getirildi; ADR-102)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -11,7 +11,7 @@
 - **Mesai türü (ADR-045):** *Standart mesaide* sen ekran başındasın; Claude 🤝/👤 göreve, bekleyen karara ya da kapıya kadar ilerler ve seni bekler. *Otonom mesaide* Claude tek başına çalışır: yalnızca 🤖 görevleri yapar, 🤝/👤 görevleri ve karar bekleyenleri atlayıp `state.json` → `standard_queue`'ya yazar; bunlar sonraki standart mesaide yapılır. Kapı otonom mesaide de geçilmez.
 - **Kabul:** görevin "bitti" sayılma şartı.
 - **🚪 Kapı:** Kilometre taşı, sen oynayıp onaylamadan kapanmaz; sonraki aşamaya geçilmez.
-- **Kademeli planlama:** M0–M4 atomik, M5–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
+- **Kademeli planlama:** M0–M6 atomik, M7–M8 daha kaba. Her kilometre taşının sonundaki Planlama Gözden Geçirmesi'nde sıradaki aşama atomik görevlere bölünür.
 
 ## Genel bakış
 
@@ -290,7 +290,7 @@
 
 **Hedef:** Oyun baştan sona, menüleriyle birlikte oynanıyor.
 
-**Akış (M4 Planlama Gözden Geçirmesi, ADR-086):** İlk açılışta menü yok, oyun doğrudan başlar (GDD §18); FTUE bitince açılışlar ana menüden. Ölüm → sonuç ekranı → "Tekrar" (yeni tur) ya da "Menü". Ekranlar `Main/UI` içinde tek tek açılır, hepsi `Events` ile konuşur (.clauderules §3). Her ekran için ortak ölçülü kabul (*UI kabulü*): beş en-boy oranında (9:16, 9:19,5, 9:21, 3:4, 4:3) görünür öğeler çakışmıyor ve ekranın içinde; her düğme ≥ 48 dp, komşu düğmeler arası ≥ 8 dp; metin kontrastı ≥ 4,5 (büyük metin ≥ 3); TR ve EN metinler gerçek fontla kutusuna sığıyor; Redmi'den ekran görüntüsü.
+**Akış (M4 Planlama Gözden Geçirmesi, ADR-086):** İlk açılışta menü yok, oyun doğrudan başlar (GDD §18); FTUE bitince açılışlar ana menüden. Ölüm → sonuç ekranı → "Tekrar" (yeni tur) ya da "Menü". Ekranlar `Main/UI` içinde tek tek açılır, hepsi `Events` ile konuşur (.clauderules §3). Her ekran için ortak ölçülü kabul (*UI kabulü*): beş en-boy oranında (9:16, 9:19,5, 9:21, 3:4, 4:3; M6-02'den beri 11 oran) görünür öğeler çakışmıyor ve ekranın içinde; her düğme ≥ 48 dp, komşu düğmeler arası ≥ 8 dp; metin kontrastı ≥ 4,5 (büyük metin ≥ 3); TR ve EN metinler gerçek fontla kutusuna sığıyor; Redmi'den ekran görüntüsü.
 
 - [x] **M5-01** 🤖 `GameManager` durum makinesi ve sahne geçişleri: izinli geçiş tablosu (`BOOT → MENU → RUNNING ⇄ PAUSED → RESULTS → RUNNING | MENU | SHOP`), izinsiz geçiş reddedilir ve debug günlüğüne yazılır; durum değişimi `Events.app_state_changed` ile duyurulur; `Main` duruma göre dünyayı kurar / bekletir. Ekranlar gelene dek geçici akış sürer (ölümden sonra kendiliğinden yeni tur).
   *Kabul:* Her izinli ve izinsiz geçiş testte; `Main` menü durumunda tur başlatmıyor, "Başla" niyetiyle başlatıyor (test); ölümden yeni tura süre Redmi'de bozulmuyor (≤ 400 ms, şimdi 370–381 ms).
@@ -312,19 +312,31 @@
   *Kabul:* `CREDITS.md`'deki her satır ekranda (test, katalog dolaşılır); Godot lisans metni `Engine.get_license_text()`'ten; kaydırma ve UI kabulü.
 - [x] **M5-10** 🤖 Menü müziği ve arayüz sesleri (GDD §19): özgün menü parçası (`tools/music/`, ADR-065) ve düğme / satın alma / rekor sesleri; menü ↔ tur müzik geçişi.
   *Kabul:* Menü parçası öbür parçalarla ±1 LU, tepe ≤ −1 dBTP (ölçülür); yeni efektler M3-15 düzey kurallarında (test); geçişte boşluk ya da çakışma yok (ölçülür).
-- [ ] **M5-11** 👤 Türkçe ve İngilizce metinlerin gözden geçirilmesi
-- [ ] **M5-12** 🤝 İlk kez açan biri gibi test + Planlama Gözden Geçirmesi → 🚪
+- [x] **M5-11** 👤 Türkçe ve İngilizce metinlerin gözden geçirilmesi
+- [x] **M5-12** 🤝 İlk kez açan biri gibi test + Planlama Gözden Geçirmesi → 🚪 ✅ M5 senin tarafından onaylandı, 2026-11-22 (ADR-102).
 
 ## M6 — Cihaz uyumu ve performans
 
 **Hedef:** Farklı telefonlarda aynı kalite.
 
-- [x] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe)
+- [ ] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe). *Yeniden açıldı (ADR-102).*
+  *Kabul:* UI kabulü iki kötü profilde de geçiyor: (a) üst 150, yan ve alt 60 px; (b) üst 150, yan ve alt 40 px + 150 px köşe. Sütunlar daralır, dokunma hedefleri ≥ 144 px kalır (ölçek küçültülmez); profil küçültülürse test düşer. `Main`'e sıfırdan farklı pay verilen test var; `_apply_safe_area` çağrısı kaldırılınca düşer. Redmi ekran görüntüsü okuma kipi kapalıyken alınır.
 - [x] **M6-02** 🤖 Ekran oranı matrisi: 16:9, 18:9, 20:9, 21:9, 4:3, katlanabilir
-- [ ] **M6-03** 🤖 Performans ölçümü + efekt kalitesi seviyeleri + indirme boyutu (hedef < 40 MB; debug APK şu an 68 MB, `architecture.md` §16)
+  *Kabul:* 11 oranda yerleşim ve oyun dünyası testi (ADR-100). Sığma ve kontrast tek oranda (ADR-102).
+- [ ] **M6-03** 🤖 Performans ölçümü + indirme boyutu (hedef < 40 MB)
+  *Kabul:* Redmi'de yükseltmesiz, duvar karelerin ≥ %95'inde ekranda: S3–Taşma'nın her biri üç kalitede, sektör giriş dalgası ayrı (en az 3 örnek). S3 M3-19 ile, S5 ve Taşma M4-13 ile karşılaştırılır, S4 yeni taban; yüksek ≤ 10 ms, p95 ve takılma sayısı M3-19 ile yan yana. En büyük mimari < 40 MB (`size_report.py`).
+- [ ] **M6-10** 🤖 Takılma kümesi (S-09)
+  *Kabul:* 2026-11-21'deki küme (uygulama açılışından 56,5–67,1 sn, tur başından 52,6–63,1 sn; 11 kare 29–75 ms) aynı koşulda 3 kez denenir (tohum sabitlenemez); nedeni bulunup giderilir ya da yinelenmediği sayılarla yazılır.
 - [ ] **M6-04** 🤖 Android emülatöründe düşük seviyeli cihaz profili testi
+  *Kabul:* 720p, 2 GB profilde açılış, menü ve 5 dk tur çökmeden; kare süresi ve bellek yazılır (emülatör GPU'su gerçek cihaz sayılmaz). Yeni lisans kabulü gerekirse kullanıcıya bırakılır.
+- [ ] **M6-11** 🤖 Zayıf cihazda efekt kalitesi (M6-03 ve M6-04'ün ölçümleriyle)
+  *Kabul:* Varsayılan kalite ya da otomatik düşürme kuralı ölçüme dayanır ve testte; oyuncunun seçtiği ayar hiç ezilmez.
 - [ ] **M6-05** 🤖 Pil ve ısınma kontrolü
+  *Kabul:* 30 dk turda sıcaklık ve kare süresi dakikada bir; son 5 dk'nın ortalaması ilk 5 dk'dan en çok %10 kötü ve ≤ 10 ms. Telefon ayarı değiştirilmez; pil tüketimi kablosuz ölçüm istiyorsa kullanıcıya bırakılır.
 - [ ] **M6-06** 🤖 Uygulama ikonu ve açılış ekranı
+  *Kabul:* Özgün; uyarlanabilir ikonda ana şekil 66/108 güvenli alanda; 48 dp'de şekil–zemin kontrastı ≥ 3; açılışta beyaz kare yok (ölçülür). Zevk kullanıcıya bırakılır.
+- [ ] **M6-12** 🤝 Çöküş duvarı dengesi (D-13)
+  *Kabul:* Kullanıcının seçtiği denge benzetimle kalibre edilir ve kalıcı teste bağlanır.
 - [ ] **M6-07** 👤 🔔 **Google Play Console hesabını aç** (25 $; kimlik doğrulaması günler sürebilir)
 - [ ] **M6-08** 👤 Tanıdıkların telefonlarında test (APK / web linki)
 - [ ] **M6-09** 🤝 Planlama Gözden Geçirmesi → 🚪
