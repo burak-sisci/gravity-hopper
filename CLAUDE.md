@@ -52,7 +52,8 @@ Dikey ekranlı, tek dokunuşlu, yerçekimi çevirmeli hibrit-casual sonsuz tırm
 3. Tasarım değiştiyse `GDD.md`'yi, teknik karar değiştiyse `architecture.md`'yi güncelle ve karar kaydına yeni bir ADR satırı ekle.
 4. Dış varlık eklendiyse `CREDITS.md`'yi güncelle.
 5. Commit mesajı: `[M1-03] Kısa açıklama`.
-6. Commit'ten sonra `tools/notify.ps1 -Read`: kullanıcı telefondan yazdıysa ona göre davran.
+6. Commit'ten sonra birikmiş commit'ler `git push` ile gönderilir (kullanıcı kararı, ADR-107; ayrıca onay beklenmez). Depo **bilerek herkese açık**: gizli bilgi (anahtar, şifre, ntfy konusu) commit'lenmez.
+7. Push'tan sonra `tools/notify.ps1 -Read`: kullanıcı telefondan yazdıysa ona göre davran.
 
 ### Kullanıcı bir karar verdiğinde
 

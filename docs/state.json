@@ -18,7 +18,7 @@
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "standard",
     "started": "2026-11-23",
-    "note": "Standart mesai 2026-11-23 (kullanıcı türü söylemedi). Kullanıcı D-13 ve D-14 önerilerini onayladı, stüdyo adını verdi (BEŞ Studio), logoyu projeye aldırdı ve stüdyo giriş ekranını görev olarak ekletti (M6-13)."
+    "note": "Standart mesai 2026-11-23 (kullanıcı türü söylemedi). Kullanıcı D-13 ve D-14 önerilerini onayladı, stüdyo adını verdi (BEŞ Studio), logoyu projeye aldırdı ve stüdyo giriş ekranını görev olarak ekletti (M6-13). Mesai kullanıcı isteğiyle karar kaydında bitti; push yapılmadı (kural: görev bitince)."
   },
 
   "standard_queue": [
@@ -278,7 +278,7 @@
       "editor_settings": "%APPDATA%/Godot/editor_settings-4.7.tres (Java/SDK yolları ve debug anahtarı Godot tarafından yazıldı, S-04)"
     },
     "git": { "version": "2.55.0", "identity_set": true },
-    "github_cli": { "version": "2.101.0", "authenticated": true, "account": "burak-sisci", "repo_url": "https://github.com/burak-sisci/gravity-hopper", "visibility": "private", "default_branch": "main" },
+    "github_cli": { "version": "2.101.0", "authenticated": true, "account": "burak-sisci", "repo_url": "https://github.com/burak-sisci/gravity-hopper", "visibility": "public", "default_branch": "main" },
     "jdk17": { "installed": true, "version": "17.0.20.1", "path": "C:/Program Files/Microsoft/jdk-17.0.20.101-hotspot", "java_home_set": true },
     "android_sdk": {
       "path": "C:/Users/burak/AppData/Local/Android/Sdk",
@@ -341,7 +341,7 @@
 
   "last_session": {
     "date": "2026-11-23",
-    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. Ardından kullanıcı paket adını onayladı (com.besstudio.gravityhopper, ADR-106; D-06 kapandı, geçiş M8-01'de) ve logonun ekibin ortak üretimi olduğunu, yalnızca bu JPEG'in bulunduğunu söyledi; logo ölçüldü, yeterli. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
+    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. Ardından kullanıcı paket adını onayladı (com.besstudio.gravityhopper, ADR-106; D-06 kapandı, geçiş M8-01'de) ve logonun ekibin ortak üretimi olduğunu, yalnızca bu JPEG'in bulunduğunu söyledi; logo ölçüldü, yeterli. Son olarak kullanıcı otomatik push'a karar verdi (ADR-107; depo bilerek herkese açık, e-posta olduğu gibi); 'sıradaki 2 görev' isteğini iptal etti, M6-01'e başlanmadı (kod değişmedi). Kalan görevler yeni mesaide. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
     "next_steps": [
       "M6-01: güvenli alanı 60 px'lik yan / alt profilde geçir, Main'e sıfırdan farklı pay veren test.",
       "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11, M6-05, M6-06.",
