@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-11-23 (kullanıcı kararları: çöküş duvarı dengesi D-13, stüdyo BEŞ Studio; stüdyo giriş ekranı planlandı) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-11-23 (kullanıcı kararları: çöküş duvarı dengesi D-13, stüdyo BEŞ Studio ve paket adı; stüdyo giriş ekranı planlandı) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 

@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Yol Haritası ve Atomik Görev Listesi
 
-> Son güncelleme: 2026-11-23 (kullanıcı kararları D-13, D-14, D-06; yeni görev M6-13 stüdyo giriş ekranı; ADR-103–105)
+> Son güncelleme: 2026-11-23 (kullanıcı kararları D-13, D-14, D-06; yeni görev M6-13 stüdyo giriş ekranı; ADR-103–106)
 > Yayın tarihi yok; kalite odaklı ilerliyoruz. Görevlerin **durumu** için tek doğru kaynak `docs/state.json`'dur; buradaki kutular onun yansımasıdır.
 
 ## Nasıl okunur?
@@ -335,7 +335,7 @@
   *Kabul:* 30 dk turda sıcaklık ve kare süresi dakikada bir; son 5 dk'nın ortalaması ilk 5 dk'dan en çok %10 kötü ve ≤ 10 ms. Telefon ayarı değiştirilmez; pil tüketimi kablosuz ölçüm istiyorsa kullanıcıya bırakılır.
 - [ ] **M6-06** 🤖 Uygulama ikonu ve açılış ekranı
   *Kabul:* Özgün; uyarlanabilir ikonda ana şekil 66/108 güvenli alanda; 48 dp'de şekil–zemin kontrastı ≥ 3; açılışta beyaz kare yok (ölçülür). Zevk kullanıcıya bırakılır. Motor yüklenirken görünen boot ekranı (`application/boot_splash`) burada düz zeminle kurulur; stüdyo logosu oraya konacaksa M6-13 değiştirir ve beyaz kare ölçüsünü yeniden çalıştırır.
-- [ ] **M6-13** 🤝 Stüdyo giriş ekranı (BEŞ Studio; kullanıcı isteği 2026-11-23, ADR-105). Kaynak `branding/bes_studio_logo.jpeg`; Claude 2–3 tasarımı telefon görüntüsüyle sunar, sen seçersin.
+- [ ] **M6-13** 🤝 Stüdyo giriş ekranı (BEŞ Studio; kullanıcı isteği 2026-11-23, ADR-105). Kaynak `branding/bes_studio_logo.jpeg` (tek sürüm, JPEG; yeterliliği ölçüldü, ADR-106): oyundaki sürüm kenarları üç renge oturtularak temizlenir. Claude 2–3 tasarımı telefon görüntüsüyle sunar, sen seçersin.
   *Kabul:* İki parça. **Boot ekranı** (motor yüklenirken, dokunuş almaz): logo kullanılırsa beyaz kare yok, zemin oyun sahnesine renk sıçraması olmadan geçer (ölçülür). **Oyun içi giriş sahnesi:** ekranda kalma süresi veride (`TuningConfig`) ve testte sınırlı; tek dokunuş sahneyi geçer (test); arka plandan dönüşte gösterilmez (test); logo 11 oranda güvenli alanda, tam görünür (UI kabulü). **Bekleme:** dokunuş gönderilmeden, uygulamanın açılmasından ilk oynanabilir kareye (menünün ya da ilk açılışta turun ilk çizilen karesi, günlükten) süre Redmi'de, değişiklikten önce aynı yolla ölçülen tabana göre 5 açılışın ortancasında en çok 1 sn fazla; logo–zemin kontrastı ≥ 3; geçişlerde beyaz kare yok (ölçülür); indirme boyutu < 40 MB kalır (bugün 0,61 MB pay); oyuna giren logo CREDITS ve Hakkında kataloğuna işlenir. Hareketin ve sürenin hissi sana bırakılır.
 - [ ] **M6-12** 🤖 Çöküş duvarı dengesi (D-13; kullanıcı kararı 2026-11-23, ADR-104)
   *Kabul:* Mıknatısın çektiği Glimmer duvarı itmez, cüzdana yine girer (test); gerilim başlangıcı 11 oranda aynı mesafede (test); gerilim başlangıç mesafesi tek bir `TuningConfig` değeri (başlangıç önerisi bugünkü 20:9 değeri, 20 m); S4–S6 sürünmesi benzetimle kalibre edilir. Görevin başında Claude, sektör başına sayısal hedef bantları önerir (düzenli oyuncu mıknatıssız: duvarın göründüğü süre ve en çok yakalanma oranı; tam mıknatısla: duvarın en az göründüğü süre) ve onayına sunar (gözden geçir notu); kalıcı test bu bantların dışında düşer. Eski ve yeni değerler (ADR-104 tabanı) yan yana yazılır; parça doğrulaması ve ekonomi hedef testi geçer.
@@ -361,7 +361,7 @@
 
 **Hedef:** Play Store'da.
 
-- [ ] **M8-01** 🤝 Paket adının kesinleşmesi (D-06) + yayın anahtarı + yedekleme + Play App Signing
+- [ ] **M8-01** 🤝 Paket adına geçiş (`com.besstudio.gravityhopper`, D-06 kararı, ADR-106) + yayın anahtarı + yedekleme + Play App Signing
 - [ ] **M8-02** 🤖 AAB derlemesi, hedef API şartının kontrolü, yayın ön ayarında debug dosyalarının dışlanması (`addons/debug_menu/*`, `scenes/debug/*`, `scripts/debug/*`)
 - [ ] **M8-03** 🤝 Mağaza sayfası: ikon, ekran görüntüleri, dikey tanıtım videosu, TR/EN açıklamalar
 - [ ] **M8-04** 🤝 İsim ve marka son kontrolü

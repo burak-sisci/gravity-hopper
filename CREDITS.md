@@ -69,4 +69,4 @@ Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar de�
 
 | Varlık | Kaynak | Yazar | Lisans | Durum |
 | --- | --- | --- | --- | --- |
-| BEŞ Studio logosu (`branding/bes_studio_logo.jpeg`, 1254 × 1254 JPEG, 89,6 KB; 2026-11-23'te değiştirilmeden kopyalandı) | Stüdyonun kendisi | BEŞ Studio | Stüdyonun kendi eseri (bütün haklar BEŞ Studio'da) | Kaynak; stüdyo giriş ekranında kullanılacak (M6-13) |
+| BEŞ Studio logosu (`branding/bes_studio_logo.jpeg`, 1254 × 1254 JPEG, 89,6 KB; 2026-11-23'te değiştirilmeden kopyalandı) | Stüdyonun kendisi | BEŞ Studio ekibi (ortak üretim) | Stüdyonun kendi eseri (bütün haklar BEŞ Studio'da) | Kaynak; stüdyo giriş ekranında kullanılacak (M6-13) |

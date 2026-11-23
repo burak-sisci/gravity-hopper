@@ -27,7 +27,7 @@
       "owner": "user",
       "added": "2026-11-23",
       "reason": "🤝 görev: stüdyo giriş ekranı (BEŞ Studio). Tasarım birlikte seçilir.",
-      "resume": "Claude 2–3 seçeneği telefon görüntüsüyle sunar. Kaynak branding/bes_studio_logo.jpeg (JPEG); düz renkli bir logo olduğu için PNG ya da SVG aslı varsa daha temiz bir sürüm çıkar."
+      "resume": "Claude 2–3 seçeneği telefon görüntüsüyle sunar. Kaynak branding/bes_studio_logo.jpeg tek sürüm (kayıpsız aslı yok, kullanıcı 2026-11-23); ölçüldü, yeterli (ADR-106). Oyundaki sürüm kenarları üç renge oturtularak üretilir ve kenar sapması ölçülür."
     },
     {
       "task": "M6-07",
@@ -251,15 +251,7 @@
 
   "blockers": [],
 
-  "pending_user_decisions": [
-    {
-      "id": "D-06",
-      "question": "Paket adı. Stüdyo adı kararlaştı: BEŞ Studio (kullanıcı, 2026-11-23). Paket adı Play'e ilk yüklemeden sonra değiştirilemez ve yalnızca küçük ASCII harf, rakam, nokta ve _ alır (Ş giremez).",
-      "needed_by": "M8-01",
-      "recommendation": "com.besstudio.gravityhopper (stüdyo adı + oyun adı, ASCII).",
-      "note": "Şimdilik geçici paket adı com.gravityhopper.dev (export_presets.cfg). Stüdyo adının Play'deki geliştirici adıyla ve marka çakışmasıyla kontrolü M8-04'te."
-    }
-  ],
+  "pending_user_decisions": [],
 
   "open_technical_questions": [
     { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "resolved", "answer": "Glow çalışıyor (Canvas arka plan, 3B kamera gerekmez; hdr_scale 0.2, eşik 0.3, yoğunluk 2.0) ama Redmi'de kare süresi 8,4 → 17,5 ms, 120 → 57 FPS. Sahte parlama 8,4 ms (≈ +0,9 ms GPU) → ADR-020: sahte parlama." },
@@ -349,11 +341,11 @@
 
   "last_session": {
     "date": "2026-11-23",
-    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
+    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. Ardından kullanıcı paket adını onayladı (com.besstudio.gravityhopper, ADR-106; D-06 kapandı, geçiş M8-01'de) ve logonun ekibin ortak üretimi olduğunu, yalnızca bu JPEG'in bulunduğunu söyledi; logo ölçüldü, yeterli. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
     "next_steps": [
       "M6-01: güvenli alanı 60 px'lik yan / alt profilde geçir, Main'e sıfırdan farklı pay veren test.",
       "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11, M6-05, M6-06.",
-      "Kullanıcıyla: M6-13 stüdyo giriş ekranı tasarımı, D-06 paket adı, logonun nasıl üretildiği (lisans), standard_queue'daki gözden geçirmeler, push onayı."
+      "Kullanıcıyla: M6-13 stüdyo giriş ekranı tasarımı, standard_queue'daki gözden geçirmeler, push onayı."
     ]
   }
 }
