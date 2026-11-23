@@ -2,7 +2,7 @@
 
 > Oyunda kullanılan her dış varlık ve eklenti, **eklendiği commit'te** buraya (sürümüyle) yazılır.
 > İzinli lisanslar: görsel/ses **CC0, CC-BY** · kod/eklenti **MIT, BSD, Apache-2.0, zlib** · font **SIL OFL 1.1** (hepsi atıfla).
-> **Yasak:** CC-BY-NC (ticari kullanım yasak), CC-BY-SA, GPL/LGPL/AGPL ve lisansı belirsiz her şey.
+> **Yasak:** CC-BY-NC (ticari kullanım yasak), CC-BY-SA, GPL/LGPL/AGPL ve lisansı belirsiz her şey. Tek istisna: dağıtılmayan geliştirme araçlarının LGPL bağımlılıkları (ADR-103).
 
 ## Motor ve oyuna dahil edilen yazılımlar
 
@@ -58,7 +58,15 @@ Kenney ses paketlerinden (CC0; atıf zorunlu değil ama veriliyor). Dosyalar de�
 
 | Araç | Sürüm | Lisans | Kullanım | Durum |
 | --- | --- | --- | --- | --- |
-| numpy ([numpy.org](https://numpy.org)) + soundfile ([bastibe/python-soundfile](https://github.com/bastibe/python-soundfile)) | numpy 2.5.4, soundfile 0.14.0 (libsndfile 1.2.2 içinde) | BSD-3-Clause (numpy, soundfile); libsndfile LGPL-2.1 | `tools/music/` (müzik üreteci, M3-21; M2-20'de `tools/music_prep.py`) ve `tools/sfx_prep.py` (efekt ses düzeyi ölçümü, M3-15), `tools/sfx_synth.py` (özgün efekt sesi üretimi, M4-13). Yalnızca geliştirme ortamında (`%LOCALAPPDATA%\gravity-hopper\venv`); oyuna ve depoya girmez, ürettiği ses dosyaları bu lisanslara bağlı değil | ✅ M2-20'de kuruldu |
+| numpy ([numpy.org](https://numpy.org)) + soundfile ([bastibe/python-soundfile](https://github.com/bastibe/python-soundfile)) | numpy 2.5.4, soundfile 0.14.0 (libsndfile 1.2.2 içinde) | BSD-3-Clause (numpy, soundfile); libsndfile LGPL-2.1 | `tools/music/` (müzik üreteci, M3-21; M2-20'de `tools/music_prep.py`) ve `tools/sfx_prep.py` (efekt ses düzeyi ölçümü, M3-15), `tools/sfx_synth.py` (özgün efekt sesi üretimi, M4-13). Yalnızca geliştirme ortamında (`%LOCALAPPDATA%\gravity-hopper\venv`); oyuna ve depoya girmez, ürettiği ses dosyaları bu lisanslara bağlı değil | ✅ M2-20'de kuruldu; LGPL istisnası ADR-103 (kullanıcı kararı D-14, 2026-11-23) |
 | gdtoolkit (`gdlint`) ([Scony/godot-gdscript-toolkit](https://github.com/Scony/godot-gdscript-toolkit)) | 4.5.0 (bağımlılıklar: lark 1.2.2, docopt-ng 0.9.0, radon 6.0.1, PyYAML 6.0.3) | MIT | Kod denetimi. Python paketi; proje dışındaki sanal ortamda (`%LOCALAPPDATA%\gravity-hopper\venv`), depoda değil | ✅ M0-12'de kuruldu |
 | godot-debug-menu ([godot-extended-libraries/godot-debug-menu](https://github.com/godot-extended-libraries/godot-debug-menu)), © 2023-present Hugo Locurcio and contributors | commit `ff12461` (2025-11-19; v1.2.0 + 7 düzeltme) | MIT (`addons/debug_menu/LICENSE.md`) | FPS ve kare süresi ölçümü, yalnızca debug build. Yalnızca `debug_menu.gd`, `.tscn`, `.uid` ve lisans alındı; editör eklentisi alınmadı | ✅ M0-09'da eklendi |
 | gdUnit4 ([godot-gdunit-labs/gdUnit4](https://github.com/godot-gdunit-labs/gdUnit4)), © 2023 Mike Schulze | 6.2.2 (Godot 4.5–4.7.1 için listelenmiş, 4.7.2'de denendi) | MIT (`addons/gdUnit4/LICENSE`) | Otomatik testler (`tests/`), `tools/check.ps1` 8. adım. Dışa aktarmada dışlanır (`addons/gdUnit4/*`) | ✅ M2-01'de eklendi |
+
+## Stüdyo kimliği (henüz oyunda değil)
+
+> Kaynak dosyalar `branding/` altında; klasörde `.gdignore` olduğu için Godot içe aktarmaz ve oyuna girmez. Oyuna giren sürüm (M6-13) yukarıdaki **Görseller** tablosuna ve Hakkında kataloğuna (`data/credits/credits.tres`) taşınır.
+
+| Varlık | Kaynak | Yazar | Lisans | Durum |
+| --- | --- | --- | --- | --- |
+| BEŞ Studio logosu (`branding/bes_studio_logo.jpeg`, 1254 × 1254 JPEG, 89,6 KB; 2026-11-23'te değiştirilmeden kopyalandı) | Stüdyonun kendisi | BEŞ Studio | Stüdyonun kendi eseri (bütün haklar BEŞ Studio'da) | Kaynak; stüdyo giriş ekranında kullanılacak (M6-13) |

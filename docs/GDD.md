@@ -1,6 +1,6 @@
 # GRAVITY HOPPER — Oyun Tasarım Belgesi (GDD)
 
-> Son güncelleme: 2026-11-22 (M5 Planlama Gözden Geçirmesi: M5 onaylandı; çöküş duvarı dengesi D-13'te karar bekliyor) · Sürüm 0.1 (ön prodüksiyon)
+> Son güncelleme: 2026-11-23 (kullanıcı kararları: çöküş duvarı dengesi D-13, stüdyo BEŞ Studio; stüdyo giriş ekranı planlandı) · Sürüm 0.1 (ön prodüksiyon)
 > Bu belge *ne* yaptığımızı anlatır. **Sayısal değerlerin hepsi başlangıç değeridir**; ayar paneliyle oynanarak kesinleşir ve buraya işlenir.
 > Teknik karşılıklar → `architecture.md`. Sıra → `roadmap.md`.
 
@@ -11,6 +11,7 @@
 | | |
 | --- | --- |
 | **Ad** | GRAVITY HOPPER |
+| **Yapımcı** | BEŞ Studio |
 | **Tür** | Hibrit-casual refleks kaçış (sonsuz tırmanış + kalıcı ilerleme) |
 | **Platform** | Android (Google Play), ileride web |
 | **Ekran** | Dikey, tek elle |
@@ -262,13 +263,14 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 | Olay | Etki (başlangıç) |
 | --- | --- |
 | Zamanla sürünme | S1: 0,3 m/sn → S5: 0,8 m/sn (Taşma'da da 0,8) |
-| Glimmer toplamak | +1 m (duvarı iter) |
+| Glimmer toplamak | +1 m (duvarı iter; mıknatısın çektiği Glimmer itmez, D-13 kararı, M6-12) |
 | Kıl payı geçiş | +3 m |
 | Kalkanla darbe almak | −8 m (duvarı çeker) |
 | Başlangıç mesafesi / en fazla | 20 m / 30 m |
 
 - Duvar ekrana girdiğinde ekranın iki yan kenarında, koridorun dışında ince kırmızı bir vinyet belirir ve gerilim sesi yükselir. Vinyet koridorun içine taşmaz; engeller hep okunur (M3-09).
 - **Gerilim sesi (M3-16):** duvar yaklaştıkça müzik boğuklaşır (tizleri kısılır, ritim duyulmaya devam eder) ve altta yükselen, perdesi giderek tizleşen bir "bozuk veri" cızırtısı belirir. Duvar uzaklaşınca (Glimmer, kıl payı) ses yumuşakça açılır. Ölümde ve yeni turda hemen biter.
+- **Denge kararı (kullanıcı, 2026-11-23, D-13):** mıknatısla çekilen Glimmer duvarı itmez (Glimmer yine kazanılır); yalnızca oyuncunun yoluna gidip topladığı iter. Gerilim (vinyet ve ses) her ekran oranında duvar oyuncuya aynı mesafedeyken başlar. S4–S6 sürünmesi benzetimle yeniden ayarlanır. Neden: tam mıknatısla duvar neredeyse hiç görünmüyordu ve uyarı ekran oranına göre değişiyordu (ölçüm ADR-104). Uygulama M6-12'de; tablodaki değerler o zamana dek geçerli.
 - **Amaç öldürmek değil, gerilim yaratmaktır.** S1'de duvar çok yavaştır. Pasif ve aşırı temkinli oynayan oyuncu er geç yakalanır; cesur oynayan rahat nefes alır.
 
 ## 15. Kıl payı ve kombo
@@ -302,6 +304,7 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 - Tehlikeler tek tek tanıtılır; ilk sektör 3–5 turda geçilebilir olmalı.
 - İlk ölümden sonra sonuç ekranı ve ilk Glimmer'lar → "Yükseltmeler" düğmesi parlar.
 - FTUE bitince (ilk tur tamamlanınca) sonraki açılışlar **ana menüden** başlar (M4 Planlama Gözden Geçirmesi; gözden geçirilecek varsayım).
+- **Stüdyo giriş ekranı (M6-13, planlandı; kullanıcı isteği 2026-11-23):** açılışta BEŞ Studio logosu kısa görünür. Oyuncuya ek bekleme eklememesi hedeflenir: logo motor yüklenirken boot ekranında başlayabilir, ardından kısa bir oyun içi sahneyle sürer; ilk oynanabilir kareye ek süre en çok 1 sn, sahne dokununca geçilir. Uygulama arka plandan dönerken gösterilmez. Tasarım M6-13'te birlikte seçilir.
 - **Uygulama (M5-07):** ilk parça 14 vuruşluk boş bir duvar, oyuncunun bulunduğu duvarda tek diken ve karşı duvarda üç Glimmer (çevirmeyi ödüllendirir). El, ekranın ortasında, alt yarıda: açık renkli, camgöbeği kenarlı; her saniye bir kez basar ve parmak ucundan bir halka yayılır. İlk çevirmede kaybolur. İlk sonuç ekranında Yükseltmeler düğmesi Glimmer yeşiline döner ve yavaşça büyüyüp küçülür. Uygulama ilk tur bitmeden kapanırsa sonraki açılış yine tanıtımla başlar.
 
 ## 19. Ses ve his
@@ -358,4 +361,4 @@ Tur başında ilk desen parçasına kadar boşluk: 25 m, tam vuruşa yuvarlanır
 
 | # | Soru | Ne zaman |
 | --- | --- | --- |
-| D-13 | Çöküş duvarı baskısı: mıknatıs ve ekran oranı gerilimi değiştiriyor (ölçüm: `state.json`) | M6-12, M6-09 kapısından önce |
+| — | Şu an açık tasarım sorusu yok (D-13 2026-11-23'te karara bağlandı, §14) | — |

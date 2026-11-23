@@ -63,6 +63,7 @@
 
 - İzinli: görsel/ses **CC0, CC-BY** · kod/eklenti **MIT, BSD, Apache-2.0, zlib** · font **SIL OFL 1.1** · **sözleşmeli ısmarlama eser** (haklar ya da süresiz, dünya çapında kullanım izni yazılı sözleşmeyle; ADR-037). Hepsi atıfla.
 - **Yasak: CC-BY-NC, CC-BY-SA, GPL/LGPL/AGPL ve lisansı belirsiz her şey.**
+  Tek istisna (ADR-103): yalnızca geliştirme ortamında çalışan, oyuna, depoya ve APK'ya girmeyen araçların LGPL bağımlılıkları (bugün libsndfile).
 - Eklenen her dış varlık ve eklenti aynı commit içinde `CREDITS.md`'ye (sürümüyle) yazılır.
 - Eklentiler `addons/` altına **sürümü sabitlenerek** konur ve depoya commit edilir. Test ve editör eklentileri yayın dışa aktarımına girmez.
 - Dış repolar proje klasörüne klonlanmaz (Godot klasördeki her dosyayı içe aktarır). İnceleme proje dışında yapılır; yalnızca gereken dosyalar alınır, fazlası alınmaz.

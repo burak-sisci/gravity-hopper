@@ -2,7 +2,7 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-22",
+  "updated": "2026-11-23",
   "phase": "pre-production",
 
   "current": {
@@ -16,18 +16,18 @@
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
-    "mode": "autonomous",
-    "started": "2026-11-22",
-    "note": "Otonom mesai 2026-11-22'de kullanıcı tarafından bitirildi (devam eden görevi tamamla, güvenli biçimde sonlandır): M5-12 kapandı, yeni göreve başlanmadı, push yapılmadı."
+    "mode": "standard",
+    "started": "2026-11-23",
+    "note": "Standart mesai 2026-11-23 (kullanıcı türü söylemedi). Kullanıcı D-13 ve D-14 önerilerini onayladı, stüdyo adını verdi (BEŞ Studio), logoyu projeye aldırdı ve stüdyo giriş ekranını görev olarak ekletti (M6-13)."
   },
 
   "standard_queue": [
     {
-      "task": "M6-12",
+      "task": "M6-13",
       "owner": "user",
-      "added": "2026-11-22",
-      "reason": "Karar (D-13): çöküş duvarı dengesi.",
-      "resume": "Ölçüm ve seçenekler pending_user_decisions → D-13'te; öneri henüz benzetilmedi, oyun değerleri değiştirilmedi."
+      "added": "2026-11-23",
+      "reason": "🤝 görev: stüdyo giriş ekranı (BEŞ Studio). Tasarım birlikte seçilir.",
+      "resume": "Claude 2–3 seçeneği telefon görüntüsüyle sunar. Kaynak branding/bes_studio_logo.jpeg (JPEG); düz renkli bir logo olduğu için PNG ya da SVG aslı varsa daha temiz bir sürüm çıkar."
     },
     {
       "task": "M6-07",
@@ -48,7 +48,7 @@
       "owner": "user",
       "added": "2026-11-22",
       "reason": "Kapı: M6 oyun testi ve Planlama Gözden Geçirmesi.",
-      "resume": "Otonom mesaide geçilmez; D-13 kapıdan önce karara bağlanır."
+      "resume": "Otonom mesaide geçilmez. D-13 ve D-14 2026-11-23'te karara bağlandı."
     },
     {
       "task": "M6-03",
@@ -254,24 +254,10 @@
   "pending_user_decisions": [
     {
       "id": "D-06",
-      "question": "Paket adı ve yayıncı/stüdyo adı (ör. com.<studyo>.gravityhopper). Play'e ilk yüklemeden sonra değiştirilemez.",
-      "needed_by": "M8-01 (erken karar verilirse iyi olur)",
-      "recommendation": "Kısa, kalıcı bir stüdyo adı seç.",
-      "note": "Şimdilik geçici paket adı com.gravityhopper.dev kullanılıyor (export_presets.cfg)."
-    },
-    {
-      "id": "D-13",
-      "question": "Çöküş duvarı baskısı: Mıknatıs alınınca duvar neredeyse hiç görünmüyor ve uyarı ekran oranına bağlı. Ölçüm (2026-11-22, gerçek harita üreticisi, 48 tohum; kıl payı itişi ve kalkan yok, toplama rastgele): duvarı dengede tutan toplama oranı S1 0,29 · S2 0,40 · S3 0,51 · S4 0,62 · S5 0,70 · S6 0,68. 20:9 ekranda duvarın göründüğü süre, düzenli oyuncu mıknatıssız (0,60): S1 %8 · S3 %23 · S5 %86 (S5'te %46 yakalanıyor); tam mıknatısla (0,82): S1 %6 · S3 %5 · S5 %29 (yakalanan yok). 16:9 ekranda tam mıknatısla her sektörde en çok %0,2. Gerilim 20:9'da 20 m'de, 16:9'da 10,4 m'de başlıyor.",
-      "needed_by": "M6-09 kapısından önce",
-      "recommendation": "Mıknatısın çektiği Glimmer duvarı itmesin (parası yine gelsin), gerilim her ekranda aynı mesafede başlasın; S4–S6 sürünmesi benzetimle kalibre edilip denge kalıcı teste bağlansın. Öbür seçenekler: olduğu gibi bırakmak; bütün Glimmer itişini küçültmek (mıknatıssız oyuncuyu daha çok öldürür).",
-      "note": "Neden: glimmer_push M2-15'te 1 m seçildi, M4-16'da Glimmer sıklaştı (≈ 1,04–1,18/sn), itme aynı kaldı. Önerinin etkisi henüz benzetilmedi. Oyun değerleri değiştirilmedi (büyük tasarım sorusu, ADR-082 itirazı)."
-    },
-    {
-      "id": "D-14",
-      "question": "Lisans kuralı çelişkisi: müzik ve efekt araçları (tools/music, sfx_prep, sfx_synth) soundfile'ın içindeki LGPL-2.1 libsndfile'ı kullanıyor (M2-20'den beri, CREDITS'te yazılı). .clauderules §7 LGPL'i istisnasız yasaklıyor; istisna kaydı yok.",
-      "needed_by": "M6-09 kapısından önce",
-      "recommendation": "Dağıtılmayan geliştirme araçları için yazılı istisna (ADR): oyuna, depoya ve APK'ya girmez, yalnızca ürettiği ses dosyaları girer. Öbür seçenek: izinli lisanslı bir Vorbis kodlayıcıya geçmek.",
-      "note": "Karar gelene kadar araç değiştirilmedi."
+      "question": "Paket adı. Stüdyo adı kararlaştı: BEŞ Studio (kullanıcı, 2026-11-23). Paket adı Play'e ilk yüklemeden sonra değiştirilemez ve yalnızca küçük ASCII harf, rakam, nokta ve _ alır (Ş giremez).",
+      "needed_by": "M8-01",
+      "recommendation": "com.besstudio.gravityhopper (stüdyo adı + oyun adı, ASCII).",
+      "note": "Şimdilik geçici paket adı com.gravityhopper.dev (export_presets.cfg). Stüdyo adının Play'deki geliştirici adıyla ve marka çakışmasıyla kontrolü M8-04'te."
     }
   ],
 
@@ -362,12 +348,12 @@
   },
 
   "last_session": {
-    "date": "2026-11-22",
-    "summary": "Otonom mesai, kullanıcı bitirdi. M5-11 ve M5-12 kullanıcı onayıyla kapandı (M5 kapısı, ADR-102). Planlama Gözden Geçirmesi: sekiz belge okundu, bulunan çelişkiler ve eskimiş bilgiler düzeltildi, M6 atomik görevlere bölündü (M6-10/11/12 eklendi). 2026-11-21 iddiaları düzeltildi: M6-01 bitmemişti, M6-03'te gerileme olmadığı kanıtlı değil (S3 yüksek 8,36–9,03 ms, giriş dalgası 11,53 ms), müzik 206 → 156 kbps. Çok ajanlı denetim yarıda kesildi: 3 denetçiden 1'i bitti, doğrulayıcı çalışmadı; belgeye işlenen bulgular elle sınandı. Yalnızca belge değişti; telefon ölçümü yapılmadı.",
+    "date": "2026-11-23",
+    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
     "next_steps": [
       "M6-01: güvenli alanı 60 px'lik yan / alt profilde geçir, Main'e sıfırdan farklı pay veren test.",
-      "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-04, M6-11, M6-05, M6-06.",
-      "Kullanıcıyla: D-13 ve D-14 (M6-09 kapısından önce), D-06, standard_queue'daki gözden geçirmeler, push onayı."
+      "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11, M6-05, M6-06.",
+      "Kullanıcıyla: M6-13 stüdyo giriş ekranı tasarımı, D-06 paket adı, logonun nasıl üretildiği (lisans), standard_queue'daki gözden geçirmeler, push onayı."
     ]
   }
 }
