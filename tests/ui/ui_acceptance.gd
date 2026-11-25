@@ -22,13 +22,18 @@ const MIN_DISABLED_CONTRAST: float = 3.0
 ## yazısı 12 sp).
 const MIN_FONT_PX: int = 36
 const LOCALES: Array[String] = ["en", "tr"]
-## Güvenli alan (M6-01): ekran testleri kötü bir telefonda ölçer. Üstte 150 px çentik (≈ 50 dp;
-## Redmi 94, 1440 px genişlikli büyük kamera delikleri tuvalde ≈ 110–130; SafeArea.DESIGN_MARGINS
-## üstte 60'ı aşar, içerik kayar) ve 150 px yuvarlak köşe (≈ 50 dp; Redmi 102 = 37 dp). Dikey
-## telefonda yan ve alt kesik neredeyse yok: oralarda pay tasarım payına eşit (40 px; ölçü öğelerin
-## bu payı bıraktığını sınar). Godot köşe yarıçapını bildirmez: köşe bölgesi tasarımla boş kalır.
-const WORST_INSETS: Vector4 = Vector4(40.0, 150.0, 40.0, 40.0)
-const CORNER_RADIUS_PX: float = 150.0
+## Güvenli alan (M6-01, ADR-102): ekran testleri iki kötü telefonda ölçer. İkisinde de üstte
+## 150 px çentik (≈ 50 dp; Redmi 94, 1440 px genişlikli büyük kamera delikleri tuvalde ≈ 110–130;
+## SafeArea.DESIGN_MARGINS üstte 60'ı aşar, içerik kayar).
+## (a) Yanlarda ve altta 60 px kesik (bükük kenarlı ekran, hareket çubuğu): tasarım payını 20 px
+## aşar, içerik yanlardan ve alttan içeri girer, sütunlar daralır. Köşe ölçülmez.
+## (b) Yanlarda ve altta 40 px (tasarım payına eşit, içerik kaymaz) + 150 px yuvarlak köşe
+## (≈ 50 dp; Redmi 102 = 37 dp). Godot köşe yarıçapını bildirmez: köşe bölgesi tasarımla boş kalır.
+## Profiller küçültülürse safe_area_test düşer. İlk profil (en dar içerik) tek profilli testlerin.
+const SAFE_PROFILES: Array[Vector4] = [Vector4(60.0, 150.0, 60.0, 60.0),
+		Vector4(40.0, 150.0, 40.0, 40.0)]
+## Profillerin köşe yarıçapı (tuval px; 0 = köşe ölçülmez).
+const PROFILE_CORNERS: Array[float] = [0.0, 150.0]
 
 
 ## Oranı verilen ekranın tuval boyutu (stretch "expand", taban 1080 × 1920).
@@ -41,30 +46,32 @@ static func canvas_size(aspect: float) -> Vector2i:
 	return Vector2i(size.round())
 
 
-## Ekranı kötü telefonun güvenli alanına alır (Main'in cihazda yaptığı gibi: tasarım payını aşan
-## kısım kadar) ve öğelerin içinde kalması gereken güvenli dikdörtgeni döndürür.
-static func apply_worst_safe_area(screen: Control) -> void:
-	SafeArea.fit(screen, SafeArea.content_insets(WORST_INSETS))
+## Ekranı kötü telefon profilinin güvenli alanına alır (Main'in cihazda yaptığı gibi: tasarım
+## payını aşan kısım kadar).
+static func apply_safe_profile(screen: Control, profile: int) -> void:
+	SafeArea.fit(screen, SafeArea.content_insets(SAFE_PROFILES[profile]))
 
 
-## Kötü telefonun güvenli dikdörtgeni (tuvalden payları çıkarılmış).
-static func worst_safe_rect(control: Control) -> Rect2:
+## Profilin güvenli dikdörtgeni (tuvalden payları çıkarılmış): öğeler bunun içinde kalır.
+static func safe_rect(control: Control, profile: int) -> Rect2:
 	var view: Vector2 = control.get_viewport_rect().size
-	return Rect2(WORST_INSETS.x, WORST_INSETS.y, view.x - WORST_INSETS.x - WORST_INSETS.z,
-			view.y - WORST_INSETS.y - WORST_INSETS.w)
+	var insets: Vector4 = SAFE_PROFILES[profile]
+	return Rect2(insets.x, insets.y, view.x - insets.x - insets.z, view.y - insets.y - insets.w)
 
 
-## Yuvarlak köşenin kestiği bölgeye giren sabit öğeler (her köşede yarıçap CORNER_RADIUS_PX'lik
-## çeyrek dairenin dışı, köşe karesinin içi; öğenin ekrandaki kısmının köşeye en yakın noktası
-## ölçülür). Kaydırılan listeler ve içerikleri sayılmaz: oyuncu onları köşeden kaydırarak çıkarır.
-static func corner_problems(items: Array[Control]) -> Array[String]:
+## Yuvarlak köşenin kestiği bölgeye giren sabit öğeler (her köşede `radius` yarıçaplı çeyrek
+## dairenin dışı, köşe karesinin içi; öğenin ekrandaki kısmının köşeye en yakın noktası ölçülür).
+## Kaydırılan listeler ve içerikleri sayılmaz: oyuncu onları köşeden kaydırarak çıkarır.
+static func corner_problems(items: Array[Control], radius: float) -> Array[String]:
 	var problems: Array[String] = []
+	if radius <= 0.0:
+		return problems
 	for item: Control in items:
 		var view: Vector2 = item.get_viewport_rect().size
 		var rect: Rect2 = item.get_global_rect().intersection(Rect2(Vector2.ZERO, view))
 		if _scrolls(item) or not rect.has_area():
 			continue
-		var r: float = CORNER_RADIUS_PX
+		var r: float = radius
 		var corners: Array[Vector2] = [Vector2(r, r), Vector2(view.x - r, r),
 				Vector2(r, view.y - r), Vector2(view.x - r, view.y - r)]
 		for center: Vector2 in corners:
@@ -91,9 +98,16 @@ static func leaves(root: Control) -> Array[Control]:
 	return found
 
 
+## Profilde: öğeler güvenli dikdörtgenin içinde ve çakışmıyor; dokunulan öğeler (düğme,
+## kaydırıcı) ≥ 48 dp ve aralarında ≥ 8 dp; köşe bölgesine girmiyor.
+static func profile_problems(items: Array[Control], control: Control, profile: int) \
+		-> Array[String]:
+	return layout_problems(items, safe_rect(control, profile), PROFILE_CORNERS[profile])
+
+
 ## Öğeler ekranın içinde ve çakışmıyor; dokunulan öğeler (düğme, kaydırıcı) ≥ 48 dp ve aralarında
-## ≥ 8 dp.
-static func layout_problems(items: Array[Control], screen: Rect2) -> Array[String]:
+## ≥ 8 dp; `corner` yarıçaplı yuvarlak köşeye girmiyor (0: köşe ölçülmez).
+static func layout_problems(items: Array[Control], screen: Rect2, corner: float) -> Array[String]:
 	var problems: Array[String] = []
 	for item: Control in items:
 		var rect: Rect2 = item.get_global_rect()
@@ -111,12 +125,13 @@ static func layout_problems(items: Array[Control], screen: Rect2) -> Array[Strin
 				var gap: float = _gap(rect, other.get_global_rect())
 				if gap < MIN_GAP_PX:
 					problems.append("%s ~ %s arası %.0f px" % [item.name, other.name, gap])
-	problems.append_array(corner_problems(items))
+	problems.append_array(corner_problems(items, corner))
 	return problems
 
 
-## Düğme yazısı gerçek fontla tasarlanan genişliğe sığar (sığmayan yazı düğmeyi büyütür, ölçüyü
-## gizlerdi; bu yüzden custom_minimum_size'a göre) ve düğme tasarlanan boyunda kalır.
+## Düğme yazısı gerçek fontla tasarlanan en küçük genişliğe sığar (sığmayan yazı düğmeyi büyütür,
+## ölçüyü gizlerdi; bu yüzden custom_minimum_size'a göre: esnek düğmelerde o, en dar profildeki
+## genişliktir) ve yazı düğmenin en küçük boyutunu büyütmez.
 static func button_fit_problems(button: Button) -> Array[String]:
 	var problems: Array[String] = []
 	var text: String = button.text
@@ -128,8 +143,10 @@ static func button_fit_problems(button: Button) -> Array[String]:
 	var room: float = button.custom_minimum_size.x - 2.0 * NeonButton.BORDER_PX * 4.0
 	if width > room:
 		problems.append("'%s' %.0f px > %.0f" % [text, width, room])
-	if button.size != button.custom_minimum_size:
-		problems.append("%s büyüdü: %s" % [button.name, button.size])
+	# Yazı düğmenin en küçük boyutunu büyütmemeli (kap genişletebilir: esnek sütun, M6-01).
+	if button.get_combined_minimum_size() != button.custom_minimum_size:
+		problems.append("%s yazıyla büyüdü: %s" % [button.name,
+				button.get_combined_minimum_size()])
 	problems.append_array(glyph_problems(font, text))
 	return problems
 

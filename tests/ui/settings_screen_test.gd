@@ -38,16 +38,17 @@ func after_test() -> void:
 ## Her oranda ve dilde: öğeler ekranın içinde, çakışmıyor; düğmeler ve kaydırıcılar ≥ 48 dp,
 ## aralarında ≥ 8 dp.
 func test_layout_holds_on_every_aspect_and_language() -> void:
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			var screen: SettingsScreen = await _open(aspect)
-			var items: Array[Control] = UI.leaves(screen)
-			assert_int(items.size()).is_equal(LEAF_COUNT)
-			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(screen))
-			assert_array(problems).override_failure_message("%s %.3f: %s" % [
-				locale, aspect, problems]).is_empty()
-			screen.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				var screen: SettingsScreen = await _open(aspect, profile)
+				var items: Array[Control] = UI.leaves(screen)
+				assert_int(items.size()).is_equal(LEAF_COUNT)
+				var problems: Array[String] = UI.profile_problems(items, screen, profile)
+				assert_array(problems).override_failure_message("profil %d %s %.3f: %s" % [
+					profile, locale, aspect, problems]).is_empty()
+				screen.get_parent().queue_free()
 
 
 ## İki dilde ve iki anahtar durumunda (AÇIK / KAPALI): düğme yazıları kutusunda, satır adları en
@@ -166,8 +167,9 @@ func test_opens_on_request_and_closes() -> void:
 	screen.get_parent().queue_free()
 
 
-func _open(aspect: float) -> SettingsScreen:
-	var screen: SettingsScreen = await _add(SETTINGS_SCENE, aspect) as SettingsScreen
+func _open(aspect: float, profile: int = 0) -> SettingsScreen:
+	var screen: SettingsScreen = await _add(SETTINGS_SCENE, aspect, profile) \
+			as SettingsScreen
 	screen.open()
 	return screen
 
@@ -183,13 +185,13 @@ func _open_all() -> Array[Control]:
 
 
 ## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) sahneyi kurar.
-func _add(scene: PackedScene, aspect: float) -> Control:
+func _add(scene: PackedScene, aspect: float, profile: int = 0) -> Control:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var control: Control = scene.instantiate() as Control
 	viewport.add_child(control)
-	UI.apply_worst_safe_area(control)
+	UI.apply_safe_profile(control, profile)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return control

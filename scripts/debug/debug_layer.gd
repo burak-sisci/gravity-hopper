@@ -27,6 +27,9 @@ const UPGRADE_ARG: String = "--upgrade="
 ## Başlatma argümanı (`-- --trail=trail_gold`): iz bedelsiz verilir ve kuşanılır (kaydedilir;
 ## kare yakalama, M4-08).
 const TRAIL_ARG: String = "--trail="
+## Başlatma argümanı (`-- --safe-area=60,150,60,60`): cihazın güvenli alanı yerine bu paylar
+## (tuval px; sol, üst, sağ, alt). Çentiksiz cihazda kötü telefon profilini dener (M6-01).
+const SAFE_AREA_ARG: String = "--safe-area="
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -104,6 +107,12 @@ func _ready() -> void:
 			var trail: StringName = StringName(arg.trim_prefix(TRAIL_ARG))
 			Progression.grant_trail(trail)
 			Progression.equip_trail(trail)
+		elif arg.begins_with(SAFE_AREA_ARG):
+			# Main güvenli alanı debug katmanını yükledikten hemen sonra uygular.
+			var sides: PackedFloat64Array = arg.trim_prefix(SAFE_AREA_ARG).split_floats(",")
+			if sides.size() == 4:
+				SafeArea.simulated_insets = Vector4(sides[0], sides[1], sides[2], sides[3])
+				SafeArea.simulate = true
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):

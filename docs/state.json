@@ -2,23 +2,23 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-23",
+  "updated": "2026-11-25",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M6",
-    "task": "M6-01",
-    "task_title": "Güvenli alan (çentik, yuvarlak köşe)",
+    "task": "M6-03",
+    "task_title": "Performans ölçümü + indirme boyutu (hedef < 40 MB)",
     "owner": "claude",
-    "status": "not_started",
-    "note": "Yeniden açıldı (ADR-102): yan / alt 60 px profilde 4 testte 54 hata (taşma yatayda); Main'in güvenli alan testi pay 0'da boşa geçiyor. Kabul kriteri roadmap'te."
+    "status": "in_progress",
+    "note": "İndirme boyutu ara sonucu ADR-101'de (39,39 / 40 MB). Performans ADR-102'den sonra aynı koşulda yeniden: yükseltmesiz kayıt, duvar karelerin ≥ %95'inde ekranda, S3–Taşma × üç kalite, giriş dalgası ayrı. Kabul kriteri roadmap'te."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
-    "mode": "standard",
-    "started": "2026-11-23",
-    "note": "Standart mesai 2026-11-23 (kullanıcı türü söylemedi). Kullanıcı D-13 ve D-14 önerilerini onayladı, stüdyo adını verdi (BEŞ Studio), logoyu projeye aldırdı ve stüdyo giriş ekranını görev olarak ekletti (M6-13). Mesai kullanıcı isteğiyle karar kaydında bitti; push yapılmadı (kural: görev bitince)."
+    "mode": "autonomous",
+    "started": "2026-11-25",
+    "note": "Otonom mesai 2026-11-25 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesaiyi otomatik bitir; her görev sonunda push). Hedef: M6-01, M6-03."
   },
 
   "standard_queue": [
@@ -62,7 +62,7 @@
       "owner": "user",
       "added": "2026-11-21",
       "reason": "Gözden geçir (varsayım, ADR-099): çentikli telefonda ekranlar çentiğin tamamı kadar değil, ekranların zaten bıraktığı payı (üstte 60 px) aşan kısmı kadar iner (Redmi'de 34 px).",
-      "resume": "Ölçülen: Redmi çentiği 94 px, köşe yarıçapı 102 px; cüzdan 34 px indi, zemin çentik şeridini kaplıyor, duraklat düğmesi güvenli alan çizgisinde. En üstteki öğe çentik çizgisine değiyor (boşluk 0 px). Yan pay 60 px olunca yerleşim yatayda bozuluyor; M6-01 bunun için yeniden açıldı (ADR-102). Üst kayma beğenilmezse SafeArea.DESIGN_MARGINS küçültülür (0 → çentiğin tamamı kadar iner); UI kabulü yine ölçer."
+      "resume": "Ölçülen: Redmi çentiği 94 px, köşe yarıçapı 102 px; cüzdan 34 px indi, zemin çentik şeridini kaplıyor, duraklat düğmesi güvenli alan çizgisinde. En üstteki öğe çentik çizgisine değiyor (boşluk 0 px). Yan / alt 60 px'lik profil M6-01'de (ADR-108) düzeltildi: sütunlar daralıyor. Üst kayma beğenilmezse SafeArea.DESIGN_MARGINS küçültülür (0 → çentiğin tamamı kadar iner); UI kabulü yine ölçer."
     },
     {
       "task": "M5-10",
@@ -246,7 +246,8 @@
     "M5-10",
     "M5-11",
     "M5-12",
-    "M6-02"
+    "M6-02",
+    "M6-01"
   ],
 
   "blockers": [],
@@ -340,12 +341,11 @@
   },
 
   "last_session": {
-    "date": "2026-11-23",
-    "summary": "Standart mesai. Kullanıcı D-13 (çöküş duvarı dengesi, ADR-104; M6-12 artık 🤖) ve D-14 (geliştirme aracı LGPL istisnası, ADR-103; .clauderules §7) önerilerini onayladı, stüdyo adını verdi: BEŞ Studio (ADR-105; paket adı D-06'da açık, öneri com.besstudio.gravityhopper). Logo branding/bes_studio_logo.jpeg'e kopyalandı (baytları aynı; .gdignore ile içe aktarılmaz, oyuna girmez). Yeni 🤝 görev M6-13 stüdyo giriş ekranı. Ardından kullanıcı paket adını onayladı (com.besstudio.gravityhopper, ADR-106; D-06 kapandı, geçiş M8-01'de) ve logonun ekibin ortak üretimi olduğunu, yalnızca bu JPEG'in bulunduğunu söyledi; logo ölçüldü, yeterli. Son olarak kullanıcı otomatik push'a karar verdi (ADR-107; depo bilerek herkese açık, e-posta olduğu gibi); 'sıradaki 2 görev' isteğini iptal etti, M6-01'e başlanmadı (kod değişmedi). Kalan görevler yeni mesaide. İki doğrulayıcı ajan 4 kusur buldu, düzeltildi (M6-13 bekleme ölçüsü, M6-12 sayısal hedefleri, M6-06/M6-13 boot ekranı sahipliği, bu alan). 2026-11-22: M5 kapısı ve Planlama Gözden Geçirmesi (ADR-102).",
+    "date": "2026-11-25",
+    "summary": "Otonom mesai (kullanıcı: bekleyen 25 commit push'landı, her görev sonunda otomatik push kuralı yeniden teyit edildi, sıradaki 2 görev M6-01 ve M6-03, sonra mesai biter). M6-01 bitti (ADR-108): UI kabulü iki kötü profilde, sütunlar safe_column grubunda daralıyor, Main'in testi debug taklidiyle sıfırdan farklı payla, 5 bozma yakalandı; Redmi'de kötü profil okuma kipi kapalıyken görüntülendi (kullanıcı telefonu bıraktı ve 'istediğin gibi çalış' dedi; okuma kipi ölçümler için kapatıldı, mesai sonunda eski değerine döner). M6-03 sürüyor.",
     "next_steps": [
-      "M6-01: güvenli alanı 60 px'lik yan / alt profilde geçir, Main'e sıfırdan farklı pay veren test.",
-      "Sonra M6-03 (aynı koşulda performans), M6-10 (takılma kümesi), M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11, M6-05, M6-06.",
-      "Kullanıcıyla: M6-13 stüdyo giriş ekranı tasarımı, standard_queue'daki gözden geçirmeler, push onayı."
+      "M6-03: yükseltmesiz kayıtla S3–Taşma × üç kalite, duvar ≥ %95 ekranda, giriş dalgası ≥ 3 örnek; M3-19 / M4-13 ile karşılaştır.",
+      "Telefon: kayıt yedeği scratchpad'de; ölçüm bitince kayıt, ayar ve okuma kipi (1) geri yüklenir."
     ]
   }
 }

@@ -319,7 +319,7 @@
 
 **Hedef:** Farklı telefonlarda aynı kalite.
 
-- [ ] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe). *Yeniden açıldı (ADR-102).*
+- [x] **M6-01** 🤖 Güvenli alan (çentik, yuvarlak köşe). *Yeniden açıldı (ADR-102), kapandı (ADR-108).*
   *Kabul:* UI kabulü iki kötü profilde de geçiyor: (a) üst 150, yan ve alt 60 px; (b) üst 150, yan ve alt 40 px + 150 px köşe. Sütunlar daralır, dokunma hedefleri ≥ 144 px kalır (ölçek küçültülmez); profil küçültülürse test düşer. `Main`'e sıfırdan farklı pay verilen test var; `_apply_safe_area` çağrısı kaldırılınca düşer. Redmi ekran görüntüsü okuma kipi kapalıyken alınır.
 - [x] **M6-02** 🤖 Ekran oranı matrisi: 16:9, 18:9, 20:9, 21:9, 4:3, katlanabilir
   *Kabul:* 11 oranda yerleşim ve oyun dünyası testi (ADR-100). Sığma ve kontrast tek oranda (ADR-102).

@@ -163,8 +163,9 @@ func test_finale_banner_replaces_the_sector_banner() -> void:
 
 
 ## Çeviri sığar (ölçülür, M4-13): her sektör afişi ve final afişi iki dilde de gerçek fontla en
-## çok MAX_BANNER_LINES satır; bütün satırlar görünür ve afiş ekranın içinde. Ölçü oyunun taban
-## boyutunda: "expand" uyarlamasında mantıksal genişlik hiçbir ekranda bundan dar olmaz.
+## çok MAX_BANNER_LINES satır; bütün satırlar görünür ve afiş güvenli alanın içinde. Ölçü oyunun
+## taban boyutunda ("expand" uyarlamasında mantıksal genişlik hiçbir ekranda bundan dar olmaz) ve
+## en dar kötü telefon profilinde (afiş 1000 → 960 px, M6-01).
 func test_every_banner_fits_in_both_languages() -> void:
 	var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
 	viewport.size = Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
@@ -172,9 +173,10 @@ func test_every_banner_fits_in_both_languages() -> void:
 	add_child(viewport)
 	var hud: Control = HUD_SCENE.instantiate() as Control
 	viewport.add_child(hud)
+	UI.apply_safe_profile(hud, 0)
 	var banner: Label = hud.get_node("%SectorBanner") as Label
 	var sectors: SectorCatalog = (hud as Object).get("sectors") as SectorCatalog
-	var screen: Rect2 = Rect2(Vector2.ZERO, viewport.size)
+	var screen: Rect2 = UI.safe_rect(hud, 0)
 	for locale: String in ["en", "tr"]:
 		TranslationServer.set_locale(locale)
 		var texts: Array[String] = [tr("HUD_FINALE")]
@@ -195,9 +197,10 @@ func test_every_banner_fits_in_both_languages() -> void:
 				locale, text, rect]).is_true()
 
 
-## Sayaçlar sığar (ölçülür, M4-14): en kötü yükseklik ve Glimmer sayısı iki dilde gerçek fontla
-## kendi kutusuna sığar; aynı satırdaki iki yazı (solda yükseklik, sağda sağa yaslı Glimmer)
-## arasında MIN_COUNTER_GAP kalır. Ölçü oyunun taban genişliğinde (en dar mantıksal ekran).
+## Sayaçlar sığar (ölçülür, M4-14): en kötü yükseklik, rekor ve Glimmer sayısı iki dilde gerçek
+## fontla kendi kutusuna sığar; soldaki iki yazının (yükseklik, rekor) her biri ile sağa yaslı
+## Glimmer arasında MIN_COUNTER_GAP kalır. Ölçü oyunun taban genişliğinde ve en dar kötü telefon
+## profilinde (yanlardan 20 px daralmış ekran, M6-01).
 func test_counters_fit_at_worst_values() -> void:
 	var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
 	viewport.size = Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
@@ -205,23 +208,32 @@ func test_counters_fit_at_worst_values() -> void:
 	add_child(viewport)
 	var hud: Control = HUD_SCENE.instantiate() as Control
 	viewport.add_child(hud)
+	UI.apply_safe_profile(hud, 0)
 	await get_tree().process_frame
 	var height: Label = hud.get_node("%HeightLabel") as Label
+	var best: Label = hud.get_node("%BestLabel") as Label
 	var glimmer: Label = hud.get_node("%GlimmerLabel") as Label
 	# Kutular yazı değişmeden önce: taşan yazı etiketi büyütür, ölçüyü gizlerdi.
 	var height_box: Rect2 = height.get_global_rect()
+	var best_box: Rect2 = best.get_global_rect()
 	var glimmer_box: Rect2 = glimmer.get_global_rect()
 	for locale: String in ["en", "tr"]:
 		TranslationServer.set_locale(locale)
 		var height_width: float = _text_width(height, tr("HUD_HEIGHT") % WORST_HEIGHT_M)
+		var best_width: float = _text_width(best, tr("HUD_BEST") % WORST_HEIGHT_M)
 		var glimmer_width: float = _text_width(glimmer, tr("HUD_GLIMMERS") % WORST_GLIMMERS)
 		assert_float(height_width).override_failure_message("%s: yükseklik %.0f px > kutu %.0f" % [
 			locale, height_width, height_box.size.x]).is_less_equal(height_box.size.x)
+		assert_float(best_width).override_failure_message("%s: rekor %.0f px > kutu %.0f" % [
+			locale, best_width, best_box.size.x]).is_less_equal(best_box.size.x)
 		assert_float(glimmer_width).override_failure_message("%s: Glimmer %.0f px > kutu %.0f" % [
 			locale, glimmer_width, glimmer_box.size.x]).is_less_equal(glimmer_box.size.x)
-		var gap: float = (glimmer_box.end.x - glimmer_width) - (height_box.position.x + height_width)
-		assert_float(gap).override_failure_message("%s: sayaçlar arası %.0f px < %.0f" % [
-			locale, gap, MIN_COUNTER_GAP]).is_greater_equal(MIN_COUNTER_GAP)
+		var glimmer_start: float = glimmer_box.end.x - glimmer_width
+		for left: Array in [["yükseklik", height_box.position.x + height_width],
+				["rekor", best_box.position.x + best_width]]:
+			var gap: float = glimmer_start - float(left[1])
+			assert_float(gap).override_failure_message("%s: %s ~ Glimmer %.0f px < %.0f" % [
+				locale, left[0], gap, MIN_COUNTER_GAP]).is_greater_equal(MIN_COUNTER_GAP)
 
 
 ## Kıl payı yazısı ve kombo göstergesi (M3-12): iki dilde; yazı söner, gösterge zincirle biter.
@@ -300,21 +312,23 @@ func test_taps_on_labels_flip_player() -> void:
 ## Duraklat (M5-06): her oranda üst şeritteki yazılar ve düğme ekranda, çakışmasız; düğme
 ## ≥ 48 dp, yazısı sığar ve okunur. Yalnızca süren turda görünür.
 func test_pause_button_layout_and_visibility() -> void:
-	for aspect: float in UI.ASPECTS:
-		var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
-		viewport.size = UI.canvas_size(aspect)
-		add_child(viewport)
-		var hud: Control = HUD_SCENE.instantiate() as Control
-		viewport.add_child(hud)
-		UI.apply_worst_safe_area(hud)
-		await get_tree().process_frame
-		var items: Array[Control] = []
-		for path: String in ["%HeightLabel", "%BestLabel", "%GlimmerLabel", "%PauseButton"]:
-			items.append(hud.get_node(path) as Control)
-		var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(hud))
-		assert_array(problems).override_failure_message("%.3f: %s" % [aspect, problems]).is_empty()
-		assert_array(UI.button_fit_problems(hud.get_node("%PauseButton") as Button)).is_empty()
-		hud.queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			var viewport: SubViewport = auto_free(SubViewport.new()) as SubViewport
+			viewport.size = UI.canvas_size(aspect)
+			add_child(viewport)
+			var hud: Control = HUD_SCENE.instantiate() as Control
+			viewport.add_child(hud)
+			UI.apply_safe_profile(hud, profile)
+			await get_tree().process_frame
+			var items: Array[Control] = []
+			for path: String in ["%HeightLabel", "%BestLabel", "%GlimmerLabel", "%PauseButton"]:
+				items.append(hud.get_node(path) as Control)
+			var problems: Array[String] = UI.profile_problems(items, hud, profile)
+			assert_array(problems).override_failure_message("profil %d %.3f: %s" % [profile, aspect,
+					problems]).is_empty()
+			assert_array(UI.button_fit_problems(hud.get_node("%PauseButton") as Button)).is_empty()
+			hud.queue_free()
 	assert_array(UI.button_contrast_problems(Color.BLACK)).is_empty()
 	var pause: Control = _hud.get_node("%PauseButton") as Control
 	for state: GameTypes.AppState in GameTypes.AppState.values():

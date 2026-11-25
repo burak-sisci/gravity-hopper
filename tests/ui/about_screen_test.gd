@@ -76,25 +76,26 @@ func test_shows_every_credit_and_license() -> void:
 ## Beş oranda ve iki dilde: geri, başlık ve liste ekranda, çakışmasız; geri ≥ 48 dp; listedeki
 ## her yazı listenin genişliğinde (yatay taşma yok) ve içerik listeden uzun (kaydırılır).
 func test_layout_holds_on_every_aspect_and_language() -> void:
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			var screen: AboutScreen = await _open(aspect)
-			var items: Array[Control] = []
-			for path: String in FRAME_ITEMS:
-				items.append(screen.get_node(path) as Control)
-			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(screen))
-			var list: ScrollContainer = screen.get_node("%List") as ScrollContainer
-			var box: Control = screen.get_node("%Box") as Control
-			for label: Label in _labels(screen):
-				if label.size.x > list.size.x + 0.5:
-					problems.append("%s taşıyor %.0f > %.0f" % [label.text.left(30), label.size.x,
-							list.size.x])
-			if box.size.y <= list.size.y:
-				problems.append("kaymıyor: içerik %.0f ≤ %.0f" % [box.size.y, list.size.y])
-			assert_array(problems).override_failure_message("%s %.3f: %s" % [
-				locale, aspect, problems]).is_empty()
-			screen.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				var screen: AboutScreen = await _open(aspect, profile)
+				var items: Array[Control] = []
+				for path: String in FRAME_ITEMS:
+					items.append(screen.get_node(path) as Control)
+				var problems: Array[String] = UI.profile_problems(items, screen, profile)
+				var list: ScrollContainer = screen.get_node("%List") as ScrollContainer
+				var box: Control = screen.get_node("%Box") as Control
+				for label: Label in _labels(screen):
+					if label.size.x > list.size.x + 0.5:
+						problems.append("%s taşıyor %.0f > %.0f" % [label.text.left(30), label.size.x,
+								list.size.x])
+				if box.size.y <= list.size.y:
+					problems.append("kaymıyor: içerik %.0f ≤ %.0f" % [box.size.y, list.size.y])
+				assert_array(problems).override_failure_message("profil %d %s %.3f: %s" % [
+					profile, locale, aspect, problems]).is_empty()
+				screen.get_parent().queue_free()
 
 
 ## İki dilde: yazılar ≥ 36 px, geri düğmesi ve başlık kutusuna sığar, font her harfi içerir.
@@ -203,8 +204,8 @@ func _labels(screen: AboutScreen) -> Array[Label]:
 	return found
 
 
-func _open(aspect: float) -> AboutScreen:
-	var screen: AboutScreen = await _add(ABOUT_SCENE, aspect) as AboutScreen
+func _open(aspect: float, profile: int = 0) -> AboutScreen:
+	var screen: AboutScreen = await _add(ABOUT_SCENE, aspect, profile) as AboutScreen
 	screen.open()
 	screen.finish_build()
 	await get_tree().process_frame
@@ -213,13 +214,13 @@ func _open(aspect: float) -> AboutScreen:
 
 
 ## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) sahneyi kurar.
-func _add(scene: PackedScene, aspect: float) -> Control:
+func _add(scene: PackedScene, aspect: float, profile: int = 0) -> Control:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var control: Control = scene.instantiate() as Control
 	viewport.add_child(control)
-	UI.apply_worst_safe_area(control)
+	UI.apply_safe_profile(control, profile)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return control

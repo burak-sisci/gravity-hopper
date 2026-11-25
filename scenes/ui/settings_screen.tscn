@@ -47,7 +47,7 @@ script = ExtResource("3_neon_label")
 color = Color(0, 0.85, 1, 1)
 font_size = 72
 
-[node name="Column" type="VBoxContainer" parent="."]
+[node name="Column" type="VBoxContainer" parent="." groups=["safe_column"]]
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -500.0
@@ -62,7 +62,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="MusicLabel" type="Label" parent="Column/MusicRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_MUSIC"
 vertical_alignment = 1
@@ -75,6 +75,7 @@ font_size = 44
 unique_name_in_owner = true
 custom_minimum_size = Vector2(616, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 max_value = 1.0
 step = 0.05
 script = ExtResource("5_neon_slider")
@@ -84,7 +85,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="SfxLabel" type="Label" parent="Column/SfxRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_SFX"
 vertical_alignment = 1
@@ -97,6 +98,7 @@ font_size = 44
 unique_name_in_owner = true
 custom_minimum_size = Vector2(616, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 max_value = 1.0
 step = 0.05
 script = ExtResource("5_neon_slider")
@@ -106,7 +108,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="VibrationLabel" type="Label" parent="Column/VibrationRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_VIBRATION"
 vertical_alignment = 1
@@ -119,6 +121,7 @@ font_size = 44
 unique_name_in_owner = true
 custom_minimum_size = Vector2(616, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "SETTINGS_ON"
 script = ExtResource("4_neon_button")
 font_size = 44
@@ -128,7 +131,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="LanguageLabel" type="Label" parent="Column/LanguageRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_LANGUAGE"
 vertical_alignment = 1
@@ -139,12 +142,14 @@ font_size = 44
 
 [node name="Choices" type="HBoxContainer" parent="Column/LanguageRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 24
 
 [node name="TurkishButton" type="Button" parent="Column/LanguageRow/Choices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(296, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 auto_translate_mode = 2
 text = "TÜRKÇE"
 script = ExtResource("4_neon_button")
@@ -154,6 +159,7 @@ font_size = 40
 unique_name_in_owner = true
 custom_minimum_size = Vector2(296, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 auto_translate_mode = 2
 text = "ENGLISH"
 script = ExtResource("4_neon_button")
@@ -164,7 +170,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="QualityLabel" type="Label" parent="Column/QualityRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_QUALITY"
 vertical_alignment = 1
@@ -175,12 +181,14 @@ font_size = 44
 
 [node name="Choices" type="HBoxContainer" parent="Column/QualityRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 24
 
 [node name="LowButton" type="Button" parent="Column/QualityRow/Choices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(189, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "QUALITY_LOW"
 script = ExtResource("4_neon_button")
 font_size = 36
@@ -189,6 +197,7 @@ font_size = 36
 unique_name_in_owner = true
 custom_minimum_size = Vector2(189, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "QUALITY_MEDIUM"
 script = ExtResource("4_neon_button")
 font_size = 36
@@ -197,6 +206,7 @@ font_size = 36
 unique_name_in_owner = true
 custom_minimum_size = Vector2(189, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "QUALITY_HIGH"
 script = ExtResource("4_neon_button")
 font_size = 36
@@ -206,7 +216,7 @@ layout_mode = 2
 theme_override_constants/separation = 24
 
 [node name="FpsLabel" type="Label" parent="Column/FpsRow"]
-custom_minimum_size = Vector2(360, 150)
+custom_minimum_size = Vector2(320, 150)
 layout_mode = 2
 text = "SETTINGS_FPS_LIMIT"
 vertical_alignment = 1
@@ -219,13 +229,15 @@ font_size = 44
 unique_name_in_owner = true
 custom_minimum_size = Vector2(616, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "SETTINGS_OFF"
 script = ExtResource("4_neon_button")
 font_size = 44
 
 [node name="AboutButton" type="Button" parent="Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1000, 150)
+custom_minimum_size = Vector2(960, 150)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "SETTINGS_ABOUT"
 script = ExtResource("4_neon_button")

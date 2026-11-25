@@ -40,20 +40,21 @@ func after_test() -> void:
 
 ## Her oranda, dilde ve kipte: öğeler ekranın içinde, çakışmıyor; düğmeler ≥ 48 dp, arası ≥ 8 dp.
 func test_layout_holds_on_every_aspect_language_and_mode() -> void:
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			for offer: bool in [false, true]:
-				var screen: ResultsScreen = await _open(aspect)
-				_fill_worst(offer)
-				await get_tree().process_frame
-				var items: Array[Control] = UI.leaves(screen)
-				assert_int(items.size()).is_equal(OFFER_ITEMS if offer else RESULT_ITEMS)
-				var problems: Array[String] = UI.layout_problems(items,
-						UI.worst_safe_rect(screen))
-				assert_array(problems).override_failure_message("%s %.3f teklif=%s: %s" % [
-					locale, aspect, offer, problems]).is_empty()
-				screen.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				for offer: bool in [false, true]:
+					var screen: ResultsScreen = await _open(aspect, profile)
+					_fill_worst(offer)
+					await get_tree().process_frame
+					var items: Array[Control] = UI.leaves(screen)
+					assert_int(items.size()).is_equal(OFFER_ITEMS if offer else RESULT_ITEMS)
+					var problems: Array[String] = UI.profile_problems(items, screen,
+								profile)
+					assert_array(problems).override_failure_message("profil %d %s %.3f teklif=%s: %s" % [
+						profile, locale, aspect, offer, problems]).is_empty()
+					screen.get_parent().queue_free()
 
 
 ## İki dilde ve iki kipte, en kötü değerlerle: düğme yazıları kutularında, yazılar sütuna sığar
@@ -183,13 +184,13 @@ func test_content_appears_after_the_show_delay() -> void:
 
 
 ## Oranı verilen ekranda sonuç ekranını kurar, içeriği beklemeden gösterir.
-func _open(aspect: float) -> ResultsScreen:
+func _open(aspect: float, profile: int = 0) -> ResultsScreen:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var screen: ResultsScreen = SCREEN_SCENE.instantiate() as ResultsScreen
 	viewport.add_child(screen)
-	UI.apply_worst_safe_area(screen)
+	UI.apply_safe_profile(screen, profile)
 	screen.open()
 	screen.show_now()
 	await get_tree().process_frame

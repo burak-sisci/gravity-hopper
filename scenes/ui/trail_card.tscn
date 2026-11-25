@@ -48,7 +48,7 @@ font_size = 36
 
 [node name="ActionButton" type="Button" parent="Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(436, 150)
+custom_minimum_size = Vector2(416, 150)
 layout_mode = 2
 text = "SHOP_EQUIP"
 script = ExtResource("3_neon_button")

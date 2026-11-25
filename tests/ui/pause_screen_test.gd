@@ -42,21 +42,22 @@ func after_test() -> void:
 ## Her oranda ve dilde, iki görünümde: öğeler ekranın içinde, çakışmıyor; düğmeler ≥ 48 dp,
 ## aralarında ≥ 8 dp.
 func test_layout_holds_on_every_aspect_and_language() -> void:
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			for counting: bool in [false, true]:
-				var screen: PauseScreen = await _open(aspect)
-				if counting:
-					screen.start_countdown()
-					await get_tree().process_frame
-				var items: Array[Control] = UI.leaves(screen)
-				assert_int(items.size()).is_equal(COUNT_ITEMS if counting else MENU_ITEMS)
-				var problems: Array[String] = UI.layout_problems(items,
-						UI.worst_safe_rect(screen))
-				assert_array(problems).override_failure_message("%s %.3f sayım=%s: %s" % [
-					locale, aspect, counting, problems]).is_empty()
-				screen.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				for counting: bool in [false, true]:
+					var screen: PauseScreen = await _open(aspect, profile)
+					if counting:
+						screen.start_countdown()
+						await get_tree().process_frame
+					var items: Array[Control] = UI.leaves(screen)
+					assert_int(items.size()).is_equal(COUNT_ITEMS if counting else MENU_ITEMS)
+					var problems: Array[String] = UI.profile_problems(items, screen,
+								profile)
+					assert_array(problems).override_failure_message("profil %d %s %.3f sayım=%s: %s" % [
+						profile, locale, aspect, counting, problems]).is_empty()
+					screen.get_parent().queue_free()
 
 
 ## İki dilde: düğme yazıları kutularında, başlık sütuna tek satır sığar, sayının her rakamı
@@ -153,13 +154,13 @@ func test_buttons_emit_intents_and_open_resets() -> void:
 
 
 ## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) duraklatma ekranını açar.
-func _open(aspect: float) -> PauseScreen:
+func _open(aspect: float, profile: int = 0) -> PauseScreen:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var screen: PauseScreen = SCREEN_SCENE.instantiate() as PauseScreen
 	viewport.add_child(screen)
-	UI.apply_worst_safe_area(screen)
+	UI.apply_safe_profile(screen, profile)
 	screen.open()
 	await get_tree().process_frame
 	await get_tree().process_frame

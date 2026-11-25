@@ -48,7 +48,7 @@ script = ExtResource("3_neon_label")
 tone = 2
 font_size = 48
 
-[node name="Tabs" type="HBoxContainer" parent="."]
+[node name="Tabs" type="HBoxContainer" parent="." groups=["safe_column"]]
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -500.0
@@ -60,7 +60,7 @@ theme_override_constants/separation = 24
 
 [node name="UpgradesTab" type="Button" parent="Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(488, 150)
+custom_minimum_size = Vector2(468, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MENU_UPGRADES"
@@ -69,14 +69,14 @@ font_size = 48
 
 [node name="TrailsTab" type="Button" parent="Tabs"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(488, 150)
+custom_minimum_size = Vector2(468, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "MENU_TRAILS"
 script = ExtResource("4_neon_button")
 font_size = 48
 
-[node name="UpgradesList" type="ScrollContainer" parent="."]
+[node name="UpgradesList" type="ScrollContainer" parent="." groups=["safe_column"]]
 unique_name_in_owner = true
 anchor_left = 0.5
 anchor_right = 0.5
@@ -96,7 +96,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 24
 
-[node name="TrailsList" type="ScrollContainer" parent="."]
+[node name="TrailsList" type="ScrollContainer" parent="." groups=["safe_column"]]
 unique_name_in_owner = true
 visible = false
 anchor_left = 0.5

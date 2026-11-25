@@ -29,16 +29,17 @@ func after_test() -> void:
 ## Her oranda ve dilde: öğeler ekranın içinde, çakışmıyor; düğmeler ≥ 48 dp ve aralarında ≥ 8 dp.
 func test_layout_holds_on_every_aspect_and_language() -> void:
 	Events.sector_entered.emit(6)
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			var menu: MainMenu = await _open(aspect)
-			var items: Array[Control] = UI.leaves(menu)
-			assert_int(items.size()).is_equal(9)
-			var problems: Array[String] = UI.layout_problems(items, UI.worst_safe_rect(menu))
-			assert_array(problems).override_failure_message("%s %.3f: %s" % [
-				locale, aspect, problems]).is_empty()
-			menu.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				var menu: MainMenu = await _open(aspect, profile)
+				var items: Array[Control] = UI.leaves(menu)
+				assert_int(items.size()).is_equal(9)
+				var problems: Array[String] = UI.profile_problems(items, menu, profile)
+				assert_array(problems).override_failure_message("profil %d %s %.3f: %s" % [
+					profile, locale, aspect, problems]).is_empty()
+				menu.get_parent().queue_free()
 
 
 ## Metinler iki dilde gerçek fontla sığar: düğme yazısı kutusunda, başlık ve her sektörün adı
@@ -110,14 +111,15 @@ func test_checkpoint_choice_and_play() -> void:
 	menu.get_parent().queue_free()
 
 
-## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) menüyü kurar.
-func _open(aspect: float) -> MainMenu:
+## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) ve kötü telefon profilinde menüyü
+## kurar.
+func _open(aspect: float, profile: int = 0) -> MainMenu:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var menu: MainMenu = MENU_SCENE.instantiate() as MainMenu
 	viewport.add_child(menu)
-	UI.apply_worst_safe_area(menu)
+	UI.apply_safe_profile(menu, profile)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	return menu

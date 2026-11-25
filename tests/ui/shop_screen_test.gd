@@ -34,16 +34,17 @@ func after_test() -> void:
 ## aralarında ≥ 8 dp; kartlar listeden geniş değil (sığmayan yazı kartı büyütmez); sürükleme
 ## listeye ulaşır.
 func test_layout_holds_on_every_aspect_language_and_tab() -> void:
-	for aspect: float in UI.ASPECTS:
-		for locale: String in UI.LOCALES:
-			TranslationServer.set_locale(locale)
-			for tab: GameTypes.ShopTab in [GameTypes.ShopTab.UPGRADES, GameTypes.ShopTab.TRAILS]:
-				var shop: ShopScreen = await _open(aspect)
-				shop.select_tab(tab)
-				await get_tree().process_frame
-				var where: String = "%s %.3f sekme %d" % [locale, aspect, tab]
-				_assert_layout(shop, tab, where)
-				shop.get_parent().queue_free()
+	for profile: int in UI.SAFE_PROFILES.size():
+		for aspect: float in UI.ASPECTS:
+			for locale: String in UI.LOCALES:
+				TranslationServer.set_locale(locale)
+				for tab: GameTypes.ShopTab in [GameTypes.ShopTab.UPGRADES, GameTypes.ShopTab.TRAILS]:
+					var shop: ShopScreen = await _open(aspect, profile)
+					shop.select_tab(tab)
+					await get_tree().process_frame
+					var where: String = "profil %d %s %.3f sekme %d" % [profile, locale, aspect, tab]
+					_assert_layout(shop, tab, where, profile)
+					shop.get_parent().queue_free()
 
 
 ## Metinler iki dilde gerçek fontla sığar: her yükseltmenin her seviyesinde (0 … en üst) ve her
@@ -233,13 +234,13 @@ func test_navigation_between_menu_results_and_shop() -> void:
 
 
 ## Oranı verilen ekranda (stretch "expand", taban 1080 × 1920) mağazayı kurar.
-func _open(aspect: float) -> ShopScreen:
+func _open(aspect: float, profile: int = 0) -> ShopScreen:
 	var viewport: SubViewport = SubViewport.new()
 	viewport.size = UI.canvas_size(aspect)
 	add_child(viewport)
 	var shop: ShopScreen = SHOP_SCENE.instantiate() as ShopScreen
 	viewport.add_child(shop)
-	UI.apply_worst_safe_area(shop)
+	UI.apply_safe_profile(shop, profile)
 	shop.open()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -258,10 +259,10 @@ func _header(shop: ShopScreen) -> Array[Control]:
 	return items
 
 
-func _assert_layout(shop: ShopScreen, tab: GameTypes.ShopTab, where: String) -> void:
-	var screen: Rect2 = UI.worst_safe_rect(shop)
+func _assert_layout(shop: ShopScreen, tab: GameTypes.ShopTab, where: String, profile: int) -> void:
+	var screen: Rect2 = UI.safe_rect(shop, profile)
 	var header: Array[Control] = _header(shop)
-	var problems: Array[String] = UI.layout_problems(header, screen)
+	var problems: Array[String] = UI.layout_problems(header, screen, UI.PROFILE_CORNERS[profile])
 	var list: ScrollContainer = _list(shop, tab)
 	var list_rect: Rect2 = list.get_global_rect()
 	if not screen.encloses(list_rect):
@@ -276,7 +277,7 @@ func _assert_layout(shop: ShopScreen, tab: GameTypes.ShopTab, where: String) -> 
 	assert_int(items.size()).override_failure_message(where).is_equal(cards * per_card)
 	# Liste dikeyde kayar: yalnızca yatay sınır listenin kenarlarıdır.
 	var column: Rect2 = Rect2(list_rect.position.x, -1.0e6, list_rect.size.x, 2.0e6)
-	problems.append_array(UI.layout_problems(items, column))
+	problems.append_array(UI.layout_problems(items, column, UI.PROFILE_CORNERS[profile]))
 	problems.append_array(_drag_blockers(items, list))
 	var content: Control = list.get_child(0) as Control
 	if content.size.x > list_rect.size.x:
