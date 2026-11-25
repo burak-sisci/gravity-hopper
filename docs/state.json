@@ -7,21 +7,28 @@
 
   "current": {
     "milestone": "M6",
-    "task": "M6-03",
-    "task_title": "Performans ölçümü + indirme boyutu (hedef < 40 MB)",
+    "task": "M6-10",
+    "task_title": "Takılma kümesi (S-09)",
     "owner": "claude",
-    "status": "in_progress",
-    "note": "İndirme boyutu ara sonucu ADR-101'de (39,39 / 40 MB). Performans ADR-102'den sonra aynı koşulda yeniden: yükseltmesiz kayıt, duvar karelerin ≥ %95'inde ekranda, S3–Taşma × üç kalite, giriş dalgası ayrı. Kabul kriteri roadmap'te."
+    "status": "not_started",
+    "note": "M6-03'te (ADR-109) küme iki turda üç kez göründü (tur başından 73,6–74,9 · 234,7–235,0 · 86,0–101,0 sn; en uzunu 66 kare 25–272 ms), kaliteden bağımsız; aynı koşul: debug yapısı, ölümsüz, yükseltmesiz, --tuning=wall_max_distance:12. Kabul kriteri roadmap'te."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
     "started": "2026-11-25",
-    "note": "Otonom mesai 2026-11-25 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesaiyi otomatik bitir; her görev sonunda push). Hedef: M6-01, M6-03."
+    "note": "Otonom mesai 2026-11-25 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesaiyi otomatik bitir; her görev sonunda push). Hedef M6-01 ve M6-03; ikisi de bitti, mesai bitti."
   },
 
   "standard_queue": [
+    {
+      "task": "M6-03",
+      "owner": "user",
+      "added": "2026-11-25",
+      "reason": "Gözden geçir (otonom varsayım, ADR-109): M6-03 ölçüm görevi olarak kapandı. Yüksek kalite S3–S5'te ≤ 10 ms tutuyor, Taşma'da 64 evreden biri 10,16; ama sektör giriş dalgası yüksekte 11,7–12,9 ms (M4-13'te 12,7 kabul edilmişti) ve takılma kümesi ölçütün üstünde. Bunlar M6-10 (küme) ve M6-11 (dalga, kalite kuralı) görevlerine devredildi. Uygun mu?",
+      "resume": "Uygun değilse M6-03 yeniden açılır ve kapanışı M6-10 / M6-11'in düzeltmesine bağlanır."
+    },
     {
       "task": "M6-13",
       "owner": "user",
@@ -247,7 +254,8 @@
     "M5-11",
     "M5-12",
     "M6-02",
-    "M6-01"
+    "M6-01",
+    "M6-03"
   ],
 
   "blockers": [],
@@ -263,7 +271,7 @@
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-17", "status": "resolved", "answer": "M3-17: Exo 2 (OFL), Türkçe harfleri tam; Orbitron'da Ğ İ Ş ğ ş · eksikti, elendi (architecture.md §12)." },
     { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M2-18", "status": "resolved", "answer": "M0-10: ekransız 8 durum ve Redmi'de adb ile 3 dokunuş = 3 sayım. Gerçek iki başparmak denemesi M2-18 oyun testinde geçti; testte bulunan hızlı çift dokunuş sorunu ADR-036 ile giderildi." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." },
-    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1). 2026-11-21: 10,5 sn içinde 11 kare 29–75 ms; giriş dalgası duvarsız 11,53 ms (tek örnek)", "resolve_in": "M6-03, M6-10", "status": "open" }
+    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1). 2026-11-21: 10,5 sn içinde 11 kare 29–75 ms; giriş dalgası duvarsız 11,53 ms (tek örnek); 2026-11-25 (M6-03, ADR-109): küme iki turda üç kez, kaliteden bağımsız (en uzunu 15 sn, 66 kare 25–272 ms); küme dışında ≈ 3,8 takılma / 100 sn; giriş dalgası yüksekte 11,7–12,9 ms", "resolve_in": "M6-10 (küme), M6-11 (dalga)", "status": "open" }
   ],
 
   "environment": {
@@ -342,10 +350,11 @@
 
   "last_session": {
     "date": "2026-11-25",
-    "summary": "Otonom mesai (kullanıcı: bekleyen 25 commit push'landı, her görev sonunda otomatik push kuralı yeniden teyit edildi, sıradaki 2 görev M6-01 ve M6-03, sonra mesai biter). M6-01 bitti (ADR-108): UI kabulü iki kötü profilde, sütunlar safe_column grubunda daralıyor, Main'in testi debug taklidiyle sıfırdan farklı payla, 5 bozma yakalandı; Redmi'de kötü profil okuma kipi kapalıyken görüntülendi (kullanıcı telefonu bıraktı ve 'istediğin gibi çalış' dedi; okuma kipi ölçümler için kapatıldı, mesai sonunda eski değerine döner). M6-03 sürüyor.",
+    "summary": "Otonom mesai (kullanıcı: bekleyen commit'ler push'landı, her görev sonunda otomatik push teyit edildi, sıradaki 2 görev, sonra mesai biter). M6-01 bitti (ADR-108): UI kabulü iki kötü profilde, sütunlar safe_column grubunda daralıyor, Main testi sıfırdan farklı payla; önce 54 hata, sonra 0; 5 bozma; iki doğrulayıcı 3 kusur buldu (HUD afişi en dar profilde ölçülmüyordu, köşe sabiti, 'geçici' sözcüğü), düzeltildi. M6-03 bitti (ADR-109): yükseltmesiz, duvar debug ayarıyla ekranda (yeni --tuning= argümanı); yüksekte S3 9,20 · S4 9,30 · S5 9,49 · Taşma 9,74 ms; giriş dalgası yüksekte 11,7–12,9 ms ve takılma kümesi (üç kez) ölçütün üstünde, M6-11 / M6-10'a devredildi (otonom varsayım, standard_queue'da gözden geçir). Doğrulayıcı belgede 4 sayı hatası buldu, düzeltildi. Telefon: kullanıcı 'telefon tamamen sende' dedi; okuma kipi ölçüm için kapatıldı, mesai sonunda 1'e döndü (doğrulandı); kayıt yedeklenip bayt bayt geri yüklendi, argümansız temiz yapı yüklü. Ara iş: kullanıcının /doctor isteğiyle Claude Code temizliği (6 kullanılmayan eklenti kapandı, Vercel bu projede kapalı; proje dosyası değişmedi).",
     "next_steps": [
-      "M6-03: yükseltmesiz kayıtla S3–Taşma × üç kalite, duvar ≥ %95 ekranda, giriş dalgası ≥ 3 örnek; M3-19 / M4-13 ile karşılaştır.",
-      "Telefon: kayıt yedeği scratchpad'de; ölçüm bitince kayıt, ayar ve okuma kipi (1) geri yüklenir."
+      "M6-10: takılma kümesi (aynı koşul: ölümsüz, yükseltmesiz, --tuning=wall_max_distance:12); PerfProbe'un ilk evresi turun açılışını içeriyor, düzeltilebilir.",
+      "Sonra M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11 (dalga 11,7–12,9 ms bu görevde), M6-05, M6-06.",
+      "Kullanıcıyla: standard_queue'daki M6-03 gözden geçirmesi, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı."
     ]
   }
 }

@@ -5,6 +5,7 @@ extends GdUnitTestSuite
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/main.tscn")
 const SECTORS: SectorCatalog = preload("res://data/sectors/sector_catalog.tres")
+const DEBUG_LAYER: GDScript = preload("res://scripts/debug/debug_layer.gd")
 const SETTLE_FRAMES: int = 40
 ## DBG düğmesinin ortası (debug_layer.tscn: 16,12 – 156,84).
 const DEBUG_BUTTON_CENTER: Vector2 = Vector2(86, 48)
@@ -184,6 +185,26 @@ func _push_touch(at: Vector2) -> void:
 	var release: InputEventScreenTouch = touch.duplicate() as InputEventScreenTouch
 	release.pressed = false
 	get_tree().root.push_input(release, true)
+
+
+## Ayar argümanı (M6-03): sayısal değer kaynağa yazılır; bilinmeyen özellik, sayı olmayan değer
+## ya da tam sayı alana kesirli değer hiçbir şeyi değiştirmez.
+func test_tuning_arg_sets_only_valid_numeric_values() -> void:
+	var tuning: TuningConfig = TuningConfig.new()
+	var max_distance: float = tuning.wall_max_distance
+	var combo: int = tuning.combo_x2_at
+	assert_bool(DEBUG_LAYER.apply_tuning_arg(tuning, "wall_max_distance:12")).is_true()
+	assert_float(tuning.wall_max_distance).is_equal(12.0)
+	assert_bool(DEBUG_LAYER.apply_tuning_arg(tuning, "combo_x2_at:4")).is_true()
+	assert_int(tuning.combo_x2_at).is_equal(4)
+	tuning.wall_max_distance = max_distance
+	tuning.combo_x2_at = combo
+	for bad: String in ["no_such_value:3", "wall_max_distance:far", "wall_max_distance",
+			"wall_max_distance:1:2", "combo_x2_at:2.5"]:
+		assert_bool(DEBUG_LAYER.apply_tuning_arg(tuning, bad)).override_failure_message(bad) \
+				.is_false()
+	assert_float(tuning.wall_max_distance).is_equal(max_distance)
+	assert_int(tuning.combo_x2_at).is_equal(combo)
 
 
 func _push_click(at: Vector2) -> void:

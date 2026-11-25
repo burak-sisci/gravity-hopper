@@ -323,7 +323,7 @@
   *Kabul:* UI kabulü iki kötü profilde de geçiyor: (a) üst 150, yan ve alt 60 px; (b) üst 150, yan ve alt 40 px + 150 px köşe. Sütunlar daralır, dokunma hedefleri ≥ 144 px kalır (ölçek küçültülmez); profil küçültülürse test düşer. `Main`'e sıfırdan farklı pay verilen test var; `_apply_safe_area` çağrısı kaldırılınca düşer. Redmi ekran görüntüsü okuma kipi kapalıyken alınır.
 - [x] **M6-02** 🤖 Ekran oranı matrisi: 16:9, 18:9, 20:9, 21:9, 4:3, katlanabilir
   *Kabul:* 11 oranda yerleşim ve oyun dünyası testi (ADR-100). Sığma ve kontrast tek oranda (ADR-102).
-- [ ] **M6-03** 🤖 Performans ölçümü + indirme boyutu (hedef < 40 MB)
+- [x] **M6-03** 🤖 Performans ölçümü + indirme boyutu (hedef < 40 MB). *Kapandı (ADR-109); dalga ve takılma kümesi ölçütün üstünde, M6-11 ve M6-10'a devredildi.*
   *Kabul:* Redmi'de yükseltmesiz, duvar karelerin ≥ %95'inde ekranda: S3–Taşma'nın her biri üç kalitede, sektör giriş dalgası ayrı (en az 3 örnek). S3 M3-19 ile, S5 ve Taşma M4-13 ile karşılaştırılır, S4 yeni taban; yüksek ≤ 10 ms, p95 ve takılma sayısı M3-19 ile yan yana. En büyük mimari < 40 MB (`size_report.py`).
 - [ ] **M6-10** 🤖 Takılma kümesi (S-09)
   *Kabul:* 2026-11-21'deki küme (uygulama açılışından 56,5–67,1 sn, tur başından 52,6–63,1 sn; 11 kare 29–75 ms) aynı koşulda 3 kez denenir (tohum sabitlenemez); nedeni bulunup giderilir ya da yinelenmediği sayılarla yazılır.

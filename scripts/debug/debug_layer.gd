@@ -30,6 +30,11 @@ const TRAIL_ARG: String = "--trail="
 ## Başlatma argümanı (`-- --safe-area=60,150,60,60`): cihazın güvenli alanı yerine bu paylar
 ## (tuval px; sol, üst, sağ, alt). Çentiksiz cihazda kötü telefon profilini dener (M6-01).
 const SAFE_AREA_ARG: String = "--safe-area="
+## Başlatma argümanı (`-- --tuning=wall_max_distance:12`, tekrarlanabilir): TuningConfig'in bir
+## sayısal değeri bu oturum için (kaydedilmez). Ölçümde duvarı ekranda tutar (M6-03).
+const TUNING_ARG: String = "--tuning="
+## Run'ın kullandığı ayar kaynağı (önbellekte tek örnek; ayar paneliyle aynı).
+const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
 const QUALITY_ARGS: Array[String] = ["low", "medium", "high"]
 const QUALITY_LABELS: Array[String] = ["Kalite D", "Kalite O", "Kalite Y"]
@@ -113,6 +118,10 @@ func _ready() -> void:
 			if sides.size() == 4:
 				SafeArea.simulated_insets = Vector4(sides[0], sides[1], sides[2], sides[3])
 				SafeArea.simulate = true
+		elif arg.begins_with(TUNING_ARG):
+			# Run ayar kaynağını tur başında okur; ilk tur bu karenin sonunda kurulur.
+			if not apply_tuning_arg(load(TUNING_PATH) as TuningConfig, arg.trim_prefix(TUNING_ARG)):
+				push_warning("DebugLayer: geçersiz ayar argümanı: %s" % arg)
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):
@@ -129,6 +138,23 @@ func _ready() -> void:
 		if _invincible:
 			Events.debug_invincibility_changed.emit(true))
 	Events.sector_entered.connect(func(index: int) -> void: _sector = index)
+
+
+## "özellik:değer" metnini ayar kaynağına uygular. Özellik sayısal değilse ya da yoksa, değer
+## sayı değilse hiçbir şeyi değiştirmez ve false döner.
+static func apply_tuning_arg(tuning: TuningConfig, text: String) -> bool:
+	var parts: PackedStringArray = text.split(":")
+	if parts.size() != 2 or not parts[1].is_valid_float():
+		return false
+	var property: StringName = StringName(parts[0])
+	var current: Variant = tuning.get(property)
+	if typeof(current) == TYPE_FLOAT:
+		tuning.set(property, parts[1].to_float())
+	elif typeof(current) == TYPE_INT and parts[1].is_valid_int():
+		tuning.set(property, parts[1].to_int())
+	else:
+		return false
+	return true
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
