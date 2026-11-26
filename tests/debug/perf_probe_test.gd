@@ -9,6 +9,8 @@ const TICK_SEC: float = 0.125
 ## Takılma testi için uzun ve kısa kare (ms).
 const LONG_FRAME_MS: float = 62.5
 const SHORT_FRAME_MS: float = 15.625
+## Turun açılış karesi (ms; telefonda 1379–1493).
+const OPENING_FRAME_MS: float = 1500.0
 
 var _quality: GameTypes.Quality
 
@@ -86,6 +88,44 @@ func test_long_frames_count_as_spikes_after_warmup() -> void:
 	probe.tick(SHORT_FRAME_MS)
 	assert_int(probe.get("_spikes") as int).is_equal(1)
 	assert_int(_count(probe, "_frames")).is_equal(3)
+
+
+## Tur başlayınca (M6-10) açılış karesi (≈ 1,4 sn) atılır, evre aynı kalitede yeniden başlar ve
+## ilk çizim karesi ısınmada kalır; eskiden ilk evrenin en kötü karesi buydu.
+func test_run_start_drops_the_opening_frame_and_restarts_the_phase() -> void:
+	var probe: PerfProbe = _add_probe(5.0)
+	_ticks(probe, roundi(2.0 / TICK_SEC))
+	assert_int(_count(probe, "_frames")).is_equal(8)
+	Events.run_started.emit(1, 3)
+	probe.tick(OPENING_FRAME_MS)
+	assert_int(_count(probe, "_frames")).is_equal(0)
+	probe.tick(LONG_FRAME_MS)
+	# Eski evre 5 sn'de biterdi; yeniden başlayan evre 3,5625 sn'de sürüyor.
+	_ticks(probe, 28)
+	assert_int(probe.get("_phase") as int).is_equal(0)
+	assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.HIGH)
+	# Ölçülen kareler yalnız sıradan kareler: açılış ve ilk çizim karesi yok.
+	var frames: Array[float] = probe.get("_frames")
+	assert_int(frames.size()).is_equal(21)
+	assert_object(PerfProbe.summarize(frames)).is_equal(Vector3.ONE * TICK_SEC * 1000.0)
+
+
+func test_later_run_drops_only_the_opening_frame_and_keeps_the_phase() -> void:
+	var probe: PerfProbe = _add_probe(5.0)
+	Events.run_started.emit(1, 3)
+	probe.tick(OPENING_FRAME_MS)
+	_ticks(probe, roundi(3.0 / TICK_SEC))
+	assert_int(_count(probe, "_frames")).is_equal(16)
+	# Ölüp yeniden başlama: evre sıfırlanmaz, yalnız açılış karesi atılır (takılma da sayılmaz).
+	var spikes: int = probe.get("_spikes") as int
+	Events.run_started.emit(2, 3)
+	probe.tick(OPENING_FRAME_MS)
+	assert_int(_count(probe, "_frames")).is_equal(16)
+	assert_int(probe.get("_spikes") as int).is_equal(spikes)
+	# Evre ilk turun başından 5 sn'de biter ve kalite bir alta iner.
+	_ticks(probe, roundi(2.0 / TICK_SEC))
+	assert_int(probe.get("_phase") as int).is_equal(1)
+	assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.MEDIUM)
 
 
 func _add_probe(phase_sec: float) -> PerfProbe:

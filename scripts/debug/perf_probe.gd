@@ -5,8 +5,12 @@ extends Node
 ## sonunda günlüğe bir "PERF" satırı yazılır: kare süresinin ortalaması, p95'i ve en kötüsü;
 ## ayrıca çöküş duvarı ekrandayken ve renk dalgası sürerken geçen karelerin ortalaması.
 ## Takılmalar (SPIKE_MS'den uzun kareler) olduğu anda zamanıyla yazılır: önceki karenin çizimi
-## (render), çizimin bitişinden bu kareye kalan süre (ekran takası, fizik, işlem) ve doku
-## belleğinin değişimi (yeni doku yaratıldı mı).
+## (render), çizimin bitişinden bu kareye kalan süre (ekran takası, fizik, işlem), motorun son
+## 1 sn'deki en uzun işlem ve fizik süresi (Godot bu monitörleri saniyede bir, o saniyenin en
+## büyüğüyle günceller; kareye ait değildir, M6-10) ve doku belleğinin değişimi (yeni doku).
+## Her tur başında (`run_started`) ardından gelen ilk kare (turun açılışı, sahne kurulumu,
+## ≈ 1,4 sn) atılır. İlk turda evre de yeniden başlar: menü kareleri ölçülmez, ilk çizim ısınmada
+## kalır. Sonraki turlarda (ölüp yeniden başlama) evre sürer (M6-10).
 ## Oyun dünyasını tanımaz: duvarı, dalgayı ve dokunuşları Events'ten izler.
 ## `--auto-tap=0,5` ile her 0,5 sn'de bir oyun alanına dokunuş gönderilir (oyuncu duvardan duvara
 ## atlar: iniş kıvılcımı, kıl payı). Yalnızca geliştirici görür; metinler doğrudan yazılır.
@@ -52,6 +56,10 @@ var _draw_ms: float = 0.0
 ## Çizimin bitişinden bu karenin ölçümüne kalan süre (ms).
 var _after_draw_ms: float = 0.0
 var _texture_mb: float = 0.0
+## Tur yeni başladı: sıradaki kare (turun açılışı) ölçülmez.
+var _skip_next_frame: bool = false
+## Henüz tur başlamadı: ilk turun başında evre yeniden başlar (kalite aynı kalır).
+var _before_first_run: bool = true
 
 
 func _ready() -> void:
@@ -62,7 +70,8 @@ func _ready() -> void:
 	Events.run_started.connect(func(_run_seed: int, start_sector: int) -> void:
 		_sector = start_sector
 		_wall_ratio = 0.0
-		_wave_left = 0.0)
+		_wave_left = 0.0
+		_skip_next_frame = true)
 	Events.player_flipped.connect(func() -> void: _flips += 1)
 	Events.near_miss.connect(func(_combo: int, _multiplier: int) -> void: _near_misses += 1)
 	print("PERF config phase_sec=%.1f auto_tap=%.2f refresh=%.0f viewport=%s" % [
@@ -88,6 +97,13 @@ func _process(_delta: float) -> void:
 
 ## Bir karenin süresini (ms) işler; testler zamanı bununla sürer.
 func tick(frame_ms: float) -> void:
+	if _skip_next_frame:
+		_skip_next_frame = false
+		_texture_mb = _texture_memory_mb()
+		if _before_first_run:
+			_before_first_run = false
+			_start_phase()
+		return
 	var sec: float = frame_ms / 1000.0
 	_phase_elapsed += sec
 	_wave_left = maxf(_wave_left - sec, 0.0)
@@ -101,10 +117,12 @@ func tick(frame_ms: float) -> void:
 		_frames.append(frame_ms)
 		if frame_ms > SPIKE_MS:
 			_spikes += 1
-			print(("PERF spike ms=%.2f draw_ms=%.2f after_draw_ms=%.2f texture_mb=%+.2f "
-					+ "phase=%d sector=%d t=%d") % [
-				frame_ms, _draw_ms, _after_draw_ms, texture_mb - _texture_mb, _phase + 1,
-				_sector, Time.get_ticks_msec(),
+			print(("PERF spike ms=%.2f draw_ms=%.2f after_draw_ms=%.2f process_max_1s_ms=%.2f "
+					+ "physics_max_1s_ms=%.2f texture_mb=%+.2f phase=%d sector=%d t=%d") % [
+				frame_ms, _draw_ms, _after_draw_ms,
+				Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+				Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+				texture_mb - _texture_mb, _phase + 1, _sector, Time.get_ticks_msec(),
 			])
 		if _wall_ratio > 0.0:
 			_wall_frames.append(frame_ms)

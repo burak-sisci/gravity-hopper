@@ -2,26 +2,33 @@
   "_aciklama": "Projenin anlık durumu. Claude her oturum başında okur, her görev sonunda günceller (CLAUDE.md > Planlama rutini). Görev tanımları docs/roadmap.md'de; bu dosya yalnızca durumu tutar ve durumun tek doğru kaynağıdır.",
   "schema_version": 1,
   "project": "Gravity Hopper",
-  "updated": "2026-11-25",
+  "updated": "2026-11-26",
   "phase": "pre-production",
 
   "current": {
     "milestone": "M6",
-    "task": "M6-10",
-    "task_title": "Takılma kümesi (S-09)",
+    "task": "M6-04",
+    "task_title": "Android emülatöründe düşük seviyeli cihaz profili testi",
     "owner": "claude",
     "status": "not_started",
-    "note": "M6-03'te (ADR-109) küme iki turda üç kez göründü (tur başından 73,6–74,9 · 234,7–235,0 · 86,0–101,0 sn; en uzunu 66 kare 25–272 ms), kaliteden bağımsız; aynı koşul: debug yapısı, ölümsüz, yükseltmesiz, --tuning=wall_max_distance:12. Kabul kriteri roadmap'te."
+    "note": "Kabul kriteri roadmap'te. Ölçümde tools/phone_perf.py düzeneği ve M6-10 kuralı (toplam CPU %60 üstü saniyeler ayrı sayılır; ADR-110) kullanılır."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
-    "started": "2026-11-25",
-    "note": "Otonom mesai 2026-11-25 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesaiyi otomatik bitir; her görev sonunda push). Hedef M6-01 ve M6-03; ikisi de bitti, mesai bitti."
+    "started": "2026-11-26",
+    "note": "Otonom mesai 2026-11-26 (kullanıcı 2026-11-25: sıradaki görevi tamamla, sonra mesai biter; her görev sonunda push). Hedef M6-10. Kullanıcı M6-01'deki ayarlar ekranı değişikliğini (satır etiketleri 360 → 320 px, ADR-108) onayladı. M6-10 bitti (ADR-110); mesai bitti."
   },
 
   "standard_queue": [
+    {
+      "task": "M6-10",
+      "owner": "user",
+      "added": "2026-11-26",
+      "reason": "Gözden geçir (otonom varsayım, ADR-110): takılma kümesi yineledi (3 turun ikisinde, 11 ve 5 küme) ama nedeni oyunun dışında: başka uygulamaların arka plan işi telefonun 8 çekirdeğini dolduruyor (toplam CPU ≥ %90 olan saniyelerin %94'ünde takılma, < %60'ta %1,9); bilerek verilen CPU yüküyle küme o anda doğuyor. Oyunda değişiklik yapılmadı; görev 'neden bulundu, sayılarla yazıldı' olarak kapandı.",
+      "resume": "İstenirse: Android oyun performans ipucu (ADPF) bir eklenti ister (.clauderules §1 onayı); bugün gerekçe zayıf. Ayrıca bugünkü ortalamalar M6-03'ten 0,9–1,0 ms yüksek: en olası neden oyunun üstündeki iki odak aracı katmanı (M6-03'te kapalıydı). M6-11 ölçümünde o araç kapalıyken ölçmek gerekir; mesai başında hatırlatılır."
+    },
     {
       "task": "M6-03",
       "owner": "user",
@@ -255,7 +262,8 @@
     "M5-12",
     "M6-02",
     "M6-01",
-    "M6-03"
+    "M6-03",
+    "M6-10"
   ],
 
   "blockers": [],
@@ -271,7 +279,7 @@
     { "id": "S-06", "question": "Türkçe karakter destekli, lisansı temiz neon font", "resolve_in": "M3-17", "status": "resolved", "answer": "M3-17: Exo 2 (OFL), Türkçe harfleri tam; Orbitron'da Ğ İ Ş ğ ş · eksikti, elendi (architecture.md §12)." },
     { "id": "S-07", "question": "Emülasyon fare olaylarının DEVICE_ID_EMULATION ile ayrılması", "resolve_in": "M2-18", "status": "resolved", "answer": "M0-10: ekransız 8 durum ve Redmi'de adb ile 3 dokunuş = 3 sayım. Gerçek iki başparmak denemesi M2-18 oyun testinde geçti; testte bulunan hızlı çift dokunuş sorunu ADR-036 ile giderildi." },
     { "id": "S-08", "question": "Sahne aracı --headless --script modunda autoload'lara başvuran betikleri yükleyebiliyor mu?", "resolve_in": "M0-06", "status": "resolved", "answer": "Evet: --headless --script modunda autoload'lar yükleniyor (M0-06 denemesi). Sahne aracı GDScript ile yazılır." },
-    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1). 2026-11-21: 10,5 sn içinde 11 kare 29–75 ms; giriş dalgası duvarsız 11,53 ms (tek örnek); 2026-11-25 (M6-03, ADR-109): küme iki turda üç kez, kaliteden bağımsız (en uzunu 15 sn, 66 kare 25–272 ms); küme dışında ≈ 3,8 takılma / 100 sn; giriş dalgası yüksekte 11,7–12,9 ms", "resolve_in": "M6-10 (küme), M6-11 (dalga)", "status": "open" }
+    { "id": "S-09", "question": "Redmi'de rastgele tek kare takılmaları (25–43 ms, ≈ 100 sn'de 0–2, her kalitede) ve sektör girişinde dalga + yakın duvarla yüksek kalitede 10,8 ms (M3-19, architecture.md §16.1). 2026-11-21: 10,5 sn içinde 11 kare 29–75 ms; giriş dalgası duvarsız 11,53 ms (tek örnek); 2026-11-25 (M6-03, ADR-109): küme iki turda üç kez, kaliteden bağımsız (en uzunu 15 sn, 66 kare 25–272 ms); küme dışında ≈ 3,8 takılma / 100 sn; giriş dalgası yüksekte 11,7–12,9 ms; 2026-11-26 (M6-10, ADR-110): kümenin nedeni oyunun dışında (başka uygulamaların arka plan işi 8 çekirdeği dolduruyor; yapay yükle kanıtlandı), çözüldü", "resolve_in": "M6-11 (dalga)", "status": "open" }
   ],
 
   "environment": {
@@ -349,12 +357,12 @@
   },
 
   "last_session": {
-    "date": "2026-11-25",
-    "summary": "Otonom mesai (kullanıcı: bekleyen commit'ler push'landı, her görev sonunda otomatik push teyit edildi, sıradaki 2 görev, sonra mesai biter). M6-01 bitti (ADR-108): UI kabulü iki kötü profilde, sütunlar safe_column grubunda daralıyor, Main testi sıfırdan farklı payla; önce 54 hata, sonra 0; 5 bozma; iki doğrulayıcı 3 kusur buldu (HUD afişi en dar profilde ölçülmüyordu, köşe sabiti, 'geçici' sözcüğü), düzeltildi. M6-03 bitti (ADR-109): yükseltmesiz, duvar debug ayarıyla ekranda (yeni --tuning= argümanı); yüksekte S3 9,20 · S4 9,30 · S5 9,49 · Taşma 9,74 ms; giriş dalgası yüksekte 11,7–12,9 ms ve takılma kümesi (üç kez) ölçütün üstünde, M6-11 / M6-10'a devredildi (otonom varsayım, standard_queue'da gözden geçir). Doğrulayıcı belgede 4 sayı hatası buldu, düzeltildi. Telefon: kullanıcı 'telefon tamamen sende' dedi; okuma kipi ölçüm için kapatıldı, mesai sonunda 1'e döndü (doğrulandı); kayıt yedeklenip bayt bayt geri yüklendi, argümansız temiz yapı yüklü. Ara iş: kullanıcının /doctor isteğiyle Claude Code temizliği (6 kullanılmayan eklenti kapandı, Vercel bu projede kapalı; proje dosyası değişmedi).",
+    "date": "2026-11-26",
+    "summary": "Otonom mesai (kullanıcı 2026-11-25: sıradaki görev, sonra mesai biter; M6-01'deki ayarlar ekranı değişikliğini onayladı). Bağlantı kesintisinden sonra kaldığı yerden sürdü. M6-10 bitti (ADR-110): aynı koşulda 3 tur × 465 sn + nedensellik turu; yeni telemetri (toplam CPU, frekans ve sınır, GPU doluluğu, sıcaklık, iş parçacıkları). Küme 2 turda yineledi (11, 5); nedeni başka uygulamaların 8 çekirdeği doldurması (kümelerin 19/24'ünde CPU %88,2–100, takılmasız %40–51; ≥ %90 saniyelerin %94'ü takılmalı); yapay yükle kanıtlandı (8 çekirdek 137 takılma, 2 çekirdek 14, önceki 15 sn 0 ve 3; 4 çekirdekte süren doğal küme uzadı). Oyunda giderilemez, değişiklik yok. PerfProbe: tur açılış karesini artık ölçmüyor (ilk evrenin en kötü karesi 1379–1493 → 19,9–36,9 ms; evre yalnız ilk turda yeniden başlar), takılmada son 1 sn'nin en uzun işlem / fizik süresi; ölçüm düzeneği tools/phone_perf.py oldu (kaydı yedekleyip geri yükler, yarıda kesilince de temizler). Doğrulama iş akışı (2 denetçi) 4 sayı düzeltmesi ve 2 kod hatası buldu, düzeltildi. Ortalamalar M6-03'ten 0,9–1,0 ms yüksek (üst katman farkı olası; gözden geçir). Telefon: kayıt yedeklendi, bayt bayt geri yüklendi; temiz yapı yüklü; okuma kipi mesai başında zaten 0'dı, dokunulmadı.",
     "next_steps": [
-      "M6-10: takılma kümesi (aynı koşul: ölümsüz, yükseltmesiz, --tuning=wall_max_distance:12); PerfProbe'un ilk evresi turun açılışını içeriyor, düzeltilebilir.",
-      "Sonra M6-12 (çöküş duvarı; önce hedef bantlar kullanıcıya), M6-04, M6-11 (dalga 11,7–12,9 ms bu görevde), M6-05, M6-06.",
-      "Kullanıcıyla: standard_queue'daki M6-03 gözden geçirmesi, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı."
+      "M6-04: emülatörde düşük seviyeli cihaz profili.",
+      "Sonra M6-11 (dalga 11,7–12,9 ms; üst katmansız ölçüm, toplam CPU %60 üstü saniyeler ayrı), M6-05 (tools/phone_perf.py ile), M6-06, M6-12 (önce sektör başına hedef bantlar).",
+      "Kullanıcıyla: standard_queue'daki M6-10 ve M6-03 gözden geçirmeleri, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı."
     ]
   }
 }
