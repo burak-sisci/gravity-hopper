@@ -26,7 +26,7 @@ aynı anda toplam CPU kullanımı, çekirdek frekansı ve sınırı, GPU dolulu�
       sabit): dakika dakika kare süresi (ham ve takılmasız), GPU / CPU / pil sıcaklığı, büyük
       çekirdeğin frekans sınırı (ısıl kısma), toplam CPU; ilk ve son THERMAL_MIN dakikanın kareye
       göre ağırlıklı ortalaması ve kabul ölçütü (son ≤ ilk × 1,10 ve ≤ 10 ms; kümesiz evrelerin
-      takılmasız ortalaması). capture tur boyunca 30 sn'de bir ön plandaki pencereyi ve üst katman
+      takılmasız ortalaması). capture tur boyunca 30 sn'de bir ön plandaki pencereyi ve görünür üst katman
       penceresi sayısını focus.txt'ye yazar. Çıkış: 0 tutuyor, 1 tutmuyor, 2 geçersiz (kısa,
       karışık kalite, evre 1 dk değil, oyun ön planda değil).
   python -I tools/phone_perf.py --self-test
@@ -76,9 +76,12 @@ while [ $i -lt %(n)d ]; do
  (e=$((${EPOCHREALTIME%%.*}+%(sec)d)); while [ ${EPOCHREALTIME%%.*} -lt $e ]; do :; done) &
  i=$((i+1))
 done; wait; echo "BURN end n=%(n)d $EPOCHREALTIME\""""
+## Üst katman: görünür durumdaki (isReadyForDisplay()=true) APPLICATION_OVERLAY pencereleri; sistemin
+## görünmez katman penceresi sayılmaz (M6-05 yeniden ölçüm). windows= dökümdeki pencere sayısı:
+## 0 ise döküm boş ya da biçim değişmiş, üst katman ölçülmemiş sayılır.
 FOCUS_SCRIPT = """end=$((${EPOCHREALTIME%%.*}+%(sec)d))
 while [ ${EPOCHREALTIME%%.*} -lt $end ]; do
- o=$(dumpsys window windows | grep -c 'ty=APPLICATION_OVERLAY')
+ o=$(dumpsys window windows | awk '/^ *Window #[0-9]/{v=0; w++} /ty=APPLICATION_OVERLAY/{v=1} v && /isReadyForDisplay[(][)]=true/{n++; v=0} END{print n+0 " windows=" w+0}')
  echo "$EPOCHREALTIME overlays=$o $(dumpsys window | grep mCurrentFocus)"; sleep 30
 done"""
 ## Isınma ölçütü (M6-05): ilk ve son bu kadar dakika karşılaştırılır; son en çok THERMAL_WORSE
@@ -274,14 +277,25 @@ def load(folder: Path) -> dict:
                 elif begin:
                     run["burn"].append({**begin, "b": float(p[3])})
     if (folder / "focus.txt").exists():
-        # Satır: zaman [overlays=N] mCurrentFocus=…; odak satırı boşsa oyun ön planda sayılmaz.
         for line in open(folder / "focus.txt", encoding="utf-8", errors="replace"):
-            p = line.split(None, 1)
-            if p and re.fullmatch(r"\d+\.\d+", p[0]):
-                rest = p[1] if len(p) == 2 else ""
-                m = re.search(r"overlays=(\d+)", rest)
-                run["focus"].append((float(p[0]), PACKAGE in rest, int(m.group(1)) if m else None))
+            sample = focus_sample(line)
+            if sample is not None:
+                run["focus"].append(sample)
     return run
+
+
+def focus_sample(line: str):
+    """focus.txt satırı: zaman [overlays=N windows=W] mCurrentFocus=… → (zaman, oyun ön planda mı,
+    görünür üst katman sayısı ya da None). Odak satırı boşsa oyun ön planda sayılmaz; windows=0 ise
+    döküm boştur, üst katman ölçülmemiş sayılır (None)."""
+    p = line.split(None, 1)
+    if not p or not re.fullmatch(r"\d+\.\d+", p[0]):
+        return None
+    rest = p[1] if len(p) == 2 else ""
+    m = re.search(r"overlays=(\d+)", rest)
+    w = re.search(r"windows=(\d+)", rest)
+    measured = m is not None and (w is None or int(w.group(1)) > 0)
+    return (float(p[0]), PACKAGE in rest, int(m.group(1)) if measured else None)
 
 
 def phase_minutes(phase_rows: list, spikes: list) -> list:
@@ -496,6 +510,12 @@ def self_test() -> None:
     assert [r["cluster"] for r in phase_minutes(three, long)] == [True, True, True]
     assert thermal_verdict(9.0, 9.9) and not thermal_verdict(9.0, 9.95)
     assert thermal_verdict(9.95, 10.0) and not thermal_verdict(9.95, 10.01)
+    # Ön plan / üst katman satırı: boş döküm (windows=0) ölçülmemiş, eski biçim (windows yok) geçerli.
+    g = "mCurrentFocus=Window{1 u0 %s/x}" % PACKAGE
+    assert focus_sample("1.5 overlays=0 windows=0 " + g) == (1.5, True, None)
+    assert focus_sample("2.5 overlays=1 windows=40 " + g) == (2.5, True, 1)
+    assert focus_sample("3.5 overlays=0   mCurrentFocus=Window{2 u0 home/L}") == (3.5, False, 0)
+    assert focus_sample("4.5\n") == (4.5, False, None) and focus_sample("odak yok") is None
     print("SELF-TEST TAMAM")
 
 

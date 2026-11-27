@@ -11,14 +11,14 @@
     "task_title": "Uygulama ikonu ve açılış ekranı",
     "owner": "claude",
     "status": "not_started",
-    "note": "Kabul kriteri roadmap'te. M6-05 kullanıcı kararını bekliyor (D-15; standard_queue)."
+    "note": "Kabul kriteri roadmap'te."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
-    "mode": "autonomous",
+    "mode": "standard",
     "started": "2026-11-27",
-    "note": "Otonom mesai 2026-11-27 (ikinci; kullanıcı: sıradaki bir görevi tamamla, mesaiyi güvenli biçimde sonlandır). Hedef M6-05. M6-05 ölçüldü (ADR-113); mutlak ölçüt kullanıcı kararına kaldı (D-15), görev atlandı; mesai bitti."
+    "note": "Standart mesai 2026-11-27 (üçüncü). Kullanıcı D-15'te A'yı seçti, odak aracını duraklattı: M6-05 üst katmansız yeniden ölçüm. Ölçüm tamam: 9,11 → 9,45 ms, M6-05 kapandı (ADR-114)."
   },
 
   "standard_queue": [
@@ -26,8 +26,8 @@
       "task": "M6-05",
       "owner": "user",
       "added": "2026-11-27",
-      "reason": "Karar D-15 (pending_user_decisions). Isınma ölçüldü ve tutuyor (ADR-113); mutlak ≤ 10 ms için üst katmansız ölçüm kullanıcıya bağlı. Pil tüketimi kablosuz ölçüm istiyor: kabul gereği kullanıcıya bırakıldı (istenirse: telefon şarjdan çıkarılmış hâlde 30 dk oynanır, pil yüzdesi baştan ve sondan okunur).",
-      "resume": "A seçilirse: odak aracı duraklatılır, telefon kabloda; Claude telefondaki kaydı deploy'dan önce yedekler, ölçüm yapısını yükler (extra_args '-- --invincible --start-sector=6 --quality=high --perf=60 --auto-tap=0.5 --trail=trail_default'), 'phone_perf.py capture --seconds 1835 --save clean_save' ve 'thermal' çalıştırır (thermal üst katman sayısını raporlar: 0 olmalı), sonra kaydı bayt bayt geri yükler ve normal yapıyı yeniden yükler."
+      "reason": "İsteğe bağlı: pil tüketimi kablosuz ölçüm istiyor (kabul kriteri gereği kullanıcıya bırakıldı). Isınma ve kare süresi ölçüldü, görev kapandı (ADR-114).",
+      "resume": "İstenirse: telefon şarjdan çıkarılmış hâlde 30 dk oynanır, pil yüzdesi baştan ve sondan okunur; sonuç architecture.md §16.1 M6-05'e eklenir."
     },
     {
       "task": "M6-11",
@@ -279,24 +279,13 @@
     "M6-03",
     "M6-10",
     "M6-04",
-    "M6-11"
+    "M6-11",
+    "M6-05"
   ],
 
   "blockers": [],
 
-  "pending_user_decisions": [
-    {
-      "id": "D-15",
-      "task": "M6-05",
-      "added": "2026-11-27",
-      "question": "M6-05'in mutlak ölçütü (son 5 dk ≤ 10 ms) tutmuyor: Taşma'da (ilk ≈ 2 dk'dan sonra tam zorluk), yüksek kalite, 120 Hz, kümesiz evrelerde ilk 5 dk 10,20 → son 5 dk 10,41 ms. Isınma payı tutuyor (+%2,1); aşım soğukken de var (2. dk 10,34), yani ısıdan değil. Ölçüm sırasında oyunun üstünde odak aracının iki üst katmanı açıktı (M6-10'da bu koşulda ortalamalar ≈ 1 ms yüksek çıkmıştı). Nasıl ilerleyelim?",
-      "options": [
-        "A (önerim): Bir standart mesaide telefon kablodayken odak aracını ≈ 35 dk duraklat; Claude aynı ölçümü tek komutla tekrarlar. ≤ 10 ms çıkarsa M6-05 kapanır. Çıkmazsa Taşma'nın tam zorluktaki GPU yükü için ayrı bir 🤖 optimizasyon görevi açılır.",
-        "B: Isınma sonucunu yeterli say, M6-05'i şimdi kapat. Mutlak 10 ms için Taşma tam zorluk ölçümü ayrı bir performans görevi olur."
-      ],
-      "recommendation": "A: tek ölçümle üst katmanın payı ayrışır; B'de de aynı ölçüm sonradan gerekecek."
-    }
-  ],
+  "pending_user_decisions": [],
 
   "open_technical_questions": [
     { "id": "S-01", "question": "Compatibility renderer'da 2D glow: Redmi'de görüntü ve maliyet", "resolve_in": "M0-09", "status": "resolved", "answer": "Glow çalışıyor (Canvas arka plan, 3B kamera gerekmez; hdr_scale 0.2, eşik 0.3, yoğunluk 2.0) ama Redmi'de kare süresi 8,4 → 17,5 ms, 120 → 57 FPS. Sahte parlama 8,4 ms (≈ +0,9 ms GPU) → ADR-020: sahte parlama." },
@@ -386,11 +375,10 @@
 
   "last_session": {
     "date": "2026-11-27",
-    "summary": "Otonom mesai (kullanıcı: sıradaki bir görevi tamamla, mesaiyi güvenli kapat; kullanıcısız bitmiyorsa atla). M6-05: Redmi'de 30 dk Taşma, yüksek kalite sabit, 120 Hz, telefon kabloda. Isınma payı +%2,1 (ölçüt ≤ %10 tutuyor); GPU 47 → 55 °C, CPU 48 → 56 °C, pil 29 → 35 °C, büyük çekirdek sınırı 2803 → 2400 MHz ama GPU dolu (%99,4–99,5), kare süresine yansımadı. Mutlak ≤ 10 ms tutmuyor (10,20 → 10,41 ms, soğukken de 10,3): odak aracının iki üst katmanı açıktı; üst katmansız ölçüm kullanıcıya bağlı (D-15). Görev açık bırakıldı, standard_queue'da. Araç: PerfProbe.fixed_quality (--perf + --quality), phone_perf.py thermal + ön plan denetimi. Telefondaki kayıt deploy'dan önce yedeklenip bayt bayt geri yüklendi; normal yapı yeniden yüklendi.",
+    "summary": "Otonom mesaide M6-05 ölçüldü (ADR-113): ısınma payı +%2,1 tuttu, ≤ 10 ms tutmadı (10,20 → 10,41 ms; oyunun üstünde odak aracının iki göstergesi). Ardından standart mesai: kullanıcı D-15'te A'yı seçti, odak aracını ve göstergesini kapattı. Üst katmansız aynı ölçüm: 9,11 → 9,45 ms (+%3,6), iki ölçüt de tutuyor; göstergelerin payı ≈ 1 ms (bütün tur 10,45 → 9,33; M6-10'un tahmini doğrulandı). GPU 48 → 53,5 °C, pil 29 → 35 °C. phone_perf.py: üst katman sayacı yalnızca görünür durumdaki pencereleri sayıyor, boş döküm ölçülmemiş sayılıyor. Kayıt deploy'dan önce yedeklendi, bayt bayt geri yüklendi; normal yapı yeniden yüklendi. M6-05 kapandı; pil tüketimi isteğe bağlı olarak kullanıcıda.",
     "next_steps": [
-      "D-15 kararı (M6-05): önerim A, odak aracı kapalıyken 35 dk'lık yeniden ölçüm.",
       "Sıradaki 🤖: M6-06 (ikon ve açılış ekranı), M6-12 (çöküş duvarı dengesi).",
-      "Kullanıcıyla: standard_queue'daki M6-11, M6-10, M6-03 gözden geçirmeleri, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı."
+      "Kullanıcıyla: standard_queue'daki M6-11, M6-10, M6-03 gözden geçirmeleri, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı; isteğe bağlı M6-05 pil ölçümü."
     ]
   }
 }
