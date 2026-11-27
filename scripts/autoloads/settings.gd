@@ -5,6 +5,9 @@ extends Node
 ## (Music / SFX; 0'da yol susturulur), FPS sınırı. Efekt kalitesini Main uygular (settings_changed).
 ## Titreşimi M5-08 okur. Ayarlar ekranı (M5-05) set_… işlevleriyle değiştirir: hemen uygulanır
 ## ve yazılır.
+## Efekt kalitesi (M6-11): oyuncu ayarlar ekranından seçmediyse (quality_chosen) Main, cihaz uzun
+## süre 60 FPS'i tutamayınca lower_quality_automatically ile bir kademe düşürür (AutoQuality).
+## Oyuncunun seçtiği kalite hiç değişmez. Debug kaliteyi elle değiştirince auto_quality kapanır.
 ## Dil seçimi: oyuncunun seçtiği dil → yoksa cihaz dili → desteklenmiyorsa İngilizce.
 
 const SETTINGS_PATH: String = "user://settings.cfg"
@@ -14,6 +17,8 @@ const MUSIC_BUS: StringName = &"Music"
 const SFX_BUS: StringName = &"SFX"
 ## FPS sınırı açıkken Engine.max_fps; kapalıyken 0 (ekranın yenileme hızı).
 const LIMITED_FPS: int = 60
+## Oyuncu seçmediyse başlangıç kalitesi.
+const DEFAULT_QUALITY: GameTypes.Quality = GameTypes.Quality.HIGH
 ## Debug: tur başladıktan bu kadar sonra yolların tepe düzeyi günlüğe yazılır (cihazda ölçüm).
 const PEAK_LOG_DELAY: float = 2.0
 
@@ -26,7 +31,12 @@ var vibration: bool = true
 ## Oyuncunun seçtiği dil kodu ("tr", "en"). Boşsa cihaz dili kullanılır.
 var language: String = ""
 ## Efekt kalitesi.
-var effect_quality: GameTypes.Quality = GameTypes.Quality.HIGH
+var effect_quality: GameTypes.Quality = DEFAULT_QUALITY
+## Oyuncu kaliteyi ayarlar ekranından kendisi seçti mi (seçtiyse otomatik düşürme yapılmaz).
+var quality_chosen: bool = false
+## Otomatik kalite düşürme açık mı (kaydedilmez; auto_quality_allowed). Debug ölçümü ve --quality=
+## de kapatır.
+var auto_quality: bool = true
 ## Açıksa oyun 60 FPS ile sınırlanır (pil tasarrufu).
 var limit_fps_60: bool = false
 ## Ayar dosyası (testler geçici dosyaya çevirir).
@@ -34,6 +44,8 @@ var path: String = SETTINGS_PATH
 
 
 func _ready() -> void:
+	auto_quality = auto_quality_allowed(DisplayServer.get_name(), OS.has_feature("movie"),
+			OS.has_feature("web"))
 	load_settings()
 	apply_language()
 	apply()
@@ -62,6 +74,9 @@ func load_settings() -> void:
 	var stored_quality: int = int(cfg.get_value("video", "effect_quality", effect_quality))
 	var quality: int = clampi(stored_quality, 0, GameTypes.Quality.size() - 1)
 	effect_quality = quality as GameTypes.Quality
+	# Bayraktan önceki dosyalarda (M6-11 öncesi) varsayılandan farklı kalite oyuncunun seçimidir.
+	var legacy_chosen: bool = effect_quality != DEFAULT_QUALITY
+	quality_chosen = bool(cfg.get_value("video", "quality_chosen", legacy_chosen))
 	limit_fps_60 = bool(cfg.get_value("video", "limit_fps_60", limit_fps_60))
 
 
@@ -73,12 +88,14 @@ func save_settings() -> void:
 	cfg.set_value("feedback", "vibration", vibration)
 	cfg.set_value("general", "language", language)
 	cfg.set_value("video", "effect_quality", effect_quality)
+	cfg.set_value("video", "quality_chosen", quality_chosen)
 	cfg.set_value("video", "limit_fps_60", limit_fps_60)
 	var err: Error = cfg.save(path)
 	if err != OK:
 		push_error("Ayarlar kaydedilemedi: %s" % error_string(err))
-	_log("saved music=%.2f sfx=%.2f vibration=%s language=%s quality=%d fps60=%s" % [
-		music_volume, sfx_volume, vibration, language, effect_quality, limit_fps_60])
+	_log("saved music=%.2f sfx=%.2f vibration=%s language=%s quality=%d chosen=%s fps60=%s" % [
+		music_volume, sfx_volume, vibration, language, effect_quality, quality_chosen,
+		limit_fps_60])
 	Events.settings_changed.emit()
 
 
@@ -105,9 +122,33 @@ func set_vibration(on: bool) -> void:
 	_changed(true)
 
 
+## Oyuncunun seçimi (ayarlar ekranı): kalıcıdır, otomatik düşürme artık dokunmaz.
 func set_effect_quality(quality: GameTypes.Quality) -> void:
 	effect_quality = quality
+	quality_chosen = true
 	_changed(true)
+
+
+## Otomatik kalite bu ortamda çalışabilir mi. Ekransız kipte (testler) ve kare yakalamada (Movie
+## Maker) kare süresi GPU'yu ölçmez. Web'de tarayıcı kare hızına tavan koyabilir (pil tasarrufu
+## 30 FPS): kural tavanı zayıf GPU sanır, kaliteyi boşuna düşürür (M6-11 doğrulaması).
+static func auto_quality_allowed(display_server: String, is_movie: bool, is_web: bool) -> bool:
+	return display_server != "headless" and not is_movie and not is_web
+
+
+## Otomatik düşürme kaliteye dokunabilir mi: oyuncu seçmedi, kapatılmadı, en düşükte değil.
+func can_lower_quality() -> bool:
+	return auto_quality and not quality_chosen and effect_quality != GameTypes.Quality.LOW
+
+
+## Kaliteyi bir kademe düşürür, kaydeder ve duyurur (seçim sayılmaz). Düşürdüyse true.
+func lower_quality_automatically() -> bool:
+	if not can_lower_quality():
+		return false
+	effect_quality = AutoQuality.lowered(effect_quality)
+	_log("auto quality lowered to %d" % effect_quality)
+	_changed(true)
+	return true
 
 
 func set_limit_fps_60(on: bool) -> void:

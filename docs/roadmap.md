@@ -329,7 +329,7 @@
   *Kabul:* 2026-11-21'deki küme (uygulama açılışından 56,5–67,1 sn, tur başından 52,6–63,1 sn; 11 kare 29–75 ms) aynı koşulda 3 kez denenir (tohum sabitlenemez); nedeni bulunup giderilir ya da yinelenmediği sayılarla yazılır.
 - [x] **M6-04** 🤖 Android emülatöründe düşük seviyeli cihaz profili testi. *Kapandı (ADR-111): 720p / 2 GB'da açılış, menü ve 334 sn'lik tur çökmeden, bellek 283 → 303 MB; ARM yapısı emülatörün çevirmeninde düştüğü için geçici x86_64 yapısıyla.*
   *Kabul:* 720p, 2 GB profilde açılış, menü ve 5 dk tur çökmeden; kare süresi ve bellek yazılır (emülatör GPU'su gerçek cihaz sayılmaz). Yeni lisans kabulü gerekirse kullanıcıya bırakılır.
-- [ ] **M6-11** 🤖 Zayıf cihazda efekt kalitesi (M6-03 ve M6-04'ün ölçümleriyle)
+- [x] **M6-11** 🤖 Zayıf cihazda efekt kalitesi (M6-03 ve M6-04'ün ölçümleriyle). *Kapandı (ADR-112): oyuncu seçmediyse 30 sn boyunca 50 FPS altı kaliteyi bir kademe düşürür; ölçülen koşullar tetiklemiyor (test), oyuncunun seçimi ezilmiyor (test); dalga değişmedi.*
   *Kabul:* Varsayılan kalite ya da otomatik düşürme kuralı ölçüme dayanır ve testte; oyuncunun seçtiği ayar hiç ezilmez.
 - [ ] **M6-05** 🤖 Pil ve ısınma kontrolü
   *Kabul:* 30 dk turda sıcaklık ve kare süresi dakikada bir; son 5 dk'nın ortalaması ilk 5 dk'dan en çok %10 kötü ve ≤ 10 ms. Telefon ayarı değiştirilmez; pil tüketimi kablosuz ölçüm istiyorsa kullanıcıya bırakılır.

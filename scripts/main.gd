@@ -2,7 +2,9 @@ extends Node
 ## Kök sahne (architecture.md §5.1). Sahnedeki işi yapar: turu World kabına kurar ve kaldırır.
 ## Kararı GameManager verir (tohum, durum, sonuç); Main uygular ve GameManager'a haber verir.
 ## Debug build'de debug katmanını Debug kabına yükler; yayın sürümünde yüklenmez (ADR-023).
-## Efekt kalitesini ayardan neon bileşenlerine aktarır (Neon autoload kullanmaz, §9).
+## Efekt kalitesini ayardan neon bileşenlerine aktarır (Neon autoload kullanmaz, §9). Tur sürerken
+## karelerin gerçek süresini AutoQuality'ye verir; cihaz 60 FPS'i uzun süre tutamazsa ve oyuncu
+## kaliteyi seçmediyse Settings kaliteyi bir kademe düşürür (M6-11).
 ## Desen parçası havuzları (ChunkPools) turlar arasında burada korunur; her tura verilir (M3-10).
 ## Her tura Progression'ın kalıcı rekoru verilir; Run rekor çizgisini oraya koyar (M3-14, M4-02).
 ## Yükseltmelerin etkileri tur başında tek bir yük olarak Run'a ve GameManager'a verilir (M4-04).
@@ -22,6 +24,9 @@ var _run: Run
 ## seçim değişince sonraki turdan geçerli. Debug 5 tuşu ve --start= Events.start_requested ile
 ## kilide bakmadan başka bir sektörden hemen başlatır. Ölüm ve Tekrar'dan sonra da aynı sektör.
 var _start_sector: int
+var _auto_quality: AutoQuality = AutoQuality.new()
+## Önceki karenin gerçek zamanı (µs; Engine.time_scale'den bağımsız).
+var _last_frame_usec: int = 0
 
 @onready var _world: Node2D = %World
 @onready var _chunk_pools: ChunkPools = %ChunkPools
@@ -88,6 +93,23 @@ func _start_run() -> void:
 	GameManager.begin_run(run_seed, _start_sector, loadout)
 	if first_run:
 		_hud.show_tap_hint()
+
+
+## Görsel kalite kararı: yalnızca tur sürerken sayılır (menü, duraklatma ve sonuç ekranı hariç).
+func _process(_delta: float) -> void:
+	var now: int = Time.get_ticks_usec()
+	_track_frame((now - _last_frame_usec) / 1_000_000.0)
+	_last_frame_usec = now
+
+
+## Karenin gerçek süresini (sn) otomatik kalite kuralına verir.
+func _track_frame(frame_sec: float) -> void:
+	if GameManager.state != GameTypes.AppState.RUNNING or not Settings.can_lower_quality():
+		return
+	if _auto_quality.add_frame(frame_sec):
+		if OS.is_debug_build():
+			print("QUALITY auto window_ms=%.1f" % _auto_quality.last_window_ms)
+		Settings.lower_quality_automatically()
 
 
 func _apply_quality() -> void:

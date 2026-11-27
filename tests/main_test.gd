@@ -4,6 +4,8 @@ extends GdUnitTestSuite
 ## Rekor (M3-14, M4-02): Progression kalıcı rekoru tutar ve kaydeder, Main yeni tura verir;
 ## tur sonu kazancı cüzdana girer. Kontrol noktası (M4-09): tur seçili sektörden başlar.
 ## Testler geçici kayıtla çalışır (SaveManager.TEST_SAVE_DIR).
+## Otomatik kalite (M6-11): turda yavaş kareler sayılır, duraklatmada ve menüde sayılmaz; oyuncunun
+## seçimi ezilmez.
 ## İlk açılış (M5-07): boş kayıtta menü yerine tanıtım parçasıyla başlayan tur ve "dokun" eli.
 ## Öteki testler deneyimli oyuncu gibi açar (ftue_done = true).
 
@@ -14,6 +16,10 @@ const NO_RESTART_FRAMES: int = 40
 const TEARDOWN_FRAMES: int = 30
 ## Tanıtım parçasının kimliği (ChunkLibrary.intro'nun dosya adı).
 const INTRO_ID: String = "ftue_intro_01"
+const SettingsTest: GDScript = preload("res://tests/autoloads/settings_test.gd")
+const SETTINGS_TEST_PATH: String = "user://settings_main_test.cfg"
+## 40 FPS'lik (25 ms) kare sayısı: kuralın 30 sn'si ve biraz fazlası (AutoQuality).
+const SLOW_FRAMES: int = 1210
 
 var _main: Node
 var _started_seeds: Array[int] = []
@@ -244,6 +250,33 @@ func test_settings_change_sets_neon_quality() -> void:
 	Neon.quality = GameTypes.Quality.HIGH
 
 
+## Otomatik kalite (M6-11): oyuncu seçmediyse tur sürerken 30 sn boyunca 40 FPS'lik kareler
+## kaliteyi bir kademe düşürür ve neon bileşenlerine uygular; duraklatmada ve menüde sayılmaz;
+## oyuncunun seçimi ezilmez. Ayarlar geçici dosyaya yazılır.
+func test_slow_frames_lower_quality_only_in_a_run_and_never_a_choice() -> void:
+	var saved: Dictionary[String, Variant] = SettingsTest.snapshot()
+	Settings.path = SETTINGS_TEST_PATH
+	Settings.auto_quality = true
+	Settings.quality_chosen = false
+	Settings.effect_quality = GameTypes.Quality.HIGH
+	await _start_main()
+	_slow_frames(SLOW_FRAMES)
+	assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.MEDIUM)
+	assert_int(Neon.quality).is_equal(GameTypes.Quality.MEDIUM)
+	Settings.set_effect_quality(GameTypes.Quality.HIGH)
+	_slow_frames(SLOW_FRAMES)
+	assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.HIGH)
+	Settings.quality_chosen = false
+	for state: GameTypes.AppState in [GameTypes.AppState.PAUSED, GameTypes.AppState.MENU]:
+		assert_bool(GameManager.change_state(state)).is_true()
+		_slow_frames(SLOW_FRAMES)
+		assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.HIGH)
+	SettingsTest.restore(saved)
+	Neon.quality = GameTypes.Quality.HIGH
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_TEST_PATH))
+	await _frames(TEARDOWN_FRAMES)
+
+
 ## Duraklatma (M5-06): HUD düğmesi oyunu dondurur (oyuncu yerinde kalır), duraklatma ekranı açılır;
 ## devam isteği turu sürdürür (oyuncu yeniden ilerler); duraklatmadan Menü turu kaldırır ve
 ## sonucu QUIT nedeniyle duyurur.
@@ -314,6 +347,15 @@ func _on_run_started(run_seed: int, start_sector: int) -> void:
 
 func _on_run_ended(result: RunResult) -> void:
 	_results.append(result)
+
+
+## Ana sahneye count kadar 25 ms'lik kare verir; sayaç baştan (önceki gerçek kareler sayılmaz).
+## Main'in gerçek kare yoluna (_process: mikrosaniye farkı) count tane 25 ms'lik kare verir.
+func _slow_frames(count: int) -> void:
+	_main.set(&"_auto_quality", AutoQuality.new())
+	for i: int in count:
+		_main.set(&"_last_frame_usec", Time.get_ticks_usec() - 25_000)
+		_main.call(&"_process", 0.0)
 
 
 func _frames(count: int) -> void:

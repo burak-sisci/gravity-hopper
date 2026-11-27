@@ -33,6 +33,10 @@ const SAFE_AREA_ARG: String = "--safe-area="
 ## Başlatma argümanı (`-- --tuning=wall_max_distance:12`, tekrarlanabilir): TuningConfig'in bir
 ## sayısal değeri bu oturum için (kaydedilmez). Ölçümde duvarı ekranda tutar (M6-03).
 const TUNING_ARG: String = "--tuning="
+## Başlatma argümanı (`-- --max-fps=40`): zayıf cihaz benzetimi, kare hızı tavanı (M6-11; otomatik
+## kalite düşürmeyi gerçek turda denemek için). Tavan ilk ayar kaydına kadar sürer; otomatik düşürme
+## de kaydettiği için yalnızca ilk kademe görülür.
+const MAX_FPS_ARG: String = "--max-fps="
 ## Run'ın kullandığı ayar kaynağı (önbellekte tek örnek; ayar paneliyle aynı).
 const TUNING_PATH: String = "res://data/tuning/default_tuning.tres"
 ## Kalite argümanının değerleri ve düğme yazıları, GameTypes.Quality sırasıyla.
@@ -99,6 +103,7 @@ func _ready() -> void:
 			var quality: int = QUALITY_ARGS.find(arg.trim_prefix(QUALITY_ARG))
 			if quality >= 0:
 				Settings.effect_quality = quality as GameTypes.Quality
+				Settings.auto_quality = false
 		elif arg.begins_with(RECORD_ARG):
 			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
 			# Kalıcı rekordur: tur sonunda (debug) kayda da yazılır.
@@ -122,11 +127,15 @@ func _ready() -> void:
 			# Run ayar kaynağını tur başında okur; ilk tur bu karenin sonunda kurulur.
 			if not apply_tuning_arg(load(TUNING_PATH) as TuningConfig, arg.trim_prefix(TUNING_ARG)):
 				push_warning("DebugLayer: geçersiz ayar argümanı: %s" % arg)
+		elif arg.begins_with(MAX_FPS_ARG):
+			Engine.max_fps = int(arg.trim_prefix(MAX_FPS_ARG))
 		elif arg.begins_with(PERF_ARG):
 			perf_sec = float(arg.trim_prefix(PERF_ARG))
 		elif arg.begins_with(AUTO_TAP_ARG):
 			tap_interval = float(arg.trim_prefix(AUTO_TAP_ARG))
 	if perf_sec > 0.0:
+		# Ölçüm kaliteyi kendisi döndürür; otomatik düşürme karışmaz (M6-11).
+		Settings.auto_quality = false
 		var probe: PerfProbe = PerfProbe.new()
 		probe.phase_sec = perf_sec
 		probe.tap_interval = tap_interval
@@ -244,6 +253,7 @@ func _cycle_aspect() -> void:
 func _cycle_quality() -> void:
 	var quality: int = posmod(Settings.effect_quality - 1, GameTypes.Quality.size())
 	Settings.effect_quality = quality as GameTypes.Quality
+	Settings.auto_quality = false
 	Events.settings_changed.emit()
 	_show_quality()
 	print("DEBUG kalite %s" % QUALITY_ARGS[quality])

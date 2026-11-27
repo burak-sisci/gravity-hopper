@@ -7,21 +7,28 @@
 
   "current": {
     "milestone": "M6",
-    "task": "M6-11",
-    "task_title": "Zayıf cihazda efekt kalitesi",
+    "task": "M6-05",
+    "task_title": "Pil ve ısınma kontrolü",
     "owner": "claude",
     "status": "not_started",
-    "note": "Kabul kriteri roadmap'te. Girdiler: M6-03 (Redmi, giriş dalgası yüksekte 11,7–12,9 ms, düşükte 8,2–8,4) ve M6-04 (emülatör, dalga yüksek/ortada kare hızını yarıya ya da altına indiriyor, düşükte indirmiyor). Oyuncunun seçtiği ayar hiç ezilmez."
+    "note": "Kabul kriteri roadmap'te. tools/phone_perf.py düzeneği; toplam CPU %60 üstü saniyeler ayrı (ADR-110). Ölçüm yapısında Settings.auto_quality --perf ile kapalı (M6-11)."
   },
 
   "session": {
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "autonomous",
     "started": "2026-11-27",
-    "note": "Otonom mesai 2026-11-27 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesai biter; her görev sonunda push). Hedef M6-04 ve M6-11."
+    "note": "Otonom mesai 2026-11-27 (kullanıcı: sıradaki 2 görevi tamamla, sonra mesai biter; her görev sonunda push). Hedef M6-04 ve M6-11. M6-04 (ADR-111) ve M6-11 (ADR-112) bitti; mesai bitti."
   },
 
   "standard_queue": [
+    {
+      "task": "M6-11",
+      "owner": "user",
+      "added": "2026-11-27",
+      "reason": "Gözden geçir (otonom varsayımlar, ADR-112): (1) kalite otomatik düşünce oyuncuya bir şey söylenmiyor; ayarlar ekranında yeni kalite seçili görünür, 'otomatik' göstergesi yok. (2) Bayraktan önceki ayar dosyasında YÜKSEK dışı kalite oyuncunun seçimi sayıldı. (3) Sektör giriş dalgası değiştirilmedi: Redmi'de yüksekte dalga ortalaması 11,7–12,9 ms (60 FPS payının altında), emülatörde yüksek/ortada 26–29 FPS'e iniyor; gerçek zayıf cihaz olmadan ucuzlatmanın kazancı ölçülemez. (4) Android'in oyun / pil kipi FPS tavanı (30–40) da kaliteyi düşürür (kare süresi tavanı GPU yükünden ayıramaz); web'de bu yüzden kapalı.",
+      "resume": "İstenirse: düşürme anında kısa bir bildirim ya da ayarlarda 'OTOMATİK' etiketi (metin TR+EN); dalga için M6-08'de tanıdıkların zayıf telefonunda ölçüm ve ardından %Wash / dalga ağı kopyasını ucuzlatan ayrı bir görev."
+    },
     {
       "task": "M6-10",
       "owner": "user",
@@ -264,7 +271,8 @@
     "M6-01",
     "M6-03",
     "M6-10",
-    "M6-04"
+    "M6-04",
+    "M6-11"
   ],
 
   "blockers": [],
@@ -359,9 +367,11 @@
 
   "last_session": {
     "date": "2026-11-27",
-    "summary": "Otonom mesai (kullanıcı: sıradaki 2 görev, sonra mesai biter). M6-04 bitti (ADR-111): emülatörde 720×1600 / 2 GB profil; açılış, menü, 334 sn'lik tur çökmeden; bellek 283 → 303 MB. Emülatör engelleri: ES 2.0 (bayrakla ES 3.1) ve ARM çevirmeni SIGILL (geçici x86_64 yapısı). Dışa aktarım ayarı testle korunuyor.",
+    "summary": "Otonom mesai (kullanıcı: sıradaki 2 görev, sonra mesai biter). M6-04 bitti (ADR-111): emülatörde 720×1600 / 2 GB / Android 11 profil; açılış 1471 ms, menü, 334 sn'lik tur (S1 → S5) çökmeden; PSS 283 → 303 MB (ilk dakikadan sonra ≈ 0,4 MB/dk), boş bellek ≥ 910 MB. Emülatör engelleri: varsayılan ES 2.0 (bayrakla ES 3.1) ve ARM çevirmeninde SIGILL (geçici x86_64 yapısı; depodaki ayar testle ARM). M6-11 bitti (ADR-112): oyuncu kaliteyi seçmediyse tur sırasında 30 sn boyunca 50 FPS altı kaliteyi bir kademe düşürür; eşikler ölçümden (Redmi, CPU kümeleri, emülatör dalgaları tetiklemiyor; 40 FPS tetikliyor), oyuncunun seçimi quality_chosen ile hiç ezilmez; web'de kapalı (tarayıcı FPS tavanı); emülatörde --max-fps=40 ile 30,1. sn'de düştü. Dalga değişmedi (gözden geçir). Telefona dokunulmadı. Doğrulama iş akışları sayı ve kod düzeltmeleri buldu, düzeltildi.",
     "next_steps": [
-      "M6-11: efekt kalitesi (dalga), sonra mesai sonu."
+      "M6-05: pil ve ısınma (tools/phone_perf.py ile, 30 dk tur).",
+      "Sonra M6-06 (ikon ve açılış ekranı), M6-12 (çöküş duvarı dengesi; önce sektör başına hedef bantlar).",
+      "Kullanıcıyla: standard_queue'daki M6-11, M6-10, M6-03 gözden geçirmeleri, müzik dinleme (ADR-101), M6-13 stüdyo giriş ekranı."
     ]
   }
 }
