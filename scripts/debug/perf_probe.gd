@@ -1,7 +1,8 @@
 class_name PerfProbe
 extends Node
 ## Oyunun içinde performans ölçümü (M3-19, architecture.md §16.1). Yalnızca debug katmanı kurar
-## (`-- --perf=6`): efekt kalitesi her evrede sırayla yüksek → orta → düşük olur; her evrenin
+## (`-- --perf=6`): efekt kalitesi her evrede sırayla yüksek → orta → düşük olur (`--quality=` de
+## verilirse sabit kalır: uzun ısınma ölçümü, M6-05); her evrenin
 ## sonunda günlüğe bir "PERF" satırı yazılır: kare süresinin ortalaması, p95'i ve en kötüsü;
 ## ayrıca çöküş duvarı ekrandayken ve renk dalgası sürerken geçen karelerin ortalaması.
 ## Takılmalar (SPIKE_MS'den uzun kareler) olduğu anda zamanıyla yazılır: önceki karenin çizimi
@@ -33,6 +34,9 @@ const TAP_POINT: Vector2 = Vector2(540, 1700)
 var phase_sec: float = 6.0
 ## Otomatik dokunuş aralığı (sn); 0 ise dokunuş yok.
 var tap_interval: float = 0.0
+## Sabit kalite (-1: evreden evreye döner). Uzun ısınma ölçümünde evreler aynı kalitede
+## karşılaştırılır (`--perf=60 --quality=high`, M6-05).
+var fixed_quality: int = -1
 
 var _phase: int = 0
 var _phase_elapsed: float = 0.0
@@ -138,6 +142,8 @@ func tick(frame_ms: float) -> void:
 
 ## Evredeki kalite.
 func current_quality() -> GameTypes.Quality:
+	if fixed_quality >= 0:
+		return fixed_quality as GameTypes.Quality
 	return QUALITY_ORDER[_phase % QUALITY_ORDER.size()]
 
 

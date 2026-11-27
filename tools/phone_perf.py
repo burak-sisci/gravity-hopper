@@ -21,6 +21,14 @@ aynı anda toplam CPU kullanımı, çekirdek frekansı ve sınırı, GPU dolulu�
       Her tur için takılma kümeleri (aralarında ≤ 2 sn, ≥ 5 takılma), kümenin içinde ve 10 sn
       öncesinde telemetri, yoğun iş parçacıkları, yapay yük pencereleri; sonda bütün turların
       saniyeleri toplam CPU kullanımı bantlarına göre (doz-yanıt).
+  python -I tools/phone_perf.py thermal <klasör>
+      Uzun ısınma turu (M6-05; ölçüm yapısı `--perf=60 --quality=high`, evre = 1 dk, kalite
+      sabit): dakika dakika kare süresi (ham ve takılmasız), GPU / CPU / pil sıcaklığı, büyük
+      çekirdeğin frekans sınırı (ısıl kısma), toplam CPU; ilk ve son THERMAL_MIN dakikanın kareye
+      göre ağırlıklı ortalaması ve kabul ölçütü (son ≤ ilk × 1,10 ve ≤ 10 ms; kümesiz evrelerin
+      takılmasız ortalaması). capture tur boyunca 30 sn'de bir ön plandaki pencereyi ve üst katman
+      penceresi sayısını focus.txt'ye yazar. Çıkış: 0 tutuyor, 1 tutmuyor, 2 geçersiz (kısa,
+      karışık kalite, evre 1 dk değil, oyun ön planda değil).
   python -I tools/phone_perf.py --self-test
       Hesapları yapay veriyle dener (CPU yüzdesi, kümeleme, bantlar).
 """
@@ -68,6 +76,16 @@ while [ $i -lt %(n)d ]; do
  (e=$((${EPOCHREALTIME%%.*}+%(sec)d)); while [ ${EPOCHREALTIME%%.*} -lt $e ]; do :; done) &
  i=$((i+1))
 done; wait; echo "BURN end n=%(n)d $EPOCHREALTIME\""""
+FOCUS_SCRIPT = """end=$((${EPOCHREALTIME%%.*}+%(sec)d))
+while [ ${EPOCHREALTIME%%.*} -lt $end ]; do
+ o=$(dumpsys window windows | grep -c 'ty=APPLICATION_OVERLAY')
+ echo "$EPOCHREALTIME overlays=$o $(dumpsys window | grep mCurrentFocus)"; sleep 30
+done"""
+## Isınma ölçütü (M6-05): ilk ve son bu kadar dakika karşılaştırılır; son en çok THERMAL_WORSE
+## kat kötü ve THERMAL_MAX_MS'yi aşmaz.
+THERMAL_MIN = 5
+THERMAL_WORSE = 1.10
+THERMAL_MAX_MS = 10.0
 LOG_LINE = re.compile(r"^\s*(\d+\.\d+)\s+\d+\s+\d+\s+(\w)\s+(.+?)\s*:\s(.*)$")
 KV = re.compile(r"(\w+)=([-+\w.]+)")
 
@@ -125,6 +143,7 @@ def capture(out: Path, seconds: int, serial: str, save: str, top: bool, burn: st
         _adb(serial, "logcat", "-c", check=True)
         start("log.txt", ["logcat", "-v", "epoch"])
         start("tel.txt", ["shell", TEL_SCRIPT % {"sec": seconds}])
+        start("focus.txt", ["shell", FOCUS_SCRIPT % {"sec": seconds}])
         if top:
             start("top.txt", ["shell", TOP_SCRIPT % {"sec": seconds}])
         if burns:
@@ -197,7 +216,8 @@ def band_of(cpu: float) -> tuple | None:
 
 
 def load(folder: Path) -> dict:
-    run = {"start": None, "spikes": [], "phases": 0, "system": [], "tel": [], "top": [], "burn": []}
+    run = {"start": None, "spikes": [], "phases": 0, "system": [], "tel": [], "top": [], "burn": [],
+            "phase_rows": [], "focus": []}
     for line in open(folder / "log.txt", encoding="utf-8", errors="replace"):
         m = LOG_LINE.match(line)
         if not m:
@@ -214,9 +234,14 @@ def load(folder: Path) -> dict:
                     d[old + "_max_1s_ms"] = d.pop(old + "_ms")
             d["t"] = t
             d["sector"] = int(re.search(r"sector=(\d+)", msg).group(1))
+            d["phase"] = int(re.search(r"phase=(\d+)", msg).group(1))
             run["spikes"].append(d)
         elif msg.startswith("PERF phase="):
             run["phases"] += 1
+            d = dict(KV.findall(msg))
+            run["phase_rows"].append({"t": t, "phase": int(d["phase"]), "q": d["q"],
+                    "sector": int(d["sector"]), "frames": int(d["frames"]),
+                    "avg_ms": float(d["avg_ms"]), "p95_ms": float(d["p95_ms"])})
     prev = None
     for line in open(folder / "tel.txt", encoding="utf-8", errors="replace"):
         p = line.split()
@@ -248,7 +273,112 @@ def load(folder: Path) -> dict:
                     begin = {"n": int(p[2][2:]), "a": float(p[3])}
                 elif begin:
                     run["burn"].append({**begin, "b": float(p[3])})
+    if (folder / "focus.txt").exists():
+        # Satır: zaman [overlays=N] mCurrentFocus=…; odak satırı boşsa oyun ön planda sayılmaz.
+        for line in open(folder / "focus.txt", encoding="utf-8", errors="replace"):
+            p = line.split(None, 1)
+            if p and re.fullmatch(r"\d+\.\d+", p[0]):
+                rest = p[1] if len(p) == 2 else ""
+                m = re.search(r"overlays=(\d+)", rest)
+                run["focus"].append((float(p[0]), PACKAGE in rest, int(m.group(1)) if m else None))
     return run
+
+
+def phase_minutes(phase_rows: list, spikes: list) -> list:
+    """Evre başına ham ve takılmasız ortalama (ms). Takılmasız: takılma karelerinin (PERF spike,
+    aynı evre) süresi ve sayısı çıkarılır; başka uygulamaların CPU kümesi ısınmadan ayrılsın."""
+    by_phase = defaultdict(list)
+    for s in spikes:
+        by_phase[int(s.get("phase", -1))].append(s["ms"])
+    clustered = {int(s.get("phase", -1)) for c in clusters(spikes) for s in c}
+    out = []
+    for r in phase_rows:
+        sp = by_phase.get(r["phase"], [])
+        total = r["avg_ms"] * r["frames"]
+        clean_n = r["frames"] - len(sp)
+        clean = (total - sum(sp)) / clean_n if clean_n > 0 else float("nan")
+        out.append({**r, "spikes": len(sp), "clean_ms": clean, "cluster": r["phase"] in clustered})
+    return out
+
+
+def weighted(rows: list, key: str) -> float:
+    """Kare sayısına göre ağırlıklı ortalama (takılmasızda takılmalar sayılmaz)."""
+    if key == "clean_ms":
+        n = sum(r["frames"] - r["spikes"] for r in rows)
+        return sum(r["clean_ms"] * (r["frames"] - r["spikes"]) for r in rows) / n if n else float("nan")
+    n = sum(r["frames"] for r in rows)
+    return sum(r[key] * r["frames"] for r in rows) / n if n else float("nan")
+
+
+def thermal_verdict(first: float, last: float) -> bool:
+    return last <= first * THERMAL_WORSE and last <= THERMAL_MAX_MS
+
+
+def thermal(folder: Path) -> int:
+    """0: ölçüt tutuyor, 1: tutmuyor, 2: tur geçersiz (kısa, karışık kalite, evre 1 dk değil, oyun
+    ön planda değil)."""
+    run = load(folder)
+    tel, start = run["tel"], run["start"]
+    if start is None:
+        print("%s: tur başı yok" % folder)
+        return 2
+    # Tur başından önceki evre, takılma ve ön plan örneği (menü, açılış) sayılmaz.
+    rows = phase_minutes([r for r in run["phase_rows"] if r["t"] >= start],
+            [s for s in run["spikes"] if s["t"] >= start])
+    focus = [f for f in run["focus"] if f[0] >= start]
+    qualities = sorted({r["q"] for r in rows})
+    gaps = [b["t"] - a["t"] for a, b in zip(rows, rows[1:])]
+    if len(rows) < 2 * THERMAL_MIN or len(qualities) != 1 or abs(statistics.median(gaps) - 60.0) > 2.0:
+        print("%s: geçersiz ölçüm: %d evre, kalite %s, evre aralığı %.1f sn (gerekli: ≥ %d evre, tek "
+                "kalite, 60 sn; --perf=60 --quality=…)" % (folder, len(rows), "/".join(qualities),
+                    statistics.median(gaps) if gaps else 0.0, 2 * THERMAL_MIN))
+        return 2
+    away = [f for f in focus if not f[1]]
+    overlays = [f[2] for f in focus if f[2] is not None]
+    print("=== %s: %d dakika, kalite %s, ön plan denetimi %d örnek, %d dışarıda, üst katman %s" % (
+            folder, len(rows), qualities[0], len(focus), len(away),
+            "%d–%d" % (min(overlays), max(overlays)) if overlays else "ölçülmedi"))
+    print(" dk  sektör  kare   ham ms  takılmasız  p95   takılma(K: küme)  GPU°  CPU°  pil°  büyük çekirdek sınırı MHz  CPU%")
+    prev_t = start
+    for i, r in enumerate(rows, 1):
+        w = [x for x in tel if prev_t < x["t"] <= r["t"]]
+        prev_t = r["t"]
+        mx = lambda k: max((x[k] for x in w if x[k] is not None), default=float("nan"))
+        mn = lambda k: min((x[k] for x in w if x[k] is not None), default=float("nan"))
+        print("%3d  S%d  %6d  %7.2f  %9.2f  %5.2f  %6d%s  %5.1f %5.1f %5.1f  %5.0f–%5.0f  %4.0f" % (
+                i, r["sector"], r["frames"], r["avg_ms"], r["clean_ms"], r["p95_ms"], r["spikes"],
+                " K" if r["cluster"] else "  ",
+                _median(w, "tg"), _median(w, "tc"), mx("tb"), mn("m4"), mx("m4"), _median(w, "cpu")))
+    first, last = rows[:THERMAL_MIN], rows[-THERMAL_MIN:]
+    # Resmî ölçüt kümesiz evrelerle (ADR-110: başka uygulamaların CPU kümesi ısınma değildir);
+    # ham ve takılmasız ortalama bilgi için.
+    calm = lambda rs: [r for r in rs if not r["cluster"]]
+    ok = bool(calm(first)) and bool(calm(last))
+    for key, name, a_rows, b_rows in (
+            ("clean_ms", "kümesiz evreler, takılmasız (ölçüt)", calm(first), calm(last)),
+            ("avg_ms", "kümesiz evreler, ham", calm(first), calm(last)),
+            ("avg_ms", "ham", first, last), ("clean_ms", "takılmasız", first, last)):
+        a, b = weighted(a_rows, key), weighted(b_rows, key)
+        good = thermal_verdict(a, b)
+        if name.endswith("(ölçüt)"):
+            ok = ok and good
+            name += " %d+%d dk" % (len(a_rows), len(b_rows))
+        print("İlk %d dk %s %.2f ms → son %d dk %.2f ms (%+.1f%%; ölçüt ≤ %%%d kötü ve ≤ %.0f ms): %s" % (
+                THERMAL_MIN, name, a, THERMAL_MIN, b, (b / a - 1) * 100, round((THERMAL_WORSE - 1) * 100),
+                THERMAL_MAX_MS, "TUTUYOR" if good else "TUTMUYOR"))
+    t0 = [x for x in tel if start < x["t"] <= start + 60]
+    t1 = [x for x in tel if rows[-1]["t"] - 60 < x["t"] <= rows[-1]["t"]]
+    print("Sıcaklık ilk dk → son dk (medyan): GPU %.1f → %.1f°, CPU %.1f → %.1f°, pil %.1f → %.1f°" % (
+            _median(t0, "tg"), _median(t1, "tg"), _median(t0, "tc"), _median(t1, "tc"),
+            _median(t0, "tb"), _median(t1, "tb")))
+    if away:
+        print("GEÇERSİZ: oyun %d örnekte ön planda değil" % len(away))
+        return 2
+    if overlays and max(overlays) > 0:
+        print("NOT: oyunun üstünde %d üst katman penceresi vardı (ekran birleştirici yükü, M6-10)."
+                % max(overlays))
+    print("SONUÇ: " + ("TUTUYOR" if ok else "TUTMUYOR"))
+    return 0 if ok else 1
 
 
 def _median(rows: list, key: str) -> float:
@@ -350,6 +480,22 @@ def self_test() -> None:
         except ValueError:
             continue
         raise AssertionError(bad)
+    # Isınma: takılmasız ortalama takılmaları çıkarır; ölçüt hem oran hem tavan.
+    rows = phase_minutes([{"t": 0, "phase": 1, "q": "high", "sector": 6, "frames": 100,
+            "avg_ms": 10.0, "p95_ms": 0}], [{"t": 0, "ms": 100.0, "phase": 1}])
+    assert abs(rows[0]["clean_ms"] - 900.0 / 99) < 1e-9 and rows[0]["spikes"] == 1
+    assert abs(weighted(rows, "clean_ms") - 900.0 / 99) < 1e-9
+    assert not rows[0]["cluster"]  # tek takılma küme değil
+    five = [{"t": 0.5 * i, "ms": 30.0, "phase": 2} for i in range(5)]
+    two = [{"t": 0, "phase": p, "q": "high", "sector": 6, "frames": 100, "avg_ms": 9.0,
+            "p95_ms": 0} for p in (1, 2)]
+    assert [r["cluster"] for r in phase_minutes(two, five)] == [False, True]
+    # Üç evreye yayılan küme: ortadaki evre de kümeli.
+    long = [{"t": 1.5 * i, "ms": 30.0, "phase": 1 + i // 4} for i in range(12)]
+    three = [{**two[0], "phase": p} for p in (1, 2, 3)]
+    assert [r["cluster"] for r in phase_minutes(three, long)] == [True, True, True]
+    assert thermal_verdict(9.0, 9.9) and not thermal_verdict(9.0, 9.95)
+    assert thermal_verdict(9.95, 10.0) and not thermal_verdict(9.95, 10.01)
     print("SELF-TEST TAMAM")
 
 
@@ -366,6 +512,8 @@ def main() -> None:
     if args[:1] == ["capture"] and opt("--out"):
         capture(Path(opt("--out")), int(opt("--seconds", "470")), opt("--serial", "ecde8b60"),
                 opt("--save"), "--top" in args, opt("--burn"), int(opt("--burn-sec", "10")))
+    elif args[:1] == ["thermal"] and len(args) == 2:
+        sys.exit(thermal(Path(args[1])))
     elif args[:1] == ["analyze"]:
         analyze([a for a in args[1:] if not a.startswith("--")], "--detail" in args)
     else:

@@ -331,7 +331,7 @@
   *Kabul:* 720p, 2 GB profilde açılış, menü ve 5 dk tur çökmeden; kare süresi ve bellek yazılır (emülatör GPU'su gerçek cihaz sayılmaz). Yeni lisans kabulü gerekirse kullanıcıya bırakılır.
 - [x] **M6-11** 🤖 Zayıf cihazda efekt kalitesi (M6-03 ve M6-04'ün ölçümleriyle). *Kapandı (ADR-112): oyuncu seçmediyse 30 sn boyunca 50 FPS altı kaliteyi bir kademe düşürür; ölçülen koşullar tetiklemiyor (test), oyuncunun seçimi ezilmiyor (test); dalga değişmedi.*
   *Kabul:* Varsayılan kalite ya da otomatik düşürme kuralı ölçüme dayanır ve testte; oyuncunun seçtiği ayar hiç ezilmez.
-- [ ] **M6-05** 🤖 Pil ve ısınma kontrolü
+- [ ] **M6-05** 🤖 Pil ve ısınma kontrolü. *Ölçüldü (ADR-113): ısınma payı +%2,1 (tutuyor); mutlak ≤ 10 ms tutmuyor (10,20 → 10,41 ms, soğukken de 10,3), oyunun üstünde kullanıcının odak aracının iki üst katmanı açıktı. Üst katmansız yeniden ölçüm kullanıcıya bağlı (D-15); o zamana kadar açık.*
   *Kabul:* 30 dk turda sıcaklık ve kare süresi dakikada bir; son 5 dk'nın ortalaması ilk 5 dk'dan en çok %10 kötü ve ≤ 10 ms. Telefon ayarı değiştirilmez; pil tüketimi kablosuz ölçüm istiyorsa kullanıcıya bırakılır.
 - [ ] **M6-06** 🤖 Uygulama ikonu ve açılış ekranı
   *Kabul:* Özgün; uyarlanabilir ikonda ana şekil 66/108 güvenli alanda; 48 dp'de şekil–zemin kontrastı ≥ 3; açılışta beyaz kare yok (ölçülür). Zevk kullanıcıya bırakılır. Motor yüklenirken görünen boot ekranı (`application/boot_splash`) burada düz zeminle kurulur; stüdyo logosu oraya konacaksa M6-13 değiştirir ve beyaz kare ölçüsünü yeniden çalıştırır.

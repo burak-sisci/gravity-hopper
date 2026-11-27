@@ -13,6 +13,7 @@ const INVINCIBLE_ARG: String = "--invincible"
 ## Başlatma argümanı (`-- --start-sector=2`): ilk tur o sektörden başlar (kare yakalama, M2-11).
 const START_SECTOR_ARG: String = "--start-sector="
 ## Başlatma argümanı (`-- --quality=low`): efekt kalitesi bu oturum için (kaydedilmez; M3-07).
+## `--perf=` ile birlikte verilirse ölçüm kaliteyi döndürmez, sabit tutar (M6-05).
 const QUALITY_ARG: String = "--quality="
 ## Başlatma argümanı (`-- --record=40`): rekor baştan bu yükseklikte, ilk turda rekor
 ## çizgisi görünür (kare yakalama, M3-14).
@@ -92,6 +93,7 @@ func _ready() -> void:
 	_connect_event_log()
 	var perf_sec: float = 0.0
 	var tap_interval: float = 0.0
+	var fixed_quality: int = -1
 	for arg: String in OS.get_cmdline_user_args():
 		if arg == INVINCIBLE_ARG:
 			_invincible_button.button_pressed = true
@@ -104,6 +106,7 @@ func _ready() -> void:
 			if quality >= 0:
 				Settings.effect_quality = quality as GameTypes.Quality
 				Settings.auto_quality = false
+				fixed_quality = quality
 		elif arg.begins_with(RECORD_ARG):
 			# Main ilk turu debug katmanını yükledikten hemen sonra kurar ve rekoru o an okur.
 			# Kalıcı rekordur: tur sonunda (debug) kayda da yazılır.
@@ -139,6 +142,8 @@ func _ready() -> void:
 		var probe: PerfProbe = PerfProbe.new()
 		probe.phase_sec = perf_sec
 		probe.tap_interval = tap_interval
+		# --quality= ile birlikte: kalite evreden evreye dönmez (uzun ısınma ölçümü, M6-05).
+		probe.fixed_quality = fixed_quality
 		add_child(probe)
 	_show_quality()
 	# Yeni turdaki oyuncu ölümsüzlük durumunu bilmez; her tur başında yeniden duyurulur.

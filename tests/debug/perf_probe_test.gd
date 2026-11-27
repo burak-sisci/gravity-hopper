@@ -52,6 +52,19 @@ func test_quality_steps_down_each_phase_and_wraps() -> void:
 	])
 
 
+## Sabit kaliteyle (uzun ısınma ölçümü, M6-05) her evre aynı kalitede kalır.
+func test_fixed_quality_holds_every_phase() -> void:
+	var probe: PerfProbe = auto_free(PerfProbe.new()) as PerfProbe
+	probe.phase_sec = 2.0
+	probe.fixed_quality = GameTypes.Quality.MEDIUM
+	add_child(probe)
+	probe.set_process(false)
+	for phase: int in 4:
+		assert_int(Settings.effect_quality).is_equal(GameTypes.Quality.MEDIUM)
+		for i: int in roundi(2.0 / TICK_SEC):
+			probe.tick(TICK_SEC * 1000.0)
+
+
 func test_wall_and_wave_frames_are_counted_apart() -> void:
 	var probe: PerfProbe = _add_probe(5.0)
 	# Isınma (1 sn) ölçülmez.
