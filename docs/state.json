@@ -18,7 +18,7 @@
     "_aciklama": "Mesai türü (ADR-045): standard = kullanıcı ekran başında, birlikte çalışılır; autonomous = Claude tek başına, yalnızca 🤖 görevler. Kullanıcı başta söyler; söylemezse standard.",
     "mode": "standard",
     "started": "2026-11-27",
-    "note": "Standart mesai 2026-11-27 (üçüncü). Kullanıcı D-15'te A'yı seçti, odak aracını duraklattı: M6-05 üst katmansız yeniden ölçüm. Ölçüm tamam: 9,11 → 9,45 ms, M6-05 kapandı (ADR-114)."
+    "note": "Standart mesai 2026-11-27 (üçüncü). Kullanıcı D-15'te A'yı seçti, odak aracını duraklattı: M6-05 üst katmansız yeniden ölçüm. Ölçüm tamam: 9,11 → 9,45 ms, M6-05 kapandı (ADR-114). Kullanıcı mesaiyi sonlandırdı; sıradaki 🤖 M6-06."
   },
 
   "standard_queue": [
